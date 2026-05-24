@@ -1,0 +1,550 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h1>Panel del Residente</h1>
+<p class="small">Gestiona tus visitas, códigos QR y estado de acceso.</p>
+
+<a class="btn" href="/resident/create-visit">Crear nueva visita</a>
+
+<div class="stats">
+
+    <div class="stat-card">
+        <div class="stat-top">
+            <span>Mis visitas</span>
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <h2>{{ visitas|length }}</h2>
+        <small>Visitas registradas</small>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-top">
+            <span>Visitas dentro</span>
+            <i class="fa-solid fa-building-shield"></i>
+        </div>
+        <h2>
+            {{ visitas | selectattr("estado","equalto","dentro") | list | length }}
+        </h2>
+        <small>Actualmente dentro</small>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-top">
+            <span>Finalizadas</span>
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h2>
+            {{ visitas | selectattr("estado","equalto","salida_registrada") | list | length }}
+        </h2>
+        <small>Visitas terminadas</small>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-top">
+            <span>Pendientes</span>
+            <i class="fa-solid fa-clock"></i>
+        </div>
+        <h2>
+            {{ visitas | selectattr("estado","equalto","activo") | list | length }}
+        </h2>
+        <small>Esperando acceso</small>
+    </div>
+
+</div>
+
+<div class="card">
+    <h2>Mis visitas registradas</h2>
+
+    <table class="resident-table">
+        <tr>
+            <th>Visitante</th>
+            <th>Tipo de acceso</th>
+            <th>Destino</th>
+            <th>visitas y accesos</th>
+            <th>Vehículo</th>
+            <th>QR</th>
+            <th>Estado</th>
+        </tr>
+
+        {% for visita in visitas %}
+        <tr>
+            <td>
+                <div class="visitante-info">
+                    <div class="visitante-foto">
+                        {% if visita.foto_visitante %}
+                        <img src="{{ visita.foto_visitante }}" alt="Foto visitante" class="zoomable-foto">
+                        {% else %}
+                        <img src="/static/img/default-user.png" alt="Sin foto" class="zoomable-foto">
+                        {% endif %}
+                    </div>
+                    <div class="visitante-data">
+                        <strong>{{ visita.nombre_visitante }}</strong>
+                        <span class="small">{{ visita.telefono }}</span>
+                    </div>
+                </div>
+            </td>
+
+            <td>
+                {% if visita.modalidad_visita == "recurrente" %}
+                    <span class="badge info">Recurrente</span>
+                    <br>
+                    <span class="small">
+                        {{ visita.dia_semana | capitalize }}
+                        {{ visita.hora_programada | hora_ampm }}
+                    </span>
+                    {% if visita.vigencia_hasta %}
+                    <br>
+                    <span class="small">Vence: {{ visita.vigencia_hasta.strftime('%d/%m/%Y') }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge warning">Temporal</span>
+                    <br>
+                    <span class="small">Un solo acceso</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {% if visita.condominio %}
+                    {{ visita.condominio.capitalize() }}<br>
+                {% endif %}
+                Casa {{ visita.residencia_destino }}
+            </td>
+
+            <td>
+                {% if visita.modalidad_visita == "recurrente" %}
+                    Cada {{ visita.dia_semana | capitalize }}<br>
+                    {{ visita.hora_programada | hora_ampm }}
+                {% else %}
+                    {{ visita.fecha_visita }}<br>
+                    Entrada: {{ visita.hora_inicio | hora_ampm }}
+                {% endif %}
+                <br>
+                {% if visita.hora_salida %}
+                    Salida: {{ visita.hora_salida | hora_ampm }}
+                {% else %}
+                    Salida: Pendiente
+                {% endif %}
+            </td>
+
+            <td>
+                {% if visita.vehiculo %}
+                    <strong>{{ visita.vehiculo.placa }}</strong><br>
+                    <span class="small">
+                        {{ visita.vehiculo.marca }} {{ visita.vehiculo.modelo }} — {{ visita.vehiculo.color }}
+                    </span>
+                    {% if visita.foto_placa %}
+                    <br>
+                    <img src="{{ visita.foto_placa }}" alt="Placa" class="placa-thumb zoomable-foto">
+                    {% endif %}
+                {% endif %}
+            </td>
+
+            <td>
+                <div class="qr-box">
+                    <img
+                        src="{{ visita.qr_path }}"
+                        class="qr-image qr-clickable"
+                        data-qr-path="{{ visita.qr_path }}"
+                        data-qr-token="{{ visita.qr_token }}"
+                        data-visitante="{{ visita.nombre_visitante }}"
+                        alt="Código QR"
+                    >
+                    <span class="small qr-token">{{ visita.qr_token[:8] }}…</span>
+                    <span class="small">Clic para ver y compartir</span>
+                </div>
+            </td>
+
+            <td>
+                {% if visita.qr_estado == "vencido" %}
+                    <span class="badge danger">QR vencido</span>
+                {% elif visita.estado == "activo" %}
+                    <span class="badge warning">Pendiente</span>
+                {% elif visita.estado == "dentro" %}
+                    <span class="badge success">Dentro</span>
+                {% elif visita.estado == "salida_registrada" %}
+                    <span class="badge dark">Finalizada</span>
+                {% else %}
+                    <span class="badge danger">{{ visita.estado }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<!-- Modal foto visitante/placa -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+
+<!-- Modal QR con compartir WhatsApp -->
+<div id="qrModal" class="image-modal qr-share-modal">
+    <div class="qr-modal-panel">
+        <span class="close-modal" id="closeQrModal">&times;</span>
+        <h3 id="qrModalTitle">Código QR de acceso</h3>
+        <p class="small" id="qrModalSubtitle"></p>
+        <img id="qrModalImage" class="qr-modal-image" alt="QR ampliado">
+        <div class="qr-token-display">
+            <span class="small">Token de acceso</span>
+            <code id="qrModalToken"></code>
+        </div>
+        <div class="qr-share-actions">
+            <button type="button" class="btn btn-whatsapp" id="btnShareToken">
+                <i class="fa-brands fa-whatsapp"></i> Compartir token
+            </button>
+            <button type="button" class="btn btn-whatsapp" id="btnShareQr">
+                <i class="fa-brands fa-whatsapp"></i> Compartir imagen del QR
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnDownloadQr" style="display:none;">
+                <i class="fa-solid fa-download"></i> Descargar QR
+            </button>
+            <p class="small qr-share-hint" id="qrShareHint"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fotoModal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImage");
+
+    document.querySelectorAll(".zoomable-foto").forEach(img => {
+        img.addEventListener("click", function () {
+            fotoModal.style.display = "flex";
+            modalImg.src = this.src;
+        });
+    });
+
+    document.querySelector("#imageModal .close-modal").onclick = function () {
+        fotoModal.style.display = "none";
+    };
+
+    fotoModal.onclick = function (e) {
+        if (e.target === fotoModal) fotoModal.style.display = "none";
+    };
+
+    const qrModal = document.getElementById("qrModal");
+    qrModal.style.display = "none";
+    const qrModalImage = document.getElementById("qrModalImage");
+    const qrModalToken = document.getElementById("qrModalToken");
+    const qrModalTitle = document.getElementById("qrModalTitle");
+    const qrModalSubtitle = document.getElementById("qrModalSubtitle");
+
+    let currentToken = "";
+    let currentQrUrl = "";
+    let currentQrBlob = null;
+    let currentQrFile = null;
+
+    const btnShareQr = document.getElementById("btnShareQr");
+    const btnDownloadQr = document.getElementById("btnDownloadQr");
+    const qrShareHint = document.getElementById("qrShareHint");
+
+    async function cargarImagenQr(url) {
+
+        const respuesta = await fetch(url);
+
+        if (!respuesta.ok) {
+            throw new Error("No se pudo cargar la imagen del QR");
+        }
+
+        const blob = await respuesta.blob();
+
+        const nombre = `qr-acceso-${currentToken.slice(0, 8)}.png`;
+
+        return {
+            blob,
+            file: new File(
+                [blob],
+                nombre,
+                {
+                    type: blob.type || "image/png"
+                }
+            ),
+        };
+    }
+
+    function descargarArchivo(file) {
+
+        const url = URL.createObjectURL(file);
+
+        const enlace = document.createElement("a");
+
+        enlace.href = url;
+
+        enlace.download = file.name;
+
+        document.body.appendChild(enlace);
+
+        enlace.click();
+
+        enlace.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    document.querySelectorAll(".qr-clickable").forEach(img => {
+
+        img.addEventListener("click", async function () {
+
+            currentToken = this.dataset.qrToken;
+
+            currentQrUrl =
+                window.location.origin +
+                this.dataset.qrPath;
+
+            const visitante = this.dataset.visitante;
+
+            qrModalImage.src = this.dataset.qrPath;
+
+            qrModalToken.textContent = currentToken;
+
+            qrModalTitle.textContent =
+                "QR — " + visitante;
+
+            qrModalSubtitle.textContent =
+                "Comparte el código o el token con tu visitante.";
+
+            qrShareHint.textContent =
+                "Cargando imagen del QR…";
+
+            btnShareQr.disabled = true;
+
+            currentQrBlob = null;
+
+            currentQrFile = null;
+
+            qrModal.style.display = "flex";
+
+            document.body.style.overflow = "hidden";
+
+            try {
+
+                const datos = await cargarImagenQr(currentQrUrl);
+
+                currentQrBlob = datos.blob;
+
+                currentQrFile = datos.file;
+
+                if (
+                    navigator.canShare &&
+                    navigator.canShare({
+                        files: [currentQrFile]
+                    })
+                ) {
+
+                    qrShareHint.textContent =
+                        "En móvil podrás enviar la imagen completa del QR por WhatsApp.";
+
+                    btnDownloadQr.style.display = "none";
+
+                } else {
+
+                    qrShareHint.textContent =
+                        "Se descargará la imagen y se abrirá WhatsApp para que la adjuntes al chat.";
+
+                    btnDownloadQr.style.display = "inline-flex";
+                }
+
+            } catch (err) {
+
+                qrShareHint.textContent =
+                    "No se pudo preparar la imagen. Recarga e intenta de nuevo.";
+
+            } finally {
+
+                btnShareQr.disabled = false;
+            }
+        });
+    });
+
+    document.getElementById("closeQrModal").onclick = function () {
+
+        qrModal.style.display = "none";
+
+        document.body.style.overflow = "auto";
+    };
+
+    qrModal.onclick = function (e) {
+
+        if (e.target === qrModal) {
+            qrModal.style.display = "none";
+        }
+    };
+
+    document.getElementById("btnShareToken").onclick = async function () {
+
+        if (!currentQrFile) {
+
+            alert("Espera a que cargue el QR.");
+
+            return;
+
+        }
+
+        const texto =
+`Hola, te comparto tu acceso al fraccionamiento.
+
+Token de acceso:
+${currentToken}
+
+Presenta este QR en caseta el día de tu visita.`;
+
+        try {
+
+            if (
+                navigator.share &&
+                currentQrFile
+            ) {
+
+                await navigator.share({
+
+                    title:"QR de acceso",
+
+                    text:texto,
+
+                    url: currentQrUrl
+
+                });
+
+                return;
+            }
+
+            descargarArchivo(currentQrFile);
+
+            setTimeout(() => {
+
+                window.open(
+                    "https://wa.me/?text=" +
+                    encodeURIComponent(
+                        texto +
+                        "\n\nAdjunta la imagen QR descargada."
+                    ),
+                    "_blank"
+                );
+
+            }, 700);
+
+        } catch(err) {
+
+            console.error(err);
+
+            alert(
+                "No se pudo compartir automáticamente."
+            );
+
+        }
+
+    };
+
+    btnDownloadQr.onclick = function () {
+
+        if (currentQrFile) {
+
+            descargarArchivo(currentQrFile);
+        }
+    };
+
+    btnShareQr.onclick = async function () {
+
+        if (!currentQrFile) {
+
+            alert(
+                "Espera a que cargue la imagen del QR e intenta de nuevo."
+            );
+
+            return;
+        }
+
+        const texto =
+            "Código QR de acceso al fraccionamiento.\nToken: " +
+            currentToken;
+
+        btnShareQr.disabled = true;
+
+        const textoOriginal = btnShareQr.innerHTML;
+
+        btnShareQr.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i> Preparando…';
+
+        try {
+
+            if (
+                navigator.canShare &&
+                navigator.canShare({
+                    files: [currentQrFile]
+                })
+            ) {
+
+                await navigator.share({
+
+                    title: "QR de acceso",
+
+                    text: texto,
+
+                    files: [currentQrFile],
+                });
+
+                return;
+            }
+
+            descargarArchivo(currentQrFile);
+
+            const msgWa =
+                "Hola, te comparto tu acceso al fraccionamiento.\n\n" +
+                "1) Adjunta la imagen del QR que se acaba de descargar en este chat.\n\n" +
+                "Token: " + currentToken;
+
+            setTimeout(() => {
+
+                window.open(
+                    "https://wa.me/?text=" +
+                    encodeURIComponent(msgWa),
+                    "_blank"
+                );
+
+            }, 600);
+
+        } catch (err) {
+
+            if (err.name !== "AbortError") {
+
+                descargarArchivo(currentQrFile);
+
+                alert(
+                    "No se pudo abrir el menú de compartir. La imagen se descargó: adjúntala manualmente en WhatsApp."
+                );
+            }
+
+        } finally {
+
+            btnShareQr.disabled = false;
+
+            btnShareQr.innerHTML = textoOriginal;
+        }
+    };
+
+
+    /* ========================================= */
+    /* AUTO ABRIR QR RECIÉN GENERADO */
+    /* ========================================= */
+
+    {% if auto_qr %}
+
+    window.addEventListener("load", function(){
+
+        const qrElement = document.querySelector(
+            '[data-qr-token="{{ auto_qr }}"]'
+        );
+
+        if(qrElement){
+
+            qrElement.click();
+        }
+
+    });
+
+    {% endif %}
+
+</script>
+
+{% endblock %}

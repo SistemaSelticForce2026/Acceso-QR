@@ -1,0 +1,150 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="card form-card">
+
+  <!-- =========== -->
+    <!-- LOGO -->
+  <!-- =========== -->
+
+    <div class="login-logo">
+
+        <img 
+            src="{{ url_for('static', filename='img/seltic-force-logo.png') }}" 
+            alt="Seltic Force Logo"
+        >
+
+    </div>
+
+  <!-- =========== -->
+    <!-- TITULOS -->
+  <!-- =========== -->
+
+    <h1>Access QR</h1>
+
+    <h2>Inicio de sesión</h2>
+
+    <p class="small">
+        Sistema web de control de acceso residencial mediante códigos QR.
+    </p>
+
+    {% if bloqueo_activo %}
+
+    <div class="alert bloqueo-alert">
+
+        <div class="bloqueo-header">
+
+            <i class="fa-solid fa-lock"></i>
+
+            <strong>
+                Cuenta bloqueada temporalmente
+            </strong>
+
+        </div>
+
+        <p>
+            Demasiados intentos fallidos.
+        </p>
+
+        <div class="timer-box">
+
+            <span id="timer">
+                00:00
+            </span>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+  <!-- =========== -->
+    <!-- FORMULARIO -->
+  <!-- =========== -->
+
+    <form method="POST" action="/login">
+
+        <label>Correo electrónico</label>
+
+        <input 
+            type="email"
+            name="correo"
+            placeholder="ejemplo@correo.com"
+            required
+        >
+
+        <label>Contraseña</label>
+
+        <input 
+            type="password"
+            name="password"
+            placeholder="Ingresa tu contraseña"
+            required
+        >
+
+        <button type="submit" class="btn">
+
+            Ingresar al sistema
+            
+
+        </button>
+
+    </form>
+
+    <hr>
+
+    <p>
+        ¿Eres residente y aún no tienes cuenta?
+        <a href="/register">Crear cuenta</a>
+    </p>
+
+    <p class="small">
+        Acceso disponible para residentes, guardias y administradores.
+    </p>
+
+</div>
+
+<!-- ===================================== -->
+<!-- TIMER BLOQUEO -->
+<!-- ===================================== -->
+
+{% if bloqueo_activo %}
+
+<script>
+
+    let segundos = {{ segundos_restantes }};
+
+    const timer = document.getElementById("timer");
+
+    function actualizarTimer() {
+
+        let minutos = Math.floor(segundos / 60);
+
+        let secs = segundos % 60;
+
+        minutos = minutos.toString().padStart(2, '0');
+
+        secs = secs.toString().padStart(2, '0');
+
+        timer.innerHTML = `${minutos}:${secs}`;
+
+        if (segundos <= 0) {
+
+            location.reload();
+
+        }
+
+        segundos--;
+
+    }
+
+    actualizarTimer();
+
+    setInterval(actualizarTimer, 1000);
+
+</script>
+
+{% endif %}
+
+{% endblock %}

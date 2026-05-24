@@ -1,0 +1,330 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h1>Panel de Guardia</h1>
+
+<div class="stats">
+
+    <div class="stat-card">
+        <h3>Visitas activas</h3>
+        <p>{{ activas or 0 }}</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Dentro del fraccionamiento</h3>
+        <p>{{ dentro or 0 }}</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Salidas registradas</h3>
+        <p>{{ salidas or 0 }}</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Incidencias</h3>
+        <p>{{ incidencias or 0 }}</p>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h2>Control de acceso</h2>
+    <p class="small">Use el escáner correspondiente según si el visitante ingresa o sale del fraccionamiento.</p>
+
+    <div class="scan-mode-switch" style="margin-top:16px;">
+
+        <a href="{{ url_for('guard.scan_entrada') }}" class="scan-mode-btn active">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            Escanear entrada
+        </a>
+
+        <a href="{{ url_for('guard.scan_salida') }}" class="scan-mode-btn exit">
+            <i class="fa-solid fa-door-open"></i>
+            Escanear salida
+        </a>
+
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h2>Visitas recientes</h2>
+
+    <p class="small">
+        Datos del visitante, vehículo y fotografía de placa registrados por el residente.
+    </p>
+
+    <div class="table-container">
+
+        <table>
+
+            <tr>
+                <th>Visitante</th>
+                <th>Tipo de acceso</th>
+                <th>Residencia</th>
+                <th>Horario de acceso</th>
+                <th>Vehículo</th>
+                <th>Foto placa</th>
+                <th>Estado</th>
+            </tr>
+
+            {% for visita in visitas %}
+
+            <tr>
+
+                <td>
+                    <div class="visitante-info">
+                        <div class="visitante-foto">
+                            {% if visita.foto_visitante %}
+                            <img src="{{ visita.foto_visitante }}" alt="Foto visitante" class="zoomable">
+                            {% else %}
+                            <img src="/static/img/default-user.png" alt="Sin foto" class="zoomable">
+                            {% endif %}
+                        </div>
+                        <div class="visitante-data">
+                            <strong>{{ visita.nombre_visitante }}</strong>
+                            <span class="small">{{ visita.telefono }}</span>
+                        </div>
+                    </div>
+                </td>
+
+                <td>
+
+                    <div class="modalidad-card">
+
+                        {% if visita.modalidad_visita == "recurrente" %}
+
+                            <div class="modalidad-badge recurrente">
+
+                                <i class="fa-solid fa-repeat"></i>
+
+                                Acceso recurrente
+
+                            </div>
+
+                            <span class="modalidad-description">
+
+                                Personal autorizado recurrente
+
+                            </span>
+
+                        {% else %}
+
+                            <div class="modalidad-badge temporal">
+
+                                <i class="fa-solid fa-clock"></i>
+
+                                Acceso temporal
+
+                            </div>
+
+                            <span class="modalidad-description">
+
+                                Acceso válido por un solo ingreso
+
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    <div class="residencia-card">
+
+                        <div class="residencia-condominio">
+
+                            <i class="fa-solid fa-building"></i>
+
+                            {{ visita.condominio | capitalize }}
+
+                        </div>
+
+                        <div class="residencia-casa">
+
+                            <i class="fa-solid fa-house"></i>
+
+                            Casa {{ visita.residencia_destino }}
+
+                        </div>
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    <div class="schedule-card">
+
+                        {% if visita.modalidad_visita == "recurrente" %}
+
+                            <div class="schedule-date">
+                                <i class="fa-regular fa-calendar-days"></i>
+                                {{ visita.dia_semana | capitalize }}
+                            </div>
+
+                            <div class="schedule-time">
+                                <i class="fa-regular fa-clock"></i>
+                                <span class="inline-hour">
+                                    {{ visita.hora_programada | hora_ampm }}
+                                </span>
+                            </div>
+
+                        {% else %}
+
+                            <div class="schedule-date">
+                                <i class="fa-regular fa-calendar-days"></i>
+                                {{ visita.fecha_visita }}
+                            </div>
+
+                            <div class="schedule-time">
+                                <i class="fa-regular fa-clock"></i>
+                                Entrada: <span class="inline-hour">{{ visita.hora_inicio | hora_ampm }}</span>
+                            </div>
+
+                        {% endif %}
+
+                        {% if visita.hora_salida %}
+
+                            <div class="schedule-exit">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                Salida: {{ visita.hora_salida | hora_ampm }}
+                            </div>
+
+                        {% else %}
+
+                            <div class="schedule-pending">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                                Salida pendiente
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    {% if visita.vehiculo %}
+
+                    <div class="vehiculo-card">
+
+                        <div class="vehiculo-placa">
+
+                            <i class="fa-solid fa-car-side"></i>
+
+                            {{ visita.vehiculo.placa }}
+
+                        </div>
+
+                        <div class="vehiculo-info">
+
+                            <span>
+
+                                <i class="fa-solid fa-industry"></i>
+
+                                {{ visita.vehiculo.marca }}
+
+                            </span>
+
+                            <span>
+
+                                <i class="fa-solid fa-car"></i>
+
+                                {{ visita.vehiculo.modelo }}
+
+                            </span>
+
+                            <span>
+
+                                <i class="fa-solid fa-palette"></i>
+
+                                {{ visita.vehiculo.color }}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    {% else %}
+
+                        <span class="small">Sin vehículo</span>
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+                    {% if visita.foto_placa %}
+                    <img
+                        src="{{ visita.foto_placa }}"
+                        alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
+                        class="placa-thumb zoomable"
+                        title="Clic para ampliar placa"
+                    >
+                    {% else %}
+                    <span class="small">Sin foto</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if visita.estado == "activo" %}
+                        <span class="badge warning">Pendiente</span>
+                    {% elif visita.estado == "dentro" %}
+                        <span class="badge success">Dentro</span>
+                    {% elif visita.estado == "salida_registrada" %}
+                        <span class="badge dark">Finalizada</span>
+                    {% else %}
+                        <span class="badge danger">{{ visita.estado }}</span>
+                    {% endif %}
+                </td>
+
+            </tr>
+
+            {% else %}
+            <tr>
+                <td colspan="7" class="small">No hay visitas registradas aún.</td>
+            </tr>
+            {% endfor %}
+
+        </table>
+
+    </div>
+
+</div>
+
+<div id="imageModal" class="image-modal">
+    <span class="close-modal">&times;</span>
+    <img id="modalImage" class="modal-image">
+</div>
+
+<script>
+    const zoomImages = document.querySelectorAll(".zoomable");
+    const imageModal = document.getElementById("imageModal");
+    const modalImage = document.getElementById("modalImage");
+    const closeModal = document.querySelector(".close-modal");
+
+    zoomImages.forEach(img => {
+        img.addEventListener("click", () => {
+            imageModal.style.display = "flex";
+            modalImage.src = img.src;
+        });
+    });
+
+    closeModal.addEventListener("click", () => {
+        imageModal.style.display = "none";
+    });
+
+    imageModal.addEventListener("click", (e) => {
+        if (e.target === imageModal) imageModal.style.display = "none";
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,1 @@
+console.log("Access QR funcionando correctamente");

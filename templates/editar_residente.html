@@ -1,0 +1,79 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="card form-card">
+
+    <h1>Editar residente</h1>
+
+    <p class="small">
+        Actualiza la información del residente.
+    </p>
+
+    <form method="POST">
+
+        <label>Nombre completo</label>
+        <input 
+            type="text" 
+            name="nombre"
+            value="{{ usuario.nombre }}"
+            required
+        >
+
+        <label>Correo electrónico</label>
+        <input 
+            type="email" 
+            name="correo"
+            value="{{ usuario.correo }}"
+            required
+        >
+
+        <label>Teléfono</label>
+        <input 
+            type="text" 
+            name="telefono"
+            value="{{ usuario.telefono }}"
+            required
+        >
+
+        <label>Fraccionamiento</label>
+        <input 
+            type="text" 
+            name="fraccionamiento"
+            value="{{ usuario.fraccionamiento }}"
+            required
+        >
+
+        <label>Privada</label>
+        <input 
+            type="text" 
+            name="privada"
+            value="{{ usuario.privada }}"
+            required
+        >
+
+        <label>Número de casa</label>
+        <input 
+            type="text" 
+            name="numero_casa"
+            value="{{ usuario.numero_casa }}"
+            required
+        >
+
+        <div style="margin-top:25px; display:flex; gap:10px;">
+
+            <button type="submit" class="btn">
+                Guardar cambios
+            </button>
+
+            <a href="{{ url_for('admin.residentes') }}" class="btn secondary">
+                Cancelar
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

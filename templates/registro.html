@@ -1,0 +1,217 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="card form-card">
+
+    <h1>Registro de Residente</h1>
+
+    <p class="small">
+        Completa la siguiente información para crear tu cuenta y administrar accesos mediante códigos QR.
+    </p>
+
+    <form method="POST" id="registroForm">
+
+        <h3>Información del domicilio</h3>
+
+        <label>Fraccionamiento</label>
+        <input 
+            type="text" 
+            name="fraccionamiento"
+            placeholder="Ej. Residencial Los Encinos"
+            required
+        >
+
+        <label>Privada / Condominio</label>
+        <input 
+            type="text" 
+            name="privada"
+            placeholder="Ej. Privada 3"
+            required
+        >
+
+        <label>Número de casa</label>
+        <input 
+            type="text" 
+            name="numero_casa"
+            placeholder="Ej. Casa 27"
+            required
+        >
+
+        <hr>
+
+        <h3>Información personal</h3>
+
+        <label>Nombre completo</label>
+        <input 
+            type="text" 
+            name="nombre"
+            placeholder="Ej. Juan Pérez López"
+            required
+        >
+
+        <label>Correo electrónico</label>
+        <input 
+            type="email" 
+            name="correo"
+            placeholder="ejemplo@correo.com"
+            required
+        >
+
+        <label>Número telefónico</label>
+        <input 
+            type="text" 
+            name="telefono"
+            placeholder="Ej. 7221234567"
+            pattern="[0-9]{10}"
+            maxlength="10"
+            required
+        >
+
+        <label>Contraseña</label>
+        <input 
+            type="password" 
+            name="password"
+            id="password"
+            placeholder="Crea una contraseña segura"
+            minlength="8"
+            required
+        >
+
+        <div id="password-rules" class="small" style="margin-top:10px;">
+            <p id="rule-length">❌ Mínimo 8 caracteres</p>
+            <p id="rule-uppercase">❌ Una letra mayúscula</p>
+            <p id="rule-lowercase">❌ Una letra minúscula</p>
+            <p id="rule-number">❌ Un número</p>
+            <p id="rule-special">❌ Un carácter especial (@$!%*?&)</p>
+        </div>
+
+        <label>Confirmar contraseña</label>
+        <input 
+            type="password" 
+            name="confirm_password"
+            id="confirm_password"
+            placeholder="Confirma tu contraseña"
+            required
+        >
+
+        <p id="password-match" class="small"></p>
+
+        <p class="small">
+            La contraseña debe ser privada y segura para proteger tu acceso al sistema.
+        </p>
+
+        <button type="submit">
+            Crear cuenta
+        </button>
+
+    </form>
+
+    <hr>
+
+    <p>
+        ¿Ya tienes una cuenta?
+        <a href="/login">Iniciar sesión</a>
+    </p>
+
+    <p class="small">
+        Sistema de control de acceso residencial con validación mediante QR.
+    </p>
+
+</div>
+
+<script>
+    const password = document.getElementById("password");
+    const confirmPassword = document.getElementById("confirm_password");
+    const form = document.getElementById("registroForm");
+
+    const ruleLength = document.getElementById("rule-length");
+    const ruleUppercase = document.getElementById("rule-uppercase");
+    const ruleLowercase = document.getElementById("rule-lowercase");
+    const ruleNumber = document.getElementById("rule-number");
+    const ruleSpecial = document.getElementById("rule-special");
+
+    const passwordMatch = document.getElementById("password-match");
+
+    password.addEventListener("input", () => {
+
+        const value = password.value;
+
+        const hasLength = value.length >= 8;
+        const hasUppercase = /[A-Z]/.test(value);
+        const hasLowercase = /[a-z]/.test(value);
+        const hasNumber = /[0-9]/.test(value);
+        const hasSpecial = /[@$!%*?&]/.test(value);
+
+        ruleLength.innerHTML = hasLength 
+            ? "✅ Mínimo 8 caracteres" 
+            : "❌ Mínimo 8 caracteres";
+
+        ruleUppercase.innerHTML = hasUppercase 
+            ? "✅ Una letra mayúscula" 
+            : "❌ Una letra mayúscula";
+
+        ruleLowercase.innerHTML = hasLowercase 
+            ? "✅ Una letra minúscula" 
+            : "❌ Una letra minúscula";
+
+        ruleNumber.innerHTML = hasNumber 
+            ? "✅ Un número" 
+            : "❌ Un número";
+
+        ruleSpecial.innerHTML = hasSpecial 
+            ? "✅ Un carácter especial (@$!%*?&)" 
+            : "❌ Un carácter especial (@$!%*?&)";
+
+    });
+
+    confirmPassword.addEventListener("input", () => {
+
+        if (password.value === confirmPassword.value) {
+
+            passwordMatch.innerHTML = "✅ Las contraseñas coinciden";
+            passwordMatch.style.color = "green";
+
+        } else {
+
+            passwordMatch.innerHTML = "❌ Las contraseñas no coinciden";
+            passwordMatch.style.color = "red";
+
+        }
+
+    });
+
+    form.addEventListener("submit", function(e) {
+
+        const value = password.value;
+
+        const hasLength = value.length >= 8;
+        const hasUppercase = /[A-Z]/.test(value);
+        const hasLowercase = /[a-z]/.test(value);
+        const hasNumber = /[0-9]/.test(value);
+        const hasSpecial = /[@$!%*?&]/.test(value);
+
+        if (
+            !hasLength ||
+            !hasUppercase ||
+            !hasLowercase ||
+            !hasNumber ||
+            !hasSpecial
+        ) {
+
+            alert("La contraseña no cumple con los requisitos de seguridad.");
+            e.preventDefault();
+
+        }
+
+        if (password.value !== confirmPassword.value) {
+
+            alert("Las contraseñas no coinciden.");
+            e.preventDefault();
+
+        }
+
+    });
+</script>
+
+{% endblock %}

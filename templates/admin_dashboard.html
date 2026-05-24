@@ -1,0 +1,1659 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<!-- ===================================================== -->
+<!-- HEADER -->
+<!-- ===================================================== -->
+
+<div class="page-header">
+
+    <div>
+
+        <h1>Panel Administrativo</h1>
+
+        <p class="page-subtitle">
+            Monitoreo en tiempo real de accesos, residentes, vigilancia e incidencias del fraccionamiento mediante validación QR segura.
+        </p>
+
+        <div class="live-indicator">
+
+            <span class="live-dot"></span>
+
+            Sistema en línea · Actualización en tiempo real
+
+        </div>
+
+    </div>
+
+    <div class="header-actions">
+
+        <button class="btn secondary"
+                onclick="window.location.reload();">
+
+            <i class="fa-solid fa-arrows-rotate"></i>
+            Actualizar
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- ESTADISTICAS -->
+<!-- ===================================================== -->
+
+<div class="stats">
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>Total visitas</span>
+
+            <i class="fa-solid fa-users"></i>
+
+        </div>
+
+        <h2>{{ total_visitas or 0 }}</h2>
+
+        <small>
+            Registros generales
+        </small>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>Visitas pendientes</span>
+
+            <i class="fa-solid fa-user-check"></i>
+
+        </div>
+
+        <h2>{{ activas or 0 }}</h2>
+
+        <small>
+            Accesos pendientes
+        </small>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>Personas dentro</span>
+
+            <i class="fa-solid fa-building-shield"></i>
+
+        </div>
+
+        <h2>{{ dentro or 0 }}</h2>
+
+        <small>
+            Dentro del residencial
+        </small>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>Salidas registradas</span>
+
+            <i class="fa-solid fa-door-open"></i>
+
+        </div>
+
+        <h2>{{ salidas or 0 }}</h2>
+
+        <small>
+            Visitas finalizadas
+        </small>
+
+    </div>
+
+</div>
+
+<div class="stats">
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>Residentes</span>
+
+            <i class="fa-solid fa-house"></i>
+
+        </div>
+
+        <h2>{{ total_residentes }}</h2>
+
+        <small>Usuarios registrados</small>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>Guardias</span>
+
+            <i class="fa-solid fa-shield-halved"></i>
+
+        </div>
+
+        <h2>{{ total_guardias }}</h2>
+
+        <small>Personal activo</small>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>Incidencias</span>
+
+            <i class="fa-solid fa-triangle-exclamation"></i>
+
+        </div>
+
+        <h2>{{ total_incidencias }}</h2>
+
+        <small>Eventos registrados</small>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>QR rechazados</span>
+
+            <i class="fa-solid fa-ban"></i>
+
+        </div>
+
+        <h2>{{ rechazados }}</h2>
+
+        <small>Accesos inválidos</small>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-top">
+
+            <span>Promedio diario</span>
+
+            <i class="fa-solid fa-chart-line"></i>
+
+        </div>
+
+        <h2>{{ promedio }}</h2>
+
+        <small>
+            Visitas promedio por día
+        </small>
+
+    </div>
+
+    </div>
+
+
+<!-- ===================================================== -->
+<!-- FILTRO ESTADISTICAS -->
+<!-- ===================================================== -->
+
+<div class="stats-filter">
+
+    <button class="filter-btn active">
+
+        <i class="fa-solid fa-calendar-day"></i>
+
+        Hoy
+
+    </button>
+
+    <button class="filter-btn">
+
+        <i class="fa-solid fa-calendar-week"></i>
+
+        Semana
+
+    </button>
+
+    <button class="filter-btn">
+
+        <i class="fa-solid fa-calendar"></i>
+
+        Mes
+
+    </button>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- GRAFICAS -->
+<!-- ===================================================== -->
+
+<div class="dashboard-grid">
+
+    <!-- ============================== -->
+    <!-- DONUT -->
+    <!-- ============================== -->
+
+    <div class="card chart-card">
+
+        <h2>
+            <i class="fa-solid fa-chart-pie"></i>
+            Estado operativo de accesos
+        </h2>
+
+        <canvas id="estadoChart"></canvas>
+
+    </div>
+
+    <!-- ============================== -->
+    <!-- BARRAS -->
+    <!-- ============================== -->
+
+    <div class="card chart-card">
+
+        <h2>
+            <i class="fa-solid fa-chart-column"></i>
+            Resumen general
+        </h2>
+
+        <canvas id="actividadChart"></canvas>
+
+    </div>
+
+</div>
+
+<div class="dashboard-grid">
+
+    <!-- ============================== -->
+    <!-- TIPOS DE VISITA PREMIUM -->
+    <!-- ============================== -->
+
+    <div class="card chart-card visit-chart-card">
+
+        <div class="chart-header">
+
+            <div>
+
+                <h2>
+                    <i class="fa-solid fa-id-card"></i>
+                    Modalidades de visita
+                </h2>
+
+                <p class="chart-subtitle">
+                    Distribución operativa de accesos registrados.
+                </p>
+
+            </div>
+
+            <div class="chart-live">
+
+                <span class="live-dot-chart"></span>
+
+                Monitoreo
+
+            </div>
+
+        </div>
+
+        <div class="chart-body">
+
+            <canvas id="tiposChart"></canvas>
+
+        </div>
+
+    </div>
+
+    <!-- ============================== -->
+    <!-- LINE PREMIUM -->
+    <!-- ============================== -->
+
+    <div class="card chart-card line-chart-card">
+
+        <div class="chart-header">
+
+            <div>
+
+                <h2>
+                    <i class="fa-solid fa-calendar-days"></i>
+                    Accesos por día
+                </h2>
+
+                <p class="chart-subtitle">
+                    Flujo operativo de accesos registrados diariamente.
+                </p>
+
+            </div>
+
+            <div class="chart-live">
+
+                <span class="live-dot-chart"></span>
+
+                En vivo
+
+            </div>
+
+        </div>
+
+        <div class="chart-body">
+
+            <canvas id="diasChart"></canvas>
+
+        </div>
+
+    </div>
+
+    </div>
+
+<!-- ===================================================== -->
+<!-- ESTADO DEL SISTEMA -->
+<!-- ===================================================== -->
+
+<div class="dashboard-grid">
+
+    <div class="card">
+
+        <h2>Estado del sistema</h2>
+
+        <div class="system-status">
+
+            <div class="status-item">
+
+                <div>
+
+                    <strong>Sistema QR</strong>
+
+                    <p class="small">
+                        Validación de accesos QR
+                    </p>
+
+                    <div class="status-bar">
+
+                        <div class="status-progress"></div>
+
+                    </div>
+
+                </div>
+
+                <span class="badge success">
+                    Operativo
+                </span>
+
+            </div>
+
+            <div class="status-item">
+
+                <div>
+
+                    <strong>Base de datos</strong>
+
+                    <p class="small">
+                        MongoDB conectada correctamente
+                    </p>
+
+                    <div class="status-bar">
+
+                        <div class="status-progress"></div>
+
+                    </div>
+
+                </div>
+
+                <span class="badge success">
+                    Conectada
+                </span>
+
+            </div>
+
+            <div class="status-item">
+
+                <div>
+
+                    <strong>Monitoreo</strong>
+
+                    <p class="small">
+                        Supervisión activa del sistema
+                    </p>
+
+                    <div class="status-bar">
+
+                        <div class="status-progress"></div>
+
+                    </div>
+
+                </div>
+
+                <span class="badge">
+                    Activo
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Actividad reciente</h2>
+
+        <div class="activity-list">
+
+            {% for acceso in actividad_reciente %}
+
+            <div class="activity-item">
+
+                <div class="activity-icon">
+
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+
+                </div>
+
+                <div class="activity-content">
+
+                    <strong>
+                        {{ acceso.guardia_nombre }}
+                    </strong>
+
+                    <span class="small">
+
+                        {{ acceso.accion }}
+                        -
+                        {{ acceso.resultado }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- ALERTAS Y MODULOS -->
+<!-- ===================================================== -->
+
+<div class="dashboard-grid">
+
+    <div class="card">
+
+        <h2>Alertas del sistema</h2>
+
+        <div class="alert warning">
+
+            <i class="fa-solid fa-triangle-exclamation"></i>
+
+            Revisar visitas que siguen dentro del fraccionamiento.
+
+        </div>
+
+        <div class="alert info">
+
+            <i class="fa-solid fa-circle-info"></i>
+
+            Verificar placas y fotografía del visitante antes de permitir el acceso.
+        </div>
+
+        <div class="alert danger-alert">
+
+        <i class="fa-solid fa-shield-halved"></i>
+        
+            Revisar QR rechazados, visitas no autorizadas o incidencias abiertas.
+        </div>
+
+        <div class="security-panel">
+
+            <div class="security-header">
+
+                <h3>
+
+                    <i class="fa-solid fa-shield-heart"></i>
+
+                    Centro de monitoreo
+
+                </h3>
+
+                <span class="security-live">
+
+                    <span class="pulse"></span>
+
+                    En vivo
+
+                </span>
+
+            </div>
+
+            <div class="security-grid">
+
+                <div class="security-box">
+
+                    <span class="security-number">
+                        98%
+                    </span>
+
+                    <small>
+                        Nivel de seguridad
+                    </small>
+
+                </div>
+
+                <div class="security-box">
+
+                    <span class="security-number">
+                        24/7
+                    </span>
+
+                    <small>
+                        Vigilancia activa
+                    </small>
+
+                </div>
+
+                <div class="security-box">
+
+                    <span class="security-number">
+                        {{ activas or 0 }}
+                    </span>
+
+                    <small>
+                        Accesos monitoreados
+                    </small>
+
+                </div>
+
+                <div class="security-box">
+
+                    <span class="security-number">
+                        {{ rechazados or 0 }}
+                    </span>
+
+                    <small>
+                        Bloqueos detectados
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Módulos administrativos</h2>
+
+        <div class="module-list">
+
+            <a class="module-item"
+                href="/admin/residentes">
+
+                <div class="module-icon">
+
+                    <i class="fa-solid fa-layer-group"></i>
+
+                </div>
+
+                <strong>Gestión de residentes</strong>
+
+                <span>
+                    Alta, baja y consulta de residentes registrados.
+                </span>
+
+            </a>
+
+            <a class="module-item"
+                href="/admin/guardias">
+
+                    <div class="module-icon">
+
+                        <i class="fa-solid fa-layer-group"></i>
+
+                    </div>
+
+                    <strong>Gestión de guardias</strong>
+
+                <span>
+                    Administración de personal y turnos operativos.
+                </span>
+
+            </a>
+
+            <a class="module-item"
+               href="/admin/accesos">
+
+                <strong>Historial de accesos</strong>
+
+                <span>
+                    Consultar entradas, salidas y accesos rechazados.
+                </span>
+
+            </a>
+
+            <a class="module-item"
+               href="/admin/incidencias">
+
+                <strong>Bitácora de incidencias</strong>
+
+                <span>
+                    Reportes de seguridad registrados por vigilancia.
+                </span>
+
+            </a>
+
+            <a class="module-item"
+               href="/admin/reportes">
+
+                <strong>Reportes PDF / Excel</strong>
+
+                <span>
+                    Exportación de información administrativa.
+                </span>
+
+            </a>
+
+            <a class="module-item"
+               href="/admin/configuracion">
+
+                <strong>Configuración del sistema</strong>
+
+                <span>
+                    Parámetros generales y configuración residencial.
+                </span>
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="dashboard-grid">
+
+    <!-- ===================================================== -->
+    <!-- TOP RESIDENTES -->
+    <!-- ===================================================== -->
+
+    <div class="card ranking-card">
+
+        <div class="card-header">
+
+            <div>
+                <h2>
+                    <i class="fa-solid fa-users"></i>
+                    Residentes con más visitas
+                </h2>
+
+                <p class="small">
+                    Residentes con mayor actividad de accesos registrados.
+                </p>
+            </div>
+
+            <div class="status-badge success">
+                Top actividad
+            </div>
+
+        </div>
+
+        <div class="ranking-list">
+
+            {% if top_residentes %}
+
+                {% for residente, total in top_residentes %}
+
+                <div class="ranking-item">
+
+                    <div class="ranking-info">
+
+                        <div class="ranking-avatar">
+                            {{ residente[0] }}
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                {{ residente }}
+                            </strong>
+
+                            <p class="small">
+                                Residente activo del sistema
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="ranking-stats">
+
+                        <span class="ranking-number">
+                            {{ total }}
+                        </span>
+
+                        <small>
+                            visitas
+                        </small>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <i class="fa-solid fa-user-slash"></i>
+
+                    <p>
+                        No hay residentes registrados aún.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- VEHÍCULOS FRECUENTES -->
+    <!-- ===================================================== -->
+
+    <div class="card ranking-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h2>
+                    <i class="fa-solid fa-car-side"></i>
+                    Vehículos frecuentes
+                </h2>
+
+                <p class="small">
+                    Vehículos con mayor recurrencia de ingreso.
+                </p>
+
+            </div>
+
+            <div class="status-badge info">
+                Monitoreo activo
+            </div>
+
+        </div>
+
+        <div class="ranking-list">
+
+            {% if vehiculos %}
+
+                {% for placa in vehiculos %}
+
+                <div class="ranking-item">
+
+                    <div class="ranking-info">
+
+                        <div class="vehicle-icon">
+                            <i class="fa-solid fa-car"></i>
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                {{ placa }}
+                            </strong>
+
+                            <p class="small">
+                                Vehículo autorizado
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="vehicle-status">
+
+                        <span class="badge success">
+                            Frecuente
+                        </span>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <i class="fa-solid fa-car-burst"></i>
+
+                    <p>
+                        No hay vehículos registrados.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- HISTORIAL -->
+<!-- ===================================================== -->
+
+<div class="card">
+
+    <h2>Historial de visitas</h2>
+
+    <p class="small">
+        Registro operativo de accesos y visitas dentro del fraccionamiento.
+    </p>
+
+    <div class="table-top">
+
+        <div class="table-search">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input type="text"
+                placeholder="Buscar visitante, residente o placa...">
+
+        </div>
+
+        <div class="table-actions">
+
+            <button class="btn secondary">
+
+                <i class="fa-solid fa-file-pdf"></i>
+                PDF
+
+            </button>
+
+            <button class="btn success-btn">
+
+                <i class="fa-solid fa-file-excel"></i>
+                Excel
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <div class="table-container">
+
+        <table>
+
+            <tr>
+
+                <th>Visitante</th>
+                <th>Residente</th>
+                <th>Destino</th>
+                <th>Modalidad</th>
+                <th>Fecha</th>
+                <th>Horario</th>
+                <th>Estado</th>
+                <th>Vehículo</th>
+                <th>Foto placa</th>
+
+            </tr>
+
+            {% for visita in visitas %}
+
+            <tr>
+
+                <!-- ===================================================== -->
+                <!-- VISITANTE -->
+                <!-- ===================================================== -->
+
+                <td>
+
+                    <div class="visitor-info">
+
+                        <!-- FOTO -->
+                        {% if visita.foto_visitante %}
+
+                            <img
+                                src="{{ visita.foto_visitante }}"
+                                class="visitor-photo zoomable-image"
+                                alt="Foto visitante"
+                            >
+
+                        {% else %}
+
+                            <div class="visitor-avatar">
+
+                                <i class="fa-solid fa-user"></i>
+
+                            </div>
+
+                        {% endif %}
+
+                        <!-- DATOS -->
+                        <div>
+
+                            <strong>
+                                {{ visita.nombre_visitante }}
+                            </strong>
+
+                            <br>
+
+                            <span class="small">
+                                {{ visita.telefono }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </td>
+
+                <!-- ===================================================== -->
+                <!-- RESIDENTE -->
+                <!-- ===================================================== -->
+
+                <td>
+                    {{ visita.residente_nombre }}
+                </td>
+
+                <!-- ===================================================== -->
+                <!-- DESTINO -->
+                <!-- ===================================================== -->
+
+                <td>
+
+                    {% if visita.condominio %}
+
+                        {{ visita.condominio }}
+
+                        <br>
+
+                    {% endif %}
+
+                    Casa {{ visita.residencia_destino }}
+
+                </td>
+
+                <!-- ===================================================== -->
+                <!-- TIPO -->
+                <!-- ===================================================== -->
+
+                <td>
+
+                    {% if visita.modalidad_visita == "recurrente" %}
+                        Recurrente
+                        <br>
+                        <span class="small">{{ visita.dia_semana | capitalize }}</span>
+                    {% elif visita.modalidad_visita == "temporal" %}
+                        Temporal
+                    {% else %}
+                        {{ visita.tipo_visita or "—" }}
+                    {% endif %}
+
+                </td>
+
+                <!-- ===================================================== -->
+                <!-- FECHA -->
+                <!-- ===================================================== -->
+
+                <td>
+                    {{ visita.fecha_visita }}
+                </td>
+
+                <!-- ===================================================== -->
+                <!-- HORARIO -->
+                <!-- ===================================================== -->
+
+                <td>
+
+                    Entrada:
+                    {{ visita.hora_inicio }}
+
+                    <br>
+
+                    {% if visita.hora_salida %}
+
+                        Salida:
+                        {{ visita.hora_salida }}
+
+                    {% else %}
+
+                        Salida:
+                        En curso
+
+                    {% endif %}
+
+                </td>
+
+                <!-- ===================================================== -->
+                <!-- ESTADO -->
+                <!-- ===================================================== -->
+
+                <td>
+
+                    {% if visita.estado == "activo" %}
+
+                        <span class="badge warning">
+                            Pendiente
+                        </span>
+
+                    {% elif visita.estado == "dentro" %}
+
+                        <span class="badge success">
+                            Dentro
+                        </span>
+
+                    {% elif visita.estado == "salida_registrada" %}
+
+                        <span class="badge dark">
+                            Finalizada
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge danger">
+                            {{ visita.estado }}
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <!-- ===================================================== -->
+                <!-- VEHÍCULO -->
+                <!-- ===================================================== -->
+
+                <td>
+
+                    {% if visita.vehiculo %}
+
+                        <strong>
+                            {{ visita.vehiculo.placa }}
+                        </strong>
+
+                        <br>
+
+                        <span class="small">
+                            {{ visita.vehiculo.marca }}
+                            {{ visita.vehiculo.modelo }}
+                            — {{ visita.vehiculo.color }}
+                        </span>
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+                    {% if visita.foto_placa %}
+                    <img
+                        src="{{ visita.foto_placa }}"
+                        alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
+                        class="placa-thumb-admin zoomable-image"
+                        title="Clic para ver placa"
+                    >
+                    {% else %}
+                    <span class="small">Sin foto</span>
+                    {% endif %}
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- MODAL FOTO -->
+<!-- ===================================================== -->
+
+<div id="imageModal" class="image-modal">
+
+    <span class="close-modal">
+        &times;
+    </span>
+
+    <img id="modalImage" class="modal-image">
+
+</div>
+
+<!-- ===================================================== -->
+<!-- SCRIPT ZOOM -->
+<!-- ===================================================== -->
+
+<script>
+
+    const zoomImages = document.querySelectorAll(".zoomable-image");
+
+    const imageModal = document.getElementById("imageModal");
+
+    const modalImage = document.getElementById("modalImage");
+
+    const closeModal = document.querySelector(".close-modal");
+
+    zoomImages.forEach(img => {
+
+        img.addEventListener("click", () => {
+
+            imageModal.style.display = "flex";
+
+            modalImage.src = img.src;
+
+        });
+
+    });
+
+    closeModal.addEventListener("click", () => {
+
+        imageModal.style.display = "none";
+
+    });
+
+    imageModal.addEventListener("click", (e) => {
+
+        if (e.target === imageModal) {
+
+            imageModal.style.display = "none";
+
+        }
+
+    });
+
+</script>
+
+<!-- ===================================================== -->
+<!-- CHART JS -->
+<!-- ===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<!-- ===================================================== -->
+<!-- GRAFICAS -->
+<!-- ===================================================== -->
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script>
+
+    /* ===================================================== */
+    /* SOCKET TIEMPO REAL */
+    /* ===================================================== */
+
+    const socket = io();
+
+    socket.on("nueva_visita", (data)=>{
+
+        console.log(data);
+
+        location.reload();
+
+    });
+
+    /* ===================================================== */
+    /* CONFIG CHARTS */
+    /* ===================================================== */
+
+    Chart.defaults.color = "#94a3b8";
+
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+
+    Chart.defaults.plugins.legend.labels.padding = 20;
+
+    Chart.defaults.plugins.tooltip.backgroundColor = "#0f172a";
+
+    Chart.defaults.plugins.tooltip.titleColor = "#fff";
+
+    Chart.defaults.plugins.tooltip.bodyColor = "#cbd5e1";
+
+    Chart.defaults.plugins.tooltip.padding = 14;
+
+    Chart.defaults.plugins.tooltip.cornerRadius = 14;
+
+    Chart.defaults.plugins.tooltip.displayColors = true;
+
+    /* ===================================================== */
+    /* GRADIENTES */
+    /* ===================================================== */
+
+    const ctxLine = document.getElementById('diasChart');
+
+    const gradientBlue = ctxLine
+        .getContext('2d')
+        .createLinearGradient(0,0,0,400);
+
+    gradientBlue.addColorStop(0, 'rgba(37,99,235,.55)');
+    gradientBlue.addColorStop(1, 'rgba(37,99,235,0)');
+
+    /* ===================================================== */
+    /* DONUT */
+    /* ===================================================== */
+
+    new Chart(document.getElementById('estadoChart'), {
+
+        type: 'doughnut',
+
+        data: {
+
+            labels: [
+                'Pendientes',
+                'Dentro',
+                'Finalizadas'
+            ],
+
+            datasets: [{
+
+                data: [
+                    {{ activas or 0 }},
+                    {{ dentro or 0 }},
+                    {{ salidas or 0 }}
+                ],
+
+                backgroundColor: [
+                    '#3b82f6',
+                    '#22c55e',
+                    '#f59e0b'
+                ],
+
+                borderWidth: 0,
+
+                hoverOffset: 18,
+
+                spacing: 5,
+
+                borderRadius: 10
+
+            }]
+
+        },
+
+        options: {
+
+            cutout: '72%',
+
+            responsive: true,
+
+            plugins: {
+
+                legend: {
+
+                    position: 'bottom'
+
+                }
+
+            }
+
+        }
+
+    });
+
+    /* ===================================================== */
+    /* BARRAS */
+    /* ===================================================== */
+
+    new Chart(document.getElementById('actividadChart'), {
+
+        type: 'bar',
+
+        data: {
+
+            labels: [
+                'Total',
+                'Pendientes',
+                'Dentro',
+                'Salidas'
+            ],
+
+            datasets: [{
+
+                label: 'Accesos',
+
+                data: [
+                    {{ total_visitas or 0 }},
+                    {{ activas or 0 }},
+                    {{ dentro or 0 }},
+                    {{ salidas or 0 }}
+                ],
+
+                borderRadius: 18,
+
+                backgroundColor: [
+                    '#2563eb',
+                    '#3b82f6',
+                    '#22c55e',
+                    '#f59e0b'
+                ],
+
+                borderSkipped: false,
+
+                maxBarThickness: 55
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            plugins: {
+
+                legend: {
+
+                    display: false
+
+                }
+
+            },
+
+            scales: {
+
+                x: {
+
+                    grid: {
+
+                        display: false
+
+                    }
+
+                },
+
+                y: {
+
+                    beginAtZero: true,
+
+                    grid: {
+
+                        color: 'rgba(148,163,184,.1)'
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+    /* ===================================================== */
+    /* TIPOS DE VISITA PREMIUM */
+    /* ===================================================== */
+
+    new Chart(document.getElementById('tiposChart'), {
+
+        type: 'doughnut',
+
+        data: {
+
+            labels: {{ tipo_labels|tojson }},
+
+            datasets: [{
+
+                data: {{ tipo_data|tojson }},
+
+                backgroundColor: [
+
+                    '#2563eb',
+                    '#38bdf8',
+                    '#22c55e',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#8b5cf6'
+
+                ],
+
+                borderWidth: 0,
+
+                hoverOffset: 18,
+
+                spacing: 4,
+
+                borderRadius: 10
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            cutout: '68%',
+
+            plugins: {
+
+                legend: {
+
+                    position: 'bottom',
+
+                    labels: {
+
+                        color: '#94a3b8',
+
+                        padding: 20,
+
+                        usePointStyle: true,
+
+                        pointStyle: 'circle'
+
+                    }
+
+                },
+
+                tooltip: {
+
+                    backgroundColor: '#0f172a',
+
+                    titleColor: '#fff',
+
+                    bodyColor: '#cbd5e1',
+
+                    padding: 14,
+
+                    cornerRadius: 14,
+
+                    displayColors: true
+
+                }
+
+            },
+
+            animation: {
+
+                animateRotate: true,
+
+                duration: 1800
+
+            }
+
+        }
+
+    });
+
+    /* ===================================================== */
+    /* LINE PREMIUM */
+    /* ===================================================== */
+
+    new Chart(document.getElementById('diasChart'), {
+
+        type: 'line',
+
+        data: {
+
+            labels: {{ dias_labels|tojson }},
+
+            datasets: [{
+
+                label: 'Accesos diarios',
+
+                data: {{ dias_data|tojson }},
+
+                borderColor: '#2563eb',
+
+                backgroundColor: gradientBlue,
+
+                fill: true,
+
+                tension: 0.45,
+
+                borderWidth: 5,
+
+                pointRadius: 6,
+
+                pointHoverRadius: 10,
+
+                pointBackgroundColor: '#ffffff',
+
+                pointBorderWidth: 4,
+
+                pointBorderColor: '#2563eb',
+
+                pointHoverBackgroundColor: '#2563eb',
+
+                pointHoverBorderColor: '#ffffff',
+
+                pointHoverBorderWidth: 4
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            interaction: {
+
+                intersect: false,
+
+                mode: 'index'
+
+            },
+
+            plugins: {
+
+                legend: {
+
+                    display: false
+
+                },
+
+                tooltip: {
+
+                    backgroundColor: '#0f172a',
+
+                    titleColor: '#fff',
+
+                    bodyColor: '#cbd5e1',
+
+                    padding: 14,
+
+                    cornerRadius: 14,
+
+                    displayColors: false
+
+                }
+
+            },
+
+            scales: {
+
+                x: {
+
+                    grid: {
+
+                        display: false
+
+                    },
+
+                    ticks: {
+
+                        color: '#94a3b8'
+
+                    }
+
+                },
+
+                y: {
+
+                    beginAtZero: true,
+
+                    grid: {
+
+                        color: 'rgba(148,163,184,.08)',
+
+                        drawBorder: false
+
+                    },
+
+                    ticks: {
+
+                        stepSize: 1,
+
+                        color: '#94a3b8'
+
+                    }
+
+                }
+
+            },
+
+            animation: {
+
+                duration: 1800,
+
+                easing: 'easeOutQuart'
+
+            }
+
+        }
+
+    });
+
+</script>
+
+{% endblock %}

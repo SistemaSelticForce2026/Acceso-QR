@@ -1,0 +1,1199 @@
+{% extends 'layout.html' %}
+
+{% set modo = modo|default('entrada') %}
+
+{% block content %}
+
+<div class="access-container">
+
+  <!-- =========== -->
+    <!-- HEADER -->
+  <!-- =========== -->
+
+    <div class="page-header access-header">
+
+        <div>
+
+            <h1>
+                {% if modo == 'salida' %}
+                <i class="fa-solid fa-door-open"></i>
+                Escáner de salida
+                {% else %}
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                Escáner de entrada
+                {% endif %}
+            </h1>
+
+            <p class="page-subtitle">
+                {% if modo == 'salida' %}
+                Escanee el QR para registrar la salida del visitante que está dentro del fraccionamiento.
+                {% else %}
+                Escanee el QR para autorizar el ingreso del visitante al fraccionamiento.
+                {% endif %}
+            </p>
+
+        </div>
+
+        <div class="live-status scan-mode-badge {% if modo == 'salida' %}exit-mode{% else %}entry-mode{% endif %}">
+            <span class="pulse-dot"></span>
+            {% if modo == 'salida' %}Salida activa{% else %}Modo entrada{% endif %}
+        </div>
+
+    </div>
+
+    <div class="scan-mode-switch">
+        <a href="{{ url_for('guard.scan_entrada') }}"
+           class="scan-mode-btn {% if modo != 'salida' %}active{% endif %}">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Escanear entrada
+        </a>
+        <a href="{{ url_for('guard.scan_salida') }}"
+           class="scan-mode-btn exit {% if modo == 'salida' %}active{% endif %}">
+            <i class="fa-solid fa-door-open"></i> Escanear salida
+        </a>
+        <a href="{{ url_for('guard.dashboard') }}" class="scan-mode-btn secondary">
+            <i class="fa-solid fa-house"></i> Dashboard
+        </a>
+    </div>
+
+
+  <!-- =========== -->
+    <!-- ESCANER -->
+  <!-- =========== -->
+
+    {% if not bloquear_camara and (
+        not resultado
+        or resultado.estado == "denegado"
+    ) %}
+
+    <div class="card scanner-wrapper">
+
+        <div class="scanner-top">
+
+            <div>
+
+                <h2>
+                    <i class="fa-solid fa-qrcode"></i>
+                    {% if modo == 'salida' %}Escanear QR — Salida{% else %}Escanear QR — Entrada{% endif %}
+                </h2>
+
+                <p class="small" id="scannerMessage">
+                    {% if modo == 'salida' %}
+                    Coloque el QR del visitante que sale del fraccionamiento.
+                    {% else %}
+                    Coloque el QR del visitante que ingresa al fraccionamiento.
+                    {% endif %}
+                </p>
+
+            </div>
+
+            <div class="camera-status">
+
+                <span class="status-circle"></span>
+
+                Cámara operativa
+
+            </div>
+
+        </div>
+
+        <!-- =========== -->
+        <!-- CAMARA -->
+        <!-- =========== -->
+
+        <div class="scanner-camera-box">
+
+            <div id="reader"></div>
+
+            <div class="scanner-overlay">
+
+                <div class="scanner-frame"></div>
+
+                <div class="scanner-line"></div>
+
+            </div>
+
+        </div>
+
+        <div class="scanner-footer">
+
+            <div class="scanner-indicator">
+
+                <i class="fa-solid fa-expand"></i>
+
+                Alinee el QR dentro del recuadro
+
+            </div>
+
+            <div class="scanner-indicator">
+
+                <i class="fa-solid fa-bolt"></i>
+
+                Validación automática
+
+            </div>
+
+        </div>
+
+        <!-- INPUT -->
+
+        <form method="POST"
+            id="qrForm"
+            action="{{ form_action }}"
+            class="manual-token-form">
+
+            <!-- TOKEN OCULTO -->
+            <input type="hidden"
+                name="qr_token"
+                id="qr_token">
+
+            <!-- TOKEN MANUAL -->
+            <div class="manual-token-box">
+
+                <label for="manual_token">
+
+                    <i class="fa-solid fa-keyboard"></i>
+                    Ingresar token manualmente
+
+                </label>
+
+                <div class="manual-token-actions">
+
+                    <input
+                        type="text"
+                        id="manual_token"
+                        placeholder="Pegue aquí el token QR..."
+                        autocomplete="off"
+                    >
+
+                    <button
+                        type="button"
+                        class="btn"
+                        id="manualSubmit">
+
+                        <i class="fa-solid fa-paper-plane"></i>
+                        {% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    {% endif %}
+
+
+  <!-- =========== -->
+    <!-- RESULTADO -->
+  <!-- =========== -->
+
+    {% if resultado %}
+
+    <div class="result-container">
+
+        <!-- =========== -->
+        <!-- ALERTA -->
+        <!-- =========== -->
+
+        <div class="access-alert 
+        
+            {% if resultado.estado == 'permitido' %}
+                success
+            {% elif resultado.estado == 'salida_pendiente' %}
+                warning
+            {% elif resultado.estado == 'salida_registrada' %}
+                success
+            {% else %}
+                danger
+            {% endif %}
+        
+        ">
+
+            <div class="alert-icon">
+
+                {% if resultado.estado == "permitido" %}
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                {% elif resultado.estado == "salida_pendiente" %}
+
+                    <i class="fa-solid fa-user-clock"></i>
+
+                {% elif resultado.estado == "salida_registrada" %}
+
+                    <i class="fa-solid fa-door-open"></i>
+
+                {% else %}
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                {% endif %}
+
+            </div>
+
+            <div class="alert-content">
+
+                <h2>{{ resultado.mensaje }}</h2>
+
+                <p>
+
+                    {% if resultado.estado == "permitido" %}
+
+                        Validación completada correctamente. Proceda con la autorización de ingreso en caseta.
+
+                    {% elif resultado.estado == "salida_pendiente" %}
+
+                        El visitante mantiene un acceso activo dentro del residencial.
+                        Se requiere registrar la salida antes de generar un nuevo ingreso.
+
+                    {% elif resultado.estado == "salida_registrada" %}
+
+                        El flujo de salida fue completado correctamente y el acceso quedó cerrado.
+
+                    {% else %}
+
+                        La validación fue rechazada por inconsistencias en el código o estado del acceso.
+
+                    {% endif %}
+
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if resultado.visita %}
+
+
+        {% if modo == 'salida' and resultado.estado == "salida_registrada" %}
+
+        <div class="exit-complete-banner">
+
+            <div class="exit-complete-icon">
+
+                <i class="fa-solid fa-circle-check"></i>
+
+            </div>
+
+            <div>
+
+                <h3>Salida finalizada correctamente</h3>
+
+                <p>
+                    El visitante abandonó el residencial y el acceso fue cerrado correctamente en el sistema.
+                </p>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+        <!-- =========== -->
+        <!-- GRID -->
+        <!-- =========== -->
+
+        <div class="dashboard-grid access-grid">
+
+            <!-- =========== -->
+            <!-- VISITANTE -->
+            <!-- =========== -->
+
+            <div class="card access-card">
+
+                <div class="card-title">
+
+                    <i class="fa-solid fa-id-card"></i>
+
+                    <h3>Perfil validado</h3>
+
+                </div>
+
+                <div class="visitor-profile">
+
+                    {% if resultado.visita and resultado.visita.get('foto_visitante') %}
+
+                    <img
+                        src="{{ resultado.visita.get('foto_visitante') }}"
+                        alt="Foto visitante"
+                        class="visitor-photo"
+                        id="visitorPhoto"
+                    >
+
+                    {% else %}
+
+                    <div class="visitor-no-photo">
+
+                        <i class="fa-solid fa-user"></i>
+
+                    </div>
+
+                    {% endif %}
+
+                    <div class="visitor-info">
+
+                        <h2>
+                            {{ resultado.visita.nombre_visitante }}
+                        </h2>
+
+                        <span class="badge">
+
+                            {% if resultado.visita.modalidad_visita == "recurrente" %}
+                                Visita recurrente
+                            {% else %}
+                                Visita temporal
+                            {% endif %}
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="info-list">
+
+                    <div class="info-item">
+
+                        <span>Modalidad</span>
+
+                        <strong>
+                            {% if resultado.visita.modalidad_visita == "recurrente" %}
+                                Recurrente — {{ resultado.visita.dia_semana | capitalize }}
+                                {{ resultado.visita.hora_programada | hora_ampm }}
+                            {% else %}
+                                Temporal — {{ resultado.visita.fecha_visita }}
+                            {% endif %}
+                        </strong>
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Motivo</span>
+
+                        <strong>
+                            {{ resultado.visita.motivo }}
+                        </strong>
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Condominio</span>
+
+                        <strong>
+                            {{ resultado.visita.condominio }}
+                        </strong>
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Residencia</span>
+
+                        <strong>
+                            {{ resultado.visita.residencia_destino }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========== -->
+            <!-- ESTADO -->
+            <!-- =========== -->
+
+            <div class="card access-card">
+
+                <div class="card-title">
+
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+
+                    <h3>Monitoreo de acceso</h3>
+
+                </div>
+
+                <div class="status-panel">
+
+                    <div class="status-badge 
+                    
+                        {% if resultado.visita.estado == 'dentro' %}
+                            inside
+                        {% elif resultado.visita.estado == 'salida_registrada' %}
+                            exit
+                        {% else %}
+                            active
+                        {% endif %}
+                    
+                    ">
+
+                        {% if resultado.visita.estado == "activo" %}
+                            Acceso autorizado
+                        {% elif resultado.visita.estado == "dentro" %}
+                            Visitante dentro
+                        {% elif resultado.visita.estado == "salida_registrada" %}
+                            Salida completada
+                        {% else %}
+                            Estado inválido
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                <div class="timeline">
+
+                    <div class="timeline-item">
+
+                        <i class="fa-solid fa-calendar-days"></i>
+
+                        <div>
+
+                            <span>Hora programada</span>
+
+                            <strong>
+                                {{ resultado.visita.hora_inicio }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    {% if resultado.visita.hora_entrada_real %}
+
+                    <div class="timeline-item success-line">
+
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+
+                        <div>
+
+                            <span>Entrada registrada</span>
+
+                            <strong>
+                                {{ resultado.visita.hora_entrada_real }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    {% endif %}
+
+                    {% if resultado.visita.hora_salida %}
+
+                    <div class="timeline-item exit-line">
+
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+
+                        <div class="timeline-content">
+
+                            <span>
+
+                                Estado final :
+
+                            </span>
+
+                            <strong class="status-finished">
+
+                                Visitante salió del fraccionamiento
+
+                            </strong>
+
+                            <small>
+
+                                Salida registrada a las
+
+                                <strong class="timeline-hour">
+                                    {{ resultado.visita.hora_salida }}
+                                </strong>
+
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="timeline-item pending-line">
+
+                        <i class="fa-solid fa-hourglass-half"></i>
+
+                        <div class="timeline-content">
+
+                            <span>
+
+                                Estado actual :
+
+                            </span>
+
+                            <strong class="status-inside">
+
+                                Visitante dentro del residencial
+
+                            </strong>
+
+                            <small>
+
+                                Acceso activo dentro del fraccionamiento
+
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========== -->
+        <!-- VEHICULO -->
+        <!-- =========== -->
+
+        {% if resultado.visita.vehiculo %}
+
+        <div class="card vehicle-card">
+
+            <div class="card-title">
+
+                <i class="fa-solid fa-car-side"></i>
+
+                <h3>Unidad vehicular registrada</h3>
+
+            </div>
+
+            <div class="vehicle-grid">
+
+                <div>
+
+                    <span>Placa</span>
+
+                    <strong>
+                        {{ resultado.visita.vehiculo.placa }}
+                    </strong>
+
+                </div>
+
+                <div>
+
+                    <span>Marca</span>
+
+                    <strong>
+                        {{ resultado.visita.vehiculo.marca }}
+                    </strong>
+
+                </div>
+
+                <div>
+
+                    <span>Modelo</span>
+
+                    <strong>
+                        {{ resultado.visita.vehiculo.modelo }}
+                    </strong>
+
+                </div>
+
+                <div>
+
+                    <span>Color</span>
+
+                    <strong>
+                        {{ resultado.visita.vehiculo.color }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+            {% if resultado.visita.foto_placa %}
+
+            <div class="plate-photo-section">
+
+                <span class="plate-photo-title">
+
+                    Fotografía de la placa registrada
+
+                </span>
+
+                <div class="plate-photo-wrapper">
+
+                    <img
+                        src="{{ resultado.visita.foto_placa }}"
+                        alt="Foto placa"
+                        class="plate-photo-large zoomable-placa"
+                    >
+
+                </div>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- ===================================================== -->
+        <!-- CONTROL DE ACCESO -->
+        <!-- ===================================================== -->
+
+        {% if modo != 'salida' %}
+
+        <div class="card modern-access-card">
+
+            <div class="modern-access-header">
+
+                <div class="modern-access-icon">
+
+                    <i class="fa-solid fa-shield-halved"></i>
+
+                </div>
+
+                <div>
+
+                    <h3>Control de acceso</h3>
+
+                    <p>
+                        Validación operativa del visitante y autorización de ingreso residencial.
+                    </p>
+
+                </div>
+
+            </div>
+
+            {% if resultado.estado == "permitido" %}
+
+            <div class="access-status-panel">
+
+                <div class="status-chip success">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    Acceso validado correctamente
+
+                </div>
+
+                <div class="status-description">
+
+                    Verifique visualmente la identidad del visitante y los datos registrados antes de abrir el acceso.
+
+                </div>
+
+            </div>
+
+            <div class="access-summary-grid">
+
+                <div class="summary-card">
+
+                    <span>Visitante</span>
+
+                    <strong>
+                        {{ resultado.visita.nombre_visitante }}
+                    </strong>
+
+                </div>
+
+                <div class="summary-card">
+
+                    <span>Residencia</span>
+
+                    <strong>
+                        {{ resultado.visita.condominio }}
+                        · Casa {{ resultado.visita.residencia_destino }}
+                    </strong>
+
+                </div>
+
+                <div class="summary-card">
+
+                    <span>Tipo de acceso</span>
+
+                    <strong>
+
+                        {% if resultado.visita.modalidad_visita == "recurrente" %}
+                            Recurrente
+                        {% else %}
+                            Temporal
+                        {% endif %}
+
+                    </strong>
+
+                </div>
+
+                <div class="summary-card">
+
+                    <span>Estado</span>
+
+                    <strong class="status-green">
+
+                        Visitante autorizado
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+            <div class="modern-access-actions">
+
+                <form method="POST"
+                    action="{{ url_for('guard.confirm_access') }}"
+                    style="width:100%;">
+
+                    <input type="hidden"
+                        name="qr_token"
+                        value="{{ resultado.visita.qr_token }}">
+
+                    <button type="submit"
+                            class="modern-access-btn success">
+
+                        <i class="fa-solid fa-barrier-open"></i>
+
+                        Autorizar acceso
+
+                    </button>
+
+                </form>
+
+                <a href="{{ url_for('guard.scan_salida') }}"
+                class="modern-access-btn secondary">
+
+                    <i class="fa-solid fa-door-open"></i>
+
+                    Registrar salida
+
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+        {% endif %}
+
+        </div>
+
+
+        <!-- ===================================================== -->
+        <!-- ALERTAS DE SEGURIDAD -->
+        <!-- ===================================================== -->
+
+        {% if modo != 'salida' %}
+
+        <div class="card modern-incident-card">
+
+            <div class="modern-access-header">
+
+                <div class="modern-access-icon danger">
+
+                    <i class="fa-solid fa-shield-virus"></i>
+
+                </div>
+
+                <div>
+
+                    <h3>Alertas de seguridad</h3>
+
+                    <p>
+                        Seleccione una alerta únicamente si detecta irregularidades durante la validación.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <form method="POST"
+                action="{{ url_for('guard.incidencia_manual') }}">
+
+                <input type="hidden"
+                    name="modo"
+                    value="{{ modo }}">
+
+                <input type="hidden"
+                    name="qr_token"
+                    value="{{ resultado.visita.qr_token if resultado.visita else '' }}">
+
+                <div class="modern-incident-grid">
+
+                    <button type="submit"
+                            name="tipo_incidencia"
+                            value="placa_no_coincide"
+                            class="modern-alert-btn">
+
+                        <i class="fa-solid fa-car"></i>
+
+                        Placa incorrecta
+
+                    </button>
+
+                    <button type="submit"
+                            name="tipo_incidencia"
+                            value="persona_sospechosa"
+                            class="modern-alert-btn">
+
+                        <i class="fa-solid fa-user-secret"></i>
+
+                        Identidad sospechosa
+
+                    </button>
+
+                    <button type="submit"
+                            name="tipo_incidencia"
+                            value="visitante_agresivo"
+                            class="modern-alert-btn">
+
+                        <i class="fa-solid fa-ban"></i>
+
+                        Conducta agresiva
+
+                    </button>
+
+                    <button type="submit"
+                            name="tipo_incidencia"
+                            value="datos_no_coinciden"
+                            class="modern-alert-btn">
+
+                        <i class="fa-solid fa-file-circle-xmark"></i>
+
+                        Información inválida
+
+                    </button>
+
+                    <button type="submit"
+                            name="tipo_incidencia"
+                            value="sin_autorizacion"
+                            class="modern-alert-btn">
+
+                        <i class="fa-solid fa-lock"></i>
+
+                        Acceso no autorizado
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+        {% endif %}
+
+        {% endif %}
+
+        {% endif %}
+
+        </div>
+
+<!-- ======================================== -->
+<!-- MODAL FOTO -->
+<!-- ======================================== -->
+
+<div class="photo-modal" id="photoModal">
+
+    <span class="close-photo" id="closePhoto">
+        &times;
+    </span>
+
+    <img
+        src=""
+        class="photo-modal-content"
+        id="photoZoom"
+        alt="Zoom foto"
+    >
+
+</div>
+
+<!-- ===================================================== -->
+<!-- SCRIPT -->
+<!-- ===================================================== -->
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+
+{% if not bloquear_camara %}
+
+const qrInput = document.getElementById("qr_token");
+
+const qrForm = document.getElementById("qrForm");
+
+const manualToken = document.getElementById("manual_token");
+
+const manualSubmit = document.getElementById("manualSubmit");
+
+const scannerMessage = document.getElementById("scannerMessage");
+
+const beep = new Audio(
+    "https://actions.google.com/sounds/v1/cartoon/pop.ogg"
+);
+
+const html5QrCode = new Html5Qrcode("reader");
+
+let scanned = false;
+let cameraStopped = false;
+
+manualSubmit.addEventListener("click", () => {
+
+    const token = manualToken.value.trim();
+
+    if(!token){
+
+        alert("Ingrese un token válido");
+
+        return;
+
+    }
+
+    qrInput.value = token;
+
+    qrForm.submit();
+
+});
+
+function onScanSuccess(decodedText){
+
+    if(scanned) return;
+
+    scanned = true;
+
+    beep.play();
+
+    navigator.vibrate?.(200);
+
+    qrInput.value = decodedText;
+
+    scannerMessage.innerHTML = `
+
+        <span style="color:#22c55e; font-weight:600;">
+
+            <i class="fa-solid fa-circle-check"></i>
+
+            Código QR detectado correctamente...
+
+        </span>
+
+    `;
+
+    setTimeout(() => {
+
+        if(cameraStopped) return;
+
+        cameraStopped = true;
+
+        html5QrCode.stop()
+
+        .then(() => {
+
+            document.getElementById("reader").innerHTML = `
+
+                <div class="scanner-finished">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    <h3>QR procesado correctamente</h3>
+
+                    <p>
+                        Esperando siguiente validación...
+                    </p>
+
+                </div>
+
+            `;
+
+            qrForm.submit();
+
+        })
+
+        .catch(() => {
+
+            qrForm.submit();
+
+        });
+
+    }, 1000);
+
+}
+
+function onScanFailure(error){}
+
+html5QrCode.start(
+
+    {
+        facingMode:"environment"
+    },
+
+    {
+
+        fps:10,
+
+        qrbox:{
+            width:250,
+            height:250
+        },
+
+        aspectRatio:1.777,
+
+        disableFlip:false
+
+    },
+
+    onScanSuccess,
+
+    onScanFailure
+
+).catch(err => {
+
+    console.log(err);
+
+    scannerMessage.innerHTML = `
+
+        <span style="color:#ef4444;">
+
+            <i class="fa-solid fa-camera"></i>
+
+            No fue posible acceder a la cámara
+
+        </span>
+
+    `;
+
+});
+
+{% endif %}
+
+/* ========================================= */
+/* ZOOM FOTOS */
+/* ========================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const photoModal = document.getElementById("photoModal");
+
+    const photoZoom = document.getElementById("photoZoom");
+
+    const closePhoto = document.getElementById("closePhoto");
+
+
+    /* ========================================= */
+    /* ABRIR ZOOM */
+    /* ========================================= */
+
+    function abrirZoom(src){
+
+        if(!photoModal || !photoZoom) return;
+
+        photoZoom.src = src;
+
+        photoModal.style.display = "flex";
+
+        document.body.style.overflow = "hidden";
+
+    }
+
+
+    /* ========================================= */
+    /* FOTO VISITANTE */
+    /* ========================================= */
+
+    const visitorPhoto = document.getElementById("visitorPhoto");
+
+    if(visitorPhoto){
+
+        visitorPhoto.onclick = () => {
+
+            abrirZoom(visitorPhoto.src);
+
+        };
+
+    }
+
+
+    /* ========================================= */
+    /* FOTO PLACAS */
+    /* ========================================= */
+
+    document.querySelectorAll(".zoomable-placa").forEach((img) => {
+
+        img.onclick = () => {
+
+            abrirZoom(img.src);
+
+        };
+
+    });
+
+
+    /* ========================================= */
+    /* CERRAR */
+    /* ========================================= */
+
+    function cerrarZoom(){
+
+        photoModal.style.display = "none";
+
+        document.body.style.overflow = "auto";
+
+    }
+
+
+    /* ========================================= */
+    /* BOTON X */
+    /* ========================================= */
+
+    if(closePhoto){
+
+        closePhoto.onclick = cerrarZoom;
+
+    }
+
+
+    /* ========================================= */
+    /* CLIC AFUERA */
+    /* ========================================= */
+
+    photoModal.onclick = (e) => {
+
+        if(e.target === photoModal){
+
+            cerrarZoom();
+
+        }
+
+    };
+
+
+    /* ========================================= */
+    /* ESC */
+    /* ========================================= */
+
+    document.onkeydown = (e) => {
+
+        if(e.key === "Escape"){
+
+            cerrarZoom();
+
+        }
+
+    };
+
+});
+
+</script>
+
+{% endblock %}

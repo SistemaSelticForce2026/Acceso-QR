@@ -1,0 +1,395 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+
+        <h1>Historial de accesos</h1>
+
+        <p class="page-subtitle">
+            Registro completo de entradas, salidas, accesos autorizados y validaciones QR realizadas en caseta.
+        </p>
+
+    </div>
+
+    <div class="header-actions">
+
+        <a href="{{ url_for('admin.exportar_accesos_pdf') }}"
+           class="btn">
+
+            <i class="fa-solid fa-file-pdf"></i>
+            Exportar PDF
+
+        </a>
+
+        <a href="{{ url_for('admin.exportar_accesos_excel') }}"
+           class="btn success-btn">
+
+            <i class="fa-solid fa-file-excel"></i>
+            Exportar Excel
+
+        </a>
+
+    </div>
+
+</div>
+
+        <!-- =========== -->
+============ -->
+<!-- ESTADÍSTICAS -->
+        <!-- =========== -->
+============ -->
+
+<div class="stats">
+
+    <div class="stat-card">
+
+        <div class="stat-icon blue">
+            
+        </div>
+
+        <h3>Total registros</h3>
+
+        <p>
+            {{ accesos|length }}
+        </p>
+
+        <span>
+            Accesos almacenados
+        </span>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-icon green">
+            
+        </div>
+
+        <h3>Entradas</h3>
+
+        <p>
+            {{ accesos | selectattr("accion", "equalto", "entrada") | list | length }}
+        </p>
+
+        <span>
+            Accesos permitidos
+        </span>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-icon dark-icon">
+            
+        </div>
+
+        <h3>Salidas</h3>
+
+        <p>
+            {{ accesos | selectattr("accion", "equalto", "salida") | list | length }}
+        </p>
+
+        <span>
+            Salidas registradas
+        </span>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-icon red">
+            
+        </div>
+
+        <h3>Rechazados</h3>
+
+        <p>
+            {{ accesos | selectattr("resultado", "equalto", "denegado") | list | length }}
+        </p>
+
+        <span>
+            Accesos denegados
+        </span>
+
+    </div>
+
+</div>
+
+  <!-- =========== -->
+
+<!-- TABLA -->
+  <!-- =========== -->
+
+
+<div class="card">
+
+    <div class="table-header">
+
+        <div>
+
+            <h2>Bitácora operativa</h2>
+
+            <p class="table-subtitle">
+                Monitoreo en tiempo real de movimientos registrados en el sistema AccessQR.
+            </p>
+
+        </div>
+
+        <div class="table-status">
+
+            <span class="online-dot"></span>
+
+            Sistema monitoreando accesos
+
+        </div>
+
+    </div>
+
+    <div class="table-responsive">
+
+        <table class="modern-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Guardia</th>
+                    <th>Acción</th>
+                    <th>Resultado</th>
+                    <th>Observaciones</th>
+                    <th>Fecha y hora</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for acceso in accesos %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="user-cell">
+
+                            <div class="user-avatar">
+
+                                {{ acceso.guardia_nombre[0] }}
+
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    {{ acceso.guardia_nombre }}
+                                </strong>
+
+                                <span>
+                                    ID:
+                                    {{ acceso.guardia_id }}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td>
+
+                        {% if acceso.accion == "entrada" %}
+
+                            <span class="badge success">
+                                Entrada
+                            </span>
+
+                        {% elif acceso.accion == "salida" %}
+
+                            <span class="badge dark">
+                                Salida
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge danger">
+                                {{ acceso.accion }}
+                            </span>
+
+                        {% endif %}
+
+                    </td> 
+
+                    <td> 
+
+                        {% if acceso.resultado == "permitido" %}
+
+                            <span class="badge success">
+                                Permitido
+                            </span>
+
+                        {% elif acceso.resultado == "salida_registrada" %}
+
+                            <span class="badge dark">
+                                Salida registrada
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge danger">
+                                Denegado
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if acceso.observaciones %}
+
+                            {{ acceso.observaciones }}
+
+                        {% else %}
+
+                            <span class="muted">
+                                Sin observaciones
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        <div class="fecha-box">
+
+                            <strong>
+                                {{ acceso.fecha_hora.strftime('%d/%m/%Y') }}
+                            </strong>
+
+                            <span class="hora-text">
+                                {{ acceso.fecha_hora.strftime('%I:%M %p') }}
+                            </span>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- =========== -->
+<!-- ALERTAS -->
+<!-- =========== -->
+
+
+<div class="dashboard-grid">
+
+    <div class="card">
+
+        <h2>
+            Supervisión operativa
+        </h2>
+
+        <div class="alert info">
+
+            Todos los accesos registrados quedan almacenados automáticamente para auditoría administrativa y monitoreo de seguridad.
+
+        </div>
+
+        <div class="alert warning">
+
+            Revisar accesos repetidos o múltiples validaciones del mismo código QR.
+
+        </div>
+
+        <div class="alert danger-alert">
+
+            Los accesos rechazados deben validarse inmediatamente desde el módulo de incidencias.
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>
+            Estado del sistema
+        </h2>
+
+        <div class="system-status">
+
+            <div class="status-item">
+
+                <div>
+                    <strong class="status-label">
+                        Sistema QR
+                    </strong>
+
+                    <p class="small">
+                        Validación de accesos QR
+                    </p>
+                </div>
+
+                <span class="badge success">
+                    Operativo
+                </span>
+
+            </div>
+
+            <div class="status-item">
+
+                <div>
+                    <strong class="status-label">
+                        Base de datos
+                    </strong>
+
+                    <p class="small">
+                        MongoDB conectada correctamente
+                    </p>
+                </div>
+
+                <span class="badge success">
+                    Conectada
+                </span>
+
+            </div>
+
+            <div class="status-item">
+
+            <div>
+                <strong class="status-label">
+                    Monitoreo
+                </strong>
+
+                <p class="small">
+                    Supervisión activa del sistema
+                </p>
+            </div>
+
+            <span class="badge dark">
+                Activo
+            </span>
+
+        </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

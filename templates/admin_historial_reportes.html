@@ -1,0 +1,398 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+  <!-- =========== -->
+<!-- HEADER -->
+  <!-- =========== -->
+
+<div class="page-header">
+
+    <div>
+
+        <h1>Historial de reportes</h1>
+
+        <p class="page-subtitle">
+            Auditoría administrativa de exportaciones PDF y Excel generadas dentro del sistema AccessQR.
+        </p>
+
+    </div>
+
+    <div class="header-actions">
+
+        <button class="btn"
+                onclick="window.location.reload();">
+
+            <i class="fa-solid fa-rotate"></i>
+            Actualizar
+
+        </button>
+
+    </div>
+
+</div>
+
+  <!-- =========== -->
+<!-- ESTADÍSTICAS -->
+  <!-- =========== -->
+
+<div class="stats">
+
+    <div class="stat-card">
+
+        <div class="stat-icon blue">
+            <i class="fa-solid fa-file-lines"></i>
+        </div>
+
+        <div>
+
+            <h3>Total exportaciones</h3>
+
+            <p>
+                {{ reportes|length }}
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-icon red">
+            <i class="fa-solid fa-file-pdf"></i>
+        </div>
+
+        <div>
+
+            <h3>Archivos PDF</h3>
+
+            <p>
+                {{ reportes | selectattr("formato", "equalto", "PDF") | list | length }}
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-icon green">
+            <i class="fa-solid fa-file-excel"></i>
+        </div>
+
+        <div>
+
+            <h3>Archivos Excel</h3>
+
+            <p>
+                {{ reportes | selectattr("formato", "equalto", "Excel") | list | length }}
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-icon orange">
+            <i class="fa-solid fa-database"></i>
+        </div>
+
+        <div>
+
+            <h3>Estado del sistema</h3>
+
+            <p>
+                Operativo
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+  <!-- =========== -->
+<!-- TABLA -->
+  <!-- =========== -->
+
+<div class="card">
+
+    <div class="section-header">
+
+        <div>
+
+            <h2>Registro de exportaciones</h2>
+
+            <p class="small">
+                Historial de actividad administrativa relacionada con generación de reportes.
+            </p>
+
+        </div>
+
+    </div>
+
+    <table>
+
+        <tr>
+
+            <th>Archivo</th>
+            <th>Módulo</th>
+            <th>Formato</th>
+            <th>Administrador</th>
+            <th>Fecha y hora</th>
+            <th>Tamaño</th>
+            <th>Estado</th>
+
+        </tr>
+
+        {% for reporte in reportes %}
+
+        <tr>
+
+            <td>
+
+                <div style="display:flex; align-items:center; gap:10px;">
+
+                    <div class="table-icon">
+
+                        {% if reporte.formato == "PDF" %}
+
+                            <i class="fa-solid fa-file-pdf"></i>
+
+                        {% else %}
+
+                            <i class="fa-solid fa-file-excel"></i>
+
+                        {% endif %}
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            {{ reporte.nombre }}
+                        </strong>
+
+                        <br>
+
+                        <span class="small">
+                            Exportación automática
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+            <td>
+
+                <span class="badge dark">
+
+                    {{ reporte.tipo }}
+
+                </span>
+
+            </td>
+
+            <td>
+
+                {% if reporte.formato == "PDF" %}
+
+                    <span class="badge danger">
+
+                        <i class="fa-solid fa-file-pdf"></i>
+                        PDF
+
+                    </span>
+
+                {% else %}
+
+                    <span class="badge success">
+
+                        <i class="fa-solid fa-file-excel"></i>
+                        Excel
+
+                    </span>
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                <strong>
+                    {{ reporte.usuario }}
+                </strong>
+
+                <br>
+
+                <span class="small">
+                    Administrador principal
+                </span>
+
+            </td>
+
+            <td>
+
+                {{ reporte.fecha }}
+
+            </td>
+
+            <td>
+
+                {% if reporte.formato == "PDF" %}
+
+                    1.2 MB
+
+                {% else %}
+
+                    850 KB
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                <span class="badge success">
+
+                    <i class="fa-solid fa-circle-check"></i>
+                    {{ reporte.estado }}
+
+                </span>
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+</div>
+
+  <!-- =========== -->
+<!-- ACTIVIDAD -->
+  <!-- =========== -->
+
+<div class="dashboard-grid">
+
+    <!-- ====================================== -->
+    <!-- ACTIVIDAD -->
+    <!-- ====================================== -->
+
+    <div class="card">
+
+        <h2>Actividad administrativa</h2>
+
+        <div class="module-list">
+
+            <div class="module-item">
+
+                <div class="module-top">
+
+                    <div>
+
+                        <strong>Última exportación PDF</strong>
+
+                        <span>
+                            Reporte generado correctamente desde el módulo de incidencias.
+                        </span>
+
+                    </div>
+
+                    <span class="badge success">
+                        Completado
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="module-item">
+
+                <div class="module-top">
+
+                    <div>
+
+                        <strong>Monitoreo de actividad</strong>
+
+                        <span>
+                            Exportaciones registradas automáticamente para auditoría.
+                        </span>
+
+                    </div>
+
+                    <span class="badge success">
+                        Activo
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="module-item">
+
+                <div class="module-top">
+
+                    <div>
+
+                        <strong>Control de seguridad</strong>
+
+                        <span>
+                            Validación de accesos administrativos habilitada.
+                        </span>
+
+                    </div>
+
+                    <span class="badge warning">
+                        Protegido
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================== -->
+    <!-- ALERTAS -->
+    <!-- ====================================== -->
+
+    <div class="card">
+
+        <h2>Información del sistema</h2>
+
+        <div class="alert info">
+
+            <i class="fa-solid fa-circle-info"></i>
+
+            Todas las exportaciones generadas quedan registradas automáticamente dentro del sistema.
+
+        </div>
+
+        <div class="alert warning">
+
+            <i class="fa-solid fa-triangle-exclamation"></i>
+
+            Se recomienda monitorear exportaciones repetidas o descargas masivas de información.
+
+        </div>
+
+        <div class="alert danger-alert">
+
+            <i class="fa-solid fa-lock"></i>
+
+            Los archivos exportados contienen información privada y administrativa del fraccionamiento.
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

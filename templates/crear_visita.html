@@ -1,0 +1,295 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card form-card">
+    <h1>Registrar Visita</h1>
+    <p class="small">Todos los accesos son por vehículo. Completa los datos del visitante y del automóvil.</p>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <h3>Datos del visitante</h3>
+
+        <label>Nombre completo del visitante</label>
+        <input type="text" name="nombre_visitante" placeholder="Ej. Juan Pérez López" required>
+
+        <label>Teléfono de contacto</label>
+        <input type="text" name="telefono" placeholder="Ej. 7221234567" required>
+
+        <label>Fotografía del visitante</label>
+        <input
+            type="file"
+            name="foto_visitante"
+            id="foto_visitante"
+            accept="image/*"
+            capture="environment"
+        >
+
+        <div id="foto_box" style="display:none; margin-top:15px;">
+            <p class="small">Vista previa. Da clic en la imagen para ampliarla.</p>
+            <img
+                id="preview_foto"
+                src=""
+                style="
+                    width:180px;
+                    height:180px;
+                    object-fit:cover;
+                    border-radius:14px;
+                    border:3px solid #dcdcdc;
+                    cursor:pointer;
+                    box-shadow:0 5px 15px rgba(0,0,0,0.15);
+                "
+            >
+        </div>
+
+        <hr>
+
+        <h3>Modalidad de la visita</h3>
+
+        <label>Tipo de autorización</label>
+        <select name="modalidad_visita" id="modalidad_visita" required>
+            <option value="">Selecciona una opción</option>
+            <option value="temporal">Visita temporal (un solo día, un solo acceso)</option>
+            <option value="recurrente">Visita recurrente (empleado doméstico, jardinero, etc.)</option>
+        </select>
+
+        <div id="campos_temporal" style="display:none;">
+            <h3>Programación — visita temporal</h3>
+            <p class="small">El QR solo funcionará el día indicado y permitirá un único ingreso.</p>
+
+            <label>Fecha de la visita</label>
+            <input type="date" name="fecha_visita" id="fecha_visita">
+
+            <label>Hora autorizada de entrada</label>
+            <input type="time" name="hora_inicio" id="hora_inicio">
+        </div>
+
+        <div id="campos_recurrente" style="display:none;">
+            <h3>Programación — visita recurrente</h3>
+            <p class="small">
+                Válido durante un mes. Deberás generar un nuevo QR cada mes.
+                El visitante podrá ingresar cada semana el día y hora indicados.
+            </p>
+
+            <label>Día de la semana en que se presentará</label>
+            <select name="dia_semana" id="dia_semana">
+                <option value="">Selecciona el día</option>
+                <option value="lunes">Lunes</option>
+                <option value="martes">Martes</option>
+                <option value="miercoles">Miércoles</option>
+                <option value="jueves">Jueves</option>
+                <option value="viernes">Viernes</option>
+                <option value="sabado">Sábado</option>
+                <option value="domingo">Domingo</option>
+            </select>
+
+            <label>Hora habitual de llegada</label>
+            <input type="time" name="hora_programada" id="hora_programada">
+        </div>
+
+        <label>Motivo de visita</label>
+        <input type="text" name="motivo" placeholder="Ej. Visita familiar, mantenimiento, entrega" required>
+
+        <label>Condominio / Privada</label>
+        <input
+            type="text"
+            name="condominio"
+            value="{{ residente['privada'].capitalize() }}"
+            readonly
+            class="readonly-input"
+        >
+
+        <label>Número de residencia</label>
+        <input
+            type="text"
+            name="numero_residencia"
+            value="{{ residente['numero_casa'] }}"
+            readonly
+            class="readonly-input"
+        >
+
+        <hr>
+
+        <h3>Datos del vehículo</h3>
+        <p class="small">Todas las visitas registran acceso vehicular.</p>
+
+        <label>Placa</label>
+        <input type="text" name="placa" id="placa" placeholder="Ej. ABC-123" required>
+
+        <label>Marca</label>
+        <input type="text" name="marca" id="marca" placeholder="Ej. Nissan" required>
+
+        <label>Modelo</label>
+        <input type="text" name="modelo" id="modelo" placeholder="Ej. Versa" required>
+
+        <label>Color</label>
+        <input type="text" name="color" id="color" placeholder="Ej. Blanco" required>
+
+        <label>Fotografía de la placa del vehículo</label>
+        <input
+            type="file"
+            name="foto_placa"
+            id="foto_placa"
+            accept="image/*"
+            capture="environment"
+            required
+        >
+
+        <div id="placa_box" style="display:none; margin-top:15px;">
+            <p class="small">Vista previa de la placa.</p>
+            <img
+                id="preview_placa"
+                src=""
+                style="
+                    width:220px;
+                    height:140px;
+                    object-fit:cover;
+                    border-radius:14px;
+                    border:3px solid #dcdcdc;
+                    cursor:pointer;
+                "
+            >
+        </div>
+
+        <div class="alert info" style="margin-top:18px;">
+            La hora de salida será registrada por el guardia cuando el visitante abandone el fraccionamiento.
+        </div>
+
+        <button type="submit">Generar QR de acceso</button>
+    </form>
+</div>
+
+<div id="modal_foto"
+     style="
+        display:none;
+        position:fixed;
+        z-index:9999;
+        left:0;
+        top:0;
+        width:100%;
+        height:100%;
+        background:rgba(0,0,0,0.85);
+        justify-content:center;
+        align-items:center;
+     ">
+    <img id="foto_zoom" style="max-width:90%; max-height:90%; border-radius:14px;">
+</div>
+
+<script>
+    const modalidad = document.getElementById("modalidad_visita");
+    const camposTemporal = document.getElementById("campos_temporal");
+    const camposRecurrente = document.getElementById("campos_recurrente");
+    const fechaVisita = document.getElementById("fecha_visita");
+    const horaInicio = document.getElementById("hora_inicio");
+    const diaSemana = document.getElementById("dia_semana");
+    const horaProgramada = document.getElementById("hora_programada");
+
+    function actualizarModalidad() {
+        const valor = modalidad.value;
+
+        camposTemporal.style.display = "none";
+        camposRecurrente.style.display = "none";
+
+        fechaVisita.required = false;
+        horaInicio.required = false;
+        diaSemana.required = false;
+        horaProgramada.required = false;
+
+        if (valor === "temporal") {
+            camposTemporal.style.display = "block";
+            fechaVisita.required = true;
+            horaInicio.required = true;
+        } else if (valor === "recurrente") {
+            camposRecurrente.style.display = "block";
+            diaSemana.required = true;
+            horaProgramada.required = true;
+        }
+    }
+
+    modalidad.addEventListener("change", actualizarModalidad);
+    actualizarModalidad();
+</script>
+
+<script>
+    const inputFoto = document.getElementById("foto_visitante");
+    const previewFoto = document.getElementById("preview_foto");
+    const fotoBox = document.getElementById("foto_box");
+    const modalFoto = document.getElementById("modal_foto");
+    const fotoZoom = document.getElementById("foto_zoom");
+
+    inputFoto.addEventListener("change", function () {
+        const archivo = this.files[0];
+        if (archivo) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewFoto.src = e.target.result;
+                fotoZoom.src = e.target.result;
+                fotoBox.style.display = "block";
+            };
+            reader.readAsDataURL(archivo);
+        }
+    });
+
+    previewFoto.addEventListener("click", function () {
+        modalFoto.style.display = "flex";
+    });
+
+    modalFoto.addEventListener("click", function () {
+        modalFoto.style.display = "none";
+    });
+</script>
+
+<script>
+
+    const inputPlaca = document.getElementById("foto_placa");
+
+    const previewPlaca = document.getElementById("preview_placa");
+
+    const placaBox = document.getElementById("placa_box");
+
+
+    /* ========================================= */
+    /* PREVIEW PLACA */
+    /* ========================================= */
+
+    inputPlaca.addEventListener("change", function () {
+
+        const archivo = this.files[0];
+
+        if (archivo) {
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+
+                previewPlaca.src = e.target.result;
+
+                placaBox.style.display = "block";
+
+            };
+
+            reader.readAsDataURL(archivo);
+
+        }
+
+    });
+
+
+    /* ========================================= */
+    /* ZOOM PLACA */
+    /* ========================================= */
+
+    previewPlaca.addEventListener("click", function () {
+
+        if(previewPlaca.src){
+
+            fotoZoom.src = previewPlaca.src;
+
+            modalFoto.style.display = "flex";
+
+        }
+
+    });
+
+</script>
+
+{% endblock %}

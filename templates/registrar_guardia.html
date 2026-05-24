@@ -1,0 +1,201 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="resident-profile">
+
+    <!-- HEADER -->
+    <div class="profile-header">
+
+        <div class="profile-avatar">
+            G
+        </div>
+
+        <div class="profile-info">
+
+            <h1>Registro de guardia</h1>
+
+            <p>
+                Alta de personal de vigilancia autorizado dentro del sistema AccessQR.
+            </p>
+
+            <div class="profile-badges">
+
+                <span class="badge success">
+                    Seguridad
+                </span>
+
+                <span class="badge">
+                    Acceso operativo
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FORMULARIO -->
+    <div class="profile-grid">
+
+        <!-- DATOS -->
+        <div class="card">
+
+            <h2>Información del guardia</h2>
+
+            <p class="small">
+                Completa correctamente la información del nuevo elemento de seguridad.
+            </p>
+
+            <form method="POST">
+
+                <div class="info-group">
+
+                    <div class="info-item">
+
+                        <span>Nombre completo</span>
+
+                        <input
+                            type="text"
+                            name="nombre"
+                            placeholder="Ej. Juan Martínez Hernández"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Correo electrónico</span>
+
+                        <input
+                            type="email"
+                            name="correo"
+                            placeholder="Ej. guardia@accessqr.com"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Teléfono</span>
+
+                        <input
+                            type="text"
+                            name="telefono"
+                            placeholder="Ej. 7221234567"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Turno operativo</span>
+
+                        <select name="turno" required>
+
+                            <option value="">
+                                Selecciona un turno
+                            </option>
+
+                            <option value="Matutino">
+                                Turno matutino
+                            </option>
+
+                            <option value="Vespertino">
+                                Turno vespertino
+                            </option>
+
+                            <option value="Nocturno">
+                                Turno nocturno
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Estado del guardia</span>
+
+                        <select name="estado" required>
+
+                            <option value="activo">
+                                Activo
+                            </option>
+
+                            <option value="inactivo">
+                                Inactivo
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <div style="margin-top:30px; display:flex; gap:12px; flex-wrap:wrap;">
+
+                    <button type="submit" class="btn">
+                        Registrar guardia
+                    </button>
+
+                    <a href="{{ url_for('admin.guardias') }}"
+                       class="btn secondary">
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+        <!-- PANEL LATERAL -->
+        <div class="card">
+
+            <h2>Información operativa</h2>
+
+            <div class="info-group">
+
+                <div class="info-item">
+
+                    <span>Permisos del guardia</span>
+
+                    <strong>
+                        Validación QR, accesos y monitoreo
+                    </strong>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span>Acceso al sistema</span>
+
+                    <strong>
+                        Panel de caseta y bitácora
+                    </strong>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span>Seguridad</span>
+
+                    <strong>
+                        Se recomienda actualizar credenciales periódicamente.
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

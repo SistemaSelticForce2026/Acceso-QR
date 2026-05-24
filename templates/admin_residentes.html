@@ -1,0 +1,186 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h1>Gestión de Residentes</h1>
+
+<p class="small">
+    Administración general de residentes registrados dentro del sistema residencial.
+</p>
+
+<div class="stats">
+
+    <div class="stat-card">
+        <h3>Total residentes</h3>
+        <p>{{ usuarios|length }}</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Residentes activos</h3>
+        <p>
+            {{ usuarios | selectattr("estado", "equalto", "activo") | list | length }}
+        </p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Privadas registradas</h3>
+        <p>
+            {{ usuarios | map(attribute='privada') | unique | list | length }}
+        </p>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:25px;">
+
+        <div>
+            <h2>Directorio de residentes</h2>
+            <p class="small">
+                Consulta y monitoreo de usuarios autorizados dentro del fraccionamiento.
+            </p>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="{{ url_for('admin.registrar_residente') }}" class="btn">
+                Registrar residente
+            </a>
+
+            <a href="{{ url_for('admin.exportar_residentes_pdf') }}" class="btn secondary">
+                Exportar listado
+            </a>
+        </div>
+
+    </div>
+
+    <table>
+
+        <tr>
+            <th>Residente</th>
+            <th>Contacto</th>
+            <th>Domicilio</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+
+        {% for usuario in usuarios %}
+
+        <tr>
+
+            <td>
+                <strong>{{ usuario.nombre }}</strong><br>
+
+                <span class="small">
+                    ID residente:
+                    {{ usuario._id }}
+                </span>
+            </td>
+
+            <td>
+                {{ usuario.correo }}<br>
+
+                <span class="small">
+                    {{ usuario.telefono }}
+                </span>
+            </td>
+
+            <td>
+                <strong>{{ usuario.fraccionamiento }}</strong><br>
+
+                <span class="small">
+                    {{ usuario.privada }} |
+                    Casa {{ usuario.numero_casa }}
+                </span>
+            </td>
+
+            <td>
+
+                {% if usuario.estado == "activo" %}
+
+                    <span class="badge success">
+                        Activo
+                    </span>
+
+                {% else %}
+
+                    <span class="badge danger">
+                        Inactivo
+                    </span>
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+
+                    <a href="{{ url_for('admin.ver_residente', id=usuario._id) }}" class="btn small-btn">
+                        Ver perfil
+                    </a>
+
+                    <a href="{{ url_for('admin.editar_residente', id=usuario._id) }}" class="btn secondary small-btn">
+                        Editar
+                    </a>
+
+                    {% if usuario.estado == "activo" %}
+
+                    <a href="{{ url_for('admin.bloquear_residente', id=usuario._id) }}"
+                        class="btn danger-btn small-btn"
+                        onclick="return confirm('¿Deseas bloquear este residente?')">
+
+                        <i class="fa-solid fa-user-lock"></i>
+                        Bloquear
+
+                    </a>
+
+                    <a href="{{ url_for('admin.eliminar_residente', id=usuario._id) }}"
+                        class="btn danger-btn small-btn"
+                        onclick="return confirm('¿Deseas eliminar este residente permanentemente?')">
+
+                        <i class="fa-solid fa-trash"></i>
+                        Eliminar
+
+                    </a>
+
+                    {% else %}
+
+                    <a href="{{ url_for('admin.desbloquear_residente', id=usuario._id) }}"
+                        class="btn success-btn small-btn"
+                        onclick="return confirm('¿Deseas desbloquear este residente?')">
+
+                        <i class="fa-solid fa-lock-open"></i>
+                        Desbloquear
+
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+</div>
+
+<div class="card">
+
+    <h2>Actividad reciente</h2>
+
+    <div class="alert info">
+        Los residentes registrados pueden generar accesos QR para visitantes y trabajadores autorizados.
+    </div>
+
+    <div class="alert warning">
+        Verificar periódicamente usuarios inactivos o con información incompleta.
+    </div>
+
+</div>
+
+{% endblock %}

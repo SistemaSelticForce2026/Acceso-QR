@@ -1,0 +1,219 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h1>Configuración del Fraccionamiento</h1>
+
+<p class="small">
+    Administración de parámetros generales, seguridad y funcionamiento del sistema residencial.
+</p>
+
+<div class="stats">
+
+    <div class="stat-card">
+        <h3>Estado del sistema</h3>
+        <p>Operativo</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Casetas activas</h3>
+        <p>1</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Accesos QR</h3>
+        <p>Habilitados</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Última actualización</h3>
+        <p>Hoy</p>
+    </div>
+
+</div>
+
+<div class="dashboard-grid">
+
+    <div class="card">
+
+        <h2>Información general</h2>
+
+        <form>
+
+            <label>Nombre del fraccionamiento</label>
+            <input 
+                type="text"
+                value="Residencial Access QR"
+            >
+
+            <label>Dirección</label>
+            <input 
+                type="text"
+                value="Av. Principal #120"
+            >
+
+            <label>Teléfono administrativo</label>
+            <input 
+                type="text"
+                value="7221234567"
+            >
+
+            <label>Correo administrativo</label>
+            <input 
+                type="email"
+                value="admin@accessqr.com"
+            >
+
+            <label>Número de privadas</label>
+            <input 
+                type="number"
+                value="6"
+            >
+
+            <button type="submit">
+                Guardar cambios
+            </button>
+
+        </form>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Configuración de accesos</h2>
+
+        <form>
+
+            <label>Duración máxima del QR</label>
+
+            <select>
+                <option>1 hora</option>
+                <option selected>3 horas</option>
+                <option>6 horas</option>
+                <option>12 horas</option>
+                <option>24 horas</option>
+            </select>
+
+            <label>Permitir múltiples accesos</label>
+
+            <select>
+                <option>Sí</option>
+                <option selected>No</option>
+            </select>
+
+            <label>Validación de vehículo</label>
+
+            <select>
+                <option selected>Obligatoria</option>
+                <option>Opcional</option>
+            </select>
+
+            <label>Fotografía obligatoria del visitante</label>
+
+            <select>
+                <option selected>Sí</option>
+                <option>No</option>
+            </select>
+
+            <label>Registro automático de incidencias</label>
+
+            <select>
+                <option selected>Habilitado</option>
+                <option>Deshabilitado</option>
+            </select>
+
+            <button type="submit">
+                Actualizar configuración
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<div class="dashboard-grid">
+
+    <div class="card">
+
+        <h2>Seguridad del sistema</h2>
+
+        <div class="module-list">
+
+            <div class="module-item">
+                <strong>Control de sesiones</strong>
+                <span>
+                    Administración de accesos de administradores y guardias.
+                </span>
+            </div>
+
+            <div class="module-item">
+                <strong>Bitácora de actividad</strong>
+                <span>
+                    Registro de cambios y operaciones críticas del sistema.
+                </span>
+            </div>
+
+            <div class="module-item">
+                <strong>Respaldos automáticos</strong>
+                <span>
+                    Generación de copias de seguridad de la base de datos.
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Configuraciones avanzadas</h2>
+
+        <div class="module-list">
+
+            <div class="module-item">
+                <strong>Integración con cámaras</strong>
+                <span>
+                    Asociación de cámaras IP para monitoreo de accesos.
+                </span>
+            </div>
+
+            <div class="module-item">
+                <strong>Lectura automática de placas</strong>
+                <span>
+                    Configuración de reconocimiento vehicular.
+                </span>
+            </div>
+
+            <div class="module-item">
+                <strong>Notificaciones en tiempo real</strong>
+                <span>
+                    Alertas automáticas para residentes y administración.
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card">
+
+    <h2>Estado operativo</h2>
+
+    <div class="alert info">
+        El sistema de control de acceso se encuentra funcionando correctamente.
+    </div>
+
+    <div class="alert warning">
+        Se recomienda actualizar periódicamente contraseñas administrativas y revisar accesos activos.
+    </div>
+
+    <div class="alert danger-alert">
+        Cualquier modificación en configuraciones críticas debe realizarse únicamente por administradores autorizados.
+    </div>
+
+</div>
+
+{% endblock %}

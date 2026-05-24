@@ -1,0 +1,189 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h1>Gestión de Guardias</h1>
+
+<p class="small">
+    Administración de personal de vigilancia, accesos y monitoreo operativo del fraccionamiento.
+</p>
+
+<div class="stats">
+
+    <div class="stat-card">
+        <h3>Total guardias</h3>
+        <p>{{ guardias|length }}</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Guardias activos</h3>
+        <p>
+            {{ guardias | selectattr("estado", "equalto", "activo") | list | length }}
+        </p>
+    </div>
+
+    <div class="stat-card">
+        <h3>En turno</h3>
+        <p>
+            {{ guardias | selectattr("estado", "equalto", "activo") | list | length }}
+        </p>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:25px;">
+
+        <div>
+            <h2>Personal de vigilancia</h2>
+
+            <p class="small">
+                Control y administración de usuarios con acceso al módulo de caseta.
+            </p>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+
+            <a href="{{ url_for('admin.registrar_guardia') }}" class="btn">
+                Registrar guardia
+            </a>
+
+            <a href="{{ url_for('admin.exportar_guardias_pdf') }}" class="btn secondary">
+                Exportar listado
+            </a>
+
+        </div>
+
+    </div>
+
+    <table>
+
+        <tr>
+            <th>Guardia</th>
+            <th>Contacto</th>
+            <th>Estado</th>
+            <th>Actividad</th>
+            <th>Acciones</th>
+        </tr>
+
+        {% for guardia in guardias %}
+
+        <tr>
+
+            <td>
+                <strong>{{ guardia.nombre }}</strong><br>
+
+                <span class="small">
+                    ID:
+                    {{ guardia._id }}
+                </span>
+            </td>
+
+            <td>
+                {{ guardia.correo }}<br>
+
+                {% if guardia.telefono %}
+                    <span class="small">
+                        {{ guardia.telefono }}
+                    </span>
+                {% endif %}
+            </td>
+
+            <td>
+
+                {% if guardia.estado == "activo" %}
+
+                    <span class="badge success">
+                        Activo
+                    </span>
+
+                {% else %}
+
+                    <span class="badge danger">
+                        Inactivo
+                    </span>
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                <span class="small">
+                    Accesos autorizados, validaciones QR y monitoreo de visitantes.
+                </span>
+
+            </td>
+
+            <td>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+
+                    <a href="{{ url_for('admin.ver_guardia', id=guardia._id) }}"
+                    class="btn small-btn">
+
+                        Ver perfil
+
+                    </a>
+
+                    <a href="{{ url_for('admin.editar_guardia', id=guardia._id) }}"
+                    class="btn secondary small-btn">
+
+                        Editar
+
+                    </a>
+
+                    {% if guardia.estado == "activo" %}
+
+                        <a href="{{ url_for('admin.desactivar_guardia', id=guardia._id) }}"
+                        class="btn danger-btn small-btn"
+                        onclick="return confirm('¿Deseas desactivar este guardia?')">
+
+                            Desactivar
+
+                        </a>
+
+                    {% else %}
+
+                        <a href="{{ url_for('admin.activar_guardia', id=guardia._id) }}"
+                        class="btn success-btn small-btn"
+                        onclick="return confirm('¿Deseas activar este guardia?')">
+
+                            Activar
+
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </td>
+
+            </tr>
+
+            {% endfor %}
+
+    </table>
+
+</div>
+
+<div class="card">
+
+    <h2>Control operativo</h2>
+
+    <div class="alert info">
+        Los guardias pueden validar códigos QR, registrar entradas y salidas, y generar incidencias.
+    </div>
+
+    <div class="alert warning">
+        Se recomienda cambiar periódicamente las contraseñas del personal de vigilancia.
+    </div>
+
+    <div class="alert danger-alert">
+        Cualquier acceso sospechoso debe registrarse inmediatamente en la bitácora de incidencias.
+    </div>
+
+</div>
+
+{% endblock %}
