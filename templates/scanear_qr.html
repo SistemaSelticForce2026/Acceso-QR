@@ -1,7 +1,10 @@
 {% extends 'layout.html' %}
 
+<<<<<<< HEAD
 {% set modo = modo|default('entrada') %}
 
+=======
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 {% block content %}
 
 <div class="access-container">
@@ -15,6 +18,7 @@
         <div>
 
             <h1>
+<<<<<<< HEAD
                 {% if modo == 'salida' %}
                 <i class="fa-solid fa-door-open"></i>
                 Escáner de salida
@@ -30,17 +34,36 @@
                 {% else %}
                 Escanee el QR para autorizar el ingreso del visitante al fraccionamiento.
                 {% endif %}
+=======
+                <i class="fa-solid fa-shield-halved"></i>
+                Control de Acceso QR
+            </h1>
+
+            <p class="page-subtitle">
+                Sistema inteligente de validación y monitoreo de visitantes
+                en tiempo real para accesos residenciales.
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
             </p>
 
         </div>
 
+<<<<<<< HEAD
         <div class="live-status scan-mode-badge {% if modo == 'salida' %}exit-mode{% else %}entry-mode{% endif %}">
             <span class="pulse-dot"></span>
             {% if modo == 'salida' %}Salida activa{% else %}Modo entrada{% endif %}
+=======
+        <div class="live-status">
+
+            <span class="pulse-dot"></span>
+
+            Seguridad activa
+
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
         </div>
 
     </div>
 
+<<<<<<< HEAD
     <div class="scan-mode-switch">
         <a href="{{ url_for('guard.scan_entrada') }}"
            class="scan-mode-btn {% if modo != 'salida' %}active{% endif %}">
@@ -55,6 +78,8 @@
         </a>
     </div>
 
+=======
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
   <!-- =========== -->
     <!-- ESCANER -->
@@ -73,6 +98,7 @@
 
                 <h2>
                     <i class="fa-solid fa-qrcode"></i>
+<<<<<<< HEAD
                     {% if modo == 'salida' %}Escanear QR — Salida{% else %}Escanear QR — Entrada{% endif %}
                 </h2>
 
@@ -82,6 +108,15 @@
                     {% else %}
                     Coloque el QR del visitante que ingresa al fraccionamiento.
                     {% endif %}
+=======
+                    Escáner QR Inteligente
+                </h2>
+
+                <p class="small" id="scannerMessage">
+
+                    Coloque el código QR frente a la cámara para iniciar la validación.
+
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
                 </p>
 
             </div>
@@ -138,7 +173,10 @@
 
         <form method="POST"
             id="qrForm"
+<<<<<<< HEAD
             action="{{ form_action }}"
+=======
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
             class="manual-token-form">
 
             <!-- TOKEN OCULTO -->
@@ -171,7 +209,11 @@
                         id="manualSubmit">
 
                         <i class="fa-solid fa-paper-plane"></i>
+<<<<<<< HEAD
                         {% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}
+=======
+                        Validar
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     </button>
 
@@ -242,6 +284,7 @@
 
                     {% if resultado.estado == "permitido" %}
 
+<<<<<<< HEAD
                         Validación completada correctamente. Proceda con la autorización de ingreso en caseta.
 
                     {% elif resultado.estado == "salida_pendiente" %}
@@ -256,6 +299,22 @@
                     {% else %}
 
                         La validación fue rechazada por inconsistencias en el código o estado del acceso.
+=======
+                        Acceso autorizado. Verifique visualmente la identidad del visitante antes de permitir el ingreso.
+
+                    {% elif resultado.estado == "salida_pendiente" %}
+
+                        El visitante ya cuenta con un ingreso activo dentro del residencial. 
+                        Proceda con el registro oficial de salida.
+
+                    {% elif resultado.estado == "salida_registrada" %}
+
+                        La salida fue registrada correctamente y el acceso ha sido finalizado.
+
+                    {% else %}
+
+                        El sistema detectó un código inválido o una inconsistencia durante la validación.
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     {% endif %}
 
@@ -268,6 +327,7 @@
 
         {% if resultado.visita %}
 
+<<<<<<< HEAD
 
         {% if modo == 'salida' and resultado.estado == "salida_registrada" %}
 
@@ -293,6 +353,8 @@
 
         {% endif %}
 
+=======
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
         <!-- =========== -->
         <!-- GRID -->
         <!-- =========== -->
@@ -309,12 +371,17 @@
 
                     <i class="fa-solid fa-id-card"></i>
 
+<<<<<<< HEAD
                     <h3>Perfil validado</h3>
+=======
+                    <h3>Información del visitante</h3>
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                 </div>
 
                 <div class="visitor-profile">
 
+<<<<<<< HEAD
                     {% if resultado.visita and resultado.visita.get('foto_visitante') %}
 
                     <img
@@ -322,11 +389,25 @@
                         alt="Foto visitante"
                         class="visitor-photo"
                         id="visitorPhoto"
+=======
+                    {% if resultado.visita.foto_visitante %}
+
+                    <img
+                        src="{{ url_for('static', filename=resultado.visita.foto_visitante.replace('static/', '')) }}"
+                        alt="Foto visitante"
+                        class="visitor-photo"
+                        id="visitorPhoto"
+                        loading="lazy"
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
                     >
 
                     {% else %}
 
+<<<<<<< HEAD
                     <div class="visitor-no-photo">
+=======
+                    <div class="visitor-placeholder">
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                         <i class="fa-solid fa-user"></i>
 
@@ -342,11 +423,15 @@
 
                         <span class="badge">
 
+<<<<<<< HEAD
                             {% if resultado.visita.modalidad_visita == "recurrente" %}
                                 Visita recurrente
                             {% else %}
                                 Visita temporal
                             {% endif %}
+=======
+                            {{ resultado.visita.tipo_visita }}
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                         </span>
 
@@ -358,6 +443,7 @@
 
                     <div class="info-item">
 
+<<<<<<< HEAD
                         <span>Modalidad</span>
 
                         <strong>
@@ -373,6 +459,8 @@
 
                     <div class="info-item">
 
+=======
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
                         <span>Motivo</span>
 
                         <strong>
@@ -416,7 +504,11 @@
 
                     <i class="fa-solid fa-clock-rotate-left"></i>
 
+<<<<<<< HEAD
                     <h3>Monitoreo de acceso</h3>
+=======
+                    <h3>Estado del acceso</h3>
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                 </div>
 
@@ -563,7 +655,11 @@
         <!-- VEHICULO -->
         <!-- =========== -->
 
+<<<<<<< HEAD
         {% if resultado.visita.vehiculo %}
+=======
+        {% if resultado.visita.vehiculo and resultado.visita.vehiculo.tiene_vehiculo %}
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
         <div class="card vehicle-card">
 
@@ -571,7 +667,11 @@
 
                 <i class="fa-solid fa-car-side"></i>
 
+<<<<<<< HEAD
                 <h3>Unidad vehicular registrada</h3>
+=======
+                <h3>Verificación vehicular</h3>
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
             </div>
 
@@ -619,6 +719,7 @@
 
             </div>
 
+<<<<<<< HEAD
             {% if resultado.visita.foto_placa %}
 
             <div class="plate-photo-section">
@@ -643,11 +744,14 @@
 
             {% endif %}
 
+=======
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
         </div>
 
         {% endif %}
 
 
+<<<<<<< HEAD
         <!-- ===================================================== -->
         <!-- CONTROL DE ACCESO -->
         <!-- ===================================================== -->
@@ -673,11 +777,25 @@
                     </p>
 
                 </div>
+=======
+        <!-- =========== -->
+        <!-- ACCIONES -->
+        <!-- =========== -->
+
+        <div class="card action-card">
+
+            <div class="card-title">
+
+                <i class="fa-solid fa-user-shield"></i>
+
+                <h3>Acciones operativas</h3>
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
             </div>
 
             {% if resultado.estado == "permitido" %}
 
+<<<<<<< HEAD
             <div class="access-status-panel">
 
                 <div class="status-chip success">
@@ -772,19 +890,74 @@
 
                 <a href="{{ url_for('guard.scan_salida') }}"
                 class="modern-access-btn secondary">
+=======
+            <div class="alert info">
+
+                Validación completada exitosamente.
+                Confirme físicamente la identidad antes de abrir el acceso vehicular o peatonal.
+
+            </div>
+
+            <form method="POST"
+                  action="/guard/confirm-access">
+
+                <input type="hidden"
+                       name="qr_token"
+                       value="{{ resultado.visita.qr_token }}">
+
+                <button type="submit"
+                        class="btn success-btn large-btn">
+
+                    <i class="fa-solid fa-barrier-open"></i>
+
+                    Autorizar ingreso
+
+                </button>
+
+            </form>
+
+            {% endif %}
+
+
+            {% if resultado.estado == "salida_pendiente" %}
+
+            <div class="alert warning">
+
+                El visitante mantiene un acceso activo.
+                Presione el botón para finalizar y registrar oficialmente la salida.
+
+            </div>
+
+            <form method="POST"
+                  action="/guard/exit">
+
+                <input type="hidden"
+                       name="qr_token"
+                       value="{{ resultado.visita.qr_token }}">
+
+                <button type="submit"
+                        class="danger large-btn">
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     <i class="fa-solid fa-door-open"></i>
 
                     Registrar salida
 
+<<<<<<< HEAD
                 </a>
 
             </div>
+=======
+                </button>
+
+            </form>
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
             {% endif %}
 
         </div>
 
+<<<<<<< HEAD
         {% endif %}
 
         </div>
@@ -812,10 +985,39 @@
 
                     <p>
                         Seleccione una alerta únicamente si detecta irregularidades durante la validación.
+=======
+
+        <!-- =========== -->
+        <!-- ACCIÓN FINAL -->
+        <!-- =========== -->
+
+        {% if resultado.estado == "salida_registrada" %}
+
+        <div class="card final-action-card">
+
+            <div class="final-action-content">
+
+                <div>
+
+                    <h3>
+
+                        <i class="fa-solid fa-circle-check"></i>
+
+                        Flujo finalizado correctamente
+
+                    </h3>
+
+                    <p>
+
+                        El acceso fue cerrado exitosamente.
+                        Puede regresar al panel principal de vigilancia.
+
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
                     </p>
 
                 </div>
 
+<<<<<<< HEAD
             </div>
 
             <form method="POST"
@@ -830,59 +1032,142 @@
                     value="{{ resultado.visita.qr_token if resultado.visita else '' }}">
 
                 <div class="modern-incident-grid">
+=======
+                <a
+                    href="{{ url_for('guard.dashboard') }}"
+                    class="btn dashboard-btn">
+
+                    <i class="fa-solid fa-house"></i>
+
+                    Volver al dashboard
+
+                </a>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- =========== -->
+        <!-- INCIDENCIAS -->
+        <!-- =========== -->
+
+        <div class="card incident-card">
+
+            <div class="card-title">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <h3>Incidencias de seguridad</h3>
+
+            </div>
+
+            <p class="small">
+
+                Registrar únicamente en caso de anomalías,
+                inconsistencias o comportamientos sospechosos.
+
+            </p>
+
+            <form method="POST"
+                  action="/guard/incidencia-manual">
+
+                <input type="hidden"
+                       name="qr_token"
+                       value="{{ resultado.visita.qr_token }}">
+
+                <div class="incident-grid">
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     <button type="submit"
                             name="tipo_incidencia"
                             value="placa_no_coincide"
+<<<<<<< HEAD
                             class="modern-alert-btn">
 
                         <i class="fa-solid fa-car"></i>
 
                         Placa incorrecta
+=======
+                            class="danger">
+
+                        <i class="fa-solid fa-car"></i>
+                        Placa no coincide
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     </button>
 
                     <button type="submit"
                             name="tipo_incidencia"
                             value="persona_sospechosa"
+<<<<<<< HEAD
                             class="modern-alert-btn">
 
                         <i class="fa-solid fa-user-secret"></i>
 
                         Identidad sospechosa
+=======
+                            class="danger">
+
+                        <i class="fa-solid fa-user-secret"></i>
+                        Persona sospechosa
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     </button>
 
                     <button type="submit"
                             name="tipo_incidencia"
                             value="visitante_agresivo"
+<<<<<<< HEAD
                             class="modern-alert-btn">
 
                         <i class="fa-solid fa-ban"></i>
 
                         Conducta agresiva
+=======
+                            class="danger">
+
+                        <i class="fa-solid fa-ban"></i>
+                        Visitante agresivo
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     </button>
 
                     <button type="submit"
                             name="tipo_incidencia"
                             value="datos_no_coinciden"
+<<<<<<< HEAD
                             class="modern-alert-btn">
 
                         <i class="fa-solid fa-file-circle-xmark"></i>
 
                         Información inválida
+=======
+                            class="danger">
+
+                        <i class="fa-solid fa-file-circle-xmark"></i>
+                        Datos no coinciden
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     </button>
 
                     <button type="submit"
                             name="tipo_incidencia"
                             value="sin_autorizacion"
+<<<<<<< HEAD
                             class="modern-alert-btn">
 
                         <i class="fa-solid fa-lock"></i>
 
                         Acceso no autorizado
+=======
+                            class="danger">
+
+                        <i class="fa-solid fa-lock"></i>
+                        Sin autorización
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
                     </button>
 
@@ -894,11 +1179,19 @@
 
         {% endif %}
 
+<<<<<<< HEAD
         {% endif %}
 
         {% endif %}
 
         </div>
+=======
+    </div>
+
+    {% endif %}
+
+</div>
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
 <!-- ======================================== -->
 <!-- MODAL FOTO -->
@@ -911,10 +1204,15 @@
     </span>
 
     <img
+<<<<<<< HEAD
         src=""
         class="photo-modal-content"
         id="photoZoom"
         alt="Zoom foto"
+=======
+        class="photo-modal-content"
+        id="photoZoom"
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
     >
 
 </div>
@@ -1078,6 +1376,7 @@ html5QrCode.start(
 {% endif %}
 
 /* ========================================= */
+<<<<<<< HEAD
 /* ZOOM FOTOS */
 /* ========================================= */
 
@@ -1144,6 +1443,48 @@ document.addEventListener("DOMContentLoaded", () => {
     /* ========================================= */
 
     function cerrarZoom(){
+=======
+/* ZOOM FOTO VISITANTE */
+/* ========================================= */
+
+const visitorPhoto = document.getElementById("visitorPhoto");
+
+const photoModal = document.getElementById("photoModal");
+
+const photoZoom = document.getElementById("photoZoom");
+
+const closePhoto = document.getElementById("closePhoto");
+
+if(visitorPhoto){
+
+    visitorPhoto.addEventListener("click", () => {
+
+        photoModal.style.display = "block";
+
+        photoZoom.src = visitorPhoto.src;
+
+        document.body.style.overflow = "hidden";
+
+    });
+
+}
+
+if(closePhoto){
+
+    closePhoto.addEventListener("click", () => {
+
+        photoModal.style.display = "none";
+
+        document.body.style.overflow = "auto";
+
+    });
+
+}
+
+window.addEventListener("click", (e) => {
+
+    if(e.target === photoModal){
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 
         photoModal.style.display = "none";
 
@@ -1151,6 +1492,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
+<<<<<<< HEAD
 
     /* ========================================= */
     /* BOTON X */
@@ -1192,6 +1534,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     };
 
+=======
+});
+
+document.addEventListener("keydown", (e) => {
+
+    if(e.key === "Escape"){
+
+        photoModal.style.display = "none";
+
+        document.body.style.overflow = "auto";
+
+    }
+
+>>>>>>> e44b9809d69a04d0a1339164cb7aa53761ed7c18
 });
 
 </script>
