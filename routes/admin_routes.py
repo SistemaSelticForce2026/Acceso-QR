@@ -12,7 +12,7 @@ from flask import (
     send_file,
 )
 
-from extensions import mongo
+from extensions import mongo, socketio
 from utils.auth import login_required, role_required
 
 from bson.objectid import ObjectId
@@ -20,6 +20,7 @@ from bson.objectid import ObjectId
 from io import BytesIO
 from datetime import datetime
 import os
+from werkzeug.security import generate_password_hash
 
 # =========================================================
 # IMPORT EXCEL
@@ -397,6 +398,10 @@ def registrar_residente():
 
         mongo.db.users.insert_one(nuevo)
 
+        socketio.emit("actualizar_residentes")
+
+        socketio.emit("actualizar_dashboard")
+
         # =================================================
         # MENSAJE
         # =================================================
@@ -455,6 +460,10 @@ def editar_residente(id):
             },
         )
 
+        socketio.emit("actualizar_residentes")
+
+        socketio.emit("actualizar_dashboard")
+
         flash("Residente actualizado correctamente")
 
         return redirect(url_for("admin.residentes"))
@@ -474,6 +483,10 @@ def bloquear_residente(id):
 
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
 
+    socketio.emit("actualizar_residentes")
+
+    socketio.emit("actualizar_dashboard")
+
     flash("Residente bloqueado correctamente")
 
     return redirect(url_for("admin.residentes"))
@@ -491,6 +504,10 @@ def eliminar_residente(id):
 
     mongo.db.users.delete_one({"_id": ObjectId(id)})
 
+    socketio.emit("actualizar_residentes")
+
+    socketio.emit("actualizar_dashboard")
+
     flash("Residente eliminado correctamente.", "success")
 
     return redirect(url_for("admin.residentes"))
@@ -507,6 +524,8 @@ def eliminar_residente(id):
 def desbloquear_residente(id):
 
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
+
+    socketio.emit("actualizar_residentes")
 
     flash("Residente desbloqueado correctamente", "success")
 
@@ -645,18 +664,78 @@ def registrar_guardia():
 
     if request.method == "POST":
 
+        # =========================================
+        # DATOS FORMULARIO
+        # =========================================
+
+        nombre = request.form["nombre"].strip()
+
+        correo = request.form["correo"].strip()
+
+        telefono = request.form["telefono"].strip()
+
+        turno = request.form["turno"].strip()
+
+        estado = request.form["estado"].strip()
+
+        # =========================================
+        # CONTRASEÑA POR DEFECTO
+        # =========================================
+
+        password_default = "Guardia123*"
+
+        # =========================================
+        # VALIDAR CORREO DUPLICADO
+        # =========================================
+
+        existe = mongo.db.users.find_one({"correo": correo})
+
+        if existe:
+
+            flash(
+                "Ese correo ya se encuentra registrado.",
+                "danger",
+            )
+
+            return redirect(url_for("admin.registrar_guardia"))
+
+        # =========================================
+        # CREAR GUARDIA
+        # =========================================
+
         nuevo = {
-            "nombre": request.form["nombre"],
-            "correo": request.form["correo"],
-            "telefono": request.form["telefono"],
-            "turno": request.form["turno"],
-            "estado": request.form["estado"],
+            "nombre": nombre,
+            "correo": correo,
+            "password": generate_password_hash(password_default),
+            "telefono": telefono,
+            "turno": turno,
+            "estado": estado,
             "rol": "guardia",
+            "created_at": datetime.now(),
+            "ultimo_acceso": None,
+            "intentos_fallidos": 0,
+            "bloqueado_hasta": None,
         }
+
+        # =========================================
+        # INSERTAR
+        # =========================================
 
         mongo.db.users.insert_one(nuevo)
 
-        flash("Guardia registrado correctamente")
+        socketio.emit("actualizar_guardias")
+
+        socketio.emit("actualizar_dashboard")
+
+        # =========================================
+        # MENSAJE
+        # =========================================
+
+        flash(
+            f"Guardia registrado correctamente. "
+            f"Contraseña temporal: {password_default}",
+            "success",
+        )
 
         return redirect(url_for("admin.guardias"))
 
@@ -695,6 +774,10 @@ def editar_guardia(id):
             },
         )
 
+        socketio.emit("actualizar_guardias")
+
+        socketio.emit("actualizar_dashboard")
+
         flash("Guardia actualizado correctamente")
 
         return redirect(url_for("admin.guardias"))
@@ -709,6 +792,10 @@ def desactivar_guardia(id):
 
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
 
+    socketio.emit("actualizar_guardias")
+
+    socketio.emit("actualizar_dashboard")
+
     flash("Guardia desactivado correctamente")
 
     return redirect(url_for("admin.guardias"))
@@ -720,6 +807,10 @@ def desactivar_guardia(id):
 def activar_guardia(id):
 
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
+
+    socketio.emit("actualizar_guardias")
+
+    socketio.emit("actualizar_dashboard")
 
     flash("Guardia activado correctamente")
 

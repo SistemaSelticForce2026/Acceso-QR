@@ -1,0 +1,335 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="card form-card recovery-card">
+
+    <!-- ===================================== -->
+    <!-- LOGO -->
+    <!-- ===================================== -->
+
+    <div class="login-logo">
+
+        <img 
+            src="{{ url_for('static', filename='img/seltic-force-logo.png') }}"
+            alt="Access QR"
+        >
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- HEADER -->
+    <!-- ===================================== -->
+
+    <div class="recovery-header">
+
+        <div class="recovery-icon">
+
+            <i class="fa-solid fa-key"></i>
+
+        </div>
+
+        <h1>Restablecer acceso</h1>
+
+        <p class="small">
+
+            Ingresa tu correo electrónico para generar
+            un código temporal de recuperación.
+
+        </p>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- SECURITY BOX -->
+    <!-- ===================================== -->
+
+    <div class="security-box {% if token_generado %}active-security{% else %}inactive-security{% endif %}">
+
+        <i class="fa-solid fa-shield-halved"></i>
+
+        <div>
+
+            {% if token_generado %}
+
+                <strong>
+                    Código temporal activo
+                </strong>
+
+                <p>
+                    El código de recuperación fue generado correctamente.
+                </p>
+
+                <div class="recovery-timer" id="recoveryTimer">
+
+                    05:00
+
+                </div>
+
+            {% else %}
+
+                <strong>
+                    Validación segura
+                </strong>
+
+                <p>
+                    Verifica tu identidad para continuar con
+                    el proceso de recuperación de acceso.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- FORMULARIO CORREO -->
+    <!-- ===================================== -->
+
+    {% if not token_generado %}
+
+    <form method="POST">
+
+        <label>
+
+            <i class="fa-solid fa-envelope"></i>
+
+            Correo electrónico
+
+        </label>
+
+        <input
+            type="email"
+            name="correo"
+            placeholder="ejemplo@correo.com"
+            required
+        >
+
+        <button type="submit" class="btn recovery-btn">
+
+            <i class="fa-solid fa-paper-plane"></i>
+
+            Generar código temporal
+
+        </button>
+
+    </form>
+
+    {% endif %}
+
+    <!-- ===================================== -->
+    <!-- TOKEN -->
+    <!-- ===================================== -->
+
+    {% if token_generado %}
+
+    <div class="token-box">
+
+        <div class="token-header">
+
+            <i class="fa-solid fa-shield-keyhole"></i>
+
+            <span>
+                Código temporal generado
+            </span>
+
+        </div>
+
+        <div class="token-code">
+
+            {{ token_generado }}
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- VALIDAR TOKEN -->
+    <!-- ===================================== -->
+
+    <form method="POST" action="/verify-token">
+
+        <label>
+
+            <i class="fa-solid fa-key"></i>
+
+            Ingresar código temporal
+
+        </label>
+
+        <input
+            type="text"
+            name="token"
+            placeholder="000000"
+            maxlength="6"
+            required
+        >
+
+        <button type="submit" class="btn success-btn">
+
+            <i class="fa-solid fa-check"></i>
+
+            Validar código
+
+        </button>
+
+    </form>
+
+    {% endif %}
+
+    <!-- ===================================== -->
+    <!-- DIVISOR -->
+    <!-- ===================================== -->
+
+    <hr>
+
+    <!-- ===================================== -->
+    <!-- VOLVER -->
+    <!-- ===================================== -->
+
+    <p class="register-text">
+
+        ¿Recordaste tu contraseña?
+
+        <a href="/login">
+
+            Volver al inicio de sesión
+
+        </a>
+
+    </p>
+
+</div>
+
+<!-- ===================================== -->
+<!-- TIMER SCRIPT -->
+<!-- ===================================== -->
+
+{% if token_generado %}
+
+<script>
+
+    const timer = document.getElementById("recoveryTimer");
+
+    if(timer){
+
+        const DURACION = 300;
+
+        let tiempoExpiracion = localStorage.getItem(
+
+            "recovery_expiration"
+
+        );
+
+        // =====================================
+        // CREAR SOLO UNA VEZ
+        // =====================================
+
+        if(!tiempoExpiracion){
+
+            tiempoExpiracion = Date.now() + (DURACION * 1000);
+
+            localStorage.setItem(
+
+                "recovery_expiration",
+
+                tiempoExpiracion
+
+            );
+
+        }
+
+        // =====================================
+        // ACTUALIZAR TIMER
+        // =====================================
+
+        function actualizarTimer(){
+
+            const ahora = Date.now();
+
+            let tiempoRestante = Math.floor(
+
+                (tiempoExpiracion - ahora) / 1000
+
+            );
+
+            // =====================================
+            // EXPIRADO
+            // =====================================
+
+            if(tiempoRestante <= 0){
+
+                timer.innerHTML = "Código expirado";
+
+                timer.style.background = "#dc2626";
+
+                timer.style.color = "#ffffff";
+
+                timer.style.padding = "10px 14px";
+
+                timer.style.borderRadius = "12px";
+
+                timer.style.fontWeight = "700";
+
+                localStorage.removeItem(
+
+                    "recovery_expiration"
+
+                );
+
+                return;
+
+            }
+
+            // =====================================
+            // MINUTOS / SEGUNDOS
+            // =====================================
+
+            let minutos = Math.floor(
+
+                tiempoRestante / 60
+
+            );
+
+            let segundos = tiempoRestante % 60;
+
+            minutos = minutos.toString().padStart(2, '0');
+
+            segundos = segundos.toString().padStart(2, '0');
+
+            timer.innerHTML = `${minutos}:${segundos}`;
+
+            // =====================================
+            // ALERTA ÚLTIMO MINUTO
+            // =====================================
+
+            if(tiempoRestante <= 60){
+
+                timer.style.background = "#fee2e2";
+
+                timer.style.color = "#dc2626";
+
+                timer.style.border = "1px solid #fecaca";
+
+                timer.style.padding = "10px 14px";
+
+                timer.style.borderRadius = "12px";
+
+                timer.style.fontWeight = "700";
+
+            }
+
+        }
+
+        actualizarTimer();
+
+        setInterval(actualizarTimer, 1000);
+
+    }
+
+</script>
+
+{% endif %}
+
+{% endblock %}

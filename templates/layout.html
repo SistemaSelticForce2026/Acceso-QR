@@ -23,7 +23,7 @@
       <!-- =========== -->
 
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
+          href="{{ url_for('static', filename='css/main.css') }}">
 
       <!-- =========== -->
     <!-- FONT AWESOME -->
@@ -165,23 +165,7 @@
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
-    <script>
-
-        const socket = io();
-
-        socket.on("connect", () => {
-
-            console.log("Socket conectado");
-
-        });
-
-        socket.on("nueva_visita", (data) => {
-
-            console.log("Nueva visita:", data);
-
-        });
-
-    </script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
 
 </body>
 

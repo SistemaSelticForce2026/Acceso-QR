@@ -10,7 +10,7 @@ from flask import (
 
 from datetime import datetime
 
-from extensions import mongo
+from extensions import mongo, socketio
 
 from utils.auth import login_required, role_required
 from utils.visita_validacion import validar_acceso_qr, actualizar_qr_vencido_si_aplica
@@ -177,9 +177,9 @@ def scan_entrada():
             else:
                 ahora = datetime.now()
                 update_entrada = {
-                    "estado": "dentro",
-                    "hora_entrada_real": ahora.strftime("%H:%M:%S"),
-                    "fecha_entrada_real": ahora,
+                    "estado": "pendiente_autorizacion",
+                    "hora_escaneo": ahora.strftime("%H:%M:%S"),
+                    "fecha_escaneo": ahora,
                 }
                 if visita.get("modalidad_visita", "temporal") == "temporal":
                     update_entrada["entrada_consumida"] = True
@@ -199,12 +199,12 @@ def scan_entrada():
                     {"_id": visita["_id"]}, {"$set": update_entrada}
                 )
 
-                visita["estado"] = "dentro"
-                visita["hora_entrada_real"] = ahora.strftime("%H:%M:%S")
+                visita["estado"] = "pendiente_autorizacion"
+                visita["hora_escaneo"] = ahora.strftime("%H:%M:%S")
 
                 resultado = {
                     "estado": "permitido",
-                    "mensaje": "Entrada autorizada. El visitante puede ingresar.",
+                    "mensaje": "QR validado correctamente. Esperando autorización del guardia.",
                     "visita": visita,
                 }
 
@@ -308,6 +308,18 @@ def confirm_access():
     visita = mongo.db.visits.find_one({"qr_token": token})
 
     if visita:
+
+        mongo.db.visits.update_one(
+            {"_id": visita["_id"]},
+            {
+                "$set": {
+                    "estado": "dentro",
+                    "hora_entrada_real": datetime.now().strftime("%H:%M:%S"),
+                    "fecha_entrada_real": datetime.now(),
+                }
+            },
+        )
+
         mongo.db.access_logs.insert_one(
             {
                 "visita_id": str(visita["_id"]),
@@ -320,5 +332,6 @@ def confirm_access():
             }
         )
 
-    flash("Acceso confirmado correctamente.")
-    return redirect(url_for("guard.scan_entrada"))
+    flash("Acceso autorizado correctamente.", "success")
+
+    return redirect(url_for("guard.dashboard"))

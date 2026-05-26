@@ -889,21 +889,27 @@
 
         </div>
 
-        <div class="table-actions">
+        <div style="display:flex; gap:15px; margin-top:20px; flex-wrap:wrap;">
 
-            <button class="btn secondary">
+            <a href="{{ url_for('admin.exportar_visitas_pdf') }}"
+            class="btn secondary"
+            style="width:auto;">
 
                 <i class="fa-solid fa-file-pdf"></i>
+
                 PDF
 
-            </button>
+            </a>
 
-            <button class="btn success-btn">
+            <a href="{{ url_for('admin.exportar_visitas_excel') }}"
+            class="btn success-btn"
+            style="width:auto;">
 
                 <i class="fa-solid fa-file-excel"></i>
+
                 Excel
 
-            </button>
+            </a>
 
         </div>
 
@@ -959,13 +965,11 @@
                         {% endif %}
 
                         <!-- DATOS -->
-                        <div>
+                        <div class="visitor-data">
 
                             <strong>
                                 {{ visita.nombre_visitante }}
                             </strong>
-
-                            <br>
 
                             <span class="small">
                                 {{ visita.telefono }}
@@ -1033,24 +1037,45 @@
                 <!-- HORARIO -->
                 <!-- ===================================================== -->
 
-                <td>
+                <td class="horario-box">
 
-                    Entrada:
-                    {{ visita.hora_inicio }}
+                    <div class="horario-content">
 
-                    <br>
+                        <strong>Entrada:</strong>
 
-                    {% if visita.hora_salida %}
+                        {% if visita.hora_inicio %}
 
-                        Salida:
-                        {{ visita.hora_salida }}
+                            {{ visita.hora_inicio }}
 
-                    {% else %}
+                            {% if "AM" not in visita.hora_inicio and "PM" not in visita.hora_inicio %}
+                                PM
+                            {% endif %}
 
-                        Salida:
-                        En curso
+                        {% else %}
 
-                    {% endif %}
+                            --
+
+                        {% endif %}
+
+                        <br>
+
+                        <strong>Salida:</strong>
+
+                        {% if visita.hora_salida %}
+
+                            {{ visita.hora_salida }}
+
+                            {% if "AM" not in visita.hora_salida and "PM" not in visita.hora_salida %}
+                                PM
+                            {% endif %}
+
+                        {% else %}
+
+                            En curso
+
+                        {% endif %}
+
+                    </div>
 
                 </td>
 

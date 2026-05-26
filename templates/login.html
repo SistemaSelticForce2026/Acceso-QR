@@ -4,9 +4,9 @@
 
 <div class="card form-card">
 
-  <!-- =========== -->
+    <!-- ===================================== -->
     <!-- LOGO -->
-  <!-- =========== -->
+    <!-- ===================================== -->
 
     <div class="login-logo">
 
@@ -17,17 +17,21 @@
 
     </div>
 
-  <!-- =========== -->
+    <!-- ===================================== -->
     <!-- TITULOS -->
-  <!-- =========== -->
+    <!-- ===================================== -->
 
-    <h1>Access QR</h1>
+    <h1>Acceso QR</h1>
 
     <h2>Inicio de sesión</h2>
 
     <p class="small">
         Sistema web de control de acceso residencial mediante códigos QR.
     </p>
+
+    <!-- ===================================== -->
+    <!-- ALERTA BLOQUEO -->
+    <!-- ===================================== -->
 
     {% if bloqueo_activo %}
 
@@ -44,7 +48,8 @@
         </div>
 
         <p>
-            Demasiados intentos fallidos.
+            Demasiados intentos fallidos detectados.
+            Espere antes de volver a iniciar sesión.
         </p>
 
         <div class="timer-box">
@@ -59,13 +64,21 @@
 
     {% endif %}
 
-  <!-- =========== -->
-    <!-- FORMULARIO -->
-  <!-- =========== -->
+    <!-- ===================================== -->
+    <!-- FORMULARIO LOGIN -->
+    <!-- ===================================== -->
 
     <form method="POST" action="/login">
 
-        <label>Correo electrónico</label>
+        <!-- EMAIL -->
+
+        <label>
+
+            <i class="fa-solid fa-envelope"></i>
+
+            Correo electrónico
+
+        </label>
 
         <input 
             type="email"
@@ -74,7 +87,15 @@
             required
         >
 
-        <label>Contraseña</label>
+        <!-- PASSWORD -->
+
+        <label>
+
+            <i class="fa-solid fa-lock"></i>
+
+            Contraseña
+
+        </label>
 
         <input 
             type="password"
@@ -83,25 +104,58 @@
             required
         >
 
+        <!-- OPCIONES LOGIN -->
+
+        <div class="login-options">
+
+            <a 
+                href="{{ url_for('auth.forgot_password') }}"
+                class="forgot-link"
+            >
+
+                <i class="fa-solid fa-key"></i>
+
+                Recuperar contraseña
+
+            </a>
+
+        </div>
+
+        <!-- BOTON LOGIN -->
+
         <button type="submit" class="btn">
 
+            <i class="fa-solid fa-right-to-bracket"></i>
+
             Ingresar al sistema
-            
 
         </button>
 
     </form>
 
+    <!-- ===================================== -->
+    <!-- DIVISOR -->
+    <!-- ===================================== -->
+
     <hr>
 
-    <p>
+    <!-- ===================================== -->
+    <!-- REGISTRO -->
+    <!-- ===================================== -->
+
+    <p class="register-text">
+
         ¿Eres residente y aún no tienes cuenta?
-        <a href="/register">Crear cuenta</a>
+
+        <a href="/register">
+
+            Crear cuenta
+
+        </a>
+
     </p>
 
-    <p class="small">
-        Acceso disponible para residentes, guardias y administradores.
-    </p>
+    </div>
 
 </div>
 

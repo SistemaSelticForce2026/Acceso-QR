@@ -37,7 +37,7 @@ def hora_ampm(valor):
 # ================
 def create_app():
 
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder="static", template_folder="templates")
 
     app.config.from_object(Config)
 
@@ -74,11 +74,12 @@ def create_app():
     return app
 
 
+app = create_app()
+
+
 # ===============================
 # INICIAR APP
 # ===============================
 if __name__ == "__main__":
-
-    app = create_app()
 
     socketio.run(app, debug=True, use_reloader=False)

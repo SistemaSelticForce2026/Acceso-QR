@@ -196,8 +196,8 @@
             <button type="button" class="btn btn-whatsapp" id="btnShareQr">
                 <i class="fa-brands fa-whatsapp"></i> Compartir imagen del QR
             </button>
-            <button type="button" class="btn btn-secondary" id="btnDownloadQr" style="display:none;">
-                <i class="fa-solid fa-download"></i> Descargar QR
+            <button type="button"class="btn btn-secondary qr-download-btn"id="btnDownloadQr">
+                <i class="fa-solid fa-download"></i> Descargar imagen QR
             </button>
             <p class="small qr-share-hint" id="qrShareHint"></p>
         </div>
@@ -335,14 +335,11 @@
                     qrShareHint.textContent =
                         "En móvil podrás enviar la imagen completa del QR por WhatsApp.";
 
-                    btnDownloadQr.style.display = "none";
 
                 } else {
 
                     qrShareHint.textContent =
                         "Se descargará la imagen y se abrirá WhatsApp para que la adjuntes al chat.";
-
-                    btnDownloadQr.style.display = "inline-flex";
                 }
 
             } catch (err) {

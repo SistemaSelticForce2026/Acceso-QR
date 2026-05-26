@@ -50,7 +50,7 @@ def register():
 
         nombre = request.form["nombre"].strip()
 
-        correo = request.form["correo"].strip().lower()
+        correo = request.form["correo"].strip()
 
         telefono = request.form["telefono"].strip()
 
@@ -170,7 +170,7 @@ def login():
 
     if request.method == "POST":
 
-        correo = request.form["correo"].strip().lower()
+        correo = request.form["correo"].strip()
 
         password = request.form["password"]
 
@@ -334,6 +334,189 @@ def login():
             return redirect(url_for("resident.dashboard"))
 
     return render_template("login.html")
+
+
+# =====================================
+# RECUPERAR CONTRASEÑA
+# =====================================
+
+
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+
+    # =====================================
+    # ENTRAR A LA VISTA
+    # =====================================
+
+    if request.method == "GET":
+
+        return render_template("recuperar_contrasena.html")
+
+    # =====================================
+    # OBTENER CORREO
+    # =====================================
+
+    correo = request.form["correo"].strip()
+
+    usuario = mongo.db.users.find_one({"correo": correo})
+
+    # =====================================
+    # USUARIO NO EXISTE
+    # =====================================
+
+    if not usuario:
+
+        flash("No existe una cuenta asociada a ese correo.", "danger")
+
+        return redirect(url_for("auth.forgot_password"))
+
+    # =====================================
+    # GENERAR TOKEN
+    # =====================================
+
+    import random
+
+    token = str(random.randint(100000, 999999))
+
+    expiracion = datetime.now() + timedelta(minutes=5)
+
+    # =====================================
+    # GUARDAR SESSION
+    # =====================================
+
+    session["recovery_token"] = token
+
+    session["correo_recuperacion"] = correo
+
+    # =====================================
+    # GUARDAR TOKEN EN MONGO
+    # =====================================
+
+    mongo.db.users.update_one(
+        {"_id": usuario["_id"]},
+        {"$set": {"token_recuperacion": token, "token_expira": expiracion}},
+    )
+
+    # =====================================
+    # MENSAJE
+    # =====================================
+
+    flash("Código temporal generado correctamente.", "success")
+
+    # =====================================
+    # MOSTRAR TOKEN
+    # =====================================
+
+    return render_template("recuperar_contrasena.html", token_generado=token)
+
+
+# =====================================
+# VALIDAR TOKEN TEMPORAL
+# =====================================
+
+
+@auth_bp.route("/verify-token", methods=["POST"])
+def verify_token():
+
+    token_ingresado = request.form["token"]
+
+    token_guardado = session.get("recovery_token")
+
+    # =====================================
+    # TOKEN CORRECTO
+    # =====================================
+
+    if token_ingresado == token_guardado:
+
+        flash("Código validado correctamente.", "success")
+
+        return redirect(url_for("auth.reset_password"))
+
+    # =====================================
+    # TOKEN INCORRECTO
+    # =====================================
+
+    flash("El código ingresado no es válido.", "danger")
+
+    return redirect(url_for("auth.forgot_password"))
+
+
+# =====================================
+# NUEVA CONTRASEÑA
+# =====================================
+
+
+@auth_bp.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+
+    # =====================================
+    # VALIDAR SESIÓN RECUPERACIÓN
+    # =====================================
+
+    correo = session.get("correo_recuperacion")
+
+    if not correo:
+
+        flash("La sesión de recuperación expiró.", "danger")
+
+        return redirect(url_for("auth.forgot_password"))
+
+    # =====================================
+    # MOSTRAR VISTA
+    # =====================================
+
+    if request.method == "GET":
+
+        return render_template("nueva_contrasena.html")
+
+    # =====================================
+    # OBTENER CONTRASEÑAS
+    # =====================================
+
+    password = request.form["password"]
+
+    confirm_password = request.form["confirm_password"]
+
+    # =====================================
+    # VALIDAR CONTRASEÑAS
+    # =====================================
+
+    if password != confirm_password:
+
+        flash("Las contraseñas no coinciden.", "danger")
+
+        return redirect(url_for("auth.reset_password"))
+
+    # =====================================
+    # ACTUALIZAR CONTRASEÑA
+    # =====================================
+
+    mongo.db.users.update_one(
+        {"correo": correo},
+        {
+            "$set": {
+                "password": generate_password_hash(password),
+                "token_recuperacion": None,
+                "token_expira": None,
+            }
+        },
+    )
+
+    # =====================================
+    # LIMPIAR SESIÓN
+    # =====================================
+
+    session.pop("recovery_token", None)
+
+    session.pop("correo_recuperacion", None)
+
+    # =====================================
+    # MENSAJE
+    # =====================================
+
+    flash("Contraseña actualizada correctamente.", "success")
+
+    return redirect(url_for("auth.login"))
 
 
 # ============
