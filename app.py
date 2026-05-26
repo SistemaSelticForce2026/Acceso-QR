@@ -49,7 +49,13 @@ def create_app():
 
     mongo.init_app(app)
 
-    socketio.init_app(app, cors_allowed_origins="*", async_mode="threading")
+    socketio.init_app(
+        app,
+        cors_allowed_origins="*",
+        async_mode="threading",
+        logger=False,
+        engineio_logger=False,
+    )
 
     # ===========================
     # REGISTRAR FILTRO JINJA
@@ -82,4 +88,4 @@ app = create_app()
 # ===============================
 if __name__ == "__main__":
 
-    socketio.run(app, debug=True, use_reloader=False)
+    socketio.run(app, debug=False)
