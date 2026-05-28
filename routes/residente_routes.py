@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 
 from bson.objectid import ObjectId
@@ -92,8 +92,11 @@ def create_visit():
         vigencia_desde = None
         vigencia_hasta = None
 
-        dia_semana = None
+        dias_autorizados = []
+
         hora_programada = None
+
+        hora_limite_salida = None
 
         fecha_visita = request.form.get("fecha_visita")
 
@@ -105,13 +108,53 @@ def create_visit():
 
         if modalidad == "recurrente":
 
-            dia_semana = request.form.get("dia_semana", "").strip().lower()
+            # =========================================
+            # DATOS DEL FORMULARIO
+            # =========================================
+
+            dias_autorizados = request.form.getlist("dias[]")
 
             hora_programada = request.form.get("hora_programada")
 
+            hora_limite_salida = request.form.get("hora_salida")
+
+            vigencia_qr = request.form.get("vigencia_qr")
+
             hora_inicio = hora_programada
 
-            vigencia_desde, vigencia_hasta = vigencia_recurrente_meses(1)
+            # =========================================
+            # FECHA ACTUAL
+            # =========================================
+
+            vigencia_desde = datetime.now()
+
+            # =========================================
+            # CALCULAR VIGENCIA
+            # =========================================
+
+            if vigencia_qr == "1_semana":
+
+                vigencia_hasta = vigencia_desde + timedelta(days=7)
+
+            elif vigencia_qr == "15_dias":
+
+                vigencia_hasta = vigencia_desde + timedelta(days=15)
+
+            elif vigencia_qr == "1_mes":
+
+                vigencia_hasta = vigencia_desde + timedelta(days=30)
+
+            elif vigencia_qr == "3_meses":
+
+                vigencia_hasta = vigencia_desde + timedelta(days=90)
+
+            else:
+
+                vigencia_hasta = vigencia_desde + timedelta(days=30)
+
+            # =========================================
+            # FECHA BASE
+            # =========================================
 
             fecha_visita = vigencia_desde.strftime("%Y-%m-%d")
 
@@ -122,6 +165,7 @@ def create_visit():
         visita = {
             "residente_id": session["user_id"],
             "residente_nombre": session["nombre"],
+            "telefono_residente": residente.get("telefono", ""),
             "nombre_visitante": request.form["nombre_visitante"].strip(),
             "foto_visitante": foto_visitante,
             "foto_placa": foto_placa,
@@ -133,8 +177,9 @@ def create_visit():
             "residencia_destino": residente["numero_casa"],
             "fecha_visita": fecha_visita,
             "hora_inicio": hora_inicio,
-            "dia_semana": dia_semana,
+            "dias_autorizados": dias_autorizados,
             "hora_programada": hora_programada,
+            "hora_limite_salida": hora_limite_salida,
             "vigencia_desde": vigencia_desde,
             "vigencia_hasta": vigencia_hasta,
             "hora_salida": None,

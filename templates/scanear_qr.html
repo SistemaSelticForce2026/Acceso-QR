@@ -375,6 +375,97 @@
 
                 </div>
 
+                <!-- ========================================= -->
+                <!-- CONTACTO -->
+                <!-- ========================================= -->
+
+                <div class="resident-contact-panel">
+
+                    <!-- ========================================= -->
+                    <!-- RESIDENTE -->
+                    <!-- ========================================= -->
+
+                    <div class="resident-contact-item">
+
+                        <div class="resident-contact-icon resident">
+
+                            <i class="fa-solid fa-user-shield"></i>
+
+                        </div>
+
+                        <div class="resident-contact-content">
+
+                            <span>
+                                Residente responsable
+                            </span>
+
+                            <strong>
+                                {{ resultado.visita.residente_nombre }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================= -->
+                    <!-- TELEFONO RESIDENTE -->
+                    <!-- ========================================= -->
+
+                    {% if resultado.visita.get("telefono_residente") %}
+
+                    <div class="resident-contact-item">
+
+                        <div class="resident-contact-icon phone">
+
+                            <i class="fa-solid fa-mobile-screen"></i>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Número del residente
+                            </span>
+
+                            <strong>
+                                {{ resultado.visita.telefono_residente }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    {% endif %}
+
+                    <!-- ========================================= -->
+                    <!-- TELEFONO VISITANTE -->
+                    <!-- ========================================= -->
+
+                    <div class="resident-contact-item">
+
+                        <div class="resident-contact-icon visitor">
+
+                            <i class="fa-solid fa-phone"></i>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Número del visitante
+                            </span>
+
+                            <strong>
+                                {{ resultado.visita.telefono }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+                
+
                 <div class="info-list">
 
                     <div class="info-item">
@@ -382,12 +473,29 @@
                         <span>Modalidad</span>
 
                         <strong>
+
                             {% if resultado.visita.modalidad_visita == "recurrente" %}
-                                Recurrente — {{ resultado.visita.dia_semana | capitalize }}
+
+                                Recurrente
+
+                                {% if resultado.visita.get("dias_autorizados") %}
+
+                                    ·
+
+                                    {{ resultado.visita.dias_autorizados | join(', ') | capitalize }}
+
+                                {% endif %}
+
+                                ·
+
                                 {{ resultado.visita.hora_programada | hora_ampm }}
+
                             {% else %}
+
                                 Temporal — {{ resultado.visita.fecha_visita }}
+
                             {% endif %}
+
                         </strong>
 
                     </div>
@@ -423,7 +531,6 @@
                     </div>
 
                 </div>
-
             </div>
 
 
@@ -445,24 +552,29 @@
 
                     <div class="status-badge 
                     
-                        {% if resultado.visita.estado == 'dentro' %}
+                        {% if resultado.visita.get('estado') == 'dentro' %}
                             inside
-                        {% elif resultado.visita.estado == 'salida_registrada' %}
+
+                        {% elif resultado.visita.get('estado') == 'salida_registrada' %}
                             exit
+
+                        {% elif resultado.visita.get('estado') == 'activo' %}
+                            pending
+
                         {% else %}
                             active
                         {% endif %}
-                    
+                                        
                     ">
 
-                        {% if resultado.visita.estado == "activo" %}
+                        {% if resultado.visita.get("estado") == "activo" %}
                             Acceso autorizado
-                        {% elif resultado.visita.estado == "dentro" %}
+                        {% elif resultado.visita.get("estado") == "dentro" %}
                             Visitante dentro
-                        {% elif resultado.visita.estado == "salida_registrada" %}
+                        {% elif resultado.visita.get("estado") == "salida_registrada" %}
                             Salida completada
                         {% else %}
-                            Estado inválido
+                            Pendiente de autorización
                         {% endif %}
 
                     </div>
@@ -480,7 +592,7 @@
                             <span>Hora programada</span>
 
                             <strong>
-                                {{ resultado.visita.hora_inicio }}
+                                {{ resultado.visita.get("hora_inicio", "") | hora_ampm }}
                             </strong>
 
                         </div>
@@ -498,7 +610,7 @@
                             <span>Entrada registrada</span>
 
                             <strong>
-                                {{ resultado.visita.hora_entrada_real }}
+                                {{ resultado.visita.hora_entrada_real | hora_ampm }}
                             </strong>
 
                         </div>
@@ -532,7 +644,7 @@
                                 Salida registrada a las
 
                                 <strong class="timeline-hour">
-                                    {{ resultado.visita.hora_salida }}
+                                    {{ resultado.visita.hora_salida | hora_ampm }}
                                 </strong>
 
                             </small>
@@ -555,6 +667,22 @@
 
                             </span>
 
+                            {% if resultado.visita.get("estado") == "activo" %}
+
+                            <strong class="status-pending">
+
+                                Pendiente de autorización del guardia
+
+                            </strong>
+
+                            <small>
+
+                                El visitante aún NO ha ingresado al fraccionamiento.
+
+                            </small>
+
+                            {% elif resultado.visita.get("estado") == "dentro" %}
+
                             <strong class="status-inside">
 
                                 Visitante dentro del residencial
@@ -567,6 +695,21 @@
 
                             </small>
 
+                            {% else %}
+
+                            <strong class="status-invalid">
+
+                                Estado no reconocido
+
+                            </strong>
+
+                            <small>
+
+                                Verifique el flujo operativo del acceso.
+
+                            </small>
+
+                        {% endif %}
                         </div>
 
                     </div>

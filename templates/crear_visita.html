@@ -10,7 +10,13 @@
         <h3>Datos del visitante</h3>
 
         <label>Nombre completo del visitante</label>
-        <input type="text" name="nombre_visitante" placeholder="Ej. Juan Pérez López" required>
+        <input
+            type="text"
+            name="nombre_visitante"
+            id="nombre_visitante"
+            placeholder="Ej. Juan Pérez López"
+            required
+        >
 
         <label>Teléfono de contacto</label>
         <input type="text" name="telefono" placeholder="Ej. 7221234567" required>
@@ -63,31 +69,162 @@
             <input type="time" name="hora_inicio" id="hora_inicio">
         </div>
 
-        <div id="campos_recurrente" style="display:none;">
-            <h3>Programación — visita recurrente</h3>
-            <p class="small">
-                Válido durante un mes. Deberás generar un nuevo QR cada mes.
-                El visitante podrá ingresar cada semana el día y hora indicados.
-            </p>
+        <div id="campos_recurrente" class="visita-box" style="display:none;">
 
-            <label>Día de la semana en que se presentará</label>
-            <select name="dia_semana" id="dia_semana">
-                <option value="">Selecciona el día</option>
-                <option value="lunes">Lunes</option>
-                <option value="martes">Martes</option>
-                <option value="miercoles">Miércoles</option>
-                <option value="jueves">Jueves</option>
-                <option value="viernes">Viernes</option>
-                <option value="sabado">Sábado</option>
-                <option value="domingo">Domingo</option>
+            <div class="visita-header recurrente">
+                <i class="fa-solid fa-repeat"></i>
+                <div>
+                    <h3>Acceso recurrente</h3>
+                    <p>
+                        Ideal para personal doméstico, mantenimiento,
+                        proveedores frecuentes o trabajadores autorizados.
+                    </p>
+                </div>
+            </div>
+
+            <div class="alert info recurrente-alert">
+
+                <strong>Importante:</strong>
+
+                El QR tendrá una vigencia configurable y permitirá ingresos
+                únicamente en los días y horarios autorizados.
+
+            </div>
+
+            <label>Tipo de visitante recurrente</label>
+
+            <select name="tipo_recurrente" id="tipo_recurrente">
+
+                <option value="">Selecciona una opción</option>
+
+                <option value="domestica">Empleado(a) doméstico(a)</option>
+
+                <option value="jardinero">Jardinero</option>
+
+                <option value="mantenimiento">Mantenimiento</option>
+
+                <option value="proveedor">Proveedor frecuente</option>
+
+                <option value="chofer">Chofer</option>
+
+                <option value="familiar">Familiar frecuente</option>
+
+                <option value="otro">Otro</option>
+
             </select>
 
-            <label>Hora habitual de llegada</label>
-            <input type="time" name="hora_programada" id="hora_programada">
+            <label>Vigencia del acceso</label>
+
+            <select name="vigencia_qr" id="vigencia_qr">
+
+                <option value="1_semana">1 semana</option>
+
+                <option value="15_dias">15 días</option>
+
+                <option value="1_mes" selected>1 mes</option>
+
+                <option value="3_meses">3 meses</option>
+
+            </select>
+
+            <label>Días autorizados</label>
+
+            <div class="dias-grid">
+
+                <label class="dia-item">
+                    <input type="checkbox" name="dias[]" value="lunes">
+                    <span>Lun</span>
+                </label>
+
+                <label class="dia-item">
+                    <input type="checkbox" name="dias[]" value="martes">
+                    <span>Mar</span>
+                </label>
+
+                <label class="dia-item">
+                    <input type="checkbox" name="dias[]" value="miercoles">
+                    <span>Mié</span>
+                </label>
+
+                <label class="dia-item">
+                    <input type="checkbox" name="dias[]" value="jueves">
+                    <span>Jue</span>
+                </label>
+
+                <label class="dia-item">
+                    <input type="checkbox" name="dias[]" value="viernes">
+                    <span>Vie</span>
+                </label>
+
+                <label class="dia-item">
+                    <input type="checkbox" name="dias[]" value="sabado">
+                    <span>Sáb</span>
+                </label>
+
+                <label class="dia-item">
+                    <input type="checkbox" name="dias[]" value="domingo">
+                    <span>Dom</span>
+                </label>
+
+            </div>
+
+            <div class="horarios-grid">
+
+                <div>
+
+                    <label>Hora permitida de entrada</label>
+
+                    <input
+                        type="time"
+                        name="hora_programada"
+                        id="hora_programada"
+                    >
+
+                </div>
+
+                <div>
+
+                    <label>Hora límite de salida</label>
+
+                    <input
+                        type="time"
+                        name="hora_salida"
+                        id="hora_salida"
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="card-mini recurrente-card">
+
+                <div class="mini-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+
+                <div>
+
+                    <strong>Control inteligente de acceso</strong>
+
+                    <p>
+                        El sistema validará automáticamente días, horarios
+                        y vigencia antes de permitir el ingreso.
+                    </p>
+
+                </div>
+
+            </div>
+
         </div>
 
         <label>Motivo de visita</label>
-        <input type="text" name="motivo" placeholder="Ej. Visita familiar, mantenimiento, entrega" required>
+        <input
+            type="text"
+            name="motivo"
+            id="motivo"
+            placeholder="Ej. Visita Familiar"
+            required
+        >
 
         <label>Condominio / Privada</label>
         <input
@@ -112,8 +249,32 @@
         <h3>Datos del vehículo</h3>
         <p class="small">Todas las visitas registran acceso vehicular.</p>
 
+
+        <label>Tipo de vehículo</label>
+
+        <select name="tipo_vehiculo" id="tipo_vehiculo" required>
+
+            <option value="auto">
+                Automóvil
+            </option>
+
+            <option value="motocicleta">
+                Motocicleta
+            </option>
+
+        </select>
+
+
         <label>Placa</label>
-        <input type="text" name="placa" id="placa" placeholder="Ej. ABC-123" required>
+        <input
+            type="text"
+            name="placa"
+            id="placa"
+            placeholder="Ej. ABC-123-A"
+            maxlength="11"
+            autocomplete="off"
+            required
+        >
 
         <label>Marca</label>
         <input type="text" name="marca" id="marca" placeholder="Ej. Nissan" required>
@@ -178,12 +339,14 @@
     const modalidad = document.getElementById("modalidad_visita");
     const camposTemporal = document.getElementById("campos_temporal");
     const camposRecurrente = document.getElementById("campos_recurrente");
+
     const fechaVisita = document.getElementById("fecha_visita");
     const horaInicio = document.getElementById("hora_inicio");
-    const diaSemana = document.getElementById("dia_semana");
+
     const horaProgramada = document.getElementById("hora_programada");
 
     function actualizarModalidad() {
+
         const valor = modalidad.value;
 
         camposTemporal.style.display = "none";
@@ -191,22 +354,32 @@
 
         fechaVisita.required = false;
         horaInicio.required = false;
-        diaSemana.required = false;
+
         horaProgramada.required = false;
 
         if (valor === "temporal") {
+
             camposTemporal.style.display = "block";
+
             fechaVisita.required = true;
             horaInicio.required = true;
-        } else if (valor === "recurrente") {
-            camposRecurrente.style.display = "block";
-            diaSemana.required = true;
-            horaProgramada.required = true;
+
         }
+
+        else if (valor === "recurrente") {
+
+            camposRecurrente.style.display = "block";
+
+            horaProgramada.required = true;
+
+        }
+
     }
 
     modalidad.addEventListener("change", actualizarModalidad);
+
     actualizarModalidad();
+
 </script>
 
 <script>
@@ -291,5 +464,509 @@
     });
 
 </script>
+
+<script>
+
+/* ========================================= */
+/* VALIDACION PLACAS MEXICO */
+/* ========================================= */
+
+const placaInput =
+    document.getElementById("placa");
+
+const tipoVehiculo =
+    document.getElementById("tipo_vehiculo");
+    
+const marcaInput =
+    document.getElementById("marca");
+
+const modeloInput =
+    document.getElementById("modelo");
+
+const placaPlaceholder =
+    document.getElementById("placa");
+
+
+/* ========================================= */
+/* CAMBIAR EJEMPLOS */
+/* ========================================= */
+
+function actualizarEjemplosVehiculo(){
+
+    if(tipoVehiculo.value === "motocicleta"){
+
+        placaPlaceholder.placeholder =
+            "Ej. AB-123-A";
+
+        marcaInput.placeholder =
+            "Ej. Italika";
+
+        modeloInput.placeholder =
+            "Ej. Z250";
+
+    }
+
+    else{
+
+        placaPlaceholder.placeholder =
+            "Ej. ABC-123-A";
+
+        marcaInput.placeholder =
+            "Ej. Nissan";
+
+        modeloInput.placeholder =
+            "Ej. Versa";
+
+    }
+
+}
+
+
+/* ========================================= */
+/* EVENTO */
+/* ========================================= */
+
+tipoVehiculo.addEventListener(
+    "change",
+    actualizarEjemplosVehiculo
+);
+
+
+/* ========================================= */
+/* INICIAR */
+/* ========================================= */
+
+actualizarEjemplosVehiculo();
+
+
+/* ========================================= */
+/* FORMATO TEXTO PROFESIONAL */
+/* ========================================= */
+
+const nombreVisitante =
+    document.getElementById("nombre_visitante");
+
+const motivoInput =
+    document.getElementById("motivo");
+
+const marcaVehiculo =
+    document.getElementById("marca");
+
+const modeloVehiculo =
+    document.getElementById("modelo");
+
+const colorVehiculo =
+    document.getElementById("color");
+
+
+/* ========================================= */
+/* FUNCION CAPITALIZAR */
+/* ========================================= */
+
+function capitalizarTexto(valor){
+
+    return valor
+        .toLowerCase()
+        .replace(/\b\w/g, function(letra){
+
+            return letra.toUpperCase();
+
+        });
+
+}
+
+
+
+/* ========================================= */
+/* MOTIVO */
+/* ========================================= */
+
+motivoInput.addEventListener("input", function(){
+
+    this.value = capitalizarTexto(this.value);
+
+});
+
+
+/* ========================================= */
+/* MARCA */
+/* ========================================= */
+
+marcaVehiculo.addEventListener("input", function(){
+
+    this.value = capitalizarTexto(this.value);
+
+});
+
+
+/* ========================================= */
+/* MODELO */
+/* ========================================= */
+
+modeloVehiculo.addEventListener("input", function(){
+
+    this.value = capitalizarTexto(this.value);
+
+});
+
+
+/* ========================================= */
+/* COLOR */
+/* ========================================= */
+
+colorVehiculo.addEventListener("input", function(){
+
+    this.value = capitalizarTexto(this.value);
+
+});
+
+
+/* ========================================= */
+/* LIMPIAR NOMBRE VISITANTE */
+/* ========================================= */
+
+nombreVisitante.addEventListener("input", function(){
+
+    this.value = this.value
+        .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, "");
+
+    this.value = capitalizarTexto(this.value);
+
+});
+
+
+/* ========================================= */
+/* SOLO NUMEROS TELEFONO */
+/* ========================================= */
+
+document.querySelector('input[name="telefono"]')
+.addEventListener("input", function(){
+
+    this.value =
+        this.value.replace(/\D/g, "").slice(0,10);
+
+});
+
+
+/* ========================================= */
+/* LIMPIAR CARACTERES EXTRAÑOS */
+/* ========================================= */
+
+motivoInput.addEventListener("input", function(){
+
+    this.value =
+        this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]/g, "");
+
+});
+
+
+/* ========================================= */
+/* FORMATO AUTOMATICO */
+/* ========================================= */
+
+placaInput.addEventListener("input", function () {
+
+    let valor = this.value.toUpperCase();
+
+    valor = valor.replace(/[^A-Z0-9]/g, "");
+
+
+    /* ========================================= */
+    /* AUTOMOVIL */
+    /* ========================================= */
+
+    if(tipoVehiculo.value === "auto"){
+
+        if(valor.length <= 3){
+
+            this.value = valor;
+
+        }
+
+        else if(valor.length <= 6){
+
+            this.value =
+                valor.slice(0,3) +
+                "-" +
+                valor.slice(3);
+
+        }
+
+        else{
+
+            this.value =
+                valor.slice(0,3) +
+                "-" +
+                valor.slice(3,6) +
+                "-" +
+                valor.slice(6,7);
+
+        }
+
+    }
+
+
+    /* ========================================= */
+    /* MOTOCICLETA */
+    /* ========================================= */
+
+    else{
+
+        if(valor.length <= 2){
+
+            this.value = valor;
+
+        }
+
+        else if(valor.length <= 5){
+
+            this.value =
+                valor.slice(0,2) +
+                "-" +
+                valor.slice(2);
+
+        }
+
+        else{
+
+            this.value =
+                valor.slice(0,2) +
+                "-" +
+                valor.slice(2,5) +
+                "-" +
+                valor.slice(5,7);
+
+        }
+
+    }
+
+});
+
+
+/* ========================================= */
+/* VALIDACION FINAL */
+/* ========================================= */
+
+document.querySelector("form").addEventListener("submit", function(e){
+
+    const placa = placaInput.value.trim();
+
+    let regex;
+
+
+    /* ========================================= */
+    /* FORMATOS AUTO */
+    /* ========================================= */
+
+    if(tipoVehiculo.value === "auto"){
+
+        regex = new RegExp(
+            "^(" +
+            "[A-Z]{3}-[0-9]{3}" + "|" +
+            "[A-Z]{3}-[0-9]{3}-[A-Z0-9]" + "|" +
+            "[0-9]{3}-[A-Z]{3}" + "|" +
+            "[A-Z]{2}-[0-9]{3}-[A-Z]{2}" + "|" +
+            "[A-Z]{3}-[0-9]{2}-[0-9]{2}" +
+            ")$"
+        );
+
+    }
+
+
+    /* ========================================= */
+    /* FORMATOS MOTOCICLETA */
+    /* ========================================= */
+
+    else{
+
+        regex = new RegExp(
+            "^(" +
+            "[A-Z]{2}-[0-9]{3}" + "|" +
+            "[A-Z]{2}-[0-9]{3}-[A-Z0-9]{1,2}" + "|" +
+            "[0-9]{2}-[A-Z]{3}" +
+            ")$"
+        );
+
+    }
+
+
+    /* ========================================= */
+    /* VALIDAR */
+    /* ========================================= */
+
+    if(!regex.test(placa)){
+
+        e.preventDefault();
+
+        if(tipoVehiculo.value === "auto"){
+
+            alert(
+`Placa de automóvil inválida.
+
+Formatos permitidos:
+
+• ABC-123
+• ABC-123-A
+• 123-ABC
+• AB-123-CD
+• ABC-12-34`
+            );
+
+        }
+
+        else{
+
+            alert(
+`Placa de motocicleta inválida.
+
+Formatos permitidos:
+
+• AB-123
+• AB-123-A
+• 12-ABC`
+            );
+
+        }
+
+        placaInput.focus();
+
+    }
+
+});
+
+</script>
+
+
+<style>
+
+/* ========================================= */
+/* ESPACIADO FORMULARIO */
+/* ========================================= */
+
+.form-card form{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+}
+
+
+/* ========================================= */
+/* TITULOS */
+/* ========================================= */
+
+.form-card h3{
+
+    margin-top:14px;
+
+    margin-bottom:4px;
+
+    font-size:1.1rem;
+
+    color:#0f172a;
+
+}
+
+
+/* ========================================= */
+/* LABELS */
+/* ========================================= */
+
+.form-card label{
+
+    margin-bottom:-10px;
+
+    font-weight:600;
+
+    color:#334155;
+
+}
+
+
+/* ========================================= */
+/* INPUTS Y SELECT */
+/* ========================================= */
+
+.form-card input,
+.form-card select{
+
+    margin-bottom:6px;
+
+}
+
+
+/* ========================================= */
+/* SECCIONES */
+/* ========================================= */
+
+#campos_temporal,
+#campos_recurrente{
+
+    margin-top:12px;
+
+    padding-top:12px;
+
+}
+
+
+/* ========================================= */
+/* LINEA HR */
+/* ========================================= */
+
+.form-card hr{
+
+    margin:12px 0;
+
+}
+
+
+/* ========================================= */
+/* ALERTAS */
+/* ========================================= */
+
+.alert{
+
+    margin-top:12px;
+
+}
+
+
+/* ========================================= */
+/* GRID HORARIOS */
+/* ========================================= */
+
+.horarios-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:18px;
+
+    margin-top:10px;
+
+}
+
+
+/* ========================================= */
+/* GRID DIAS */
+/* ========================================= */
+
+.dias-grid{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:12px;
+
+    margin-top:10px;
+
+}
+
+</style>
 
 {% endblock %}

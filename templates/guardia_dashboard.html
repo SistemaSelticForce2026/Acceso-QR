@@ -179,7 +179,7 @@
 
                             <div class="schedule-date">
                                 <i class="fa-regular fa-calendar-days"></i>
-                                {{ visita.fecha_visita }}
+                                {{ visita.fecha_visita.split('-')[2] }}/{{ visita.fecha_visita.split('-')[1] }}/{{ visita.fecha_visita.split('-')[0] }}
                             </div>
 
                             <div class="schedule-time">
@@ -229,7 +229,7 @@
 
                                 <i class="fa-solid fa-industry"></i>
 
-                                {{ visita.vehiculo.marca }}
+                                {{ visita.vehiculo.marca | title }}
 
                             </span>
 
@@ -237,7 +237,7 @@
 
                                 <i class="fa-solid fa-car"></i>
 
-                                {{ visita.vehiculo.modelo }}
+                                {{ visita.vehiculo.modelo | title }}
 
                             </span>
 
@@ -245,7 +245,7 @@
 
                                 <i class="fa-solid fa-palette"></i>
 
-                                {{ visita.vehiculo.color }}
+                                {{ visita.vehiculo.color | title }}
 
                             </span>
 

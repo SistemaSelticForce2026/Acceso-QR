@@ -53,9 +53,12 @@
 </div>
 
 <div class="card">
+
     <h2>Mis visitas registradas</h2>
 
-    <table class="resident-table">
+    <div class="table-wrapper">
+
+        <table class="resident-table">
         <tr>
             <th>Visitante</th>
             <th>Tipo de acceso</th>
@@ -170,6 +173,7 @@
         </tr>
         {% endfor %}
     </table>
+    </div>
 </div>
 
 <!-- Modal foto visitante/placa -->
@@ -543,5 +547,713 @@ Presenta este QR en caseta el día de tu visita.`;
     {% endif %}
 
 </script>
+
+
+<style>
+
+/* ========================================= */
+/* PANEL RESIDENTE */
+/* ========================================= */
+
+.stats{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+
+    gap:22px;
+
+    margin:30px 0;
+
+}
+
+
+/* ========================================= */
+/* STATS CARD */
+/* ========================================= */
+
+.stat-card{
+
+    background:#ffffff;
+
+    border-radius:24px;
+
+    padding:26px;
+
+    border:1px solid #e2e8f0;
+
+    box-shadow:
+        0 10px 25px rgba(15,23,42,.05);
+
+    transition:.25s;
+
+}
+
+
+.stat-card:hover{
+
+    transform:translateY(-4px);
+
+}
+
+
+.stat-top{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    margin-bottom:20px;
+
+}
+
+
+.stat-top span{
+
+    font-weight:600;
+
+    color:#64748b;
+
+}
+
+
+.stat-top i{
+
+    width:48px;
+
+    height:48px;
+
+    border-radius:16px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#eff6ff;
+
+    color:#2563eb;
+
+    font-size:1.1rem;
+
+}
+
+
+.stat-card h2{
+
+    font-size:3rem;
+
+    margin-bottom:10px;
+
+    color:#0f172a;
+
+}
+
+
+.stat-card small{
+
+    color:#94a3b8;
+
+    font-size:.92rem;
+
+}
+
+
+/* ========================================= */
+/* BOTON CREAR */
+/* ========================================= */
+
+.btn{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:10px;
+
+    margin-top:15px;
+
+    margin-bottom:10px;
+
+}
+
+
+/* ========================================= */
+/* TABLA */
+/* ========================================= */
+
+.resident-table{
+
+    width:100%;
+
+    border-collapse:separate;
+
+    border-spacing:0 18px;
+
+    margin-top:30px;
+
+}
+
+
+/* ========================================= */
+/* HEADER TABLA */
+/* ========================================= */
+
+.resident-table th{
+
+    background:linear-gradient(
+        135deg,
+        #0f172a,
+        #1e3a8a
+    );
+
+    color:#ffffff;
+
+    padding:22px 18px;
+
+    font-size:.9rem;
+
+    text-align:left;
+
+    font-weight:700;
+
+    letter-spacing:.4px;
+
+}
+
+
+.resident-table th:first-child{
+
+    border-top-left-radius:18px;
+
+    border-bottom-left-radius:18px;
+
+}
+
+
+.resident-table th:last-child{
+
+    border-top-right-radius:18px;
+
+    border-bottom-right-radius:18px;
+
+}
+
+
+/* ========================================= */
+/* FILAS */
+/* ========================================= */
+
+.resident-table td{
+
+    background:#ffffff;
+
+    padding:24px 18px;
+
+    vertical-align:middle;
+
+    border-top:1px solid #e2e8f0;
+
+    border-bottom:1px solid #e2e8f0;
+
+}
+
+
+.resident-table td:first-child{
+
+    border-left:1px solid #e2e8f0;
+
+    border-top-left-radius:20px;
+
+    border-bottom-left-radius:20px;
+
+}
+
+
+.resident-table td:last-child{
+
+    border-right:1px solid #e2e8f0;
+
+    border-top-right-radius:20px;
+
+    border-bottom-right-radius:20px;
+
+}
+
+
+/* ========================================= */
+/* VISITANTE */
+/* ========================================= */
+
+.visitante-info{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+
+    min-width:240px;
+
+}
+
+
+.visitante-foto img{
+
+    width:68px;
+
+    height:68px;
+
+    border-radius:18px;
+
+    object-fit:cover;
+
+    border:3px solid #e2e8f0;
+
+    cursor:pointer;
+
+}
+
+
+.visitante-data{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+}
+
+
+/* ========================================= */
+/* BADGES */
+/* ========================================= */
+
+.badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:10px 18px;
+
+    border-radius:999px;
+
+    font-size:.85rem;
+
+    font-weight:700;
+
+}
+
+
+.badge.warning{
+
+    background:#fed7aa;
+
+    color:#9a3412;
+
+}
+
+
+.badge.success{
+
+    background:#dcfce7;
+
+    color:#166534;
+
+}
+
+
+.badge.info{
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+}
+
+
+.badge.dark{
+
+    background:#e2e8f0;
+
+    color:#334155;
+
+}
+
+
+.badge.danger{
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+}
+
+
+/* ========================================= */
+/* VEHICULO */
+/* ========================================= */
+
+.placa-thumb{
+
+    width:95px;
+
+    margin-top:10px;
+
+    border-radius:10px;
+
+    border:2px solid #e2e8f0;
+
+}
+
+
+td span.small{
+
+    display:inline-block;
+
+    margin-top:8px;
+
+    line-height:1.6;
+
+}
+
+
+/* ========================================= */
+/* QR */
+/* ========================================= */
+
+.qr-box{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+
+.qr-image{
+
+    width:90px;
+
+    height:90px;
+
+    border-radius:18px;
+
+    padding:10px;
+
+    background:#ffffff;
+
+    border:1px solid #e2e8f0;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+
+.qr-image:hover{
+
+    transform:scale(1.05);
+
+}
+
+
+.qr-token{
+
+    background:#f1f5f9;
+
+    padding:8px 12px;
+
+    border-radius:999px;
+
+    font-weight:600;
+
+}
+
+
+/* ========================================= */
+/* CARD GENERAL */
+/* ========================================= */
+
+.card{
+
+    border-radius:28px;
+
+    padding:32px;
+
+}
+
+
+/* ========================================= */
+/* MODAL */
+/* ========================================= */
+
+.image-modal{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.82);
+
+    display:none;
+
+    align-items:center;
+
+    justify-content:center;
+
+    z-index:9999;
+
+    padding:20px;
+
+}
+
+
+.modal-content{
+
+    max-width:90%;
+
+    max-height:90%;
+
+    border-radius:20px;
+
+}
+
+
+.close-modal{
+
+    position:absolute;
+
+    top:25px;
+
+    right:35px;
+
+    color:#ffffff;
+
+    font-size:2rem;
+
+    cursor:pointer;
+
+}
+
+
+/* ========================================= */
+/* TABLA RESPONSIVE REAL */
+/* ========================================= */
+
+.resident-table{
+
+    width:100%;
+
+    min-width:1450px;
+
+}
+
+
+/* ========================================= */
+/* CONTENEDOR SCROLL */
+/* ========================================= */
+
+.table-wrapper{
+
+    width:100%;
+
+    overflow-x:auto;
+
+    padding-bottom:10px;
+
+}
+
+
+/* ========================================= */
+/* SCROLL BONITO */
+/* ========================================= */
+
+.table-wrapper::-webkit-scrollbar{
+
+    height:10px;
+
+}
+
+
+.table-wrapper::-webkit-scrollbar-track{
+
+    background:#e2e8f0;
+
+    border-radius:999px;
+
+}
+
+
+.table-wrapper::-webkit-scrollbar-thumb{
+
+    background:#2563eb;
+
+    border-radius:999px;
+
+}
+
+
+/* ========================================= */
+/* HEADERS */
+/* ========================================= */
+
+.resident-table th{
+
+    white-space:nowrap;
+
+    min-width:150px;
+
+}
+
+
+/* ========================================= */
+/* COLUMNAS ESPECIALES */
+/* ========================================= */
+
+.resident-table th:nth-child(1),
+.resident-table td:nth-child(1){
+
+    min-width:280px;
+
+}
+
+
+.resident-table th:nth-child(2),
+.resident-table td:nth-child(2){
+
+    min-width:220px;
+
+}
+
+
+.resident-table th:nth-child(3),
+.resident-table td:nth-child(3){
+
+    min-width:170px;
+
+}
+
+
+.resident-table th:nth-child(4),
+.resident-table td:nth-child(4){
+
+    min-width:240px;
+
+}
+
+
+.resident-table th:nth-child(5),
+.resident-table td:nth-child(5){
+
+    min-width:260px;
+
+}
+
+
+.resident-table th:nth-child(6),
+.resident-table td:nth-child(6){
+
+    min-width:180px;
+
+}
+
+
+.resident-table th:nth-child(7),
+.resident-table td:nth-child(7){
+
+    min-width:170px;
+
+}
+
+
+/* ========================================= */
+/* RESPONSIVE */
+/* ========================================= */
+
+@media screen and (max-width:1200px){
+
+    .card{
+
+        padding:22px;
+
+    }
+
+}
+
+/* ========================================= */
+/* EVITAR TEXTO CORTADO */
+/* ========================================= */
+
+.resident-table th,
+.resident-table td{
+
+    white-space:normal;
+
+    word-break:keep-all;
+
+}
+
+
+/* ========================================= */
+/* HEADERS */
+/* ========================================= */
+
+.resident-table th{
+
+    white-space:nowrap;
+
+    text-transform:uppercase;
+
+}
+
+
+/* ========================================= */
+/* DESTINO */
+/* ========================================= */
+
+.resident-table td:nth-child(3){
+
+    line-height:1.7;
+
+}
+
+
+/* ========================================= */
+/* VISITAS Y ACCESOS */
+/* ========================================= */
+
+.resident-table td:nth-child(4){
+
+    line-height:1.8;
+
+}
+
+
+/* ========================================= */
+/* VEHICULO */
+/* ========================================= */
+
+.resident-table td:nth-child(5){
+
+    line-height:1.8;
+
+}
+
+</style>
 
 {% endblock %}

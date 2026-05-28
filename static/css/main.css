@@ -873,47 +873,6 @@ canvas{
     gap: 20px;
 }
 
-/* =========================================================
-   INFORMACION GENERAL
-========================================================= */
-
-.info-group{
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 15px;
-
-    margin-top: 20px;
-}
-
-.info-item{
-
-    background: rgba(148,163,184,0.08);
-
-    padding: 16px;
-
-    border-radius: 12px;
-
-    border: 1px solid rgba(148,163,184,0.15);
-}
-
-.info-item span{
-
-    display: block;
-
-    font-size: 13px;
-
-    color: #64748b;
-
-    margin-bottom: 6px;
-}
-
-.info-item strong{
-
-    font-size: 16px;
-}
 
 /* =========================================================
    BOTONES PERFIL
@@ -1363,84 +1322,10 @@ canvas{
     gap: 10px;
 }
 
-/* =========================================================
-   VISITOR PROFILE
-========================================================= */
-
-.visitor-profile{
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 20px;
-
-    flex-wrap: wrap;
-
-    margin-bottom: 20px;
-}
-
-.visitor-photo{
-
-    width: 130px;
-
-    height: 130px;
-
-    border-radius: 18px;
-
-    object-fit: cover;
-
-    border: 4px solid #e2e8f0;
-
-    box-shadow: 0 8px 20px rgba(0,0,0,.08);
-}
-
-.visitor-placeholder{
-
-    width: 130px;
-
-    height: 130px;
-
-    border-radius: 18px;
-
-    background: #e2e8f0;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    font-size: 42px;
-
-    color: #64748b;
-}
-
-.visitor-info h2{
-
-    margin-bottom: 8px;
-}
 
 /* =========================================================
    STATUS BADGE
 ========================================================= */
-
-.status-badge{
-
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    padding: 10px 18px;
-
-    border-radius: 30px;
-
-    font-weight: 700;
-
-    margin-bottom: 20px;
-}
 
 .status-badge.active{
 
@@ -2510,23 +2395,6 @@ table tr{
 
 }
 
-
-/* ===================================================== */
-/* DASHBOARD GRID */
-/* ===================================================== */
-
-.dashboard-grid {
-
-    display: grid;
-
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-
-    gap: 25px;
-
-    margin-top: 25px;
-
-}
-
 /* ===================================================== */
 /* CARD HEADER */
 /* ===================================================== */
@@ -2570,20 +2438,6 @@ table tr{
 /* ===================================================== */
 /* STATUS BADGES */
 /* ===================================================== */
-
-.status-badge {
-
-    padding: 8px 14px;
-
-    border-radius: 30px;
-
-    font-size: 0.75rem;
-
-    font-weight: 700;
-
-    letter-spacing: 0.5px;
-
-}
 
 .status-badge.success {
 
@@ -2738,18 +2592,6 @@ table tr{
 /* ===================================================== */
 /* BADGES */
 /* ===================================================== */
-
-.badge {
-
-    padding: 7px 12px;
-
-    border-radius: 30px;
-
-    font-size: 0.75rem;
-
-    font-weight: 700;
-
-}
 
 .badge.success {
 
@@ -3261,20 +3103,52 @@ table tr{
 
 
 /* ===================================================== */
-/* DASHBOARD GRID */
+/* ACCESS GRID FIX */
 /* ===================================================== */
 
-.dashboard-grid {
+.dashboard-grid.access-grid{
 
-    display: grid;
+    display:grid;
 
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    grid-template-columns:1fr 1fr;
 
-    gap: 25px;
+    gap:24px;
 
-    margin-top: 25px;
+    align-items:start;
 
-    align-items: stretch;
+}
+
+
+/* ===================================================== */
+/* ACCESS CARD */
+/* ===================================================== */
+
+.access-card{
+
+    height:fit-content;
+
+}
+
+
+/* ===================================================== */
+/* RESPONSIVE */
+/* ===================================================== */
+
+@media(max-width:1100px){
+
+    .dashboard-grid.access-grid{
+
+        display:grid;
+
+        grid-template-columns:
+            minmax(420px,1.2fr)
+            minmax(380px,.9fr);
+
+        gap:28px;
+
+        align-items:start;
+
+    }
 
 }
 
@@ -9612,3 +9486,883 @@ body.dark-mode .table-container::-webkit-scrollbar-thumb{
 
 }
 
+
+
+/* ===================================================== */
+/* VISITA RECURRENTE */
+/* ===================================================== */
+
+.visita-box{
+
+    margin-top:20px;
+
+    padding:22px;
+
+    border-radius:22px;
+
+    background:#f8fafc;
+
+    border:1px solid #e2e8f0;
+
+}
+
+.visita-header{
+
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:16px;
+
+    margin-bottom:18px;
+
+}
+
+.visita-header i{
+
+    width:55px;
+
+    height:55px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:16px;
+
+    font-size:1.3rem;
+
+    color:white;
+
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+    box-shadow:0 10px 25px rgba(37,99,235,.25);
+
+}
+
+.visita-header h3{
+
+    margin:0;
+
+    font-size:1.2rem;
+
+}
+
+.visita-header p{
+
+    margin-top:5px;
+
+    color:#64748b;
+
+    line-height:1.5;
+
+}
+
+.recurrente-alert{
+
+    margin-bottom:20px;
+
+}
+
+.dias-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:12px;
+
+    margin-top:10px;
+
+    margin-bottom:22px;
+
+}
+
+.dia-item{
+
+    position:relative;
+
+    cursor:pointer;
+
+}
+
+.dia-item input{
+
+    display:none;
+
+}
+
+.dia-item span{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:12px;
+
+    border-radius:14px;
+
+    background:white;
+
+    border:2px solid #dbeafe;
+
+    font-weight:600;
+
+    transition:.25s;
+
+}
+
+.dia-item input:checked + span{
+
+    background:#2563eb;
+
+    color:white;
+
+    border-color:#2563eb;
+
+    transform:scale(1.03);
+
+}
+
+.horarios-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:16px;
+
+}
+
+.recurrente-card{
+
+    margin-top:24px;
+
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:14px;
+
+    padding:18px;
+
+    border-radius:18px;
+
+    background:white;
+
+    border:1px solid #dbeafe;
+
+}
+
+.mini-icon{
+
+    width:48px;
+
+    height:48px;
+
+    border-radius:14px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#eff6ff;
+
+    color:#2563eb;
+
+    font-size:1.1rem;
+
+}
+
+.recurrente-card strong{
+
+    display:block;
+
+    margin-bottom:6px;
+
+}
+
+.recurrente-card p{
+
+    margin:0;
+
+    color:#64748b;
+
+    line-height:1.5;
+
+}
+
+
+/* ===================================================== */
+/* RESPONSIVE */
+/* ===================================================== */
+
+@media screen and (max-width:768px){
+
+    .dias-grid{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+    .horarios-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+
+/* ===================================================== */
+/* BADGES ESTADO MEJORADOS */
+/* ===================================================== */
+
+.badge,
+.status-badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    padding:10px 18px;
+
+    min-height:42px;
+
+    max-width:100%;
+
+    border-radius:999px;
+
+    font-size:.82rem;
+
+    font-weight:700;
+
+    text-align:center;
+
+    line-height:1.2;
+
+    white-space:normal;
+
+    word-break:break-word;
+
+    overflow-wrap:anywhere;
+
+}
+
+
+/* ===================================================== */
+/* BADGE ROJO */
+/* ===================================================== */
+
+.badge.danger,
+.status-badge.danger{
+
+    background:linear-gradient(
+        135deg,
+        #dc2626,
+        #ef4444
+    );
+
+    color:white;
+
+    box-shadow:
+        0 8px 18px rgba(239,68,68,.25);
+
+}
+
+
+/* ===================================================== */
+/* BADGE AZUL */
+/* ===================================================== */
+
+.badge.info,
+.status-badge.info{
+
+    background:linear-gradient(
+        135deg,
+        #dbeafe,
+        #bfdbfe
+    );
+
+    color:#1d4ed8;
+
+}
+
+
+/* ===================================================== */
+/* BADGE VERDE */
+/* ===================================================== */
+
+.badge.success,
+.status-badge.success{
+
+    background:linear-gradient(
+        135deg,
+        #dcfce7,
+        #bbf7d0
+    );
+
+    color:#166534;
+
+}
+
+
+/* ===================================================== */
+/* BADGE NARANJA */
+/* ===================================================== */
+
+.badge.warning,
+.status-badge.warning{
+
+    background:linear-gradient(
+        135deg,
+        #fed7aa,
+        #fdba74
+    );
+
+    color:#9a3412;
+
+}
+
+.status-pending{
+
+    color:#f59e0b;
+
+    font-weight:700;
+
+}
+
+.pending{
+
+    background:#fef3c7;
+
+    color:#b45309;
+
+}
+
+/* ===================================================== */
+/* HEADER ESCANER */
+/* ===================================================== */
+
+.access-header h1{
+
+    color:#ffffff !important;
+
+    font-size:3rem;
+
+    font-weight:800;
+
+    line-height:1.1;
+
+    margin-bottom:14px;
+
+}
+
+.access-header p{
+
+    color:rgba(255,255,255,.78) !important;
+
+    font-size:1.08rem;
+
+    line-height:1.6;
+
+    max-width:760px;
+
+}
+
+
+.access-header h1::selection,
+.access-header p::selection{
+
+    background:rgba(255,255,255,.18);
+
+    color:#ffffff;
+
+}
+
+.access-header h1::-moz-selection,
+.access-header p::-moz-selection{
+
+    background:rgba(255,255,255,.18);
+
+    color:#ffffff;
+
+}
+
+/* ===================================================== */
+/* FOLIO VISITA */
+/* ===================================================== */
+
+.visit-id-banner{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:14px;
+
+    margin-top:22px;
+
+    margin-bottom:22px;
+
+}
+
+.visit-id-item{
+
+    padding:16px 18px;
+
+    border-radius:18px;
+
+    background:linear-gradient(
+        135deg,
+        #eff6ff,
+        #dbeafe
+    );
+
+    border:1px solid #bfdbfe;
+
+}
+
+.visit-id-item span{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    font-size:.82rem;
+
+    font-weight:600;
+
+    color:#64748b;
+
+    margin-bottom:8px;
+
+}
+
+.visit-id-item strong{
+
+    display:block;
+
+    color:#1e3a8a;
+
+    font-size:1rem;
+
+    font-weight:800;
+
+    letter-spacing:.4px;
+
+}
+
+
+/* ===================================================== */
+/* RESPONSIVE */
+/* ===================================================== */
+
+@media screen and (max-width:768px){
+
+    .visit-id-banner{
+
+        grid-template-columns:1fr;
+
+    .visit-id-banner.single{
+
+        grid-template-columns:1fr;
+
+    }
+    
+        
+    }
+
+}
+
+/* ===================================================== */
+/* CONTACTO VISITANTE ULTRA PREMIUM */
+/* ===================================================== */
+
+.resident-contact-panel{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+    margin-top:28px;
+
+}
+
+/* ===================================================== */
+/* ITEM */
+/* ===================================================== */
+
+.resident-contact-item{
+
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+    padding:18px 22px;
+
+    border-radius:22px;
+
+    background:linear-gradient(
+        135deg,
+        #ffffff,
+        #f8fafc
+    );
+
+    border:1px solid #e2e8f0;
+
+    overflow:hidden;
+
+    transition:.28s ease;
+
+    box-shadow:
+        0 6px 18px rgba(15,23,42,.05);
+
+}
+
+/* Glow */
+
+.resident-contact-item::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    width:4px;
+
+    height:100%;
+
+    background:linear-gradient(
+        180deg,
+        #2563eb,
+        #38bdf8
+    );
+
+    opacity:.9;
+
+}
+
+/* Hover */
+
+.resident-contact-item:hover{
+
+    transform:translateY(-3px);
+
+    border-color:#93c5fd;
+
+    box-shadow:
+        0 16px 34px rgba(37,99,235,.10);
+
+}
+
+/* ===================================================== */
+/* ICONO */
+/* ===================================================== */
+
+.resident-contact-icon{
+
+    width:58px;
+
+    height:58px;
+
+    min-width:58px;
+
+    border-radius:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:22px;
+
+    color:#ffffff;
+
+    position:relative;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 10px 24px rgba(0,0,0,.14);
+
+}
+
+/* Shine */
+
+.resident-contact-icon::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:linear-gradient(
+        135deg,
+        rgba(255,255,255,.28),
+        transparent
+    );
+
+}
+
+/* ===================================================== */
+/* FIX ICONOS */
+/* ===================================================== */
+
+.resident-contact-icon i{
+
+    position:relative;
+
+    z-index:2;
+
+    color:#ffffff !important;
+
+}
+
+/* ===================================================== */
+/* COLORES ICONOS */
+/* ===================================================== */
+
+.resident-contact-icon.resident{
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #60a5fa
+    );
+
+}
+
+.resident-contact-icon.phone{
+
+    background:linear-gradient(
+        135deg,
+        #0f172a,
+        #334155
+    );
+
+}
+
+.resident-contact-icon.visitor{
+
+    background:linear-gradient(
+        135deg,
+        #16a34a,
+        #4ade80
+    );
+
+}
+
+/* ===================================================== */
+/* CONTENIDO */
+/* ===================================================== */
+
+.resident-contact-content{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+}
+
+/* LABEL */
+
+.resident-contact-content span{
+
+    font-size:12px;
+
+    font-weight:700;
+
+    color:#64748b;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+}
+
+/* VALUE */
+
+.resident-contact-content strong{
+
+    font-size:18px;
+
+    color:#0f172a;
+
+    font-weight:800;
+
+    letter-spacing:-.4px;
+
+}
+
+/* ===================================================== */
+/* DARK MODE */
+/* ===================================================== */
+
+.dark-mode .resident-contact-item{
+
+    background:linear-gradient(
+        135deg,
+        rgba(15,23,42,.96),
+        rgba(17,24,39,.98)
+    );
+
+    border:1px solid rgba(59,130,246,.16);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.30);
+
+}
+
+.dark-mode .resident-contact-item::before{
+
+    background:linear-gradient(
+        180deg,
+        #38bdf8,
+        #2563eb
+    );
+
+}
+
+.dark-mode .resident-contact-content strong{
+
+    color:#f8fafc;
+
+}
+
+.dark-mode .resident-contact-content span{
+
+    color:#94a3b8;
+
+}
+
+/* ICONOS EN DARK */
+
+.dark-mode .resident-contact-icon{
+
+    color:#ffffff;
+
+    box-shadow:
+        0 10px 26px rgba(0,0,0,.40);
+
+}
+
+/* ===================================================== */
+/* DARK MODE FIX - ACCESS PANELS */
+/* ===================================================== */
+
+.dark-mode .timeline-item,
+.dark-mode .info-item,
+.dark-mode .vehicle-grid div,
+.dark-mode .status-panel,
+.dark-mode .status-box{
+
+    background:linear-gradient(
+        135deg,
+        rgba(15,23,42,.92),
+        rgba(17,24,39,.96)
+    ) !important;
+
+    border:1px solid rgba(59,130,246,.14);
+
+    color:#f8fafc;
+
+}
+
+/* ===================================================== */
+/* TIMELINE TEXT */
+/* ===================================================== */
+
+.dark-mode .timeline-item span,
+.dark-mode .timeline-content span,
+.dark-mode .info-item span{
+
+    color:#94a3b8 !important;
+
+}
+
+/* ===================================================== */
+/* STRONG TEXT */
+/* ===================================================== */
+
+.dark-mode .timeline-item strong,
+.dark-mode .timeline-content strong,
+.dark-mode .info-item strong,
+.dark-mode .vehicle-grid strong{
+
+    color:#f8fafc !important;
+
+}
+
+/* ===================================================== */
+/* ICON BOXES */
+/* ===================================================== */
+
+.dark-mode .timeline-item i{
+
+    color:#60a5fa;
+
+}
+
+/* ===================================================== */
+/* STATUS PANEL */
+/* ===================================================== */
+
+.dark-mode .status-badge{
+
+    border:none;
+
+    box-shadow:
+        0 8px 18px rgba(0,0,0,.25);
+
+}
+
+/* ===================================================== */
+/* HOVER */
+/* ===================================================== */
+
+.dark-mode .timeline-item:hover,
+.dark-mode .info-item:hover,
+.dark-mode .vehicle-grid div:hover{
+
+    border-color:rgba(96,165,250,.35);
+
+    box-shadow:
+        0 14px 30px rgba(37,99,235,.12);
+
+}
+
+/* ===================================================== */
+/* ESPACIO ENTRE CONTACTO E INFO */
+/* ===================================================== */
+
+.resident-contact-panel{
+
+    margin-bottom:28px;
+
+}
