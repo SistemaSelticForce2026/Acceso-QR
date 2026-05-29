@@ -58,37 +58,74 @@ def validar_acceso_qr(visita):
         return False, "QR no válido o ya finalizado."
 
     if modalidad == "recurrente":
-        vigencia_hasta = visita.get("vigencia_hasta")
-        if vigencia_hasta and isinstance(vigencia_hasta, datetime):
-            if ahora > vigencia_hasta:
-                return (
-                    False,
-                    "El QR recurrente venció. Debe generarse uno nuevo cada mes.",
-                )
 
-        dia = (visita.get("dia_semana") or "").strip().lower()
-        dia_num = DIAS_SEMANA_MAP.get(dia)
-        if dia_num is None:
-            return False, "Día de la visita recurrente no configurado."
+        # ==========================
+        # ESTADO
+        # ==========================
 
-        if ahora.weekday() != dia_num:
+        if visita.get("estado_recurrente") == "suspendido":
+
+            return (False, "El permiso recurrente se encuentra suspendido.")
+
+        # ==========================
+        # FECHAS
+        # ==========================
+
+        fecha_inicio = _parse_fecha(visita.get("fecha_inicio_recurrente"))
+
+        fecha_fin = _parse_fecha(visita.get("fecha_fin_recurrente"))
+
+        if fecha_inicio and ahora.date() < fecha_inicio:
+
+            return (False, "La autorización aún no inicia.")
+
+        if fecha_fin and ahora.date() > fecha_fin:
+
+            return (False, "La autorización ya venció.")
+
+        # ==========================
+        # DIAS
+        # ==========================
+
+        dias_autorizados = [d.lower() for d in visita.get("dias_autorizados", [])]
+
+        dias_hoy = [
+            "lunes",
+            "martes",
+            "miercoles",
+            "jueves",
+            "viernes",
+            "sabado",
+            "domingo",
+        ]
+
+        dia_actual = dias_hoy[ahora.weekday()]
+
+        if dias_autorizados and dia_actual not in dias_autorizados:
+
+            return (False, f"Acceso no permitido los {dia_actual.capitalize()}.")
+
+        # ==========================
+        # HORARIO
+        # ==========================
+
+        hora_desde = _parse_time(visita.get("hora_desde"))
+
+        hora_hasta = _parse_time(visita.get("hora_hasta"))
+
+        if hora_desde and ahora.time() < hora_desde:
+
             return (
                 False,
-                f"Este QR solo es válido los {dia.capitalize()}.",
+                f"Acceso permitido a partir de las {hora_desde.strftime('%H:%M')}.",
             )
 
-        hora_prog = _parse_time(
-            visita.get("hora_programada") or visita.get("hora_inicio")
-        )
-        if hora_prog:
-            ventana_inicio = (
-                datetime.combine(ahora.date(), hora_prog) - timedelta(minutes=30)
-            ).time()
-            if ahora.time() < ventana_inicio:
-                return (
-                    False,
-                    f"El acceso está autorizado a partir de las {hora_prog.strftime('%H:%M')}.",
-                )
+        if hora_hasta and ahora.time() > hora_hasta:
+
+            return (
+                False,
+                f"El horario autorizado finalizó a las {hora_hasta.strftime('%H:%M')}.",
+            )
 
         return True, ""
 

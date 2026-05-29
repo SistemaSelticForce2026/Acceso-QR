@@ -488,7 +488,9 @@
 
                                 ·
 
-                                {{ resultado.visita.hora_programada | hora_ampm }}
+                                {{ resultado.visita.hora_desde | hora_ampm }}
+                                a
+                                {{ resultado.visita.hora_hasta | hora_ampm }}
 
                             {% else %}
 
@@ -589,11 +591,31 @@
 
                         <div>
 
-                            <span>Hora programada</span>
+                            {% if resultado.visita.modalidad_visita == "recurrente" %}
 
-                            <strong>
-                                {{ resultado.visita.get("hora_inicio", "") | hora_ampm }}
-                            </strong>
+                                <span>Horario autorizado</span>
+
+                                <strong>
+
+                                    {{ resultado.visita.hora_desde | hora_ampm }}
+
+                                    -
+
+                                    {{ resultado.visita.hora_hasta | hora_ampm }}
+
+                                </strong>
+
+                            {% else %}
+
+                                <span>Hora programada</span>
+
+                                <strong>
+
+                                    {{ resultado.visita.get("hora_inicio", "") | hora_ampm }}
+
+                                </strong>
+
+                            {% endif %}
 
                         </div>
 

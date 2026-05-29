@@ -8,8 +8,11 @@
             🌙
         </button>
 
-        <a href="/login">Login</a>
-        <a href="/logout">Cerrar sesión</a>
+        {% if session.get("user_id") %}
+
+            <a href="/logout">Cerrar sesión</a>
+
+        {% endif %}
 
     </div>
 

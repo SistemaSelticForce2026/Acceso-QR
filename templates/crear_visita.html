@@ -72,60 +72,140 @@
         <div id="campos_recurrente" class="visita-box" style="display:none;">
 
             <div class="visita-header recurrente">
+
                 <i class="fa-solid fa-repeat"></i>
+
                 <div>
+
                     <h3>Acceso recurrente</h3>
+
                     <p>
-                        Ideal para personal doméstico, mantenimiento,
-                        proveedores frecuentes o trabajadores autorizados.
+                        Autoriza ingresos periódicos para personal doméstico,
+                        mantenimiento, proveedores frecuentes o familiares.
                     </p>
+
                 </div>
+
             </div>
 
             <div class="alert info recurrente-alert">
 
                 <strong>Importante:</strong>
 
-                El QR tendrá una vigencia configurable y permitirá ingresos
-                únicamente en los días y horarios autorizados.
+                El sistema validará automáticamente la vigencia,
+                los días autorizados y los horarios permitidos.
 
             </div>
 
+            <!-- TIPO -->
+
             <label>Tipo de visitante recurrente</label>
 
-            <select name="tipo_recurrente" id="tipo_recurrente">
+            <select
+                name="tipo_recurrente"
+                id="tipo_recurrente"
+            >
 
-                <option value="">Selecciona una opción</option>
+                <option value="">
+                    Selecciona una opción
+                </option>
 
-                <option value="domestica">Empleado(a) doméstico(a)</option>
+                <option value="domestica">
+                    Empleado(a) doméstico(a)
+                </option>
 
-                <option value="jardinero">Jardinero</option>
+                <option value="jardinero">
+                    Jardinero
+                </option>
 
-                <option value="mantenimiento">Mantenimiento</option>
+                <option value="mantenimiento">
+                    Personal de mantenimiento
+                </option>
 
-                <option value="proveedor">Proveedor frecuente</option>
+                <option value="proveedor">
+                    Proveedor frecuente
+                </option>
 
-                <option value="chofer">Chofer</option>
+                <option value="chofer">
+                    Chofer
+                </option>
 
-                <option value="familiar">Familiar frecuente</option>
+                <option value="familiar">
+                    Familiar frecuente
+                </option>
 
-                <option value="otro">Otro</option>
+                <option value="otro">
+                    Otro
+                </option>
 
             </select>
 
-            <label>Vigencia del acceso</label>
+            <!-- FECHAS -->
 
-            <select name="vigencia_qr" id="vigencia_qr">
+            <h4 style="margin-top:20px;">
+                Vigencia del permiso
+            </h4>
 
-                <option value="1_semana">1 semana</option>
+            <div class="horarios-grid">
 
-                <option value="15_dias">15 días</option>
+                <div>
 
-                <option value="1_mes" selected>1 mes</option>
+                    <label>Fecha de inicio</label>
 
-                <option value="3_meses">3 meses</option>
+                    <input
+                        type="date"
+                        name="fecha_inicio_recurrente"
+                        id="fecha_inicio_recurrente"
+                    >
+
+                </div>
+
+                <div>
+
+                    <label>Fecha de vencimiento</label>
+
+                    <input
+                        type="date"
+                        name="fecha_fin_recurrente"
+                        id="fecha_fin_recurrente"
+                    >
+
+                </div>
+
+            </div>
+
+            <!-- FRECUENCIA -->
+
+            <label>Frecuencia de acceso</label>
+
+            <select
+                name="frecuencia_recurrente"
+                id="frecuencia_recurrente"
+            >
+
+                <option value="">
+                    Selecciona una opción
+                </option>
+
+                <option value="diario">
+                    Todos los días
+                </option>
+
+                <option value="laboral">
+                    Lunes a Viernes
+                </option>
+
+                <option value="fin_semana">
+                    Solo fines de semana
+                </option>
+
+                <option value="personalizado">
+                    Días personalizados
+                </option>
 
             </select>
+
+            <!-- DIAS -->
 
             <label>Días autorizados</label>
 
@@ -133,82 +213,144 @@
 
                 <label class="dia-item">
                     <input type="checkbox" name="dias[]" value="lunes">
-                    <span>Lun</span>
+                    <span>Lunes</span>
                 </label>
 
                 <label class="dia-item">
                     <input type="checkbox" name="dias[]" value="martes">
-                    <span>Mar</span>
+                    <span>Martes</span>
                 </label>
 
                 <label class="dia-item">
                     <input type="checkbox" name="dias[]" value="miercoles">
-                    <span>Mié</span>
+                    <span>Miércoles</span>
                 </label>
 
                 <label class="dia-item">
                     <input type="checkbox" name="dias[]" value="jueves">
-                    <span>Jue</span>
+                    <span>Jueves</span>
                 </label>
 
                 <label class="dia-item">
                     <input type="checkbox" name="dias[]" value="viernes">
-                    <span>Vie</span>
+                    <span>Viernes</span>
                 </label>
 
                 <label class="dia-item">
                     <input type="checkbox" name="dias[]" value="sabado">
-                    <span>Sáb</span>
+                    <span>Sábado</span>
                 </label>
 
                 <label class="dia-item">
                     <input type="checkbox" name="dias[]" value="domingo">
-                    <span>Dom</span>
+                    <span>Domingo</span>
                 </label>
 
             </div>
+
+            <div id="resumen_acceso" class="alert info" style="display:none;">
+
+                <strong>
+                    Resumen de autorización
+                </strong>
+
+                <p id="texto_resumen"></p>
+
+            </div>
+
+            <!-- HORARIOS -->
+
+            <h4 style="margin-top:20px;">
+                Horarios autorizados
+            </h4>
+
+            <p class="small">
+                El visitante únicamente podrá ingresar dentro del horario establecido.
+            </p>
 
             <div class="horarios-grid">
 
                 <div>
 
-                    <label>Hora permitida de entrada</label>
+                    <label>Horario permitido desde</label>
 
                     <input
                         type="time"
-                        name="hora_programada"
-                        id="hora_programada"
+                        name="hora_desde"
+                        id="hora_desde"
                     >
 
                 </div>
 
                 <div>
 
-                    <label>Hora límite de salida</label>
+                    <label>Horario permitido hasta</label>
 
                     <input
                         type="time"
-                        name="hora_salida"
-                        id="hora_salida"
+                        name="hora_hasta"
+                        id="hora_hasta"
                     >
+
+                    <p class="small">
+
+                        Ejemplo:
+                        08:00 a 18:00 para personal doméstico,
+                        o 00:00 a 23:59 para familiares con acceso libre.
+
+                    </p>
 
                 </div>
 
             </div>
 
+            <!-- ESTADO -->
+
+            <label>Estado de autorización</label>
+
+            <select
+                name="estado_recurrente"
+                id="estado_recurrente"
+            >
+
+                <option value="activo" selected>
+                    Activo
+                </option>
+
+                <option value="suspendido">
+                    Suspendido
+                </option>
+
+            </select>
+
+            <!-- RESUMEN -->
+
             <div class="card-mini recurrente-card">
 
                 <div class="mini-icon">
+
                     <i class="fa-solid fa-shield-halved"></i>
+
                 </div>
 
                 <div>
 
-                    <strong>Control inteligente de acceso</strong>
+                    <strong>
+                        Control inteligente de acceso
+                    </strong>
 
                     <p>
-                        El sistema validará automáticamente días, horarios
-                        y vigencia antes de permitir el ingreso.
+
+                        • Validación automática de vigencia.<br>
+
+                        • Validación de días autorizados.<br>
+
+                        • Control de horarios permitidos.<br>
+
+                        • Registro de entradas y salidas.<br>
+
+                        • Bloqueo automático al vencer la autorización.
+
                     </p>
 
                 </div>
@@ -343,7 +485,17 @@
     const fechaVisita = document.getElementById("fecha_visita");
     const horaInicio = document.getElementById("hora_inicio");
 
-    const horaProgramada = document.getElementById("hora_programada");
+    const horaDesde =
+        document.getElementById("hora_desde");
+
+    const horaHasta =
+        document.getElementById("hora_hasta");
+
+    const fechaInicioRecurrente =
+        document.getElementById("fecha_inicio_recurrente");
+
+    const fechaFinRecurrente =
+        document.getElementById("fecha_fin_recurrente");
 
     function actualizarModalidad() {
 
@@ -355,7 +507,8 @@
         fechaVisita.required = false;
         horaInicio.required = false;
 
-        horaProgramada.required = false;
+        horaDesde.required = false;
+        horaHasta.required = false;
 
         if (valor === "temporal") {
 
@@ -370,7 +523,12 @@
 
             camposRecurrente.style.display = "block";
 
-            horaProgramada.required = true;
+            horaDesde.required = true;
+            horaHasta.required = true;
+
+            fechaInicioRecurrente.required = true;
+
+            fechaFinRecurrente.required = true;
 
         }
 
@@ -379,6 +537,176 @@
     modalidad.addEventListener("change", actualizarModalidad);
 
     actualizarModalidad();
+
+
+    /* ========================================= */
+    /* FRECUENCIAS AUTOMATICAS */
+    /* ========================================= */
+
+    const frecuenciaRecurrente =
+        document.getElementById("frecuencia_recurrente");
+
+    const dias =
+        document.querySelectorAll(
+            'input[name="dias[]"]'
+        );
+
+    frecuenciaRecurrente.addEventListener(
+        "change",
+        function(){
+
+            dias.forEach(dia => {
+
+                dia.checked = false;
+                dia.disabled = false;
+
+            });
+
+            if(this.value === "diario"){
+
+                dias.forEach(dia => {
+
+                    dia.checked = true;
+                    dia.disabled = true;
+
+                });
+
+            }
+
+            if(this.value === "laboral"){
+
+                dias.forEach(dia => {
+
+                    if(
+                        dia.value === "lunes" ||
+                        dia.value === "martes" ||
+                        dia.value === "miercoles" ||
+                        dia.value === "jueves" ||
+                        dia.value === "viernes"
+                    ){
+
+                        dia.checked = true;
+
+                    }
+
+                    dia.disabled = true;
+
+                });
+
+            }
+
+            if(this.value === "fin_semana"){
+
+                dias.forEach(dia => {
+
+                    if(
+                        dia.value === "sabado" ||
+                        dia.value === "domingo"
+                    ){
+
+                        dia.checked = true;
+
+                    }
+
+                    dia.disabled = true;
+
+                });
+
+            }
+
+        }
+    );
+
+
+    /* ========================================= */
+    /* RESUMEN INTELIGENTE */
+    /* ========================================= */
+
+    const resumenAcceso =
+        document.getElementById("resumen_acceso");
+
+    const textoResumen =
+        document.getElementById("texto_resumen");
+
+    function actualizarResumen(){
+
+        if(
+            !fechaInicioRecurrente.value ||
+            !fechaFinRecurrente.value
+        ){
+
+            resumenAcceso.style.display = "none";
+
+            return;
+
+        }
+
+        resumenAcceso.style.display = "block";
+
+        textoResumen.innerHTML = `
+
+            <div style="line-height:1.8;">
+
+                <strong>🟢 Permiso Activo</strong>
+
+                <br><br>
+
+                <strong>📅 Vigencia:</strong>
+
+                ${fechaInicioRecurrente.value}
+
+                al
+
+                ${fechaFinRecurrente.value}
+
+                <br><br>
+
+                <strong>🔐 Validaciones:</strong>
+
+                <br>
+
+                ✔ Fecha autorizada
+
+                <br>
+
+                ✔ Día permitido
+
+                <br>
+
+                ✔ Horario permitido
+
+                <br>
+
+                ✔ Estado activo
+
+                <br><br>
+
+                <strong>
+                    El código QR será bloqueado
+                    automáticamente al finalizar
+                    la vigencia.
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+
+    fechaInicioRecurrente.addEventListener(
+        "change",
+        actualizarResumen
+    );
+
+    fechaFinRecurrente.addEventListener(
+        "change",
+        actualizarResumen
+    );
+
+    frecuenciaRecurrente.addEventListener(
+        "change",
+        actualizarResumen
+    );
 
 </script>
 
@@ -899,15 +1227,15 @@ Formatos permitidos:
 
 
 /* ========================================= */
-/* SECCIONES */
+/* SECCIONES VISITAS */
 /* ========================================= */
 
 #campos_temporal,
 #campos_recurrente{
 
-    margin-top:12px;
+    margin-top:30px;
 
-    padding-top:12px;
+    padding-top:0;
 
 }
 
@@ -964,6 +1292,89 @@ Formatos permitidos:
     gap:12px;
 
     margin-top:10px;
+
+}
+
+/* ========================================= */
+/* RESUMEN AUTORIZACION */
+/* ========================================= */
+
+#resumen_acceso{
+
+    border-left:5px solid #2563eb;
+
+    background:#eff6ff;
+
+}
+
+
+/* ========================================= */
+/* DIAS PROFESIONALES */
+/* ========================================= */
+
+.dia-item{
+
+    position:relative;
+
+    cursor:pointer;
+
+}
+
+.dia-item input{
+
+    display:none;
+
+}
+
+.dia-item span{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:110px;
+
+    padding:14px 18px;
+
+    border-radius:14px;
+
+    border:2px solid #dbeafe;
+
+    background:white;
+
+    font-weight:700;
+
+    transition:.25s;
+
+}
+
+.dia-item input:checked + span{
+
+    background:#2563eb;
+
+    color:white;
+
+    border-color:#2563eb;
+
+    box-shadow:0 8px 20px rgba(37,99,235,.25);
+
+}
+
+.dia-item input:disabled + span{
+
+    opacity:.9;
+
+}
+
+/* ========================================= */
+/* SELECT MODALIDAD */
+/* ========================================= */
+
+#modalidad_visita{
+
+    margin-bottom:20px;
 
 }
 
