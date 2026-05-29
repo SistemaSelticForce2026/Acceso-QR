@@ -1,90 +1,204 @@
 const socket = io();
 
-console.log("Socket iniciado");
+console.log("Sistema en tiempo real iniciado");
 
-// ==========================================
-// NUEVA VISITA
-// ==========================================
 
-socket.on("nueva_visita", (data) => {
+// =====================================================
+// CONTROL GLOBAL
+// =====================================================
 
-    console.log("Nueva visita detectada");
+let actualizando = false;
 
-    mostrarToast("Nueva visita registrada");
+let timeoutActualizacion = null;
 
-    setTimeout(() => {
+
+// =====================================================
+// RECARGA SUAVE
+// =====================================================
+
+function refrescarSistema(tipo = "Sistema actualizado") {
+
+    if (actualizando) return;
+
+    actualizando = true;
+
+    document.body.classList.add("updating");
+
+    mostrarToast(tipo, "success");
+
+    clearTimeout(timeoutActualizacion);
+
+    timeoutActualizacion = setTimeout(() => {
 
         location.reload();
 
-    }, 800);
+    }, 1500);
+
+}
+
+
+// =====================================================
+// NUEVA VISITA
+// =====================================================
+
+socket.on("nueva_visita", (data) => {
+
+    console.log("Nueva visita registrada");
+
+    mostrarToast(
+        "Nueva visita registrada",
+        "info"
+    );
+
+    setTimeout(() => {
+
+        refrescarSistema(
+            "Actualizando información"
+        );
+
+    }, 900);
 
 });
 
-// ==========================================
-// ACTUALIZAR RESIDENTES
-// ==========================================
+
+// =====================================================
+// VISITAS
+// =====================================================
+
+socket.on("actualizar_visitas", () => {
+
+    console.log("Actualizando visitas");
+
+    refrescarSistema(
+        "Lista de visitas actualizada"
+    );
+
+});
+
+
+// =====================================================
+// RESIDENTES
+// =====================================================
 
 socket.on("actualizar_residentes", () => {
 
     console.log("Actualizando residentes");
 
-    mostrarToast("Lista de residentes actualizada");
-
-    setTimeout(() => {
-
-        location.reload();
-
-    }, 500);
+    refrescarSistema(
+        "Información de residentes actualizada"
+    );
 
 });
 
-// ==========================================
-// ACTUALIZAR GUARDIAS
-// ==========================================
+
+// =====================================================
+// GUARDIAS
+// =====================================================
 
 socket.on("actualizar_guardias", () => {
 
     console.log("Actualizando guardias");
 
-    mostrarToast("Lista de guardias actualizada");
-
-    setTimeout(() => {
-
-        location.reload();
-
-    }, 500);
+    refrescarSistema(
+        "Información de guardias actualizada"
+    );
 
 });
 
-// ==========================================
-// ACTUALIZAR DASHBOARD
-// ==========================================
+
+// =====================================================
+// DASHBOARD
+// =====================================================
 
 socket.on("actualizar_dashboard", () => {
 
     console.log("Actualizando dashboard");
 
-    setTimeout(() => {
-
-        location.reload();
-
-    }, 500);
+    refrescarSistema(
+        "Dashboard actualizado"
+    );
 
 });
 
-// ==========================================
-// TOAST PROFESIONAL
-// ==========================================
 
-function mostrarToast(texto) {
+// =====================================================
+// REPORTES
+// =====================================================
+
+socket.on("actualizar_reportes", () => {
+
+    console.log("Actualizando reportes");
+
+    refrescarSistema(
+        "Reportes actualizados"
+    );
+
+});
+
+
+// =====================================================
+// ACCESOS
+// =====================================================
+
+socket.on("actualizar_accesos", () => {
+
+    console.log("Actualizando accesos");
+
+    refrescarSistema(
+        "Control de accesos actualizado"
+    );
+
+});
+
+
+// =====================================================
+// INCIDENCIAS
+// =====================================================
+
+socket.on("actualizar_incidencias", () => {
+
+    console.log("Actualizando incidencias");
+
+    refrescarSistema(
+        "Incidencias actualizadas"
+    );
+
+});
+
+
+// =====================================================
+// TOAST PROFESIONAL
+// =====================================================
+
+function mostrarToast(texto, tipo = "info") {
 
     const toast = document.createElement("div");
 
-    toast.className = "socket-toast";
+    toast.className = `socket-toast ${tipo}`;
+
+    let icono = "fa-circle-info";
+
+    if (tipo === "success") {
+
+        icono = "fa-circle-check";
+
+    }
+
+    if (tipo === "error") {
+
+        icono = "fa-circle-exclamation";
+
+    }
 
     toast.innerHTML = `
-        <i class="fa-solid fa-bell"></i>
-        ${texto}
+        <div class="toast-icon">
+            <i class="fa-solid ${icono}"></i>
+        </div>
+
+        <div class="toast-content">
+            <strong>AccessQR</strong>
+            <span>${texto}</span>
+        </div>
     `;
 
     document.body.appendChild(toast);
@@ -103,8 +217,8 @@ function mostrarToast(texto) {
 
             toast.remove();
 
-        }, 300);
+        }, 400);
 
-    }, 2500);
+    }, 3200);
 
 }
