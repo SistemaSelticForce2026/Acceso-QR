@@ -18,7 +18,7 @@ from utils.auth import login_required, role_required
 from bson.objectid import ObjectId
 
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from werkzeug.security import generate_password_hash
 
@@ -64,31 +64,65 @@ def dashboard():
 
     from collections import Counter
 
-    visitas = list(mongo.db.visits.find().sort("created_at", -1))
+    filtro = request.args.get("filtro", "hoy")
+
+    hoy = datetime.now()
+
+    if filtro == "hoy":
+
+        fecha_inicio = datetime(hoy.year, hoy.month, hoy.day)
+
+    elif filtro == "semana":
+
+        fecha_inicio = hoy - timedelta(days=7)
+
+    elif filtro == "mes":
+
+        fecha_inicio = hoy - timedelta(days=30)
+
+    else:
+
+        fecha_inicio = datetime(hoy.year, hoy.month, hoy.day)
+
+    visitas = list(
+        mongo.db.visits.find({"created_at": {"$gte": fecha_inicio}}).sort(
+            "created_at", -1
+        )
+    )
 
     accesos = list(mongo.db.access_logs.find().sort("fecha_hora", -1))
 
+    accesos = [
+        a for a in accesos if a.get("fecha_hora") and a["fecha_hora"] >= fecha_inicio
+    ]
+
     incidencias = list(mongo.db.incidencias.find().sort("fecha_hora", -1))
+
+    incidencias = [
+        i
+        for i in incidencias
+        if i.get("fecha_hora") and i["fecha_hora"] >= fecha_inicio
+    ]
 
     # =====================================================
     # KPIs
     # =====================================================
 
-    total_visitas = mongo.db.visits.count_documents({})
+    total_visitas = len(visitas)
 
-    dentro = mongo.db.visits.count_documents({"estado": "dentro"})
+    dentro = len([v for v in visitas if v.get("estado") == "dentro"])
 
-    activas = mongo.db.visits.count_documents({"estado": "activo"})
+    activas = len([v for v in visitas if v.get("estado") == "activo"])
 
-    salidas = mongo.db.visits.count_documents({"estado": "salida_registrada"})
+    salidas = len([v for v in visitas if v.get("estado") == "salida_registrada"])
 
     total_residentes = mongo.db.users.count_documents({"rol": "residente"})
 
     total_guardias = mongo.db.users.count_documents({"rol": "guardia"})
 
-    total_incidencias = mongo.db.incidencias.count_documents({})
+    total_incidencias = len(incidencias)
 
-    rechazados = mongo.db.access_logs.count_documents({"resultado": "rechazado"})
+    rechazados = len([a for a in accesos if a.get("resultado") == "rechazado"])
 
     # =====================================================
     # TIPOS VISITA
@@ -106,7 +140,7 @@ def dashboard():
     tipo_data = list(tipos_counter.values())
 
     # =====================================================
-    # VISITAS POR DIA
+    # VISITAS POR DIA (ORDENADO Y PROFESIONAL)
     # =====================================================
 
     dias_counter = Counter()
@@ -119,8 +153,25 @@ def dashboard():
 
             dias_counter[str(fecha)] += 1
 
-    dias_labels = list(dias_counter.keys())
-    dias_data = list(dias_counter.values())
+    # ==========================================
+    # ORDENAR FECHAS CRONOLOGICAMENTE
+    # ==========================================
+
+    fechas_ordenadas = sorted(
+        dias_counter.keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d")
+    )
+
+    # ==========================================
+    # FORMATO BONITO PARA LA GRAFICA
+    # 31/05 -> 01/06 -> 02/06
+    # ==========================================
+
+    dias_labels = [
+        datetime.strptime(fecha, "%Y-%m-%d").strftime("%d/%m")
+        for fecha in fechas_ordenadas
+    ]
+
+    dias_data = [dias_counter[fecha] for fecha in fechas_ordenadas]
 
     # =====================================================
     # TOP RESIDENTES
@@ -158,9 +209,13 @@ def dashboard():
 
             horas_counter[hora] += 1
 
-    horas_labels = list(horas_counter.keys())
+    horas_ordenadas = sorted(
+        horas_counter.items(), key=lambda x: datetime.strptime(x[0], "%I %p")
+    )
 
-    horas_data = list(horas_counter.values())
+    horas_labels = [h[0] for h in horas_ordenadas]
+
+    horas_data = [h[1] for h in horas_ordenadas]
 
     # =====================================================
     # VISITAS POR PRIVADA
@@ -182,7 +237,7 @@ def dashboard():
     # VISITAS DENTRO
     # =====================================================
 
-    visitas_dentro = list(mongo.db.visits.find({"estado": "dentro"}))
+    visitas_dentro = [v for v in visitas if v.get("estado") == "dentro"]
 
     # =====================================================
     # ALERTAS AUTOMATICAS
@@ -202,11 +257,7 @@ def dashboard():
     # SEGURIDAD
     # =====================================================
 
-    accesos_rechazados = list(
-        mongo.db.access_logs.find({"resultado": "rechazado"})
-        .sort("fecha_hora", -1)
-        .limit(10)
-    )
+    accesos_rechazados = [a for a in accesos if a.get("resultado") == "rechazado"][:10]
 
     # =====================================================
     # TOP GUARDIAS
@@ -246,14 +297,27 @@ def dashboard():
 
                 vehiculos.append(placa)
 
+    vehiculos = list(set(vehiculos))
+
     # =====================================================
     # ANALITICA
     # =====================================================
 
-    promedio = round(total_visitas / 30, 2)
+    if filtro == "hoy":
+
+        promedio = total_visitas
+
+    elif filtro == "semana":
+
+        promedio = round(total_visitas / 7, 2)
+
+    else:
+
+        promedio = round(total_visitas / 30, 2)
 
     return render_template(
         "admin_dashboard.html",
+        filtro=filtro,
         visitas=visitas,
         accesos=accesos,
         incidencias=incidencias,

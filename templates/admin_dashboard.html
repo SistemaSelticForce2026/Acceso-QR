@@ -22,6 +22,13 @@
 
             Sistema en línea · Actualización en tiempo real
 
+            <span class="last-update">
+
+                Última actualización:
+                <strong id="fechaActual"></strong>
+
+            </span>
+
         </div>
 
     </div>
@@ -43,6 +50,47 @@
 <!-- ===================================================== -->
 <!-- ESTADISTICAS -->
 <!-- ===================================================== -->
+
+<!-- ===== RESUMEN GENERAL ===== -->
+
+<div class="security-hero">
+
+    <div>
+
+        <span class="hero-status">
+            🟢 Sistema Seguro
+        </span>
+
+        <h2>
+            98% Operatividad General
+        </h2>
+
+        <p>
+            Monitoreo activo de accesos, residentes y seguridad.
+        </p>
+
+    </div>
+
+    <div class="hero-metrics">
+
+        <div>
+            <strong>{{ dentro or 0 }}</strong>
+            <span>Dentro</span>
+        </div>
+
+        <div>
+            <strong>{{ rechazados or 0 }}</strong>
+            <span>Bloqueados</span>
+        </div>
+
+        <div>
+            <strong>{{ total_incidencias or 0 }}</strong>
+            <span>Incidencias</span>
+        </div>
+
+    </div>
+
+</div>
 
 <div class="stats">
 
@@ -235,26 +283,29 @@
 
 <div class="stats-filter">
 
-    <button class="filter-btn active">
+    <button
+        class="filter-btn {{ 'active' if filtro == 'hoy' else '' }}"
+        onclick="window.location='?filtro=hoy'">
 
         <i class="fa-solid fa-calendar-day"></i>
-
         Hoy
 
     </button>
 
-    <button class="filter-btn">
+    <button
+        class="filter-btn {{ 'active' if filtro == 'semana' else '' }}"
+        onclick="window.location='?filtro=semana'">
 
         <i class="fa-solid fa-calendar-week"></i>
-
         Semana
 
     </button>
 
-    <button class="filter-btn">
+    <button
+        class="filter-btn {{ 'active' if filtro == 'mes' else '' }}"
+        onclick="window.location='?filtro=mes'">
 
         <i class="fa-solid fa-calendar"></i>
-
         Mes
 
     </button>
@@ -359,6 +410,20 @@
                 <p class="chart-subtitle">
                     Flujo operativo de accesos registrados diariamente.
                 </p>
+
+            <div class="mini-kpis">
+
+                <span>
+                    📈 Máximo:
+                    {{ dias_data|max if dias_data else 0 }}
+                </span>
+
+                <span>
+                    📊 Promedio:
+                    {{ promedio }}
+                </span>
+
+            </div>
 
             </div>
 
@@ -521,6 +586,19 @@
     <div class="card">
 
         <h2>Alertas del sistema</h2>
+
+
+        <div class="smart-alert">
+
+            ⚠ {{ dentro or 0 }} visitas continúan dentro del fraccionamiento.
+
+        </div>
+
+        <div class="smart-alert">
+
+            🚫 {{ rechazados or 0 }} accesos rechazados detectados.
+
+        </div>
 
         <div class="alert warning">
 
@@ -756,8 +834,27 @@
                         <div>
 
                             <strong>
+
+                                {% if loop.index == 1 %}
+                                    🥇
+                                {% elif loop.index == 2 %}
+                                    🥈
+                                {% elif loop.index == 3 %}
+                                    🥉
+                                {% endif %}
+
                                 {{ residente }}
+
                             </strong>
+                            
+                            <div class="mini-bar">
+
+                                <div
+                                    class="mini-bar-fill"
+                                    style="width:{{ total * 10 }}%;">
+                                </div>
+
+                            </div>
 
                             <p class="small">
                                 Residente activo del sistema
@@ -1230,6 +1327,11 @@
 
     const closeModal = document.querySelector(".close-modal");
 
+    const fecha = new Date();
+
+    document.getElementById("fechaActual").innerHTML =
+    fecha.toLocaleString();
+
     zoomImages.forEach(img => {
 
         img.addEventListener("click", () => {
@@ -1255,6 +1357,31 @@
             imageModal.style.display = "none";
 
         }
+
+    });
+
+    document.querySelectorAll(".stat-card h2").forEach(el=>{
+
+        const final =
+            parseInt(el.innerText) || 0;
+
+        let actual = 0;
+
+        const timer = setInterval(()=>{
+
+            actual += Math.ceil(final/30);
+
+            if(actual >= final){
+
+                actual = final;
+
+                clearInterval(timer);
+
+            }
+
+            el.innerText = actual;
+
+        },30);
 
     });
 
@@ -1357,13 +1484,11 @@
                     '#f59e0b'
                 ],
 
-                borderWidth: 0,
-
-                hoverOffset: 18,
-
-                spacing: 5,
-
-                borderRadius: 10
+                borderWidth: 6,
+                borderColor: '#ffffff',
+                hoverOffset: 28,
+                spacing: 8,
+                borderRadius: 18
 
             }]
 
@@ -1371,23 +1496,86 @@
 
         options: {
 
-            cutout: '72%',
-
             responsive: true,
+
+            cutout: '78%',
 
             plugins: {
 
                 legend: {
 
-                    position: 'bottom'
+                    position: 'bottom',
+
+                    labels: {
+
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 25,
+
+                        font: {
+
+                            size: 13,
+                            weight: '600'
+
+                        }
+
+                    }
+
+                },
+
+                tooltip: {
+
+                    backgroundColor: '#0f172a',
+
+                    titleColor: '#ffffff',
+
+                    bodyColor: '#ffffff',
+
+                    padding: 18,
+
+                    cornerRadius: 18,
+
+                    displayColors: false,
+
+                    titleFont: {
+
+                        size: 14,
+                        weight: 'bold'
+
+                    },
+
+                    bodyFont: {
+
+                        size: 13
+
+                    },
+
+                    callbacks: {
+
+                        label: function(context){
+
+                            return 'Total: ' + context.raw;
+
+                        }
+
+                    }
 
                 }
+
+            },
+
+            animation: {
+
+                animateRotate: true,
+                animateScale: true,
+                duration: 2500
 
             }
 
         }
 
     });
+
 
     /* ===================================================== */
     /* BARRAS */
@@ -1411,24 +1599,28 @@
                 label: 'Accesos',
 
                 data: [
+
                     {{ total_visitas or 0 }},
                     {{ activas or 0 }},
                     {{ dentro or 0 }},
                     {{ salidas or 0 }}
+
                 ],
 
-                borderRadius: 18,
-
-                backgroundColor: [
-                    '#2563eb',
-                    '#3b82f6',
-                    '#22c55e',
-                    '#f59e0b'
-                ],
+                borderRadius: 22,
 
                 borderSkipped: false,
 
-                maxBarThickness: 55
+                maxBarThickness: 65,
+
+                backgroundColor: [
+
+                    '#2563eb',
+                    '#60a5fa',
+                    '#22c55e',
+                    '#f59e0b'
+
+                ]
 
             }]
 
@@ -1444,7 +1636,41 @@
 
                     display: false
 
+                },
+
+                tooltip: {
+
+                    backgroundColor: '#0f172a',
+
+                    titleColor: '#ffffff',
+
+                    bodyColor: '#ffffff',
+
+                    padding: 18,
+
+                    cornerRadius: 18,
+
+                    displayColors: false,
+
+                    callbacks: {
+
+                        label: function(context){
+
+                            return 'Accesos: ' + context.raw;
+
+                        }
+
+                    }
+
                 }
+
+            },
+
+            animation: {
+
+                duration: 2200,
+
+                easing: 'easeOutQuart'
 
             },
 
@@ -1466,7 +1692,9 @@
 
                     grid: {
 
-                        color: 'rgba(148,163,184,.1)'
+                        color: 'rgba(148,163,184,.05)',
+
+                        drawBorder: false
 
                     }
 
@@ -1479,7 +1707,7 @@
     });
 
     /* ===================================================== */
-    /* TIPOS DE VISITA PREMIUM */
+    /* TIPOS DE VISITA */
     /* ===================================================== */
 
     new Chart(document.getElementById('tiposChart'), {
@@ -1505,13 +1733,15 @@
 
                 ],
 
-                borderWidth: 0,
+                borderColor: '#ffffff',
 
-                hoverOffset: 18,
+                borderWidth: 7,
 
-                spacing: 4,
+                hoverOffset: 40,
 
-                borderRadius: 10
+                spacing: 10,
+
+                borderRadius: 22
 
             }]
 
@@ -1523,7 +1753,13 @@
 
             maintainAspectRatio: false,
 
-            cutout: '68%',
+            cutout: '82%',
+
+            layout: {
+
+                padding: 15
+
+            },
 
             plugins: {
 
@@ -1533,13 +1769,25 @@
 
                     labels: {
 
-                        color: '#94a3b8',
+                        color: '#64748b',
 
-                        padding: 20,
+                        padding: 28,
 
                         usePointStyle: true,
 
-                        pointStyle: 'circle'
+                        pointStyle: 'circle',
+
+                        boxWidth: 12,
+
+                        boxHeight: 12,
+
+                        font: {
+
+                            size: 13,
+
+                            weight: '700'
+
+                        }
 
                     }
 
@@ -1549,15 +1797,48 @@
 
                     backgroundColor: '#0f172a',
 
-                    titleColor: '#fff',
+                    titleColor: '#ffffff',
 
-                    bodyColor: '#cbd5e1',
+                    bodyColor: '#ffffff',
 
-                    padding: 14,
+                    padding: 18,
 
-                    cornerRadius: 14,
+                    cornerRadius: 18,
 
-                    displayColors: true
+                    displayColors: false,
+
+                    titleFont: {
+
+                        size: 14,
+
+                        weight: 'bold'
+
+                    },
+
+                    bodyFont: {
+
+                        size: 13
+
+                    },
+
+                    callbacks: {
+
+                        label: function(context){
+
+                            const total =
+                                context.dataset.data.reduce(
+                                    (a,b)=>a+b,0
+                                );
+
+                            const porcentaje =
+                                ((context.raw / total) * 100)
+                                .toFixed(1);
+
+                            return `${context.raw} visitas · ${porcentaje}%`;
+
+                        }
+
+                    }
 
                 }
 
@@ -1567,7 +1848,11 @@
 
                 animateRotate: true,
 
-                duration: 1800
+                animateScale: true,
+
+                duration: 2800,
+
+                easing: 'easeOutQuart'
 
             }
 
@@ -1575,8 +1860,9 @@
 
     });
 
+
     /* ===================================================== */
-    /* LINE PREMIUM */
+    /* ACCESOS POR DIA */
     /* ===================================================== */
 
     new Chart(document.getElementById('diasChart'), {
@@ -1589,7 +1875,7 @@
 
             datasets: [{
 
-                label: 'Accesos diarios',
+                label: 'Accesos',
 
                 data: {{ dias_data|tojson }},
 
@@ -1603,19 +1889,21 @@
 
                 borderWidth: 5,
 
-                pointRadius: 6,
+                pointRadius: 0,
 
-                pointHoverRadius: 10,
+                pointHoverRadius: 8,
+
+                pointHitRadius: 30,
 
                 pointBackgroundColor: '#ffffff',
 
-                pointBorderWidth: 4,
-
                 pointBorderColor: '#2563eb',
 
-                pointHoverBackgroundColor: '#2563eb',
+                pointBorderWidth: 3,
 
-                pointHoverBorderColor: '#ffffff',
+                pointHoverBackgroundColor: '#ffffff',
+
+                pointHoverBorderColor: '#2563eb',
 
                 pointHoverBorderWidth: 4
 
@@ -1649,15 +1937,45 @@
 
                     backgroundColor: '#0f172a',
 
-                    titleColor: '#fff',
+                    titleColor: '#ffffff',
 
-                    bodyColor: '#cbd5e1',
+                    bodyColor: '#ffffff',
 
-                    padding: 14,
+                    padding: 18,
 
-                    cornerRadius: 14,
+                    cornerRadius: 18,
 
-                    displayColors: false
+                    displayColors: false,
+
+                    titleFont: {
+
+                        size: 14,
+
+                        weight: 'bold'
+
+                    },
+
+                    bodyFont: {
+
+                        size: 13
+
+                    },
+
+                    callbacks: {
+
+                        title: function(context){
+
+                            return context[0].label;
+
+                        },
+
+                        label: function(context){
+
+                            return `${context.raw} accesos registrados`;
+
+                        }
+
+                    }
 
                 }
 
@@ -1667,6 +1985,12 @@
 
                 x: {
 
+                    border: {
+
+                        display: false
+
+                    },
+
                     grid: {
 
                         display: false
@@ -1675,7 +1999,17 @@
 
                     ticks: {
 
-                        color: '#94a3b8'
+                        color: '#64748b',
+
+                        maxRotation: 0,
+
+                        font: {
+
+                            size: 12,
+
+                            weight: '600'
+
+                        }
 
                     }
 
@@ -1685,11 +2019,21 @@
 
                     beginAtZero: true,
 
+                    grace: '30%',
+
+                    suggestedMax: Math.max(...{{ dias_data|tojson }}) + 2,
+
+                    border: {
+
+                        display: false
+
+                    },
+
                     grid: {
 
-                        color: 'rgba(148,163,184,.08)',
+                        color: 'rgba(148,163,184,.06)',
 
-                        drawBorder: false
+                        drawTicks: false
 
                     },
 
@@ -1697,7 +2041,17 @@
 
                         stepSize: 1,
 
-                        color: '#94a3b8'
+                        padding: 15,
+
+                        color: '#94a3b8',
+
+                        font: {
+
+                            size: 12,
+
+                            weight: '600'
+
+                        }
 
                     }
 
@@ -1707,7 +2061,7 @@
 
             animation: {
 
-                duration: 1800,
+                duration: 2500,
 
                 easing: 'easeOutQuart'
 
@@ -2121,13 +2475,16 @@
     display:grid;
 
     grid-template-columns:
-        repeat(auto-fit,minmax(420px,1fr));
+        repeat(auto-fit,minmax(500px,1fr));
 
-    gap:32px;
+    gap:40px;
 
-    margin-bottom:40px;
+    margin-bottom:45px;
+
+    align-items:stretch;
 
 }
+
 
 
 /* ===================================================== */
@@ -2667,6 +3024,348 @@
 }
 
 
+/* ===== Gráficas ===== */
+
+.chart-card{
+
+    position:relative;
+
+    display:flex;
+
+    flex-direction:column;
+
+    height:100%;
+
+    overflow:hidden;
+
+    border-radius:32px;
+
+    background:linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #f8fafc 100%
+    );
+
+    border:1px solid #e2e8f0;
+
+    box-shadow:
+        0 15px 35px rgba(15,23,42,.05),
+        0 35px 80px rgba(15,23,42,.08);
+
+}
+
+.chart-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    width:100%;
+
+    height:6px;
+
+    background:linear-gradient(
+        90deg,
+        #2563eb,
+        #38bdf8,
+        #60a5fa
+    );
+
+}
+
+.chart-body{
+
+    flex:1;
+
+    min-height:420px;
+
+    position:relative;
+
+}
+
+/* ===== Gráfica principal ===== */
+
+.line-chart-card{
+
+    min-height:680px;
+
+    transition:.35s ease;
+
+}
+
+.line-chart-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:
+        0 15px 35px rgba(37,99,235,.08),
+        0 35px 80px rgba(15,23,42,.12);
+
+}
+
+.line-chart-card .chart-body{
+
+    height:500px;
+
+    padding:10px 5px;
+
+}
+
+/* ===== Gráfica modalidades ===== */
+
+.visit-chart-card{
+
+    min-height:680px;
+
+}
+
+.visit-chart-card .chart-body{
+
+    height:500px;
+
+}
+
+/* ===== Encabezado ===== */
+
+.chart-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    gap:20px;
+
+    margin-bottom:20px;
+
+}
+
+.chart-header h2{
+
+    font-size:1.45rem;
+
+    font-weight:800;
+
+    color:#0f172a;
+
+    margin-bottom:8px;
+
+}
+
+.chart-subtitle{
+
+    color:#64748b;
+
+    font-size:.95rem;
+
+    line-height:1.7;
+
+    max-width:500px;
+
+}
+
+/* ===== Estado en vivo ===== */
+
+.chart-live{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    background:#ecfdf5;
+
+    color:#15803d;
+
+    padding:10px 16px;
+
+    border-radius:999px;
+
+    border:1px solid #bbf7d0;
+
+    font-size:.85rem;
+
+    font-weight:700;
+
+}
+
+.live-dot-chart{
+
+    width:10px;
+
+    height:10px;
+
+    border-radius:50%;
+
+    background:#22c55e;
+
+    animation:pulse 1.5s infinite;
+
+}
+
+/* ===== Canvas ===== */
+
+.chart-card canvas{
+
+    width:100% !important;
+
+    height:100% !important;
+
+}
+
+/* ===== HERO ===== */
+
+.security-hero{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:30px;
+
+    padding:35px;
+
+    margin-bottom:35px;
+
+    border-radius:32px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #1e40af
+        );
+
+    color:#fff;
+
+}
+
+.hero-status{
+
+    display:inline-block;
+
+    padding:8px 16px;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.15);
+
+}
+
+.hero-metrics{
+
+    display:flex;
+
+    gap:30px;
+
+}
+
+.hero-metrics strong{
+
+    display:block;
+
+    font-size:2rem;
+
+}
+
+.smart-alert{
+
+    background:#eff6ff;
+
+    border:1px solid #bfdbfe;
+
+    padding:14px 18px;
+
+    border-radius:14px;
+
+    margin-bottom:12px;
+
+    font-weight:600;
+
+}
+
+.mini-kpis{
+
+    display:flex;
+
+    gap:18px;
+
+    margin-top:10px;
+
+    color:#64748b;
+
+    font-size:.85rem;
+
+}
+
+.mini-bar{
+
+    height:8px;
+
+    background:#e2e8f0;
+
+    border-radius:999px;
+
+    margin-top:10px;
+
+}
+
+.mini-bar-fill{
+
+    height:100%;
+
+    border-radius:999px;
+
+    background:#2563eb;
+
+}
+
+.service-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:15px;
+
+    margin-bottom:30px;
+
+}
+
+.service-card{
+
+    background:#fff;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:18px;
+
+    padding:18px;
+
+    text-align:center;
+
+    font-weight:700;
+
+}
+
+.last-update{
+
+    display:block;
+
+    margin-top:8px;
+
+    font-size:.85rem;
+
+}
+
 /* ===================================================== */
 /* RESPONSIVE */
 /* ===================================================== */
@@ -2706,6 +3405,34 @@
     .page-header{
 
         flex-direction:column;
+
+    }
+
+    .chart-header{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+    .chart-live{
+
+        width:100%;
+
+        justify-content:center;
+
+    }
+
+    .line-chart-card{
+
+        min-height:580px;
+
+    }
+
+    .visit-chart-card{
+
+        min-height:580px;
 
     }
 
