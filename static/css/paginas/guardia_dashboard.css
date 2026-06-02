@@ -1,0 +1,323 @@
+/* =========================================================
+   CONTROL ACCESO
+========================================================= */
+
+.scan-mode-switch{
+
+    display:flex;
+
+    gap:12px;
+
+    flex-wrap:wrap;
+
+    margin-top:16px;
+
+}
+
+/* =========================================================
+   VISITANTE
+========================================================= */
+
+.visitante-info{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+.visitante-foto img{
+
+    width:52px;
+
+    height:52px;
+
+    border-radius:12px;
+
+    object-fit:cover;
+
+    border:1px solid #e2e8f0;
+
+}
+
+.visitante-data{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:4px;
+
+}
+
+/* =========================================================
+   MODALIDAD
+========================================================= */
+
+.modalidad-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+}
+
+.modalidad-badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:8px 12px;
+
+    border-radius:12px;
+
+    font-size:.85rem;
+
+    font-weight:600;
+
+    width:max-content;
+
+}
+
+.modalidad-badge.temporal{
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+}
+
+.modalidad-badge.recurrente{
+
+    background:#dcfce7;
+
+    color:#16a34a;
+
+}
+
+.modalidad-description{
+
+    font-size:.85rem;
+
+    color:#64748b;
+
+}
+
+/* =========================================================
+   RESIDENCIA
+========================================================= */
+
+.residencia-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+}
+
+.residencia-condominio,
+.residencia-casa{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    font-weight:500;
+
+}
+
+/* =========================================================
+   HORARIOS
+========================================================= */
+
+.schedule-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+}
+
+.schedule-date,
+.schedule-time,
+.schedule-exit,
+.schedule-pending{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+}
+
+.schedule-pending{
+
+    color:#d97706;
+
+}
+
+.schedule-exit{
+
+    color:#16a34a;
+
+}
+
+/* =========================================================
+   VEHICULO
+========================================================= */
+
+.vehiculo-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+}
+
+.vehiculo-placa{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    font-weight:700;
+
+}
+
+.vehiculo-info{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+}
+
+.vehiculo-info span{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+}
+
+/* =========================================================
+   FOTO PLACA
+========================================================= */
+
+.placa-thumb{
+
+    width:100px;
+
+    height:60px;
+
+    object-fit:cover;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    border:1px solid #e2e8f0;
+
+    transition:.25s;
+
+}
+
+.placa-thumb:hover{
+
+    transform:scale(1.05);
+
+}
+
+/* =========================================================
+   MODAL IMAGEN
+========================================================= */
+
+.image-modal{
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.85);
+
+    z-index:9999;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:20px;
+
+}
+
+.modal-image{
+
+    max-width:90%;
+
+    max-height:90%;
+
+    border-radius:16px;
+
+}
+
+.close-modal{
+
+    position:absolute;
+
+    top:25px;
+
+    right:30px;
+
+    color:white;
+
+    font-size:2rem;
+
+    cursor:pointer;
+
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:768px){
+
+    .visitante-info{
+
+        flex-direction:column;
+
+        text-align:center;
+
+    }
+
+    .scan-mode-switch{
+
+        flex-direction:column;
+
+    }
+
+}

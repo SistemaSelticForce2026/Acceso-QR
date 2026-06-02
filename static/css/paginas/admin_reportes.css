@@ -1,0 +1,109 @@
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header-actions{
+
+    display:flex;
+
+    gap:12px;
+
+    flex-wrap:wrap;
+
+}
+
+/* =========================================================
+   BOTON HISTORIAL
+========================================================= */
+
+.dark-btn{
+
+    background:#0f172a !important;
+
+    color:white !important;
+
+}
+
+.dark-btn:hover{
+
+    background:#1e293b !important;
+
+}
+
+/* =========================================================
+   ACCIONES
+========================================================= */
+
+.report-actions{
+
+    display:flex;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+}
+
+/* =========================================================
+   PDF
+========================================================= */
+
+.pdf-btn{
+
+    background:#dc2626 !important;
+
+}
+
+.pdf-btn:hover{
+
+    background:#b91c1c !important;
+
+}
+
+/* =========================================================
+   EXCEL
+========================================================= */
+
+.excel-btn{
+
+    background:#16a34a !important;
+
+}
+
+.excel-btn:hover{
+
+    background:#15803d !important;
+
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:768px){
+
+    .header-actions{
+
+        width:100%;
+
+    }
+
+    .module-top{
+
+        flex-direction:column;
+
+    }
+
+    .report-actions{
+
+        flex-direction:column;
+
+    }
+
+    .report-actions a{
+
+        width:100%;
+
+    }
+
+}

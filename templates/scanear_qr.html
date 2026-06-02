@@ -1,5 +1,11 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/escaner_qr.css') }}">
+{% endblock %}
+
 {% set modo = modo|default('entrada') %}
 
 {% block content %}

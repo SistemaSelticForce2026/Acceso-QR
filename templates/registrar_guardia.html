@@ -1,5 +1,11 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/registrar_guardia.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="resident-profile">
@@ -136,7 +142,7 @@
 
                 </div>
 
-                <div style="margin-top:30px; display:flex; gap:12px; flex-wrap:wrap;">
+                <div class="form-actions">
 
                     <button type="submit" class="btn">
                         Registrar guardia
@@ -154,7 +160,7 @@
         </div>
 
         <!-- PANEL LATERAL -->
-        <div class="card">
+        <div class="card operativo-card">
 
             <h2>Información operativa</h2>
 

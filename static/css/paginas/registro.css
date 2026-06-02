@@ -1,0 +1,274 @@
+/* ===================================== */
+/* FORMULARIO REGISTRO */
+/* ===================================== */
+
+.form-card form{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:20px;
+
+}
+
+/* ===================================== */
+/* TITULO PRINCIPAL */
+/* ===================================== */
+
+.form-card h1{
+
+    text-align:center;
+
+    margin:0 0 10px;
+
+    font-size:2rem;
+
+    font-weight:700;
+
+    color:#0f172a;
+
+}
+
+/* ===================================== */
+/* SUBTITULOS */
+/* ===================================== */
+
+.form-card h3{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin:18px 0 4px;
+
+    font-size:1.1rem;
+
+    font-weight:700;
+
+    color:#0f172a;
+
+    padding-bottom:8px;
+
+    border-bottom:1px solid #e2e8f0;
+
+}
+
+/* ===================================== */
+/* TEXTO SMALL */
+/* ===================================== */
+
+.form-card .small{
+
+    text-align:center;
+
+    line-height:1.7;
+
+    color:#64748b;
+
+    margin-bottom:10px;
+
+}
+
+/* ===================================== */
+/* LABELS */
+/* ===================================== */
+
+.form-card label{
+
+    margin-bottom:-10px;
+
+    font-weight:600;
+
+    color:#334155;
+
+    font-size:14px;
+
+}
+
+/* ===================================== */
+/* INPUTS */
+/* ===================================== */
+
+.form-card input{
+
+    margin:0;
+
+}
+
+/* ===================================== */
+/* PASSWORD RULES */
+/* ===================================== */
+
+#password-rules{
+
+    margin-top:8px;
+
+    padding:16px 18px;
+
+    border-radius:16px;
+
+    background:linear-gradient(
+        135deg,
+        #f8fafc,
+        #ffffff
+    );
+
+    border:1px solid #e2e8f0;
+
+    box-shadow:
+        0 4px 12px rgba(15,23,42,.05);
+
+}
+
+#password-rules p{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin:8px 0;
+
+    font-size:14px;
+
+}
+
+/* ===================================== */
+/* PASSWORD MATCH */
+/* ===================================== */
+
+#password-match{
+
+    margin-top:5px;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    transition:.3s ease;
+
+}
+
+/* ===================================== */
+/* BOTON REGISTRO */
+/* ===================================== */
+
+.form-card button{
+
+    margin-top:12px;
+
+    min-height:52px;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
+}
+
+/* ===================================== */
+/* DIVISOR */
+/* ===================================== */
+
+.form-card hr{
+
+    border:none;
+
+    height:1px;
+
+    background:#e2e8f0;
+
+    margin:20px 0;
+
+}
+
+/* ===================================== */
+/* TEXTO FINAL */
+/* ===================================== */
+
+.form-card p{
+
+    line-height:1.7;
+
+    color:#64748b;
+
+}
+
+/* ===================================== */
+/* LINKS */
+/* ===================================== */
+
+.form-card a{
+
+    color:#2563eb;
+
+    font-weight:700;
+
+    text-decoration:none;
+
+    transition:.3s ease;
+
+}
+
+.form-card a:hover{
+
+    color:#1d4ed8;
+
+    text-decoration:underline;
+
+}
+
+/* ===================================== */
+/* ANIMACION */
+/* ===================================== */
+
+.form-card{
+
+    animation:registroFade .5s ease;
+
+}
+
+@keyframes registroFade{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(20px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ===================================== */
+/* RESPONSIVE */
+/* ===================================== */
+
+@media screen and (max-width:600px){
+
+    .form-card{
+
+        padding:22px;
+
+    }
+
+    .form-card h1{
+
+        font-size:1.7rem;
+
+    }
+
+}

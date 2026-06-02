@@ -1,0 +1,566 @@
+/* =========================================================
+   CONTENEDOR
+========================================================= */
+
+.access-container{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:24px;
+
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.access-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:20px;
+
+    flex-wrap:wrap;
+
+}
+
+/* =========================================================
+   BADGE MODO
+========================================================= */
+
+.scan-mode-badge{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:12px 18px;
+
+    border-radius:14px;
+
+    font-weight:600;
+
+}
+
+.entry-mode{
+
+    background:#dcfce7;
+
+    color:#166534;
+
+}
+
+.exit-mode{
+
+    background:#fee2e2;
+
+    color:#991b1b;
+
+}
+
+.pulse-dot{
+
+    width:10px;
+
+    height:10px;
+
+    border-radius:50%;
+
+    background:currentColor;
+
+    animation:pulse 1.5s infinite;
+
+}
+
+/* =========================================================
+   SELECTOR MODO
+========================================================= */
+
+.scan-mode-switch{
+
+    display:flex;
+
+    gap:12px;
+
+    flex-wrap:wrap;
+
+}
+
+.scan-mode-btn{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:12px 18px;
+
+    border-radius:14px;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    background:#f8fafc;
+
+    color:#334155;
+
+    border:1px solid #e2e8f0;
+
+    transition:.25s;
+
+}
+
+.scan-mode-btn:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.scan-mode-btn.active{
+
+    background:#2563eb;
+
+    color:white;
+
+}
+
+.scan-mode-btn.exit.active{
+
+    background:#dc2626;
+
+}
+
+.scan-mode-btn.secondary{
+
+    background:#0f172a;
+
+    color:white;
+
+}
+
+/* =========================================================
+   RESULTADOS
+========================================================= */
+
+.result-container{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:24px;
+
+}
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.access-grid{
+
+    align-items:start;
+
+}
+
+/* =========================================================
+   TARJETAS
+========================================================= */
+
+.access-card{
+
+    height:100%;
+
+}
+
+/* =========================================================
+   VISITANTE
+========================================================= */
+
+.visitor-profile{
+
+    display:flex;
+
+    gap:20px;
+
+    align-items:center;
+
+    margin-bottom:24px;
+
+}
+
+.visitor-photo{
+
+    width:120px;
+
+    height:120px;
+
+    border-radius:20px;
+
+    object-fit:cover;
+
+    cursor:pointer;
+
+}
+
+.visitor-no-photo{
+
+    width:120px;
+
+    height:120px;
+
+    border-radius:20px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#f1f5f9;
+
+    font-size:2rem;
+
+}
+
+/* =========================================================
+   CONTACTO
+========================================================= */
+
+.resident-contact-panel{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+    margin-bottom:24px;
+
+}
+
+.resident-contact-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+}
+
+.resident-contact-icon{
+
+    width:45px;
+
+    height:45px;
+
+    border-radius:14px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+.resident-contact-icon.resident{
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+}
+
+.resident-contact-icon.phone{
+
+    background:#dcfce7;
+
+    color:#16a34a;
+
+}
+
+.resident-contact-icon.visitor{
+
+    background:#fef3c7;
+
+    color:#d97706;
+
+}
+
+/* =========================================================
+   TIMELINE
+========================================================= */
+
+.timeline{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+}
+
+.timeline-item{
+
+    display:flex;
+
+    gap:14px;
+
+    align-items:flex-start;
+
+}
+
+.timeline-content{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:4px;
+
+}
+
+.status-pending{
+
+    color:#d97706;
+
+}
+
+.status-inside{
+
+    color:#2563eb;
+
+}
+
+.status-finished{
+
+    color:#16a34a;
+
+}
+
+.status-invalid{
+
+    color:#dc2626;
+
+}
+
+/* =========================================================
+   VEHICULO
+========================================================= */
+
+.vehicle-card{
+
+    margin-top:0;
+
+}
+
+.plate-photo-section{
+
+    margin-top:24px;
+
+}
+
+.plate-photo-title{
+
+    display:block;
+
+    margin-bottom:12px;
+
+    font-weight:600;
+
+}
+
+.plate-photo-large{
+
+    max-width:320px;
+
+    border-radius:16px;
+
+    cursor:pointer;
+
+}
+
+/* =========================================================
+   CONTROL ACCESO
+========================================================= */
+
+.modern-access-card{
+
+    margin-top:0;
+
+}
+
+.modern-access-header{
+
+    display:flex;
+
+    gap:18px;
+
+    align-items:flex-start;
+
+    margin-bottom:24px;
+
+}
+
+.modern-access-icon{
+
+    width:60px;
+
+    height:60px;
+
+    border-radius:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+}
+
+.modern-access-icon.danger{
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+}
+
+.access-summary-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:16px;
+
+    margin:24px 0;
+
+}
+
+.summary-card{
+
+    padding:18px;
+
+    border-radius:14px;
+
+    background:#f8fafc;
+
+}
+
+.modern-access-actions{
+
+    display:flex;
+
+    gap:12px;
+
+    flex-wrap:wrap;
+
+}
+
+.modern-access-btn{
+
+    width:100%;
+
+}
+
+/* =========================================================
+   ALERTAS
+========================================================= */
+
+.modern-incident-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(220px,1fr));
+
+    gap:14px;
+
+}
+
+.modern-alert-btn{
+
+    min-height:70px;
+
+}
+
+/* =========================================================
+   BANNER SALIDA
+========================================================= */
+
+.exit-complete-banner{
+
+    display:flex;
+
+    gap:18px;
+
+    align-items:center;
+
+    padding:22px;
+
+    border-radius:18px;
+
+    background:#dcfce7;
+
+    color:#166534;
+
+}
+
+.exit-complete-icon{
+
+    font-size:2rem;
+
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:768px){
+
+    .access-header{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+    .visitor-profile{
+
+        flex-direction:column;
+
+        text-align:center;
+
+    }
+
+    .modern-access-actions{
+
+        flex-direction:column;
+
+    }
+
+    .scan-mode-switch{
+
+        flex-direction:column;
+
+    }
+
+}

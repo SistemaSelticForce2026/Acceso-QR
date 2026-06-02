@@ -1,5 +1,15 @@
 {% extends 'layout.html' %}
 
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/registrar_residente.css') }}">
+{% endblock %}
+
+{% block content %}
+
 {% block content %}
 
 <div class="card form-card">
@@ -30,7 +40,7 @@
         <label>Número de casa</label>
         <input type="text" name="numero_casa" required>
 
-        <div style="margin-top:25px; display:flex; gap:10px;">
+        <div class="form-actions">
 
             <button type="submit" class="btn">
                 Registrar residente

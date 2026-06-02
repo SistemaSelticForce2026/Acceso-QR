@@ -1,0 +1,266 @@
+/* ========================================= */
+/* MODAL BASE */
+/* ========================================= */
+
+.image-modal,
+.photo-modal{
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:9999;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:rgba(0,0,0,.88);
+
+    backdrop-filter:blur(6px);
+
+    animation:fadeIn .25s ease;
+
+}
+
+/* ========================================= */
+/* IMAGEN MODAL */
+/* ========================================= */
+
+.modal-image,
+.photo-modal-content{
+
+    max-width:90%;
+
+    max-height:90vh;
+
+    object-fit:contain;
+
+    border-radius:22px;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.40);
+
+    animation:zoomIn .25s ease;
+
+}
+
+/* ========================================= */
+/* BOTON CERRAR */
+/* ========================================= */
+
+.close-modal,
+.close-photo{
+
+    position:absolute;
+
+    top:20px;
+
+    right:35px;
+
+    color:white;
+
+    font-size:3rem;
+
+    cursor:pointer;
+
+    transition:.25s ease;
+
+}
+
+.close-modal:hover,
+.close-photo:hover{
+
+    transform:scale(1.1);
+
+    color:#60a5fa;
+
+}
+
+/* ========================================= */
+/* QR SHARE MODAL */
+/* ========================================= */
+
+.qr-share-modal{
+
+    flex-direction:column;
+
+    padding:20px;
+
+}
+
+/* ========================================= */
+/* PANEL QR */
+/* ========================================= */
+
+.qr-modal-panel{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:28px 32px;
+
+    max-width:420px;
+
+    width:100%;
+
+    text-align:center;
+
+    position:relative;
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,.25);
+
+}
+
+/* ========================================= */
+/* IMAGEN QR */
+/* ========================================= */
+
+.qr-modal-image{
+
+    width:260px;
+
+    max-width:100%;
+
+    margin:16px auto;
+
+    display:block;
+
+    border-radius:16px;
+
+    padding:12px;
+
+    background:white;
+
+    box-shadow:
+        0 8px 24px rgba(0,0,0,.12);
+
+}
+
+/* ========================================= */
+/* TOKEN */
+/* ========================================= */
+
+.qr-token-display{
+
+    margin:12px 0 20px;
+
+    word-break:break-word;
+
+}
+
+.qr-token-display code{
+
+    display:block;
+
+    margin-top:6px;
+
+    padding:10px 12px;
+
+    border-radius:10px;
+
+    background:#f1f5f9;
+
+    font-size:.85rem;
+
+}
+
+/* ========================================= */
+/* ACCIONES */
+/* ========================================= */
+
+.qr-share-actions{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+}
+
+/* ========================================= */
+/* TEXTO */
+/* ========================================= */
+
+.qr-share-hint{
+
+    margin-top:8px;
+
+    color:#64748b;
+
+    line-height:1.4;
+
+}
+
+/* ========================================= */
+/* ANIMACIONES */
+/* ========================================= */
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes zoomIn{
+
+    from{
+
+        transform:scale(.85);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+/* ========================================= */
+/* RESPONSIVE */
+/* ========================================= */
+
+@media(max-width:768px){
+
+    .modal-image,
+    .photo-modal-content{
+
+        max-width:95%;
+
+        max-height:80vh;
+
+    }
+
+    .close-modal,
+    .close-photo{
+
+        top:15px;
+
+        right:20px;
+
+        font-size:2.5rem;
+
+    }
+
+}

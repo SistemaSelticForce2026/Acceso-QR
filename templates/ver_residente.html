@@ -1,5 +1,11 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/ver_residente.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="resident-profile">
@@ -103,7 +109,7 @@
                 </a>
 
                 <a href="{{ url_for('admin.residentes') }}"
-                   class="btn secondary">
+                    class="btn btn-secondary">
                     Volver al listado
                 </a>
 

@@ -1,5 +1,11 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/editar_guardia.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="resident-profile">
@@ -76,19 +82,19 @@
 
                     {% if guardia.turno == "matutino" %}
 
-                        <strong style="color:#f59e0b;">
+                        <strong class="turno-matutino">
                             Matutino
                         </strong>
 
                     {% elif guardia.turno == "vespertino" %}
 
-                        <strong style="color:#2563eb;">
+                        <strong class="turno-vespertino">
                             Vespertino
                         </strong>
 
                     {% elif guardia.turno == "nocturno" %}
 
-                        <strong style="color:#8b5cf6;">
+                        <strong class="turno-nocturno">
                             Nocturno
                         </strong>
 
@@ -112,13 +118,13 @@
 
                     {% if guardia.estado == "activo" %}
 
-                        <strong style="color:#16a34a;">
+                        <strong class="estado-activo">
                             Activo
                         </strong>
 
                     {% else %}
 
-                        <strong style="color:#dc2626;">
+                        <strong class="estado-inactivo">
                             Inactivo
                         </strong>
 

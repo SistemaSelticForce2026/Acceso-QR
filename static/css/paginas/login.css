@@ -1,0 +1,233 @@
+/* ===================================== */
+/* FORM LOGIN */
+/* ===================================== */
+
+.form-card form{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:20px;
+
+}
+
+/* ===================================== */
+/* LOGO */
+/* ===================================== */
+
+.login-logo{
+
+    text-align:center;
+
+    margin-bottom:18px;
+
+}
+
+.login-logo img{
+
+    width:190px;
+
+    max-width:100%;
+
+    height:auto;
+
+    transition:.4s ease;
+
+    filter:drop-shadow(
+        0 8px 18px rgba(37,99,235,.15)
+    );
+
+}
+
+.login-logo img:hover{
+
+    transform:scale(1.03);
+
+}
+
+/* ===================================== */
+/* TITULOS */
+/* ===================================== */
+
+.form-card h1{
+
+    text-align:center;
+
+    margin:0;
+
+    font-size:2rem;
+
+    font-weight:700;
+
+    color:#0f172a;
+
+}
+
+.form-card h2{
+
+    text-align:center;
+
+    margin:6px 0 12px;
+
+    color:#64748b;
+
+    font-size:1rem;
+
+    font-weight:500;
+
+}
+
+/* ===================================== */
+/* TEXTO */
+/* ===================================== */
+
+.form-card .small{
+
+    text-align:center;
+
+    color:#64748b;
+
+    line-height:1.7;
+
+    margin:0;
+
+}
+
+/* ===================================== */
+/* INPUTS */
+/* ===================================== */
+
+.form-card input{
+
+    margin:0;
+
+}
+
+/* ===================================== */
+/* OPCIONES */
+/* ===================================== */
+
+.login-options{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-top:-5px;
+
+    font-size:14px;
+
+}
+
+/* ===================================== */
+/* BOTON LOGIN */
+/* ===================================== */
+
+.form-card .btn{
+
+    margin-top:5px;
+
+    width:100%;
+
+    min-height:52px;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
+}
+
+/* ===================================== */
+/* DIVISOR */
+/* ===================================== */
+
+.form-card hr{
+
+    border:none;
+
+    height:1px;
+
+    background:#e2e8f0;
+
+    margin:10px 0;
+
+}
+
+/* ===================================== */
+/* REGISTRO */
+/* ===================================== */
+
+.register-text{
+
+    text-align:center;
+
+    color:#64748b;
+
+    line-height:1.7;
+
+    font-size:14px;
+
+}
+
+.register-text a{
+
+    font-weight:600;
+
+    color:#2563eb;
+
+    text-decoration:none;
+
+}
+
+.register-text a:hover{
+
+    text-decoration:underline;
+
+}
+
+/* ===================================== */
+/* ALERTA BLOQUEO */
+/* ===================================== */
+
+.bloqueo-alert{
+
+    margin-top:15px;
+
+    border-radius:14px;
+
+}
+
+/* ===================================== */
+/* EFECTO GENERAL LOGIN */
+/* ===================================== */
+
+.form-card{
+
+    animation:fadeLogin .5s ease;
+
+}
+
+@keyframes fadeLogin{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(20px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}

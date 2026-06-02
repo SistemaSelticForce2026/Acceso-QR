@@ -1,5 +1,11 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/admin_guardias.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <h1>Gestión de Guardias</h1>
@@ -33,7 +39,7 @@
 
 <div class="card">
 
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:25px;">
+    <div class="guardias-header">
 
         <div>
             <h2>Personal de vigilancia</h2>
@@ -43,7 +49,7 @@
             </p>
         </div>
 
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div class="guardias-actions">
 
             <a href="{{ url_for('admin.registrar_guardia') }}" class="btn">
                 Registrar guardia
@@ -71,8 +77,9 @@
 
         <tr>
 
-            <td>
-                <strong>{{ guardia.nombre }}</strong><br>
+            <td class="guardia-info">
+
+                <strong>{{ guardia.nombre }}</strong>
 
                 <span class="small">
                     ID:
@@ -80,7 +87,7 @@
                 </span>
             </td>
 
-            <td>
+            <td class="contacto-info">
                 {{ guardia.correo }}<br>
 
                 {% if guardia.telefono %}
@@ -108,7 +115,7 @@
 
             </td>
 
-            <td>
+            <td class="actividad-text">
 
                 <span class="small">
                     Accesos autorizados, validaciones QR y monitoreo de visitantes.
@@ -118,7 +125,7 @@
 
             <td>
 
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <div class="acciones-guardia">
 
                     <a href="{{ url_for('admin.ver_guardia', id=guardia._id) }}"
                     class="btn small-btn">

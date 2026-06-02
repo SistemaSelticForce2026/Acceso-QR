@@ -1,5 +1,11 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/login.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="card form-card">
@@ -148,16 +154,12 @@
         ¿Eres residente y aún no tienes cuenta?
 
         <a href="/register">
-
             Crear cuenta
-
         </a>
 
     </p>
 
     </div>
-
-</div>
 
 <!-- ===================================== -->
 <!-- TIMER BLOQUEO -->
@@ -200,168 +202,5 @@
 </script>
 
 {% endif %}
-
-<style>
-
-/* ===================================== */
-/* FORM LOGIN ESPACIADO */
-/* ===================================== */
-
-.form-card form{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:18px;
-
-}
-
-
-/* ===================================== */
-/* TITULOS */
-/* ===================================== */
-
-.form-card h1{
-
-    margin-top:10px;
-
-    margin-bottom:5px;
-
-}
-
-
-.form-card h2{
-
-    margin-top:-4px;
-
-    margin-bottom:10px;
-
-    color:#475569;
-
-    font-size:1.1rem;
-
-}
-
-
-/* ===================================== */
-/* TEXTO */
-/* ===================================== */
-
-.form-card .small{
-
-    margin-bottom:15px;
-
-    line-height:1.5;
-
-    color:#64748b;
-
-}
-
-
-/* ===================================== */
-/* LABELS */
-/* ===================================== */
-
-.form-card label{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:10px;
-
-    margin-bottom:-10px;
-
-    font-weight:600;
-
-    color:#334155;
-
-}
-
-
-/* ===================================== */
-/* INPUTS */
-/* ===================================== */
-
-.form-card input{
-
-    margin-bottom:4px;
-
-}
-
-
-/* ===================================== */
-/* OPCIONES LOGIN */
-/* ===================================== */
-
-.login-options{
-
-    margin-top:2px;
-
-    margin-bottom:5px;
-
-}
-
-
-/* ===================================== */
-/* BOTON LOGIN */
-/* ===================================== */
-
-.form-card .btn{
-
-    margin-top:8px;
-
-}
-
-
-/* ===================================== */
-/* HR */
-/* ===================================== */
-
-.form-card hr{
-
-    margin:20px 0;
-
-}
-
-
-/* ===================================== */
-/* REGISTRO */
-/* ===================================== */
-
-.register-text{
-
-    text-align:center;
-
-    line-height:1.6;
-
-}
-
-
-/* ===================================== */
-/* ALERTA BLOQUEO */
-/* ===================================== */
-
-.bloqueo-alert{
-
-    margin-top:18px;
-
-    margin-bottom:20px;
-
-}
-
-
-/* ===================================== */
-/* LOGO */
-/* ===================================== */
-
-.login-logo{
-
-    margin-bottom:10px;
-
-}
-
-</style>
 
 {% endblock %}
