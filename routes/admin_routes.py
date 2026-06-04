@@ -66,6 +66,12 @@ def dashboard():
 
     filtro = request.args.get("filtro", "hoy")
 
+    busqueda = request.args.get("busqueda", "").strip()
+
+    fecha_inicio_tabla = request.args.get("fecha_inicio_tabla", "").strip()
+
+    fecha_fin_tabla = request.args.get("fecha_fin_tabla", "").strip()
+
     hoy = datetime.now()
 
     if filtro == "hoy":
@@ -103,6 +109,28 @@ def dashboard():
         for i in incidencias
         if i.get("fecha_hora") and i["fecha_hora"] >= fecha_inicio
     ]
+
+    if busqueda:
+        busqueda_lower = busqueda.lower()
+        visitas = [v for v in visitas if busqueda_lower in v.get("nombre_visitante", "").lower() or busqueda_lower in v.get("residente_nombre", "").lower()]
+        accesos = [a for a in accesos if busqueda_lower in a.get("visitante", "").lower() or busqueda_lower in a.get("guardia_nombre", "").lower() or busqueda_lower in a.get("accion", "").lower()]
+        incidencias = [i for i in incidencias if busqueda_lower in i.get("visitante", "").lower() or busqueda_lower in i.get("guardia_nombre", "").lower() or busqueda_lower in i.get("descripcion", "").lower()]
+
+    # Filtro de fechas para la tabla de visitas (calendarios independientes)
+    visitas_tabla = visitas
+
+    if fecha_inicio_tabla:
+        visitas_tabla = [v for v in visitas_tabla if v.get("fecha_visita", "") >= fecha_inicio_tabla]
+
+    if fecha_fin_tabla:
+        visitas_tabla = [v for v in visitas_tabla if v.get("fecha_visita", "") <= fecha_fin_tabla]
+
+    pagina_tabla = int(request.args.get("page", 1))
+    por_pagina_tabla = 5
+    total_visitas_tabla = len(visitas_tabla)
+    total_paginas_tabla = max(1, (total_visitas_tabla + por_pagina_tabla - 1) // por_pagina_tabla)
+    
+    visitas_tabla_paginada = visitas_tabla[(pagina_tabla - 1) * por_pagina_tabla : pagina_tabla * por_pagina_tabla]
 
     # =====================================================
     # KPIs
@@ -346,6 +374,12 @@ def dashboard():
         residentes_activos=residentes_activos,
         vehiculos=vehiculos,
         promedio=promedio,
+        busqueda=busqueda,
+        visitas_tabla=visitas_tabla_paginada,
+        fecha_inicio_tabla=fecha_inicio_tabla,
+        fecha_fin_tabla=fecha_fin_tabla,
+        pagina_tabla=pagina_tabla,
+        total_paginas_tabla=total_paginas_tabla,
     )
 
 
@@ -359,9 +393,23 @@ def dashboard():
 @role_required("admin")
 def residentes():
 
-    usuarios = list(mongo.db.users.find({"rol": "residente"}))
+    pagina = int(request.args.get("page", 1))
+    por_pagina = 10
+    total = mongo.db.users.count_documents({"rol": "residente"})
+    total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
 
-    return render_template("admin_residentes.html", usuarios=usuarios)
+    usuarios = list(
+        mongo.db.users.find({"rol": "residente"})
+        .skip((pagina - 1) * por_pagina)
+        .limit(por_pagina)
+    )
+
+    return render_template(
+        "admin_residentes.html",
+        usuarios=usuarios,
+        pagina=pagina,
+        total_paginas=total_paginas
+    )
 
 
 # =========================================
@@ -716,9 +764,23 @@ def exportar_residentes_pdf():
 @role_required("admin")
 def guardias():
 
-    guardias = list(mongo.db.users.find({"rol": "guardia"}))
+    pagina = int(request.args.get("page", 1))
+    por_pagina = 10
+    total = mongo.db.users.count_documents({"rol": "guardia"})
+    total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
 
-    return render_template("admin_guardias.html", guardias=guardias)
+    guardias = list(
+        mongo.db.users.find({"rol": "guardia"})
+        .skip((pagina - 1) * por_pagina)
+        .limit(por_pagina)
+    )
+
+    return render_template(
+        "admin_guardias.html",
+        guardias=guardias,
+        pagina=pagina,
+        total_paginas=total_paginas
+    )
 
 
 @admin_bp.route("/guardias/registrar", methods=["GET", "POST"])
@@ -997,9 +1059,24 @@ def exportar_guardias_pdf():
 @role_required("admin")
 def accesos():
 
-    accesos = list(mongo.db.access_logs.find().sort("fecha_hora", -1))
+    pagina = int(request.args.get("page", 1))
+    por_pagina = 15
+    total = mongo.db.access_logs.count_documents({})
+    total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
 
-    return render_template("admin_accesos.html", accesos=accesos)
+    accesos = list(
+        mongo.db.access_logs.find()
+        .sort("fecha_hora", -1)
+        .skip((pagina - 1) * por_pagina)
+        .limit(por_pagina)
+    )
+
+    return render_template(
+        "admin_accesos.html",
+        accesos=accesos,
+        pagina=pagina,
+        total_paginas=total_paginas
+    )
 
 
 # =========================================================
@@ -1231,9 +1308,24 @@ def exportar_accesos_excel():
 @role_required("admin")
 def incidencias():
 
-    incidencias = list(mongo.db.incidencias.find().sort("fecha_hora", -1))
+    pagina = int(request.args.get("page", 1))
+    por_pagina = 15
+    total = mongo.db.incidencias.count_documents({})
+    total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
 
-    return render_template("admin_incidencias.html", incidencias=incidencias)
+    incidencias = list(
+        mongo.db.incidencias.find()
+        .sort("fecha_hora", -1)
+        .skip((pagina - 1) * por_pagina)
+        .limit(por_pagina)
+    )
+
+    return render_template(
+        "admin_incidencias.html",
+        incidencias=incidencias,
+        pagina=pagina,
+        total_paginas=total_paginas
+    )
 
 
 # =========================================================

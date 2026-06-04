@@ -1039,6 +1039,27 @@ href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
         Registro operativo de accesos y visitas dentro del fraccionamiento.
     </p>
 
+    <!-- Filtro de fechas para la tabla -->
+    <form method="GET" style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0;">
+        <input type="hidden" name="filtro" value="{{ filtro }}">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-weight: 600; color: #475569; font-size: .9rem;">Fecha inicio</label>
+            <input type="date" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla }}" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-weight: 600; color: #475569; font-size: .9rem;">Fecha fin</label>
+            <input type="date" name="fecha_fin_tabla" value="{{ fecha_fin_tabla }}" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white;">
+        </div>
+        <button type="submit" class="btn" style="padding: 10px 20px;">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+        {% if fecha_inicio_tabla or fecha_fin_tabla %}
+        <a href="?filtro={{ filtro }}" class="btn" style="padding: 10px 20px; background: linear-gradient(135deg, #64748b, #475569);">
+            <i class="fa-solid fa-rotate-left"></i> Limpiar
+        </a>
+        {% endif %}
+    </form>
+
     <div class="table-top">
 
         <div class="table-search">
@@ -1094,7 +1115,7 @@ href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
 
             </tr>
 
-            {% for visita in visitas %}
+            {% for visita in visitas_tabla %}
 
             <tr>
 
@@ -1337,6 +1358,28 @@ href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
 
         </table>
 
+    </div>
+
+    <div class="pagination-container" style="display:flex; justify-content:center; margin-top:20px; margin-bottom: 20px;">
+        {% if total_paginas_tabla > 1 %}
+            <div class="pagination" style="display:flex; gap:10px; flex-wrap:wrap;">
+                {% if pagina_tabla > 1 %}
+                    <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla-1 }}" class="btn secondary" style="padding:10px 15px;">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                {% endif %}
+                {% for p in range(1, total_paginas_tabla + 1) %}
+                    <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ p }}" class="btn {% if p != pagina_tabla %}secondary{% endif %}" style="padding:10px 15px;">
+                        {{ p }}
+                    </a>
+                {% endfor %}
+                {% if pagina_tabla < total_paginas_tabla %}
+                    <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla+1 }}" class="btn secondary" style="padding:10px 15px;">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
 
 </div>

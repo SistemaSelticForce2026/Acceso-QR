@@ -90,6 +90,19 @@ filename='css/paginas/residente_dashboard.css') }}">
 
         </div>
 
+        <div class="filter-field">
+
+            <label>Búsqueda</label>
+
+            <input
+                type="text"
+                name="busqueda"
+                value="{{ busqueda }}"
+                placeholder="Nombre del visitante"
+            >
+
+        </div>
+
         <button
             type="submit"
             class="btn"
@@ -307,7 +320,8 @@ filename='css/paginas/residente_dashboard.css') }}">
                                     'resident.dashboard',
                                     page=pagina-1,
                                     fecha_inicio=fecha_inicio,
-                                    fecha_fin=fecha_fin
+                                    fecha_fin=fecha_fin,
+                                    busqueda=busqueda
                                 ) }}"
                                 class="page-btn"
                             >
@@ -325,7 +339,8 @@ filename='css/paginas/residente_dashboard.css') }}">
                                     'resident.dashboard',
                                     page=p,
                                     fecha_inicio=fecha_inicio,
-                                    fecha_fin=fecha_fin
+                                    fecha_fin=fecha_fin,
+                                    busqueda=busqueda
                                 ) }}"
                                 class="page-btn {% if p == pagina %}active{% endif %}"
                             >
@@ -343,7 +358,8 @@ filename='css/paginas/residente_dashboard.css') }}">
                                     'resident.dashboard',
                                     page=pagina+1,
                                     fecha_inicio=fecha_inicio,
-                                    fecha_fin=fecha_fin
+                                    fecha_fin=fecha_fin,
+                                    busqueda=busqueda
                                 ) }}"
                                 class="page-btn"
                             >

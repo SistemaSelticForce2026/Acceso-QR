@@ -8,7 +8,7 @@ from flask import (
     flash,
 )
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from extensions import mongo, socketio
 
@@ -102,25 +102,25 @@ def dashboard():
 
     por_pagina = 5
 
+    busqueda = request.args.get("busqueda", "").strip()
+
     fecha_inicio = request.args.get("fecha_inicio", "").strip()
 
     fecha_fin = request.args.get("fecha_fin", "").strip()
 
     filtro = {}
 
-    # =============================================
-    # FILTRO FECHAS
-    # =============================================
-
     if fecha_inicio:
-
         filtro["fecha_visita"] = {"$gte": fecha_inicio}
 
     if fecha_fin:
-
         filtro.setdefault("fecha_visita", {})
-
         filtro["fecha_visita"]["$lte"] = fecha_fin
+
+    if busqueda:
+        filtro["nombre_visitante"] = {"$regex": busqueda, "$options": "i"}
+
+
 
     total_visitas = mongo.db.visits.count_documents(filtro)
 
@@ -149,6 +149,7 @@ def dashboard():
         total_paginas=total_paginas,
         fecha_inicio=fecha_inicio,
         fecha_fin=fecha_fin,
+        busqueda=busqueda,
     )
 
 

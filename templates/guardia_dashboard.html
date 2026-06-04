@@ -119,56 +119,32 @@
 
     <h2>Visitas recientes</h2>
 
-    <form method="GET" class="filter-form">
+    <form method="GET" style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0;">
 
-        <div class="filter-group">
-
-            <div class="filter-field">
-
-                <label>Fecha inicial</label>
-
-                <input
-                    type="date"
-                    name="fecha_inicio"
-                    value="{{ fecha_inicio }}"
-                >
-
-            </div>
-
-            <div class="filter-field">
-
-                <label>Fecha final</label>
-
-                <input
-                    type="date"
-                    name="fecha_fin"
-                    value="{{ fecha_fin }}"
-                >
-
-            </div>
-
-            <div class="filter-actions">
-
-                <button type="submit" class="btn-filter">
-
-                    <i class="fa-solid fa-magnifying-glass"></i>
-
-                    Filtrar
-
-                </button>
-
-                <a href="{{ url_for('guard.dashboard') }}"
-                class="btn-clear">
-
-                    <i class="fa-solid fa-rotate-left"></i>
-
-                    Limpiar
-
-                </a>
-
-            </div>
-
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-weight: 600; color: #475569; font-size: .9rem;">Fecha inicio</label>
+            <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white;">
         </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-weight: 600; color: #475569; font-size: .9rem;">Fecha fin</label>
+            <input type="date" name="fecha_fin" value="{{ fecha_fin }}" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white;">
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-weight: 600; color: #475569; font-size: .9rem;">Buscar visitante</label>
+            <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre del visitante..." style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white; min-width: 200px;">
+        </div>
+
+        <button type="submit" class="btn" style="padding: 10px 20px;">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+
+        {% if fecha_inicio or fecha_fin or busqueda %}
+        <a href="{{ url_for('guard.dashboard') }}" class="btn" style="padding: 10px 20px; background: linear-gradient(135deg, #64748b, #475569);">
+            <i class="fa-solid fa-rotate-left"></i> Limpiar
+        </a>
+        {% endif %}
 
     </form>
 
@@ -428,7 +404,7 @@
         <div class="pagination">
 
             {% if pagina > 1 %}
-                <a href="{{ url_for('guard.dashboard', page=pagina-1) }}"
+                <a href="{{ url_for('guard.dashboard', page=pagina-1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
                    class="page-btn">
                     <i class="fa-solid fa-chevron-left"></i>
                 </a>
@@ -440,7 +416,8 @@
                             'guard.dashboard',
                             page=p,
                             fecha_inicio=fecha_inicio,
-                            fecha_fin=fecha_fin
+                            fecha_fin=fecha_fin,
+                            busqueda=busqueda
                         ) }}"
                    class="page-btn {% if p == pagina %}active{% endif %}">
                     {{ p }}
@@ -449,7 +426,7 @@
             {% endfor %}
 
             {% if pagina < total_paginas %}
-                <a href="{{ url_for('guard.dashboard', page=pagina+1) }}"
+                <a href="{{ url_for('guard.dashboard', page=pagina+1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
                    class="page-btn">
                     <i class="fa-solid fa-chevron-right"></i>
                 </a>

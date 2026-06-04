@@ -42,12 +42,14 @@ def dashboard():
 
     fecha_fin = request.args.get("fecha_fin", "").strip()
 
+    busqueda = request.args.get("busqueda", "").strip()
+
     residente_id = session["user_id"]
 
     filtro = {"residente_id": residente_id}
 
     # =============================================
-    # FILTRO FECHAS
+    # FILTRO FECHAS Y BÚSQUEDA
     # =============================================
 
     if fecha_inicio:
@@ -59,6 +61,10 @@ def dashboard():
         filtro.setdefault("fecha_visita", {})
 
         filtro["fecha_visita"]["$lte"] = fecha_fin
+
+    if busqueda:
+
+        filtro["nombre_visitante"] = {"$regex": busqueda, "$options": "i"}
 
     # =============================================
     # CONSULTA
@@ -107,6 +113,7 @@ def dashboard():
         total_paginas=total_paginas,
         fecha_inicio=fecha_inicio,
         fecha_fin=fecha_fin,
+        busqueda=busqueda,
     )
 
 

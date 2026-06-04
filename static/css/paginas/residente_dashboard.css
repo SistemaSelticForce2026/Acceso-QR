@@ -629,9 +629,11 @@ h1{
 
 .modal-content{
 
-    max-width:90vw;
+    max-width:600px;
 
-    max-height:90vh;
+    max-height:80vh;
+
+    object-fit:contain;
 
     border-radius:20px;
 

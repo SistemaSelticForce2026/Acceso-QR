@@ -464,7 +464,10 @@ filename='css/paginas/crear_visita.css') }}">
             La hora de salida será registrada por el guardia cuando el visitante abandone el fraccionamiento.
         </div>
 
-        <button type="submit">Generar QR de acceso</button>
+        <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <a href="{{ url_for('resident.dashboard') }}" style="flex: 1; padding: 14px; background: #ef4444; color: white; text-align: center; border-radius: 12px; text-decoration: none; font-weight: 600; display: flex; align-items: center; justify-content: center;">Cancelar</a>
+            <button type="submit" style="flex: 2; margin-top: 0;">Generar QR de acceso</button>
+        </div>
     </form>
 </div>
 
@@ -481,7 +484,7 @@ filename='css/paginas/crear_visita.css') }}">
         justify-content:center;
         align-items:center;
      ">
-    <img id="foto_zoom" style="max-width:90%; max-height:90%; border-radius:14px;">
+    <img id="foto_zoom" style="max-width:600px; max-height:80vh; object-fit:contain; border-radius:14px;">
 </div>
 
 <script>
