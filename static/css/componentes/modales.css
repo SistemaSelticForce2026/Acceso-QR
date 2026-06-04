@@ -11,7 +11,7 @@
 
     inset:0;
 
-    z-index:9999;
+    z-index:99999;
 
     justify-content:center;
 
@@ -19,31 +19,39 @@
 
     background:rgba(0,0,0,.88);
 
-    backdrop-filter:blur(6px);
+    backdrop-filter:blur(8px);
+
+    padding:20px;
+
+    overflow:hidden;
 
     animation:fadeIn .25s ease;
 
 }
 
 /* ========================================= */
-/* IMAGEN MODAL */
+/* IMAGENES */
 /* ========================================= */
 
 .modal-image,
 .photo-modal-content{
 
-    max-width:90%;
+    display:block;
 
-    max-height:90vh;
+    width:auto;
+
+    height:auto;
+
+    max-width:90vw;
+
+    max-height:85vh;
 
     object-fit:contain;
 
-    border-radius:22px;
+    border-radius:24px;
 
     box-shadow:
-        0 20px 60px rgba(0,0,0,.40);
-
-    animation:zoomIn .25s ease;
+        0 25px 70px rgba(0,0,0,.45);
 
 }
 
@@ -58,29 +66,47 @@
 
     top:20px;
 
-    right:35px;
+    right:30px;
 
-    color:white;
+    width:55px;
 
-    font-size:3rem;
+    height:55px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.12);
+
+    backdrop-filter:blur(8px);
+
+    color:#fff;
+
+    font-size:2rem;
+
+    font-weight:700;
 
     cursor:pointer;
 
-    transition:.25s ease;
+    z-index:100000;
+
+    transition:.25s;
 
 }
 
 .close-modal:hover,
 .close-photo:hover{
 
-    transform:scale(1.1);
-
-    color:#60a5fa;
+    background:rgba(255,255,255,.22);
 
 }
 
 /* ========================================= */
-/* QR SHARE MODAL */
+/* QR MODAL */
 /* ========================================= */
 
 .qr-share-modal{
@@ -88,6 +114,8 @@
     flex-direction:column;
 
     padding:20px;
+
+    overflow-y:auto;
 
 }
 
@@ -97,22 +125,52 @@
 
 .qr-modal-panel{
 
-    background:white;
-
-    border-radius:20px;
-
-    padding:28px 32px;
-
-    max-width:420px;
+    position:relative;
 
     width:100%;
 
+    max-width:520px;
+
+    background:#ffffff;
+
+    border-radius:28px;
+
+    padding:32px;
+
     text-align:center;
 
-    position:relative;
-
     box-shadow:
-        0 20px 50px rgba(0,0,0,.25);
+        0 30px 80px rgba(0,0,0,.25);
+
+    animation:zoomIn .25s ease;
+
+}
+
+/* ========================================= */
+/* CERRAR QR */
+/* ========================================= */
+
+.modal-close{
+
+    position:absolute;
+
+    top:18px;
+
+    right:18px;
+
+    width:42px;
+
+    height:42px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#f1f5f9;
+
+    cursor:pointer;
+
+    font-size:1rem;
 
 }
 
@@ -126,18 +184,20 @@
 
     max-width:100%;
 
-    margin:16px auto;
+    margin:20px auto;
 
     display:block;
 
-    border-radius:16px;
+    border-radius:18px;
+
+    background:#fff;
 
     padding:12px;
 
-    background:white;
+    border:1px solid #e2e8f0;
 
     box-shadow:
-        0 8px 24px rgba(0,0,0,.12);
+        0 10px 25px rgba(0,0,0,.08);
 
 }
 
@@ -147,9 +207,7 @@
 
 .qr-token-display{
 
-    margin:12px 0 20px;
-
-    word-break:break-word;
+    margin:16px 0 22px;
 
 }
 
@@ -157,15 +215,23 @@
 
     display:block;
 
-    margin-top:6px;
+    padding:12px;
 
-    padding:10px 12px;
+    margin-top:8px;
 
-    border-radius:10px;
+    border-radius:12px;
 
-    background:#f1f5f9;
+    background:#f8fafc;
 
-    font-size:.85rem;
+    border:1px solid #e2e8f0;
+
+    color:#2563eb;
+
+    font-size:.9rem;
+
+    font-weight:700;
+
+    word-break:break-all;
 
 }
 
@@ -179,7 +245,7 @@
 
     flex-direction:column;
 
-    gap:10px;
+    gap:12px;
 
 }
 
@@ -189,11 +255,21 @@
 
 .qr-share-hint{
 
-    margin-top:8px;
+    margin-top:10px;
 
     color:#64748b;
 
-    line-height:1.4;
+    line-height:1.6;
+
+}
+
+/* ========================================= */
+/* BLOQUEAR SCROLL */
+/* ========================================= */
+
+body.modal-open{
+
+    overflow:hidden;
 
 }
 
@@ -221,17 +297,17 @@
 
     from{
 
-        transform:scale(.85);
-
         opacity:0;
+
+        transform:scale(.95);
 
     }
 
     to{
 
-        transform:scale(1);
-
         opacity:1;
+
+        transform:scale(1);
 
     }
 
@@ -246,9 +322,15 @@
     .modal-image,
     .photo-modal-content{
 
-        max-width:95%;
+        max-width:95vw;
 
         max-height:80vh;
+
+    }
+
+    .qr-modal-panel{
+
+        padding:24px;
 
     }
 
@@ -257,9 +339,13 @@
 
         top:15px;
 
-        right:20px;
+        right:15px;
 
-        font-size:2.5rem;
+        width:48px;
+
+        height:48px;
+
+        font-size:1.6rem;
 
     }
 

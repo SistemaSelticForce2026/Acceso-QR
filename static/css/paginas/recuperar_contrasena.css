@@ -364,14 +364,42 @@
 /* RESPONSIVE */
 /* ===================================== */
 
+@media screen and (max-width:768px){
+
+    .recovery-icon{
+
+        width:80px;
+        height:80px;
+        font-size:1.9rem;
+
+    }
+
+    .security-box{
+
+        padding:20px;
+
+        gap:14px;
+
+    }
+
+    .token-code{
+
+        font-size:2.3rem;
+
+        letter-spacing:10px;
+
+        padding:20px 24px;
+
+    }
+
+}
+
 @media screen and (max-width:600px){
 
     .recovery-icon{
 
         width:70px;
-
         height:70px;
-
         font-size:1.6rem;
 
     }
@@ -382,6 +410,8 @@
 
         letter-spacing:6px;
 
+        padding:18px 20px;
+
     }
 
     .recovery-timer{
@@ -389,6 +419,46 @@
         min-width:120px;
 
         font-size:1.1rem;
+
+        padding:12px 18px;
+
+    }
+
+    .security-box{
+
+        flex-direction:column;
+
+        align-items:center;
+
+        text-align:center;
+
+    }
+
+}
+
+@media screen and (max-width:400px){
+
+    .token-code{
+
+        font-size:1.4rem;
+
+        letter-spacing:4px;
+
+        padding:14px 16px;
+
+    }
+
+    .recovery-timer{
+
+        font-size:1rem;
+
+        min-width:100px;
+
+    }
+
+    .recovery-header .small{
+
+        font-size:.9rem;
 
     }
 

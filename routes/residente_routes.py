@@ -31,16 +31,101 @@ def dashboard():
     auto_qr = request.args.get("auto_qr")
 
     # =============================================
-    # OBTENER VISITAS
+    # PAGINACION
     # =============================================
 
-    visitas = list(mongo.db.visits.find({"residente_id": session["user_id"]}))
+    pagina = int(request.args.get("page", 1))
+
+    por_pagina = 5
+
+    fecha_inicio = request.args.get("fecha_inicio", "").strip()
+
+    fecha_fin = request.args.get("fecha_fin", "").strip()
+
+    residente_id = session["user_id"]
+
+    filtro = {"residente_id": residente_id}
+
+    # =============================================
+    # FILTRO FECHAS
+    # =============================================
+
+    if fecha_inicio:
+
+        filtro["fecha_visita"] = {"$gte": fecha_inicio}
+
+    if fecha_fin:
+
+        filtro.setdefault("fecha_visita", {})
+
+        filtro["fecha_visita"]["$lte"] = fecha_fin
+
+    # =============================================
+    # CONSULTA
+    # =============================================
+
+    total_visitas = mongo.db.visits.count_documents(filtro)
+
+    total_paginas = max(1, (total_visitas + por_pagina - 1) // por_pagina)
+
+    visitas = list(
+        mongo.db.visits.find(filtro)
+        .sort("created_at", -1)
+        .skip((pagina - 1) * por_pagina)
+        .limit(por_pagina)
+    )
+
+    # =============================================
+    # ESTADISTICAS DASHBOARD
+    # =============================================
+
+    visitas_dentro = mongo.db.visits.count_documents(
+        {"residente_id": residente_id, "estado": "dentro"}
+    )
+
+    visitas_finalizadas = mongo.db.visits.count_documents(
+        {"residente_id": residente_id, "estado": "salida_registrada"}
+    )
+
+    visitas_pendientes = mongo.db.visits.count_documents(
+        {"residente_id": residente_id, "estado": "activo"}
+    )
 
     # =============================================
     # RENDER
     # =============================================
 
-    return render_template("residente_dashboard.html", visitas=visitas, auto_qr=auto_qr)
+    return render_template(
+        "residente_dashboard.html",
+        visitas=visitas,
+        total_visitas=total_visitas,
+        visitas_dentro=visitas_dentro,
+        visitas_finalizadas=visitas_finalizadas,
+        visitas_pendientes=visitas_pendientes,
+        auto_qr=auto_qr,
+        pagina=pagina,
+        total_paginas=total_paginas,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+    )
+
+
+# =====================================================
+# CANCELAR QR
+# =====================================================
+
+
+@resident_bp.route("/cancelar-qr/<token>", methods=["POST"])
+@login_required
+@role_required("residente")
+def cancelar_qr(token):
+
+    mongo.db.visits.update_one(
+        {"qr_token": token, "residente_id": session["user_id"]},
+        {"$set": {"qr_estado": "cancelado", "estado": "cancelado"}},
+    )
+
+    return {"success": True}
 
 
 # =====================================================

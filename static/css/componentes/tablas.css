@@ -1,111 +1,377 @@
 /* ========================================= */
-/* TARJETAS */
+/* TABLA PREMIUM */
 /* ========================================= */
 
-.card,
-.stat-card{
+.table-wrapper{
 
-    position:relative;
+    width:100%;
 
-    overflow:hidden;
+    overflow-x:auto;
 
-    background:white;
+    padding-bottom:14px;
 
-    padding:24px;
+}
 
-    border-radius:18px;
+.table-wrapper::-webkit-scrollbar{
 
-    border:1px solid #e2e8f0;
+    height:10px;
+
+}
+
+.table-wrapper::-webkit-scrollbar-thumb{
+
+    background:linear-gradient(
+        90deg,
+        #2563eb,
+        #60a5fa
+    );
+
+    border-radius:999px;
+
+}
+
+.table-wrapper::-webkit-scrollbar-track{
+
+    background:#e2e8f0;
+
+    border-radius:999px;
+
+}
+
+/* ========================================= */
+/* TABLA RESIDENTE DASHBOARD */
+/* ========================================= */
+
+.resident-table{
+
+    width:100%;
+
+    min-width:1650px;
+
+    border-collapse:separate;
+
+    border-spacing:0 18px;
+
+}
+
+/* ========================================= */
+/* HEADER */
+/* ========================================= */
+
+.resident-table th{
+
+    padding:20px 18px;
+
+    text-align:left;
+
+    font-size:12px;
+
+    font-weight:800;
+
+    text-transform:uppercase;
+
+    letter-spacing:.8px;
+
+    color:#ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #3b82f6,
+            #60a5fa
+        );
+
+    white-space:nowrap;
 
     box-shadow:
-        0 10px 30px rgba(15,23,42,.06),
-        0 2px 10px rgba(15,23,42,.04);
+        0 10px 25px rgba(37,99,235,.20);
 
-    backdrop-filter:blur(12px);
+}
 
-    -webkit-backdrop-filter:blur(12px);
+.resident-table th:first-child{
+
+    border-radius:18px 0 0 18px;
+
+}
+
+.resident-table th:last-child{
+
+    border-radius:0 18px 18px 0;
+
+}
+
+/* ========================================= */
+/* FILAS */
+/* ========================================= */
+
+.resident-table tbody tr{
+
+    transition:.35s ease;
+
+    box-shadow:
+        0 8px 25px rgba(15,23,42,.06);
+
+}
+
+.resident-table tbody tr:hover{
+
+    transform:
+        translateY(-5px)
+        scale(1.002);
+
+    box-shadow:
+        0 18px 40px rgba(37,99,235,.12);
+
+}
+
+/* ========================================= */
+/* CELDAS */
+/* ========================================= */
+
+.resident-table td{
+
+    padding:26px 22px;
+
+    vertical-align:middle;
+
+    line-height:1.8;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff,
+            #fafcff
+        );
+
+    border-top:1px solid #e2e8f0;
+
+    border-bottom:1px solid #e2e8f0;
+
+    border-right:1px solid #f1f5f9;
+
+}
+
+.resident-table td:first-child{
+
+    border-left:1px solid #e2e8f0;
+
+    border-radius:20px 0 0 20px;
+
+}
+
+.resident-table td:last-child{
+
+    border-right:1px solid #e2e8f0;
+
+    border-radius:0 20px 20px 0;
+
+}
+
+/* ========================================= */
+/* DIVISIONES */
+/* ========================================= */
+
+.resident-table td + td{
+
+    border-left:1px solid #f8fafc;
+
+}
+
+/* ========================================= */
+/* VISITANTE */
+/* ========================================= */
+
+.visitante-info{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:22px;
+
+    min-width:290px;
+
+}
+
+.visitante-foto img{
+
+    width:90px;
+
+    height:90px;
+
+    object-fit:cover;
+
+    border-radius:22px;
+
+    border:3px solid #ffffff;
+
+    box-shadow:
+        0 8px 20px rgba(15,23,42,.10);
 
     transition:.25s ease;
 
 }
 
-/* ========================================= */
-/* EFECTO SUPERIOR */
-/* ========================================= */
+.visitante-foto img:hover{
 
-.card::before,
-.stat-card::before{
+    transform:scale(1.06);
 
-    content:"";
+}
 
-    position:absolute;
+.visitante-data{
 
-    top:0;
+    display:flex;
 
-    left:0;
+    flex-direction:column;
 
-    width:100%;
+    gap:8px;
 
-    height:4px;
+}
 
-    background:
-        linear-gradient(
-            90deg,
-            #2563eb,
-            #38bdf8
-        );
+.visitante-data strong{
+
+    font-size:15px;
+
+    font-weight:700;
+
+    color:#0f172a;
+
+}
+
+.visitante-data .small{
+
+    color:#64748b;
 
 }
 
 /* ========================================= */
-/* EFECTO GLASS */
+/* QR */
 /* ========================================= */
 
-.card::after,
-.stat-card::after{
+.qr-box{
 
-    content:"";
+    display:flex;
 
-    position:absolute;
+    flex-direction:column;
 
-    inset:0;
+    align-items:center;
 
-    border-radius:inherit;
-
-    pointer-events:none;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255,255,255,.04),
-            transparent
-        );
+    gap:12px;
 
 }
 
-/* ========================================= */
-/* HOVER */
-/* ========================================= */
+.qr-image{
 
-.card:hover,
-.stat-card:hover{
+    width:120px;
 
-    transform:translateY(-5px);
+    height:120px;
+
+    padding:12px;
+
+    border-radius:24px;
+
+    background:#ffffff;
+
+    border:2px solid #dbeafe;
 
     box-shadow:
-        0 18px 40px rgba(37,99,235,.10),
-        0 8px 20px rgba(15,23,42,.08);
+        0 12px 30px rgba(37,99,235,.12);
+
+    transition:.25s ease;
+
+}
+
+.qr-image:hover{
+
+    transform:scale(1.08);
+
+}
+
+.qr-token{
+
+    background:#eff6ff;
+
+    color:#1d4ed8;
+
+    padding:10px 16px;
+
+    border-radius:999px;
+
+    font-weight:700;
+
+    border:1px solid #bfdbfe;
 
 }
 
 /* ========================================= */
-/* FORM CARD */
+/* VEHICULO */
 /* ========================================= */
 
-.form-card{
+.placa-thumb{
 
-    max-width:500px;
+    width:120px;
 
-    margin:30px auto;
+    margin-top:12px;
+
+    border-radius:14px;
+
+    border:2px solid #e2e8f0;
+
+    box-shadow:
+        0 6px 15px rgba(15,23,42,.08);
+
+}
+
+/* ========================================= */
+/* BADGES */
+/* ========================================= */
+
+.badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:10px 20px;
+
+    border-radius:999px;
+
+    font-weight:700;
+
+    font-size:13px;
+
+    letter-spacing:.4px;
+
+    box-shadow:
+        0 6px 15px rgba(15,23,42,.08);
+
+    backdrop-filter:blur(10px);
+
+}
+
+/* ========================================= */
+/* TEXTO PEQUEÑO */
+/* ========================================= */
+
+.small{
+
+    line-height:1.7;
+
+}
+
+/* ========================================= */
+/* RESPONSIVE */
+/* ========================================= */
+
+@media(max-width:768px){
+
+    .resident-table{
+
+        min-width:1450px;
+
+    }
 
 }

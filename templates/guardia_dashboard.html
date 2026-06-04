@@ -1,48 +1,114 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static',
+      filename='css/paginas/guardia_dashboard.css') }}">
+{% endblock %}
 {% block content %}
 
 <h1>Panel de Guardia</h1>
 
-<div class="stats">
+<div class="stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;">
 
     <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon blue">
+                <i class="fa-solid fa-users"></i>
+            </div>
+        </div>
+
         <h3>Visitas activas</h3>
+
         <p>{{ activas or 0 }}</p>
+
+        <small>Monitoreo en tiempo real</small>
     </div>
 
     <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon green">
+                <i class="fa-solid fa-house-user"></i>
+            </div>
+        </div>
+
         <h3>Dentro del fraccionamiento</h3>
+
         <p>{{ dentro or 0 }}</p>
+
+        <small>Visitantes presentes</small>
     </div>
 
     <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon purple">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+        </div>
+
         <h3>Salidas registradas</h3>
+
         <p>{{ salidas or 0 }}</p>
+
+        <small>Control de egresos</small>
     </div>
 
     <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon red">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+        </div>
+
         <h3>Incidencias</h3>
+
         <p>{{ incidencias or 0 }}</p>
+
+        <small>Eventos reportados</small>
     </div>
 
 </div>
 
-<div class="card">
+<div class="card control-card">
 
-    <h2>Control de acceso</h2>
-    <p class="small">Use el escáner correspondiente según si el visitante ingresa o sale del fraccionamiento.</p>
+    <div class="control-header">
 
-    <div class="scan-mode-switch" style="margin-top:16px;">
+        <div class="control-icon">
+            <i class="fa-solid fa-qrcode"></i>
+        </div>
 
-        <a href="{{ url_for('guard.scan_entrada') }}" class="scan-mode-btn active">
+        <div>
+
+            <h2>Control de acceso</h2>
+
+            <p class="small">
+                Gestiona entradas y salidas de visitantes mediante códigos QR.
+                Selecciona el modo de escaneo correspondiente para registrar
+                movimientos en tiempo real dentro del fraccionamiento.
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="scan-mode-switch">
+
+        <a href="{{ url_for('guard.scan_entrada') }}"
+           class="scan-mode-btn active">
+
             <i class="fa-solid fa-arrow-right-to-bracket"></i>
+
             Escanear entrada
+
         </a>
 
-        <a href="{{ url_for('guard.scan_salida') }}" class="scan-mode-btn exit">
-            <i class="fa-solid fa-door-open"></i>
+        <a href="{{ url_for('guard.scan_salida') }}"
+           class="scan-mode-btn exit">
+
+            <i class="fa-solid fa-right-from-bracket"></i>
+
             Escanear salida
+
         </a>
 
     </div>
@@ -53,13 +119,68 @@
 
     <h2>Visitas recientes</h2>
 
+    <form method="GET" class="filter-form">
+
+        <div class="filter-group">
+
+            <div class="filter-field">
+
+                <label>Fecha inicial</label>
+
+                <input
+                    type="date"
+                    name="fecha_inicio"
+                    value="{{ fecha_inicio }}"
+                >
+
+            </div>
+
+            <div class="filter-field">
+
+                <label>Fecha final</label>
+
+                <input
+                    type="date"
+                    name="fecha_fin"
+                    value="{{ fecha_fin }}"
+                >
+
+            </div>
+
+            <div class="filter-actions">
+
+                <button type="submit" class="btn-filter">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    Filtrar
+
+                </button>
+
+                <a href="{{ url_for('guard.dashboard') }}"
+                class="btn-clear">
+
+                    <i class="fa-solid fa-rotate-left"></i>
+
+                    Limpiar
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
     <p class="small">
         Datos del visitante, vehículo y fotografía de placa registrados por el residente.
     </p>
 
     <div class="table-container">
 
-        <table>
+        <div class="guardias-table-wrapper">
+
+        <table class="guardias-table">
 
             <tr>
                 <th>Visitante</th>
@@ -297,6 +418,46 @@
         </table>
 
     </div>
+
+</div>
+
+<div class="pagination-container">
+
+    {% if total_paginas > 1 %}
+
+        <div class="pagination">
+
+            {% if pagina > 1 %}
+                <a href="{{ url_for('guard.dashboard', page=pagina-1) }}"
+                   class="page-btn">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            {% endif %}
+
+            {% for p in range(1, total_paginas + 1) %}
+
+                <a href="{{ url_for(
+                            'guard.dashboard',
+                            page=p,
+                            fecha_inicio=fecha_inicio,
+                            fecha_fin=fecha_fin
+                        ) }}"
+                   class="page-btn {% if p == pagina %}active{% endif %}">
+                    {{ p }}
+                </a>
+
+            {% endfor %}
+
+            {% if pagina < total_paginas %}
+                <a href="{{ url_for('guard.dashboard', page=pagina+1) }}"
+                   class="page-btn">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            {% endif %}
+
+        </div>
+
+    {% endif %}
 
 </div>
 

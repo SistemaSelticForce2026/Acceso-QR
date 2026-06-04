@@ -172,7 +172,9 @@
 
     align-items:center;
 
-    gap:12px;
+    gap:16px;
+
+    min-width:280px;
 
 }
 
@@ -204,9 +206,13 @@
 
 .descripcion{
 
-    max-width:350px;
+    min-width:320px;
 
-    line-height:1.6;
+    max-width:420px;
+
+    line-height:1.8;
+
+    color:#475569;
 
 }
 
@@ -243,6 +249,171 @@
 .monitor-card .alert:last-child{
 
     margin-bottom:0;
+
+}
+
+/* =========================================================
+   TABLA PREMIUM GUARDIAS
+========================================================= */
+
+.guardias-table{
+
+    width:100%;
+
+    border-collapse:separate;
+
+    border-spacing:0 18px;
+
+}
+
+.guardias-table th{
+
+    padding:0 20px 14px;
+
+    text-align:left;
+
+    font-size:.85rem;
+
+    font-weight:800;
+
+    color:#64748b;
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+}
+
+.guardias-table td{
+
+    background:#ffffff;
+
+    padding:22px;
+
+    vertical-align:middle;
+
+    box-shadow:
+        0 10px 25px rgba(15,23,42,.05);
+
+}
+
+.guardias-table td:first-child{
+
+    border-radius:18px 0 0 18px;
+
+}
+
+.guardias-table td:last-child{
+
+    border-radius:0 18px 18px 0;
+
+}
+
+.guardias-table tbody tr{
+
+    transition:.25s ease;
+
+}
+
+.guardias-table tbody tr:hover{
+
+    transform:translateY(-4px);
+
+}
+
+/* =========================================
+   GUARDIA
+========================================= */
+
+.guardia-info{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+
+    min-width:280px;
+
+}
+
+.guardia-avatar{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #60a5fa
+        );
+
+    color:white;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:1.1rem;
+
+    font-weight:800;
+
+    flex-shrink:0;
+}
+
+/* =========================================
+   CONTACTO
+========================================= */
+
+.contacto-info{
+
+    min-width:240px;
+
+    line-height:1.8;
+
+}
+
+/* =========================================
+   ACTIVIDAD
+========================================= */
+
+.descripcion{
+
+    min-width:340px;
+
+    max-width:500px;
+
+    line-height:1.8;
+
+}
+
+/* =========================================
+   ACCIONES
+========================================= */
+
+.acciones-guardia{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+    min-width:150px;
+
+}
+
+.acciones-guardia .btn{
+
+    width:100%;
+
+    justify-content:center;
 
 }
 

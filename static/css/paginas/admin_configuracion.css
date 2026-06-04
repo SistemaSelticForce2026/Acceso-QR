@@ -2,7 +2,7 @@
    FORMULARIOS CONFIGURACION
 ========================================================= */
 
-.card form{
+.config-form{
 
     display:flex;
 
@@ -12,7 +12,7 @@
 
 }
 
-.card form button{
+.config-form button{
 
     margin-top:10px;
 

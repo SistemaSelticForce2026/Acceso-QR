@@ -178,11 +178,11 @@
             #f8fafc
         );
 
-    border-radius:32px;
+    border-radius:24px;
 
-    padding:34px;
+    padding:24px;
 
-    min-height:240px;
+    min-height:120px;
 
     border:1px solid #e2e8f0;
 
@@ -360,7 +360,7 @@
 
     border-radius:16px;
 
-    background:#ffffff;
+    background:#2563eb;
 
     border:1px solid #e2e8f0;
 
@@ -397,13 +397,15 @@
     display:grid;
 
     grid-template-columns:
-        repeat(auto-fit,minmax(500px,1fr));
+        repeat(auto-fit,minmax(700px,1fr));
 
-    gap:40px;
+    gap:90px;
 
-    margin-bottom:45px;
+    margin-top:40px;
 
-    align-items:stretch;
+    margin-bottom:100px;
+
+    align-items:start;
 
 }
 
@@ -956,23 +958,28 @@
 
     flex-direction:column;
 
-    height:100%;
-
     overflow:hidden;
 
-    border-radius:32px;
+    border-radius:38px;
 
-    background:linear-gradient(
-        180deg,
-        #ffffff 0%,
-        #f8fafc 100%
-    );
+    padding:42px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f8fafc 100%
+        );
 
     border:1px solid #e2e8f0;
 
     box-shadow:
-        0 15px 35px rgba(15,23,42,.05),
-        0 35px 80px rgba(15,23,42,.08);
+        0 25px 60px rgba(15,23,42,.06),
+        0 60px 120px rgba(15,23,42,.08);
+
+    backdrop-filter:blur(12px);
+
+    transition:.35s ease;
 
 }
 
@@ -988,14 +995,25 @@
 
     width:100%;
 
-    height:6px;
+    height:8px;
 
-    background:linear-gradient(
-        90deg,
-        #2563eb,
-        #38bdf8,
-        #60a5fa
-    );
+    background:
+        linear-gradient(
+            90deg,
+            #2563eb,
+            #38bdf8,
+            #60a5fa
+        );
+
+}
+
+.chart-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:
+        0 25px 60px rgba(37,99,235,.12),
+        0 50px 100px rgba(15,23,42,.10);
 
 }
 
@@ -1003,9 +1021,11 @@
 
     flex:1;
 
-    min-height:420px;
+    min-height:480px;
 
     position:relative;
+
+    padding-top:25px;
 
 }
 
@@ -1041,7 +1061,7 @@
 
 .visit-chart-card{
 
-    min-height:680px;
+    min-height:760px;
 
 }
 
@@ -1059,11 +1079,15 @@
 
     justify-content:space-between;
 
-    align-items:flex-start;
+    align-items:center;
 
-    gap:20px;
+    gap:24px;
 
-    margin-bottom:20px;
+    margin-bottom:30px;
+
+    padding-bottom:22px;
+
+    border-bottom:1px solid #e2e8f0;
 
 }
 
@@ -1076,6 +1100,37 @@
     color:#0f172a;
 
     margin-bottom:8px;
+
+}
+
+.chart-header{
+
+    position:relative;
+
+}
+
+.chart-header::after{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    bottom:-12px;
+
+    width:120px;
+
+    height:4px;
+
+    border-radius:999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #2563eb,
+            #38bdf8
+        );
 
 }
 
@@ -1138,6 +1193,8 @@
     width:100% !important;
 
     height:100% !important;
+
+    padding:10px;
 
 }
 
@@ -1287,10 +1344,6 @@
     font-size:.85rem;
 
 }
-
-/***********************************************************
-    COMPONENTES REUTILIZABLES
-************************************************************/
 
 /* =========================================================
    ICONOS ESTADISTICAS
@@ -1494,26 +1547,165 @@
 }
 
 /* ===================================================== */
-/* RESPONSIVE */
+/* CENTRO DE MONITOREO */
 /* ===================================================== */
 
-@media screen and (max-width:1200px){
+.security-panel{
 
-    .stats{
+    margin-top:25px;
 
-        grid-template-columns:
-            repeat(2,1fr);
+    padding:28px;
 
-    }
+    border-radius:24px;
+
+    background:linear-gradient(
+        135deg,
+        #0f172a,
+        #1e293b
+    );
+
+    color:#ffffff;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        0 20px 40px rgba(15,23,42,.18);
 
 }
 
+.security-header{
 
-@media screen and (max-width:768px){
+    display:flex;
 
-    .stats{
+    justify-content:space-between;
 
-        grid-template-columns:1fr;
+    align-items:center;
+
+    margin-bottom:24px;
+
+}
+
+.security-header h3{
+
+    margin:0;
+
+    font-size:1.25rem;
+
+    font-weight:800;
+
+    color:#ffffff;
+
+}
+
+.security-header i{
+
+    color:#38bdf8;
+
+    margin-right:10px;
+
+}
+
+.security-live{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    background:#22c55e20;
+
+    color:#4ade80;
+
+    padding:8px 14px;
+
+    border-radius:999px;
+
+    font-weight:700;
+
+    border:1px solid #22c55e40;
+
+}
+
+.pulse{
+
+    width:10px;
+
+    height:10px;
+
+    border-radius:50%;
+
+    background:#22c55e;
+
+    animation:pulse 1.5s infinite;
+
+}
+
+.security-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:18px;
+
+}
+
+.security-box{
+
+    background:rgba(255,255,255,.06);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:18px;
+
+    padding:20px;
+
+    text-align:center;
+
+    transition:.25s ease;
+
+}
+
+.security-box:hover{
+
+    transform:translateY(-4px);
+
+    background:rgba(255,255,255,.09);
+
+}
+
+.security-number{
+
+    display:block;
+
+    font-size:2rem;
+
+    font-weight:800;
+
+    color:#38bdf8;
+
+    margin-bottom:8px;
+
+}
+
+.security-box small{
+
+    color:#cbd5e1;
+
+    font-size:.9rem;
+
+}
+
+/* =====================================================
+   RESPONSIVE PREMIUM
+===================================================== */
+
+@media screen and (max-width:1400px){
+
+    .container{
+
+        padding:24px;
 
     }
 
@@ -1521,17 +1713,267 @@
 
         grid-template-columns:1fr;
 
+        gap:40px;
+
     }
 
-    .card{
+    .stats{
 
-        padding:24px;
+        grid-template-columns:repeat(2,1fr);
+
+        gap:24px;
+
+    }
+
+    .service-grid{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+}
+
+/* =====================================================
+   TABLETS
+===================================================== */
+
+@media screen and (max-width:1024px){
+
+    .container{
+
+        padding:20px;
 
     }
 
     .page-header{
 
         flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:20px;
+
+    }
+
+    .page-header h1{
+
+        font-size:2.4rem;
+
+    }
+
+    .page-subtitle{
+
+        max-width:100%;
+
+    }
+
+    .stats{
+
+        grid-template-columns:1fr;
+
+        gap:20px;
+
+    }
+
+    .stat-card{
+
+        padding:22px;
+
+    }
+
+    .stat-card h2{
+
+        font-size:3.5rem;
+
+    }
+
+    .stat-top{
+
+        margin-bottom:24px;
+
+    }
+
+    .stat-top i{
+
+        width:60px;
+
+        height:60px;
+
+        font-size:1.3rem;
+
+    }
+
+    .security-hero{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        text-align:left;
+
+    }
+
+    .hero-metrics{
+
+        width:100%;
+
+        justify-content:space-between;
+
+        flex-wrap:wrap;
+
+        gap:20px;
+
+    }
+
+    .card{
+
+        padding:28px;
+
+    }
+
+    .chart-card{
+
+        padding:28px;
+
+    }
+
+    .chart-body{
+
+        min-height:400px;
+
+    }
+
+    .line-chart-card{
+
+        min-height:560px;
+
+    }
+
+    .visit-chart-card{
+
+        min-height:560px;
+
+    }
+
+}
+
+/* =====================================================
+   MOVILES GRANDES
+===================================================== */
+
+@media screen and (max-width:768px){
+
+    .container{
+
+        width:100%;
+
+        padding:16px;
+
+    }
+
+    .page-header{
+
+        margin-bottom:30px;
+
+    }
+
+    .page-header h1{
+
+        font-size:2rem;
+
+        line-height:1.2;
+
+    }
+
+    .page-subtitle{
+
+        font-size:.95rem;
+
+    }
+
+    .live-indicator{
+
+        width:100%;
+
+        justify-content:center;
+
+    }
+
+    .stats{
+
+        gap:18px;
+
+    }
+
+    .stat-card{
+
+        border-radius:22px;
+
+        padding:20px;
+
+    }
+
+    .stat-card h2{
+
+        font-size:3rem;
+
+        letter-spacing:-2px;
+
+    }
+
+    .stat-top span{
+
+        font-size:.95rem;
+
+    }
+
+    .stat-top i{
+
+        width:54px;
+
+        height:54px;
+
+        border-radius:18px;
+
+        font-size:1.2rem;
+
+    }
+
+    .stats-filter{
+
+        display:grid;
+
+        grid-template-columns:1fr 1fr;
+
+        gap:12px;
+
+    }
+
+    .filter-btn{
+
+        width:100%;
+
+    }
+
+    .dashboard-grid{
+
+        gap:30px;
+
+    }
+
+    .card{
+
+        border-radius:24px;
+
+        padding:20px;
+
+    }
+
+    .chart-card{
+
+        border-radius:28px;
+
+        padding:22px;
 
     }
 
@@ -1540,6 +1982,20 @@
         flex-direction:column;
 
         align-items:flex-start;
+
+        gap:14px;
+
+    }
+
+    .chart-header h2{
+
+        font-size:1.2rem;
+
+    }
+
+    .chart-subtitle{
+
+        font-size:.88rem;
 
     }
 
@@ -1553,13 +2009,177 @@
 
     .line-chart-card{
 
-        min-height:580px;
+        min-height:500px;
 
     }
 
     .visit-chart-card{
 
-        min-height:580px;
+        min-height:500px;
+
+    }
+
+    .chart-body{
+
+        min-height:320px;
+
+    }
+
+    .hero-metrics{
+
+        flex-direction:column;
+
+        gap:15px;
+
+    }
+
+    .hero-metrics strong{
+
+        font-size:1.6rem;
+
+    }
+
+    .service-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .security-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+/* =====================================================
+   CELULARES PEQUEÑOS
+===================================================== */
+
+@media screen and (max-width:480px){
+
+    .container{
+
+        padding:12px;
+
+    }
+
+    .page-header h1{
+
+        font-size:1.7rem;
+
+    }
+
+    .page-subtitle{
+
+        font-size:.85rem;
+
+        line-height:1.7;
+
+    }
+
+    .live-indicator{
+
+        padding:12px;
+
+        font-size:.85rem;
+
+    }
+
+    .stat-card{
+
+        padding:18px;
+
+    }
+
+    .stat-card h2{
+
+        font-size:2.4rem;
+
+    }
+
+    .stat-top{
+
+        margin-bottom:18px;
+
+    }
+
+    .stat-top i{
+
+        width:48px;
+
+        height:48px;
+
+        font-size:1rem;
+
+    }
+
+    .stats-filter{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .filter-btn{
+
+        padding:12px;
+
+        font-size:.85rem;
+
+    }
+
+    .card{
+
+        padding:16px;
+
+    }
+
+    .chart-card{
+
+        padding:18px;
+
+    }
+
+    .chart-header h2{
+
+        font-size:1.05rem;
+
+    }
+
+    .chart-subtitle{
+
+        font-size:.82rem;
+
+    }
+
+    .chart-body{
+
+        min-height:260px;
+
+    }
+
+    .security-panel{
+
+        padding:18px;
+
+    }
+
+    .security-number{
+
+        font-size:1.5rem;
+
+    }
+
+    .module-item{
+
+        padding:16px;
+
+    }
+
+    .module-top{
+
+        flex-direction:column;
 
     }
 

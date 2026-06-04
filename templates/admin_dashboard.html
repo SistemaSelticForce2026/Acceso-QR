@@ -332,12 +332,33 @@ href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
 
     <div class="card chart-card">
 
-        <h2>
-            <i class="fa-solid fa-chart-pie"></i>
-            Estado operativo de accesos
-        </h2>
+        <div class="chart-header">
 
-        <canvas id="estadoChart"></canvas>
+            <div>
+
+                <h2>
+
+                    <i class="fa-solid fa-chart-pie"></i>
+
+                    Estado operativo de accesos
+
+                </h2>
+
+                <p class="chart-subtitle">
+
+                    Distribución general del estado de accesos.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="chart-body">
+
+            <canvas id="estadoChart"></canvas>
+
+        </div>
 
     </div>
 
@@ -347,10 +368,24 @@ href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
 
     <div class="card chart-card">
 
-        <h2>
-            <i class="fa-solid fa-chart-column"></i>
-            Resumen general
-        </h2>
+        <div class="chart-header">
+
+            <div>
+
+                <h2>
+                    <i class="fa-solid fa-chart-column"></i>
+                    Resumen general
+                </h2>
+
+                <p class="chart-subtitle">
+                    Distribución de actividades registradas.
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="chart-body">
 
         <canvas id="actividadChart"></canvas>
 
@@ -1505,7 +1540,8 @@ href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
 
             responsive: true,
 
-            cutout: '78%',
+            cutout: '65%',
+            radius: '75%',
 
             plugins: {
 
@@ -1760,7 +1796,8 @@ href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
 
             maintainAspectRatio: false,
 
-            cutout: '82%',
+            cutout: '65%',
+            radius: '75%',
 
             layout: {
 

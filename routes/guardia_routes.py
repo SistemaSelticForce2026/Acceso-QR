@@ -94,7 +94,44 @@ def _registrar_salida(visita, session):
 @role_required("guardia")
 def dashboard():
 
-    visitas = list(mongo.db.visits.find().sort("created_at", -1).limit(15))
+    # =============================================
+    # PAGINACION
+    # =============================================
+
+    pagina = int(request.args.get("page", 1))
+
+    por_pagina = 5
+
+    fecha_inicio = request.args.get("fecha_inicio", "").strip()
+
+    fecha_fin = request.args.get("fecha_fin", "").strip()
+
+    filtro = {}
+
+    # =============================================
+    # FILTRO FECHAS
+    # =============================================
+
+    if fecha_inicio:
+
+        filtro["fecha_visita"] = {"$gte": fecha_inicio}
+
+    if fecha_fin:
+
+        filtro.setdefault("fecha_visita", {})
+
+        filtro["fecha_visita"]["$lte"] = fecha_fin
+
+    total_visitas = mongo.db.visits.count_documents(filtro)
+
+    total_paginas = (total_visitas + por_pagina - 1) // por_pagina
+
+    visitas = list(
+        mongo.db.visits.find(filtro)
+        .sort("created_at", -1)
+        .skip((pagina - 1) * por_pagina)
+        .limit(por_pagina)
+    )
 
     activas = mongo.db.visits.count_documents({"estado": "activo"})
     dentro = mongo.db.visits.count_documents({"estado": "dentro"})
@@ -108,6 +145,10 @@ def dashboard():
         dentro=dentro,
         salidas=salidas,
         incidencias=incidencias,
+        pagina=pagina,
+        total_paginas=total_paginas,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
     )
 
 
