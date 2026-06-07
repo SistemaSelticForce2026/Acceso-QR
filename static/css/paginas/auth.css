@@ -339,6 +339,8 @@
 
 .auth-input-wrap{
     position:relative;
+    display:flex;
+    align-items:center;
 }
 
 .auth-input-icon{
@@ -402,9 +404,10 @@
     right:14px;
     top:50%;
     transform:translateY(-50%);
+    margin:0;
     background:none;
     border:none;
-    padding:0;
+    padding:0 2px;
     cursor:pointer;
     color:#77767d;
     font-size:14px;
