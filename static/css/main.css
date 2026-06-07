@@ -15,7 +15,6 @@
 @import url("estructura/notificaciones.css");
 
 /* PAGINAS */
-@import url("paginas/login.css");
 @import url("paginas/admin_dashboard.css");
 @import url("paginas/admin_guardias.css");
 @import url("paginas/admin_residentes.css");

@@ -1,245 +1,239 @@
-{% extends 'layout.html' %}
-
-{% block extra_css %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/nueva_contrasena.css') }}">
-{% endblock %}
-
+{% extends 'layout_auth.html' %}
+{% block title %}Nueva contraseña{% endblock %}
 
 {% block content %}
 
-<div class="card form-card">
+<div class="auth-layout" style="background:#f7f9fb; min-height:100vh;">
 
-    <h1>Nueva contraseña</h1>
+    <div class="auth-form-panel" style="align-items:center; padding:32px 24px;">
+        <div class="auth-form-inner auth-animate" style="max-width:460px;">
 
-    <p class="small">
-        Ingresa tu nueva contraseña para recuperar el acceso a tu cuenta.
-    </p>
+            <!-- Logo -->
+            <div class="auth-mobile-logo" style="display:flex; margin-bottom:24px;">
+                <div class="auth-mobile-icon">
+                    <img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}"
+                        alt="AccessQR Logo"
+                        style="width:24px;height:24px;object-fit:contain;">
+                </div>
+                <div>
+                    <div class="auth-mobile-name">AccessQR</div>
+                    <div class="auth-mobile-sub">Control de Accesos</div>
+                </div>
+            </div>
 
-    <form method="POST" id="resetForm">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="auth-flash">
+                        {% for category, message in messages %}
+                            <div class="alert {{ category }}">
+                                <i class="fa-solid fa-circle-info"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
 
-        <label>Nueva contraseña</label>
+            <!-- Card -->
+            <div class="glass-card">
 
-        <div class="password-box">
+                <div class="auth-card-eyebrow">Recuperación de acceso</div>
+                <h2 class="auth-card-title">Nueva contraseña</h2>
+                <p class="auth-card-subtitle">
+                    Crea una contraseña segura para recuperar el acceso a tu cuenta.
+                </p>
 
-            <input 
-                type="password"
-                name="password"
-                id="password"
-                placeholder="Ingresa tu nueva contraseña"
-                required
-            >
+                <form method="POST" id="resetForm">
 
-            <i 
-                class="fa-solid fa-eye toggle-password"
-                onclick="togglePassword('password', this)"
-            ></i>
+                    <!-- Nueva contraseña -->
+                    <div class="auth-field">
+                        <label class="auth-label" for="password">Nueva contraseña</label>
+                        <div class="auth-input-wrap">
+                            <span class="auth-input-icon">
+                                <i class="fa-solid fa-lock"></i>
+                            </span>
+                            <input
+                                class="auth-input has-toggle"
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Mínimo 8 caracteres"
+                                required
+                            >
+                            <button type="button" class="auth-eye-btn" id="togglePwd">
+                                <i class="fa-regular fa-eye" id="eyePwd"></i>
+                            </button>
+                        </div>
+                    </div>
 
+                    <!-- Reglas -->
+                    <div class="auth-rules">
+                        <div class="auth-rules-title">Tu contraseña debe incluir:</div>
+                        <ul class="auth-rules-list">
+
+                            <li class="auth-rule" id="rule-length">
+                                <div class="auth-rule-dot">
+                                    <div class="auth-rule-dot-inner"></div>
+                                    <i class="fa-solid fa-check auth-rule-check"></i>
+                                </div>
+                                Al menos 8 caracteres
+                            </li>
+
+                            <li class="auth-rule" id="rule-upper">
+                                <div class="auth-rule-dot">
+                                    <div class="auth-rule-dot-inner"></div>
+                                    <i class="fa-solid fa-check auth-rule-check"></i>
+                                </div>
+                                Una letra mayúscula
+                            </li>
+
+                            <li class="auth-rule" id="rule-lower">
+                                <div class="auth-rule-dot">
+                                    <div class="auth-rule-dot-inner"></div>
+                                    <i class="fa-solid fa-check auth-rule-check"></i>
+                                </div>
+                                Una letra minúscula
+                            </li>
+
+                            <li class="auth-rule" id="rule-number">
+                                <div class="auth-rule-dot">
+                                    <div class="auth-rule-dot-inner"></div>
+                                    <i class="fa-solid fa-check auth-rule-check"></i>
+                                </div>
+                                Un número
+                            </li>
+
+                            <li class="auth-rule" id="rule-special">
+                                <div class="auth-rule-dot">
+                                    <div class="auth-rule-dot-inner"></div>
+                                    <i class="fa-solid fa-check auth-rule-check"></i>
+                                </div>
+                                Un carácter especial (@$!%*?&)
+                            </li>
+
+                        </ul>
+                    </div>
+
+                    <!-- Confirmar contraseña -->
+                    <div class="auth-field" style="margin-top:18px;">
+                        <label class="auth-label" for="confirm_password">Confirmar contraseña</label>
+                        <div class="auth-input-wrap">
+                            <span class="auth-input-icon">
+                                <i class="fa-solid fa-lock"></i>
+                            </span>
+                            <input
+                                class="auth-input has-toggle"
+                                type="password"
+                                id="confirm_password"
+                                name="confirm_password"
+                                placeholder="Repite tu contraseña"
+                                required
+                            >
+                            <button type="button" class="auth-eye-btn" id="toggleConfirm">
+                                <i class="fa-regular fa-eye" id="eyeConfirm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Match message -->
+                    <p id="match-message" style="font-size:12px; font-weight:600; min-height:16px; margin-top:8px;"></p>
+
+                    <!-- Botón -->
+                    <button
+                        type="submit"
+                        class="btn-auth-primary"
+                        id="submitBtn"
+                        disabled
+                        style="opacity:.6; cursor:not-allowed;"
+                    >
+                        <span id="submitText">
+                            <i class="fa-solid fa-key"></i>
+                            Actualizar contraseña
+                        </span>
+                        <span class="auth-spinner" id="submitSpinner" style="display:none;"></span>
+                    </button>
+
+                </form>
+
+                <hr class="auth-divider">
+
+                <p class="auth-footer-link">
+                    <a href="/login">
+                        <i class="fa-solid fa-arrow-left" style="font-size:11px;"></i>
+                        Volver al inicio de sesión
+                    </a>
+                </p>
+
+            </div>
         </div>
-
-        <!-- VALIDACIONES -->
-
-        <div class="password-rules">
-
-            <p id="rule-length">
-                <i class="fa-solid fa-circle-xmark"></i>
-                Mínimo 8 caracteres
-            </p>
-
-            <p id="rule-uppercase">
-                <i class="fa-solid fa-circle-xmark"></i>
-                Una letra mayúscula
-            </p>
-
-            <p id="rule-special">
-                <i class="fa-solid fa-circle-xmark"></i>
-                Un carácter especial (@$!%*?&)
-            </p>
-
-            <p id="rule-number">
-                <i class="fa-solid fa-circle-xmark"></i>
-                Un número
-            </p>
-
-        </div>
-
-        <label>Confirmar contraseña</label>
-
-        <div class="password-box">
-
-            <input 
-                type="password"
-                name="confirm_password"
-                id="confirm_password"
-                placeholder="Confirma tu nueva contraseña"
-                required
-            >
-
-            <i 
-                class="fa-solid fa-eye toggle-password"
-                onclick="togglePassword('confirm_password', this)"
-            ></i>
-
-        </div>
-
-        <p 
-            id="match-message"
-            class="small"
-            style="margin-top:8px;"
-        ></p>
-
-        <button 
-            type="submit" 
-            class="btn"
-            id="submitBtn"
-            disabled
-        >
-
-            <i class="fa-solid fa-key"></i>
-
-            Actualizar contraseña
-
-        </button>
-
-    </form>
+    </div>
 
 </div>
 
-<!-- ===================================== -->
-<!-- JAVASCRIPT -->
-<!-- ===================================== -->
-
-<script>
-
-const password = document.getElementById("password")
-
-const confirmPassword = document.getElementById("confirm_password")
-
-const submitBtn = document.getElementById("submitBtn")
-
-const matchMessage = document.getElementById("match-message")
-
-password.addEventListener("input", validarPassword)
-
-confirmPassword.addEventListener("input", validarPassword)
-
-function validarPassword(){
-
-    const value = password.value
-
-    const tieneLongitud = value.length >= 8
-
-    const tieneMayuscula = /[A-Z]/.test(value)
-
-    const tieneNumero = /[0-9]/.test(value)
-
-    const tieneEspecial = /[@$!%*?&]/.test(value)
-
-    actualizarRegla("rule-length", tieneLongitud)
-
-    actualizarRegla("rule-uppercase", tieneMayuscula)
-
-    actualizarRegla("rule-number", tieneNumero)
-
-    actualizarRegla("rule-special", tieneEspecial)
-
-    const coincide = value === confirmPassword.value &&
-                     confirmPassword.value !== ""
-
-    if(coincide){
-
-        matchMessage.innerHTML = `
-            <i class="fa-solid fa-circle-check"></i>
-            Las contraseñas coinciden
-        `
-
-        matchMessage.style.color = "#16a34a"
-
-    }else{
-
-        matchMessage.innerHTML = `
-            <i class="fa-solid fa-circle-xmark"></i>
-            Las contraseñas no coinciden
-        `
-
-        matchMessage.style.color = "#dc2626"
-
-    }
-
-    if(
-        tieneLongitud &&
-        tieneMayuscula &&
-        tieneNumero &&
-        tieneEspecial &&
-        coincide
-    ){
-
-        submitBtn.disabled = false
-
-        submitBtn.style.opacity = "1"
-
-        submitBtn.style.cursor = "pointer"
-
-    }else{
-
-        submitBtn.disabled = true
-
-        submitBtn.style.opacity = ".6"
-
-        submitBtn.style.cursor = "not-allowed"
-
-    }
-
-}
-
-function actualizarRegla(id, valido){
-
-    const regla = document.getElementById(id)
-
-    if(valido){
-
-        regla.style.color = "#16a34a"
-
-        regla.querySelector("i").className =
-            "fa-solid fa-circle-check"
-
-    }else{
-
-        regla.style.color = "#dc2626"
-
-        regla.querySelector("i").className =
-            "fa-solid fa-circle-xmark"
-
-    }
-
-}
-
-function togglePassword(id, icon){
-
-    const input = document.getElementById(id)
-
-    if(input.type === "password"){
-
-        input.type = "text"
-
-        icon.classList.remove("fa-eye")
-
-        icon.classList.add("fa-eye-slash")
-
-    }else{
-
-        input.type = "password"
-
-        icon.classList.remove("fa-eye-slash")
-
-        icon.classList.add("fa-eye")
-
-    }
-
-}
-
-</script>
-
 {% endblock %}
 
+{% block extra_js %}
+<script>
+const pwdInput   = document.getElementById("password");
+const confInput  = document.getElementById("confirm_password");
+const submitBtn  = document.getElementById("submitBtn");
+const matchMsg   = document.getElementById("match-message");
+
+const rules = {
+    "rule-length":  v => v.length >= 8,
+    "rule-upper":   v => /[A-Z]/.test(v),
+    "rule-lower":   v => /[a-z]/.test(v),
+    "rule-number":  v => /[0-9]/.test(v),
+    "rule-special": v => /[@$!%*?&]/.test(v),
+};
+
+pwdInput.addEventListener("input", validate);
+confInput.addEventListener("input", validate);
+
+function validate() {
+    const v = pwdInput.value;
+    let allMet = true;
+
+    for (const [id, fn] of Object.entries(rules)) {
+        const met = fn(v);
+        document.getElementById(id).classList.toggle("met", met);
+        if (!met) allMet = false;
+    }
+
+    const match = v === confInput.value && confInput.value !== "";
+
+    if (confInput.value) {
+        matchMsg.style.color   = match ? "#009869" : "#ba1a1a";
+        matchMsg.textContent   = match ? "✓ Las contraseñas coinciden" : "✗ Las contraseñas no coinciden";
+    } else {
+        matchMsg.textContent = "";
+    }
+
+    const ok = allMet && match;
+    submitBtn.disabled          = !ok;
+    submitBtn.style.opacity     = ok ? "1"          : ".6";
+    submitBtn.style.cursor      = ok ? "pointer"    : "not-allowed";
+}
+
+// Toggles
+function makeToggle(btnId, inputId, iconId) {
+    document.getElementById(btnId).addEventListener("click", () => {
+        const inp  = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        const show = inp.type === "password";
+        inp.type   = show ? "text" : "password";
+        icon.className = show ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+    });
+}
+makeToggle("togglePwd",     "password",         "eyePwd");
+makeToggle("toggleConfirm", "confirm_password",  "eyeConfirm");
+
+// Spinner en submit
+document.getElementById("resetForm").addEventListener("submit", () => {
+    submitBtn.disabled = true;
+    document.getElementById("submitText").style.display   = "none";
+    document.getElementById("submitSpinner").style.display = "block";
+});
+</script>
+{% endblock %}

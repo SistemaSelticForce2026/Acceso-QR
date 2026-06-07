@@ -1,344 +1,559 @@
-/* ========================================= */
-/* ESPACIADO FORMULARIO */
-/* ========================================= */
+/* ============================================================ */
+/* CREAR VISITA — Wizard                                      */
+/* ============================================================ */
 
-.form-card form{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:18px;
-
+/* ---- Wrapper centrado ------------------------------------- */
+.cv-wrapper {
+    max-width: 680px;
+    margin: 0 auto;
 }
 
-/* ========================================= */
-/* TITULOS */
-/* ========================================= */
-
-.form-card h3{
-
-    margin-top:30px;
-
-    margin-bottom:12px;
-
-    font-size:1.3rem;
-
-    color:#0f172a;
-
+/* ---- Back link -------------------------------------------- */
+.cv-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #77767d;
+    text-decoration: none;
+    margin-bottom: 24px;
+    transition: color 0.2s;
 }
 
-/* ========================================= */
-/* LABELS */
-/* ========================================= */
-
-.form-card label{
-
-    display:block;
-
-    margin-bottom:6px;
-
-    font-weight:600;
-
-    color:#334155;
-
+.cv-back:hover {
+    color: #010211;
 }
 
-/* ========================================= */
-/* ESPACIADO CAMPOS */
-/* ========================================= */
-
-.form-card .form-group{
-
-    margin-bottom:18px;
-
+/* ---- Page header ------------------------------------------ */
+.cv-header {
+    margin-bottom: 28px;
 }
 
-.form-card input,
-.form-card select,
-.form-card textarea{
-
-    margin-top:4px;
-
-    margin-bottom:6px;
-
+.cv-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #77767d;
+    margin: 0 0 4px;
 }
 
-/* ========================================= */
-/* SECCIONES VISITAS */
-/* ========================================= */
-
-#campos_temporal,
-#campos_recurrente{
-
-    margin-top:40px;
-
+.cv-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #010211;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
 }
 
-/* ========================================= */
-/* LINEA HR */
-/* ========================================= */
-
-.form-card hr{
-
-    margin:12px 0;
-
+.cv-subtitle {
+    font-size: 14px;
+    color: #77767d;
+    margin: 0;
 }
 
-/* ========================================= */
-/* ALERTAS */
-/* ========================================= */
-
-.alert{
-
-    margin-top:12px;
-
+/* ---- Progress stepper ------------------------------------- */
+.cv-stepper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 28px;
 }
 
-/* ========================================= */
-/* GRID HORARIOS */
-/* ========================================= */
-
-.horarios-grid{
-
-    display:grid;
-
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-
-    gap:18px;
-
-    margin-top:10px;
-
+.cv-step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+    background: #eceef0;
+    color: #77767d;
 }
 
-/* ========================================= */
-/* GRID DIAS */
-/* ========================================= */
-
-.dias-grid{
-
-    display:flex;
-
-    flex-wrap:wrap;
-
-    gap:12px;
-
-    margin-top:10px;
-
+.cv-step-circle.active {
+    background: #1a1c2e;
+    color: white;
+    box-shadow: 0 4px 14px rgba(1, 2, 17, 0.25);
 }
 
-/* ========================================= */
-/* RESUMEN AUTORIZACION */
-/* ========================================= */
-
-#resumen_acceso{
-
-    border-left:5px solid #2563eb;
-
-    background:#eff6ff;
-
-    padding:18px;
-
-    border-radius:14px;
-
+.cv-step-circle.done {
+    background: #009869;
+    color: white;
+    box-shadow: 0 3px 12px rgba(0, 152, 105, 0.28);
 }
 
-/* ========================================= */
-/* DIAS PROFESIONALES */
-/* ========================================= */
-
-.dia-item{
-
-    position:relative;
-
-    cursor:pointer;
-
+.cv-step-line {
+    flex: 1;
+    height: 2px;
+    background: #e0e3e5;
+    border-radius: 999px;
+    margin: 0 8px;
+    transition: background 0.5s;
 }
 
-.dia-item input{
-
-    display:none;
-
+.cv-step-line.done {
+    background: #009869;
 }
 
-.dia-item span{
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    min-width:110px;
-
-    padding:14px 18px;
-
-    border-radius:14px;
-
-    border:2px solid #dbeafe;
-
-    background:#ffffff;
-
-    font-weight:700;
-
-    transition:.25s;
-
+/* ---- Glass card ------------------------------------------- */
+.cv-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.60);
+    border-radius: 24px;
+    overflow: hidden;
 }
 
-.dia-item:hover span{
-
-    border-color:#93c5fd;
-
-    transform:translateY(-2px);
-
+/* ---- Card body -------------------------------------------- */
+.cv-card-body {
+    padding: 28px;
 }
 
-.dia-item input:checked + span{
-
-    background:#2563eb;
-
-    color:#ffffff;
-
-    border-color:#2563eb;
-
-    box-shadow:0 8px 20px rgba(37,99,235,.25);
-
+.cv-step-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #010211;
+    margin: 0 0 4px;
 }
 
-.dia-item input:disabled + span{
-
-    opacity:.9;
-
+.cv-step-desc {
+    font-size: 13px;
+    color: #77767d;
+    margin: 0 0 24px;
 }
 
-/* ========================================= */
-/* SELECT MODALIDAD */
-/* ========================================= */
+/* ---- Wizard steps ----------------------------------------- */
+.cv-step { display: none; }
+.cv-step.active { display: block; }
 
-#modalidad_visita{
-
-    margin-bottom:20px;
-
+/* ---- Type cards (Paso 1) ---------------------------------- */
+.cv-type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 }
 
-/* ========================================= */
-/* TITULOS DE BLOQUES */
-/* ========================================= */
-
-#campos_temporal h3,
-#campos_recurrente h3{
-
-    margin-bottom:10px;
-
+@media (max-width: 480px) {
+    .cv-type-grid { grid-template-columns: 1fr; }
 }
 
-/* ========================================= */
-/* DESCRIPCIONES */
-/* ========================================= */
-
-#campos_temporal p,
-#campos_recurrente p{
-
-    margin-bottom:20px;
-
-    line-height:1.7;
-
-    color:#64748b;
-
+.cv-type-card {
+    padding: 20px;
+    border-radius: 16px;
+    border: 2px solid rgba(199, 197, 205, 0.60);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    font-family: 'Inter', sans-serif;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0;
 }
 
-/* ========================================= */
-/* RESPONSIVE */
-/* ========================================= */
-
-@media (max-width:768px){
-
-    .form-card{
-
-        padding:20px;
-
-    }
-
-    .form-card h3{
-
-        font-size:1.15rem;
-
-        margin-top:24px;
-
-    }
-
-    .horarios-grid{
-
-        grid-template-columns:1fr;
-
-        gap:14px;
-
-    }
-
-    .dias-grid{
-
-        display:grid;
-
-        grid-template-columns:repeat(2,1fr);
-
-        gap:10px;
-
-    }
-
-    .dia-item span{
-
-        width:100%;
-
-        min-width:unset;
-
-        padding:12px;
-
-        font-size:.95rem;
-
-    }
-
-    .form-card input,
-    .form-card select,
-    .form-card textarea{
-
-        width:100%;
-
-        font-size:16px;
-
-    }
-
-    #resumen_acceso{
-
-        padding:14px;
-
-        font-size:.95rem;
-
-    }
-
+.cv-type-card:hover {
+    border-color: rgba(70, 70, 76, 0.40);
+    background: #f7f9fb;
 }
 
-/* ========================================= */
-/* MOVILES PEQUEÑOS */
-/* ========================================= */
+.cv-type-card.selected {
+    border-color: #1a1c2e;
+    background: #f2f4f6;
+    box-shadow: 0 4px 20px rgba(26, 28, 46, 0.10);
+}
 
-@media (max-width:480px){
+.cv-type-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin-bottom: 12px;
+    transition: background 0.2s, color 0.2s;
+    background: #eceef0;
+    color: #46464c;
+}
 
-    .dias-grid{
+.cv-type-card.selected .cv-type-icon {
+    background: #1a1c2e;
+    color: white;
+}
 
-        grid-template-columns:1fr;
+.cv-type-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #010211;
+    margin: 0 0 3px;
+}
 
-    }
+.cv-type-desc {
+    font-size: 12px;
+    color: #77767d;
+    margin: 0;
+    line-height: 1.4;
+}
 
-    .form-card h3{
+/* ---- Form fields ------------------------------------------ */
+.cv-field { margin-bottom: 18px; }
 
-        font-size:1.05rem;
+.cv-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #191c1e;
+    margin: 0 0 6px;
+    letter-spacing: 0.02em;
+}
 
-    }
+.cv-label-opt {
+    font-weight: 400;
+    color: #77767d;
+}
 
-    .dia-item span{
+.cv-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 16px;
+    border: 1.5px solid rgba(199, 197, 205, 0.60);
+    border-radius: 16px;
+    background: #f2f4f6;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: #191c1e;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    box-shadow: none;
+}
 
-        padding:14px;
+.cv-input:focus {
+    border-color: #2e5bff;
+    box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.10);
+    background: white;
+}
 
-    }
+.cv-input::placeholder { color: #77767d; }
 
+.cv-input-icon-wrap { position: relative; }
+
+.cv-input-icon-wrap .cv-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #77767d;
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.cv-input-icon-wrap .cv-input { padding-left: 40px; }
+
+.cv-select {
+    width: 100%;
+    height: 44px;
+    padding: 0 40px 0 16px;
+    border: 1.5px solid rgba(199, 197, 205, 0.60);
+    border-radius: 16px;
+    background: #f2f4f6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 24 24'%3E%3Cpath d='M6 9L12 15L18 9' stroke='%2364758b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+    appearance: none;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: #191c1e;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.cv-select:focus {
+    border-color: #2e5bff;
+    box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.10);
+}
+
+.cv-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+@media (max-width: 560px) {
+    .cv-grid-2 { grid-template-columns: 1fr; }
+}
+
+.cv-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+@media (min-width: 560px) {
+    .cv-grid-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ---- Photo preview ---------------------------------------- */
+.cv-photo-preview { display: none; margin-top: 12px; }
+
+.cv-photo-preview img {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid #e0e3e5;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.cv-photo-preview img:hover { transform: scale(1.04); }
+
+.cv-photo-hint {
+    font-size: 11px;
+    color: #77767d;
+    margin: 6px 0 0;
+}
+
+/* ---- Plate preview ---------------------------------------- */
+.cv-plate-preview { display: none; margin-top: 12px; }
+
+.cv-plate-preview img {
+    width: 160px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid #e0e3e5;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+/* ---- Days grid -------------------------------------------- */
+.cv-days-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.cv-day-label {
+    position: relative;
+    cursor: pointer;
+    margin: 0;
+    display: flex;
+}
+
+.cv-day-label input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+}
+
+.cv-day-span {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #eceef0;
+    color: #46464c;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid transparent;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    user-select: none;
+}
+
+.cv-day-label input:checked + .cv-day-span {
+    background: #1a1c2e;
+    color: white;
+    box-shadow: 0 3px 10px rgba(1, 2, 17, 0.25);
+}
+
+.cv-day-label input:disabled + .cv-day-span {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---- Info box --------------------------------------------- */
+.cv-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(46, 91, 255, 0.06);
+    border: 1px solid rgba(46, 91, 255, 0.15);
+    margin-bottom: 18px;
+}
+
+.cv-info-box i { color: #2e5bff; font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+
+.cv-info-box p { font-size: 12px; color: #46464c; margin: 0; line-height: 1.5; }
+
+/* ---- Warning box ------------------------------------------ */
+.cv-warn-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(217, 119, 6, 0.08);
+    border: 1px solid rgba(217, 119, 6, 0.20);
+    margin-bottom: 18px;
+}
+
+.cv-warn-box i { color: #d97706; font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+.cv-warn-box p { font-size: 12px; color: #46464c; margin: 0; line-height: 1.5; }
+
+/* ---- Confirm summary table -------------------------------- */
+.cv-summary {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1.5px solid rgba(199, 197, 205, 0.50);
+    margin-bottom: 20px;
+}
+
+.cv-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f7f9fb;
+    border-bottom: 1px solid rgba(199, 197, 205, 0.40);
+}
+
+.cv-summary-row:last-child { border-bottom: none; }
+
+.cv-summary-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #77767d;
+    letter-spacing: 0.03em;
+}
+
+.cv-summary-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: #010211;
+    text-align: right;
+}
+
+/* ---- Card nav footer -------------------------------------- */
+.cv-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 28px;
+    border-top: 1px solid rgba(199, 197, 205, 0.30);
+}
+
+.cv-btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 20px;
+    border: 1.5px solid rgba(199, 197, 205, 0.70);
+    border-radius: 16px;
+    background: transparent;
+    color: #46464c;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 0;
+}
+
+.cv-btn-back:hover { background: #eceef0; }
+
+.cv-btn-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 24px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2e5bff, #0040e0);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(46, 91, 255, 0.30);
+    transition: opacity 0.2s, transform 0.2s;
+    margin-top: 0;
+}
+
+.cv-btn-next:hover { opacity: 0.90; transform: translateY(-1px); }
+
+.cv-btn-next:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.cv-btn-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 24px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #009869, #007a54);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 152, 105, 0.30);
+    transition: opacity 0.2s;
+    margin-top: 0;
+}
+
+.cv-btn-submit:hover { opacity: 0.90; }
+
+.cv-btn-submit:disabled { opacity: 0.60; cursor: not-allowed; }
+
+/* ---- Photo zoom modal ------------------------------------- */
+.cv-photo-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.85);
+    justify-content: center;
+    align-items: center;
+}
+
+.cv-photo-modal img {
+    max-width: 600px;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 14px;
+}
+
+/* ---- Readonly input --------------------------------------- */
+.cv-input-readonly {
+    background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+    color: #475569;
+    font-weight: 600;
+    cursor: not-allowed;
+    border-color: #dbe4ee;
 }

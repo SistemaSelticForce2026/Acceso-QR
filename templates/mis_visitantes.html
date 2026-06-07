@@ -1,0 +1,434 @@
+{% extends 'layout_residente.html' %}
+{% block title %}Mis Visitantes{% endblock %}
+{% block page_title %}Mis Visitantes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/residente_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="res-visits-section">
+
+    {# ─── Header ──────────────────────────────────────────────────────── #}
+    <div class="res-page-header">
+        <div>
+            <p class="res-eyebrow">Gestión</p>
+            <h1 class="res-page-heading">Mis Visitantes</h1>
+            <p class="res-page-sub">Gestiona los accesos de tus visitantes registrados</p>
+        </div>
+        <a href="{{ url_for('resident.create_visit') }}" class="res-btn-new">
+            <i class="fa-solid fa-plus"></i>
+            Nueva visita
+        </a>
+    </div>
+
+    {# ── Filter bar ─────────────────────────────────────────────────── #}
+    <div class="res-filter-card">
+        <form method="GET" action="{{ url_for('resident.visitors') }}">
+            <div class="res-filter-row">
+
+                <div class="res-filter-field">
+                    <label class="res-filter-label">Fecha inicio</label>
+                    <input class="res-filter-input"
+                           type="date"
+                           name="fecha_inicio"
+                           value="{{ fecha_inicio }}">
+                </div>
+
+                <div class="res-filter-field">
+                    <label class="res-filter-label">Fecha fin</label>
+                    <input class="res-filter-input"
+                           type="date"
+                           name="fecha_fin"
+                           value="{{ fecha_fin }}">
+                </div>
+
+                <div class="res-filter-field" style="flex:2; min-width:180px;">
+                    <label class="res-filter-label">Buscar visitante</label>
+                    <input class="res-filter-input"
+                           type="text"
+                           name="busqueda"
+                           value="{{ busqueda }}"
+                           placeholder="Nombre del visitante…">
+                </div>
+
+                <button type="submit" class="res-filter-btn">
+                    <i class="fa-solid fa-filter"></i>
+                    Filtrar
+                </button>
+
+                <a href="{{ url_for('resident.visitors') }}" class="res-filter-clear">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Limpiar
+                </a>
+
+            </div>
+        </form>
+    </div>
+
+    {# ── Count ──────────────────────────────────────────────────────── #}
+    <p class="res-count-label">
+        {{ total_visitas }} {{ 'visita encontrada' if total_visitas == 1 else 'visitas encontradas' }}
+    </p>
+
+    {# ── Visit cards ─────────────────────────────────────────────────── #}
+    {% for visita in visitas %}
+
+    {%- set nombre = visita.nombre_visitante | default('Visitante') -%}
+    {%- set iniciales = (nombre.split(' ') | map('first') | list)[:2] | join('') | upper -%}
+
+    {# Estado #}
+    {%- if visita.qr_estado == 'cancelado' -%}
+        {%- set badge_cls = 'badge-danger' -%}
+        {%- set badge_label = 'QR cancelado' -%}
+    {%- elif visita.qr_estado == 'vencido' -%}
+        {%- set badge_cls = 'badge-danger' -%}
+        {%- set badge_label = 'QR vencido' -%}
+    {%- elif visita.estado == 'dentro' -%}
+        {%- set badge_cls = 'badge-success' -%}
+        {%- set badge_label = 'Dentro' -%}
+    {%- elif visita.estado == 'salida_registrada' -%}
+        {%- set badge_cls = 'badge-neutral' -%}
+        {%- set badge_label = 'Finalizada' -%}
+    {%- elif visita.estado == 'cancelado' -%}
+        {%- set badge_cls = 'badge-danger' -%}
+        {%- set badge_label = 'Cancelada' -%}
+    {%- else -%}
+        {%- set badge_cls = 'badge-warning' -%}
+        {%- set badge_label = 'Pendiente' -%}
+    {%- endif -%}
+
+    {# Modalidad #}
+    {%- if visita.modalidad_visita == 'recurrente' -%}
+        {%- set modal_cls = 'badge-blue' -%}
+        {%- set modal_label = 'Recurrente' -%}
+    {%- else -%}
+        {%- set modal_cls = 'badge-neutral' -%}
+        {%- set modal_label = 'Temporal' -%}
+    {%- endif -%}
+
+    <div class="res-visit-card">
+        <div class="res-visit-body">
+
+            {# Avatar iniciales #}
+            <div class="res-avatar" style="background:
+                {%- if visita.estado == 'dentro' -%}
+                    #1a1c2e
+                {%- elif visita.qr_estado in ['cancelado','vencido'] or visita.estado in ['cancelado','salida_registrada'] -%}
+                    #46464c
+                {%- else -%}
+                    #2e5bff
+                {%- endif -%}
+            ;">{{ iniciales }}</div>
+
+            {# Info #}
+            <div class="res-visit-info">
+                <p class="res-visit-name">{{ nombre }}</p>
+
+                <div class="res-visit-meta">
+                    {% if visita.motivo %}
+                    <span class="res-visit-meta-item">
+                        <i class="fa-solid fa-circle-info" style="font-size:11px; color:#77767d;"></i>
+                        {{ visita.motivo }}
+                    </span>
+                    {% endif %}
+                    {% if visita.telefono %}
+                    <span class="res-visit-meta-item">
+                        <i class="fa-solid fa-phone" style="font-size:11px; color:#77767d;"></i>
+                        {{ visita.telefono }}
+                    </span>
+                    {% endif %}
+                    {% if visita.modalidad_visita == 'temporal' and visita.fecha_visita %}
+                    <span class="res-visit-meta-item">
+                        <i class="fa-regular fa-calendar" style="font-size:11px; color:#77767d;"></i>
+                        {{ visita.fecha_visita }}
+                    </span>
+                    {% endif %}
+                    {% if visita.hora_inicio %}
+                    <span class="res-visit-meta-item">
+                        <i class="fa-regular fa-clock" style="font-size:11px; color:#77767d;"></i>
+                        Entrada: {{ visita.hora_inicio }}
+                    </span>
+                    {% endif %}
+                    {% if visita.vehiculo and visita.vehiculo.placa %}
+                    <span class="res-visit-meta-item">
+                        <i class="fa-solid fa-car" style="font-size:11px; color:#77767d;"></i>
+                        {{ visita.vehiculo.placa }} · {{ visita.vehiculo.marca }} {{ visita.vehiculo.color }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="res-visit-badges">
+                    <span class="res-badge {{ modal_cls }}">{{ modal_label }}</span>
+                    <span class="res-badge {{ badge_cls }}">
+                        <span class="res-badge-dot"></span>
+                        {{ badge_label }}
+                    </span>
+                </div>
+            </div>
+
+            {# Right: QR + cancel #}
+            <div class="res-visit-right">
+                <img src="{{ visita.qr_path }}"
+                     class="res-qr-thumb {% if visita.qr_estado == 'cancelado' %}qr-cancelado{% else %}qr-clickable{% endif %}"
+                     data-qr-path="{{ visita.qr_path }}"
+                     data-qr-token="{{ visita.qr_token }}"
+                     data-visitante="{{ nombre }}"
+                     alt="QR de {{ nombre }}">
+
+                {% if visita.qr_estado != 'cancelado' %}
+                <button type="button"
+                        class="res-btn-cancel btn-cancelar-qr"
+                        data-token="{{ visita.qr_token }}">
+                    <i class="fa-solid fa-ban"></i>
+                    Cancelar
+                </button>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    {% else %}
+
+    <div class="res-empty">
+        <div class="res-empty-icon">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <p class="res-empty-title">Sin visitantes registrados</p>
+        <p class="res-empty-sub">
+            {% if busqueda or fecha_inicio or fecha_fin %}
+                No hay visitas con los filtros seleccionados.
+            {% else %}
+                Aún no has registrado ninguna visita.
+            {% endif %}
+        </p>
+        <a href="{{ url_for('resident.create_visit') }}" class="res-btn-new">
+            <i class="fa-solid fa-plus"></i>
+            Registrar primera visita
+        </a>
+    </div>
+
+    {% endfor %}
+
+    {# ── Botón dashed agregar ───────────────────────────────────────── #}
+    {% if visitas %}
+    <a href="{{ url_for('resident.create_visit') }}" class="res-add-dashed">
+        <i class="fa-solid fa-plus"></i>
+        Agregar visitante
+    </a>
+    {% endif %}
+
+    {# ── Paginación ─────────────────────────────────────────────────── #}
+    {% if total_paginas > 1 %}
+    <div class="res-pagination">
+
+        {% if pagina > 1 %}
+        <a href="{{ url_for('resident.visitors', page=pagina-1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+           class="res-page-btn">
+            <i class="fa-solid fa-chevron-left" style="font-size:11px;"></i>
+        </a>
+        {% endif %}
+
+        {% for p in range(1, total_paginas + 1) %}
+        <a href="{{ url_for('resident.visitors', page=p, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+           class="res-page-btn {% if p == pagina %}active{% endif %}">
+            {{ p }}
+        </a>
+        {% endfor %}
+
+        {% if pagina < total_paginas %}
+        <a href="{{ url_for('resident.visitors', page=pagina+1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+           class="res-page-btn">
+            <i class="fa-solid fa-chevron-right" style="font-size:11px;"></i>
+        </a>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+</div>
+
+{# ─── QR Modal ─────────────────────────────────────────────────────── #}
+<div id="qrModal" class="res-qr-modal">
+    <div class="res-qr-panel">
+        <button type="button" class="res-qr-close" id="closeQrModal">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <h3 class="res-qr-modal-title" id="qrModalTitle">Código QR de acceso</h3>
+        <p class="res-qr-modal-sub" id="qrModalSubtitle"></p>
+
+        <div class="res-qr-image-wrap">
+            <img id="qrModalImage" class="res-qr-modal-image" alt="QR ampliado">
+        </div>
+
+        <div class="res-token-row">
+            <span class="res-token-code" id="qrModalToken"></span>
+            <button type="button" class="res-token-copy" id="btnCopyToken">
+                <i class="fa-regular fa-copy"></i>
+            </button>
+        </div>
+
+        <div class="res-qr-actions">
+            <button type="button" class="res-qr-action-btn" id="btnShareToken">
+                <i class="fa-brands fa-whatsapp" style="color:#22c55e;"></i>
+                Token
+            </button>
+            <button type="button" class="res-qr-action-btn" id="btnShareQr">
+                <i class="fa-brands fa-whatsapp" style="color:#22c55e;"></i>
+                Imagen QR
+            </button>
+            <button type="button" class="res-qr-action-btn" id="btnDownloadQr">
+                <i class="fa-solid fa-download"></i>
+                Descargar
+            </button>
+        </div>
+
+        <p class="res-qr-share-hint" id="qrShareHint"></p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ─── QR Modal ─────────────────────────────────────────────────────── */
+const qrModal       = document.getElementById("qrModal");
+const qrModalImage  = document.getElementById("qrModalImage");
+const qrModalToken  = document.getElementById("qrModalToken");
+const qrModalTitle  = document.getElementById("qrModalTitle");
+const qrModalSub    = document.getElementById("qrModalSubtitle");
+const qrShareHint   = document.getElementById("qrShareHint");
+const btnShareQr    = document.getElementById("btnShareQr");
+const btnDownloadQr = document.getElementById("btnDownloadQr");
+const btnCopyToken  = document.getElementById("btnCopyToken");
+
+let currentToken  = "";
+let currentQrUrl  = "";
+let currentQrFile = null;
+
+async function cargarImagenQr(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("No se pudo cargar el QR");
+    const blob = await res.blob();
+    const file = new File([blob], `qr-${currentToken.slice(0,8)}.png`, { type: blob.type || "image/png" });
+    return { blob, file };
+}
+
+function descargarArchivo(file) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url; a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.querySelectorAll(".qr-clickable").forEach(img => {
+    img.addEventListener("click", async function () {
+        currentToken  = this.dataset.qrToken;
+        currentQrUrl  = window.location.origin + this.dataset.qrPath;
+        const visitante = this.dataset.visitante;
+
+        qrModalImage.src             = this.dataset.qrPath;
+        qrModalToken.textContent     = currentToken.trim();
+        qrModalTitle.textContent     = "QR — " + visitante;
+        qrModalSub.textContent       = "Comparte el código o el token con tu visitante.";
+        qrShareHint.textContent      = "Cargando imagen del QR…";
+        btnShareQr.disabled          = true;
+        currentQrFile                = null;
+
+        qrModal.style.display        = "flex";
+        document.body.style.overflow = "hidden";
+
+        try {
+            const { file } = await cargarImagenQr(currentQrUrl);
+            currentQrFile = file;
+            qrShareHint.textContent = navigator.canShare && navigator.canShare({ files: [file] })
+                ? "En móvil podrás enviar la imagen completa por WhatsApp."
+                : "Se descargará la imagen y se abrirá WhatsApp.";
+        } catch {
+            qrShareHint.textContent = "No se pudo preparar la imagen. Recarga e intenta.";
+        } finally {
+            btnShareQr.disabled = false;
+        }
+    });
+});
+
+document.getElementById("closeQrModal").onclick = () => {
+    qrModal.style.display        = "none";
+    document.body.style.overflow = "auto";
+};
+
+qrModal.addEventListener("click", e => {
+    if (e.target === qrModal) {
+        qrModal.style.display        = "none";
+        document.body.style.overflow = "auto";
+    }
+});
+
+document.getElementById("btnShareToken").onclick = async () => {
+    if (!currentQrFile) { alert("Espera a que cargue el QR."); return; }
+    const texto = `Hola, te comparto tu acceso al fraccionamiento.\n\nToken: ${currentToken}\n\nPresenta este QR en caseta.`;
+    try {
+        if (navigator.share) { await navigator.share({ title: "QR de acceso", text: texto, url: currentQrUrl }); return; }
+        descargarArchivo(currentQrFile);
+        setTimeout(() => window.open("https://wa.me/?text=" + encodeURIComponent(texto + "\n\nAdjunta la imagen QR."), "_blank"), 700);
+    } catch (err) { console.error(err); }
+};
+
+btnDownloadQr.onclick = () => { if (currentQrFile) descargarArchivo(currentQrFile); };
+
+btnShareQr.onclick = async () => {
+    if (!currentQrFile) { alert("Espera e intenta de nuevo."); return; }
+    const texto = "Código QR de acceso al fraccionamiento.\nToken: " + currentToken;
+    const orig  = btnShareQr.innerHTML;
+    btnShareQr.disabled  = true;
+    btnShareQr.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+        if (navigator.canShare && navigator.canShare({ files: [currentQrFile] })) {
+            await navigator.share({ title: "QR de acceso", text: texto, files: [currentQrFile] }); return;
+        }
+        descargarArchivo(currentQrFile);
+        setTimeout(() => window.open("https://wa.me/?text=" + encodeURIComponent("Hola, te comparto tu acceso.\n\n1) Adjunta la imagen QR descargada.\n\nToken: " + currentToken), "_blank"), 600);
+    } catch (err) {
+        if (err.name !== "AbortError") { descargarArchivo(currentQrFile); alert("Imagen descargada. Adjúntala en WhatsApp."); }
+    } finally {
+        btnShareQr.disabled  = false;
+        btnShareQr.innerHTML = orig;
+    }
+};
+
+btnCopyToken.addEventListener("click", async () => {
+    try {
+        await navigator.clipboard.writeText(qrModalToken.textContent.trim());
+        const orig = btnCopyToken.innerHTML;
+        btnCopyToken.innerHTML = '<i class="fa-solid fa-check" style="color:#009869;"></i>';
+        setTimeout(() => { btnCopyToken.innerHTML = orig; }, 1500);
+    } catch { alert("No se pudo copiar el token."); }
+});
+
+/* ─── Cancelar QR ──────────────────────────────────────────────────── */
+document.querySelectorAll(".btn-cancelar-qr").forEach(btn => {
+    btn.addEventListener("click", async function () {
+        const token = this.dataset.token;
+        if (!confirm("¿Deseas cancelar este QR?")) return;
+        try {
+            const res  = await fetch(`/resident/cancelar-qr/${token}`, { method: "POST" });
+            const data = await res.json();
+            if (data.success) { alert("QR cancelado correctamente"); location.reload(); }
+            else alert("No se pudo cancelar el QR");
+        } catch { alert("Error al cancelar el QR"); }
+    });
+});
+
+/* ─── Auto abrir QR recién generado ───────────────────────────────── */
+{% if auto_qr %}
+window.addEventListener("load", () => {
+    const el = document.querySelector('[data-qr-token="{{ auto_qr }}"]');
+    if (el) el.click();
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -24,6 +24,58 @@ resident_bp = Blueprint("resident", __name__, url_prefix="/resident")
 @role_required("residente")
 def dashboard():
 
+    residente_id = session["user_id"]
+
+    # =============================================
+    # 5 VISITAS MÁS RECIENTES
+    # =============================================
+
+    visitas_recientes = list(
+        mongo.db.visits.find({"residente_id": residente_id})
+        .sort("created_at", -1)
+        .limit(5)
+    )
+
+    # =============================================
+    # ESTADISTICAS
+    # =============================================
+
+    total_visitas = mongo.db.visits.count_documents(
+        {"residente_id": residente_id}
+    )
+
+    visitas_dentro = mongo.db.visits.count_documents(
+        {"residente_id": residente_id, "estado": "dentro"}
+    )
+
+    visitas_finalizadas = mongo.db.visits.count_documents(
+        {"residente_id": residente_id, "estado": "salida_registrada"}
+    )
+
+    visitas_pendientes = mongo.db.visits.count_documents(
+        {"residente_id": residente_id, "estado": "activo"}
+    )
+
+    return render_template(
+        "residente_dashboard.html",
+        visitas_recientes=visitas_recientes,
+        total_visitas=total_visitas,
+        visitas_dentro=visitas_dentro,
+        visitas_finalizadas=visitas_finalizadas,
+        visitas_pendientes=visitas_pendientes,
+    )
+
+
+# =====================================================
+# MIS VISITANTES
+# =====================================================
+
+
+@resident_bp.route("/visitantes")
+@login_required
+@role_required("residente")
+def visitors():
+
     # =============================================
     # AUTO ABRIR QR
     # =============================================
@@ -31,12 +83,12 @@ def dashboard():
     auto_qr = request.args.get("auto_qr")
 
     # =============================================
-    # PAGINACION
+    # PAGINACION Y FILTROS
     # =============================================
 
     pagina = int(request.args.get("page", 1))
 
-    por_pagina = 5
+    por_pagina = 8
 
     fecha_inicio = request.args.get("fecha_inicio", "").strip()
 
@@ -47,10 +99,6 @@ def dashboard():
     residente_id = session["user_id"]
 
     filtro = {"residente_id": residente_id}
-
-    # =============================================
-    # FILTRO FECHAS Y BÚSQUEDA
-    # =============================================
 
     if fecha_inicio:
 
@@ -81,33 +129,10 @@ def dashboard():
         .limit(por_pagina)
     )
 
-    # =============================================
-    # ESTADISTICAS DASHBOARD
-    # =============================================
-
-    visitas_dentro = mongo.db.visits.count_documents(
-        {"residente_id": residente_id, "estado": "dentro"}
-    )
-
-    visitas_finalizadas = mongo.db.visits.count_documents(
-        {"residente_id": residente_id, "estado": "salida_registrada"}
-    )
-
-    visitas_pendientes = mongo.db.visits.count_documents(
-        {"residente_id": residente_id, "estado": "activo"}
-    )
-
-    # =============================================
-    # RENDER
-    # =============================================
-
     return render_template(
-        "residente_dashboard.html",
+        "mis_visitantes.html",
         visitas=visitas,
         total_visitas=total_visitas,
-        visitas_dentro=visitas_dentro,
-        visitas_finalizadas=visitas_finalizadas,
-        visitas_pendientes=visitas_pendientes,
         auto_qr=auto_qr,
         pagina=pagina,
         total_paginas=total_paginas,
@@ -314,7 +339,7 @@ def create_visit():
         # REDIRECCIONAR Y ABRIR QR AUTOMÁTICAMENTE
         # =============================================
 
-        return redirect(url_for("resident.dashboard", auto_qr=token))
+        return redirect(url_for("resident.visitors", auto_qr=token))
 
     # =============================================
     # RENDER GET

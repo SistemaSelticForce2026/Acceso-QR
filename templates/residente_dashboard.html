@@ -1,889 +1,179 @@
-{% extends 'layout.html' %}
+{% extends 'layout_residente.html' %}
+{% block title %}Inicio{% endblock %}
+{% block page_title %}Inicio{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/residente_dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/residente_dashboard.css') }}">
 {% endblock %}
 
 {% block content %}
-<h1>Panel del Residente</h1>
-<p class="small">Gestiona tus visitas, códigos QR y estado de acceso.</p>
 
-<a class="btn" href="/resident/create-visit">Crear nueva visita</a>
+{# ─── Hero ─────────────────────────────────────────────────────────── #}
+<div class="res-hero">
+    <h1>¡Bienvenido, {{ session.nombre.split(' ')[0] }}!</h1>
+    <p class="res-hero-date" id="heroDate"></p>
+</div>
 
-<div class="stats">
+{# ─── Fila superior: CTA + stat grid ──────────────────────────────── #}
+<div class="res-top-row">
 
-    <div class="stat-card">
-        <div class="stat-top">
-            <span>Mis visitas</span>
-            <i class="fa-solid fa-users"></i>
+    {# CTA dark card #}
+    <a href="{{ url_for('resident.create_visit') }}" class="res-cta-card">
+        <div class="res-cta-orb"></div>
+        <div class="res-cta-icon">
+            <i class="fa-solid fa-qrcode"></i>
         </div>
-        <h2>
-            {{ total_visitas }}
-        </h2>
-        <small>Visitas registradas</small>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-top">
-            <span>Visitas dentro</span>
-            <i class="fa-solid fa-building-shield"></i>
+        <p class="res-cta-title">Nueva Visita</p>
+        <p class="res-cta-sub">Genera un pase QR para tu visitante</p>
+        <div class="res-cta-link">
+            Generar ahora <i class="fa-solid fa-arrow-right" style="font-size:11px;"></i>
         </div>
-        <h2>
-            {{ visitas_dentro }}
-        </h2>
-        <small>Actualmente dentro</small>
-    </div>
+    </a>
 
-    <div class="stat-card">
-        <div class="stat-top">
-            <span>Finalizadas</span>
-            <i class="fa-solid fa-circle-check"></i>
-        </div>
-        <h2>
-            {{ visitas_finalizadas }}
-        </h2>
-        <small>Visitas terminadas</small>
-    </div>
+    {# Stat grid 2×2 #}
+    <div class="res-stat-grid">
 
-    <div class="stat-card">
-        <div class="stat-top">
-            <span>Pendientes</span>
-            <i class="fa-solid fa-clock"></i>
+        <div class="res-stat-card">
+            <div class="res-stat-top">
+                <span class="res-stat-lbl">Total visitas</span>
+                <div class="res-stat-icon res-icon-blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+            <p class="res-stat-num res-num-blue">{{ total_visitas }}</p>
+            <p class="res-stat-sub">Visitas registradas</p>
         </div>
-        <h2>
-            {{ visitas_pendientes }}
-        </h2>
-        <small>Esperando acceso</small>
+
+        <div class="res-stat-card">
+            <div class="res-stat-top">
+                <span class="res-stat-lbl">Dentro</span>
+                <div class="res-stat-icon res-icon-green">
+                    <i class="fa-solid fa-building-shield"></i>
+                </div>
+            </div>
+            <p class="res-stat-num res-num-green">{{ visitas_dentro }}</p>
+            <p class="res-stat-sub">Actualmente dentro</p>
+        </div>
+
+        <div class="res-stat-card">
+            <div class="res-stat-top">
+                <span class="res-stat-lbl">Finalizadas</span>
+                <div class="res-stat-icon res-icon-neutral">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+            <p class="res-stat-num res-num-neutral">{{ visitas_finalizadas }}</p>
+            <p class="res-stat-sub">Visitas terminadas</p>
+        </div>
+
+        <div class="res-stat-card">
+            <div class="res-stat-top">
+                <span class="res-stat-lbl">Pendientes</span>
+                <div class="res-stat-icon res-icon-amber">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+            <p class="res-stat-num res-num-amber">{{ visitas_pendientes }}</p>
+            <p class="res-stat-sub">Esperando acceso</p>
+        </div>
+
     </div>
 
 </div>
 
-<div class="card">
+{# ─── Visitas recientes ────────────────────────────────────────────── #}
+<div class="res-recent-card">
 
-    <h2>Mis visitas registradas</h2>
-
-    <form method="GET" class="filter-bar">
-
-        <div class="filter-field">
-
-            <label>Fecha inicio</label>
-
-            <input
-                type="date"
-                name="fecha_inicio"
-                value="{{ fecha_inicio }}"
-            >
-
-        </div>
-
-        <div class="filter-field">
-
-            <label>Fecha fin</label>
-
-            <input
-                type="date"
-                name="fecha_fin"
-                value="{{ fecha_fin }}"
-            >
-
-        </div>
-
-        <div class="filter-field">
-
-            <label>Búsqueda</label>
-
-            <input
-                type="text"
-                name="busqueda"
-                value="{{ busqueda }}"
-                placeholder="Nombre del visitante"
-            >
-
-        </div>
-
-        <button
-            type="submit"
-            class="btn"
-        >
-            <i class="fa-solid fa-filter"></i>
-            Filtrar
-        </button>
-
-        <a
-            href="{{ url_for('resident.dashboard') }}"
-            class="btn btn-limpiar"
-        >
-            <i class="fa-solid fa-rotate-left"></i>
-            Limpiar
+    <div class="res-recent-head">
+        <h2 class="res-section-title" style="margin:0;">Visitas recientes</h2>
+        <a href="{{ url_for('resident.visitors') }}" class="res-see-all-link">
+            Ver todas <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
         </a>
-
-    </form>
-
-    <div class="table-wrapper">
-
-        <table class="resident-table">
-        <tr>
-            <th>Visitante</th>
-            <th>Tipo de acceso</th>
-            <th>Destino</th>
-            <th>visitas y accesos</th>
-            <th>Vehículo</th>
-            <th>QR</th>
-            <th>Estado</th>
-        </tr>
-
-        {% for visita in visitas %}
-        <tr>
-            <td>
-                <div class="visitante-info">
-                    <div class="visitante-foto">
-                        {% if visita.foto_visitante %}
-                        <img src="{{ visita.foto_visitante }}" alt="Foto visitante" class="zoomable-foto">
-                        {% else %}
-                        <img src="/static/img/default-user.png" alt="Sin foto" class="zoomable-foto">
-                        {% endif %}
-                    </div>
-                    <div class="visitante-data">
-                        <strong>{{ visita.nombre_visitante }}</strong>
-                        <span class="small">{{ visita.telefono }}</span>
-                    </div>
-                </div>
-            </td>
-
-            <td>
-                {% if visita.modalidad_visita == "recurrente" %}
-                    <span class="badge info">Recurrente</span>
-                    <br>
-                    <span class="small">
-                        {{ visita.dia_semana | capitalize }}
-                        {{ visita.hora_programada | hora_ampm }}
-                    </span>
-                    {% if visita.vigencia_hasta %}
-                    <br>
-                    <span class="small">Vence: {{ visita.vigencia_hasta.strftime('%d/%m/%Y') }}</span>
-                    {% endif %}
-                {% else %}
-                    <span class="badge warning">Temporal</span>
-                    <br>
-                    <span class="small">Un solo acceso</span>
-                {% endif %}
-            </td>
-
-            <td>
-                {% if visita.condominio %}
-                    {{ visita.condominio.capitalize() }}<br>
-                {% endif %}
-                Casa {{ visita.residencia_destino }}
-            </td>
-
-            <td>
-                {% if visita.modalidad_visita == "recurrente" %}
-                    Cada {{ visita.dia_semana | capitalize }}<br>
-                    {{ visita.hora_programada | hora_ampm }}
-                {% else %}
-                    {{ visita.fecha_visita[8:10] }}/{{ visita.fecha_visita[5:7] }}/{{ visita.fecha_visita[0:4] }}<br>
-                    Entrada: {{ visita.hora_inicio | hora_ampm }}
-                {% endif %}
-                <br>
-                {% if visita.hora_salida %}
-                    Salida: {{ visita.hora_salida | hora_ampm }}
-                {% else %}
-                    Salida: Pendiente
-                {% endif %}
-            </td>
-
-            <td>
-                {% if visita.vehiculo %}
-                    <strong>{{ visita.vehiculo.placa }}</strong><br>
-                    <span class="small">
-                        {{ visita.vehiculo.marca }} {{ visita.vehiculo.modelo }} — {{ visita.vehiculo.color }}
-                    </span>
-                    {% if visita.foto_placa %}
-                    <br>
-                    <img src="{{ visita.foto_placa }}" alt="Placa" class="placa-thumb zoomable-foto">
-                    {% endif %}
-                {% endif %}
-            </td>
-
-            <td>
-                <div class="qr-box">
-
-                    <img
-                        src="{{ visita.qr_path }}"
-                        class="qr-image {% if visita.qr_estado != 'cancelado' %}qr-clickable{% endif %}"
-                        data-qr-path="{{ visita.qr_path }}"
-                        data-qr-token="{{ visita.qr_token }}"
-                        data-visitante="{{ visita.nombre_visitante }}"
-                        alt="Código QR"
-                    >
-
-                    <span class="small qr-token">
-                        {{ visita.qr_token[:8] }}…
-                    </span>
-
-                    <span class="small">
-                        Clic para ver y compartir
-                    </span>
-
-                    {% if visita.qr_estado != "cancelado" %}
-
-                    <button
-                        type="button"
-                        class="btn-cancelar-qr"
-                        data-token="{{ visita.qr_token }}"
-                    >
-                        <i class="fa-solid fa-ban"></i>
-                        Cancelar QR
-                    </button>
-
-                    {% endif %}
-
-                </div>
-            </td>
-
-            <td>
-
-                {% if visita.qr_estado == "cancelado" %}
-
-                    <span class="badge danger">
-                        QR cancelado
-                    </span>
-
-                {% elif visita.qr_estado == "vencido" %}
-
-                    <span class="badge danger">
-                        QR vencido
-                    </span>
-
-                {% elif visita.estado == "activo" %}
-
-                    <span class="badge warning">
-                        Pendiente
-                    </span>
-
-                {% elif visita.estado == "dentro" %}
-
-                    <span class="badge success">
-                        Dentro
-                    </span>
-
-                {% elif visita.estado == "salida_registrada" %}
-
-                    <span class="badge dark">
-                        Finalizada
-                    </span>
-
-                {% else %}
-
-                    <span class="badge danger">
-                        {{ visita.estado }}
-                    </span>
-
-                {% endif %}
-
-            </td>
-
-            </tr>
-
-            {% else %}
-
-            <tr>
-
-                <td colspan="7" class="empty-table">
-
-                    <i class="fa-solid fa-calendar-xmark"></i>
-
-                    No hay visitas registradas en el periodo seleccionado.
-
-                </td>
-
-            </tr>
-
-            {% endfor %}
-
-            </table>
-
-            </div>
-
-            <div class="pagination-container">
-
-                {% if total_paginas > 1 %}
-
-                    <div class="pagination">
-
-                        {% if pagina > 1 %}
-
-                            <a
-                                href="{{ url_for(
-                                    'resident.dashboard',
-                                    page=pagina-1,
-                                    fecha_inicio=fecha_inicio,
-                                    fecha_fin=fecha_fin,
-                                    busqueda=busqueda
-                                ) }}"
-                                class="page-btn"
-                            >
-
-                                <i class="fa-solid fa-chevron-left"></i>
-
-                            </a>
-
-                        {% endif %}
-
-                        {% for p in range(1, total_paginas + 1) %}
-
-                            <a
-                                href="{{ url_for(
-                                    'resident.dashboard',
-                                    page=p,
-                                    fecha_inicio=fecha_inicio,
-                                    fecha_fin=fecha_fin,
-                                    busqueda=busqueda
-                                ) }}"
-                                class="page-btn {% if p == pagina %}active{% endif %}"
-                            >
-
-                                {{ p }}
-
-                            </a>
-
-                        {% endfor %}
-
-                        {% if pagina < total_paginas %}
-
-                            <a
-                                href="{{ url_for(
-                                    'resident.dashboard',
-                                    page=pagina+1,
-                                    fecha_inicio=fecha_inicio,
-                                    fecha_fin=fecha_fin,
-                                    busqueda=busqueda
-                                ) }}"
-                                class="page-btn"
-                            >
-
-                                <i class="fa-solid fa-chevron-right"></i>
-
-                            </a>
-
-                        {% endif %}
-
-                    </div>
-
-                {% endif %}
-
-            </div>
-
-            </div>
-
-
-<!-- Modal foto visitante/placa -->
-<div id="imageModal" class="image-modal">
-    <span class="close-modal">&times;</span>
-    <img class="modal-content" id="modalImage">
-</div>
-
-<!-- Modal QR con compartir WhatsApp -->
-<div id="qrModal" class="image-modal qr-share-modal">
-    <div class="qr-modal-panel">
-        <button
-type="button"
-            class="modal-close"
-            id="closeQrModal">
-
-            <i class="fa-solid fa-xmark"></i>
-
-        </button>
-        <h3 id="qrModalTitle">Código QR de acceso</h3>
-        <p class="small" id="qrModalSubtitle"></p>
-        <img id="qrModalImage" class="qr-modal-image" alt="QR ampliado">
-        <div class="qr-token-display">
-
-            <span class="small">
-                Token de acceso
-            </span>
-
-            <div class="token-copy-box">
-
-                <code id="qrModalToken"></code>
-
-                <button
-                    type="button"
-                    id="btnCopyToken"
-                    class="btn-copy-token"
-                >
-                    <i class="fa-regular fa-copy"></i>
-                </button>
-
-            </div>
-
-        </div>
-        <div class="qr-share-actions">
-            <button type="button" class="btn btn-whatsapp" id="btnShareToken">
-                <i class="fa-brands fa-whatsapp"></i> Compartir token
-            </button>
-            <button type="button" class="btn btn-whatsapp" id="btnShareQr">
-                <i class="fa-brands fa-whatsapp"></i> Compartir imagen del QR
-            </button>
-            <button type="button"class="btn btn-secondary qr-download-btn"id="btnDownloadQr">
-                <i class="fa-solid fa-download"></i> Descargar imagen QR
-            </button>
-            <p class="small qr-share-hint" id="qrShareHint"></p>
-        </div>
     </div>
-</div>
 
-<script>
-    const fotoModal = document.getElementById("imageModal");
-    const modalImg = document.getElementById("modalImage");
-
-    document.querySelectorAll(".zoomable-foto").forEach(img => {
-        img.addEventListener("click", function () {
-            fotoModal.style.display = "flex";
-            modalImg.src = this.src;
-        });
-    });
-
-    document.querySelector("#imageModal .close-modal").onclick = function () {
-        fotoModal.style.display = "none";
-    };
-
-    fotoModal.onclick = function (e) {
-        if (e.target === fotoModal) fotoModal.style.display = "none";
-    };
-
-    const qrModal = document.getElementById("qrModal");
-    qrModal.style.display = "none";
-    const qrModalImage = document.getElementById("qrModalImage");
-    const qrModalToken = document.getElementById("qrModalToken");
-    const qrModalTitle = document.getElementById("qrModalTitle");
-    const qrModalSubtitle = document.getElementById("qrModalSubtitle");
-
-    let currentToken = "";
-    let currentQrUrl = "";
-    let currentQrBlob = null;
-    let currentQrFile = null;
-
-    const btnShareQr = document.getElementById("btnShareQr");
-    const btnDownloadQr = document.getElementById("btnDownloadQr");
-    const qrShareHint = document.getElementById("qrShareHint");
-
-    const btnCopyToken =
-    document.getElementById("btnCopyToken");
-
-    async function cargarImagenQr(url) {
-
-        const respuesta = await fetch(url);
-
-        if (!respuesta.ok) {
-            throw new Error("No se pudo cargar la imagen del QR");
-        }
-
-        const blob = await respuesta.blob();
-
-        const nombre = `qr-acceso-${currentToken.slice(0, 8)}.png`;
-
-        return {
-            blob,
-            file: new File(
-                [blob],
-                nombre,
-                {
-                    type: blob.type || "image/png"
-                }
-            ),
-        };
-    }
-
-    function descargarArchivo(file) {
-
-        const url = URL.createObjectURL(file);
-
-        const enlace = document.createElement("a");
-
-        enlace.href = url;
-
-        enlace.download = file.name;
-
-        document.body.appendChild(enlace);
-
-        enlace.click();
-
-        enlace.remove();
-
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-
-    document.querySelectorAll(".qr-clickable").forEach(img => {
-
-        img.addEventListener("click", async function () {
-
-            currentToken = this.dataset.qrToken;
-
-            currentQrUrl =
-                window.location.origin +
-                this.dataset.qrPath;
-
-            const visitante = this.dataset.visitante;
-
-            qrModalImage.src = this.dataset.qrPath;
-
-            qrModalToken.textContent =
-                currentToken.trim();
-
-            qrModalTitle.textContent =
-                "QR — " + visitante;
-
-            qrModalSubtitle.textContent =
-                "Comparte el código o el token con tu visitante.";
-
-            qrShareHint.textContent =
-                "Cargando imagen del QR…";
-
-            btnShareQr.disabled = true;
-
-            currentQrBlob = null;
-
-            currentQrFile = null;
-
-            qrModal.style.display = "flex";
-
-            document.body.style.overflow = "hidden";
-
-            try {
-
-                const datos = await cargarImagenQr(currentQrUrl);
-
-                currentQrBlob = datos.blob;
-
-                currentQrFile = datos.file;
-
-                if (
-                    navigator.canShare &&
-                    navigator.canShare({
-                        files: [currentQrFile]
-                    })
-                ) {
-
-                    qrShareHint.textContent =
-                        "En móvil podrás enviar la imagen completa del QR por WhatsApp.";
-
-
-                } else {
-
-                    qrShareHint.textContent =
-                        "Se descargará la imagen y se abrirá WhatsApp para que la adjuntes al chat.";
-                }
-
-            } catch (err) {
-
-                qrShareHint.textContent =
-                    "No se pudo preparar la imagen. Recarga e intenta de nuevo.";
-
-            } finally {
-
-                btnShareQr.disabled = false;
-            }
-        });
-    });
-
-    document.getElementById("closeQrModal").onclick = function () {
-
-        qrModal.style.display = "none";
-
-        document.body.style.overflow = "auto";
-    };
-
-    qrModal.onclick = function (e) {
-
-        if (e.target === qrModal) {
-
-            qrModal.style.display = "none";
-
-            document.body.style.overflow = "auto";
-
-        }
-
-    };
-
-    document.getElementById("btnShareToken").onclick = async function () {
-
-        if (!currentQrFile) {
-
-            alert("Espera a que cargue el QR.");
-
-            return;
-
-        }
-
-        const texto =
-`Hola, te comparto tu acceso al fraccionamiento.
-
-Token de acceso:
-${currentToken}
-
-Presenta este QR en caseta el día de tu visita.`;
-
-        try {
-
-            if (
-                navigator.share &&
-                currentQrFile
-            ) {
-
-                await navigator.share({
-
-                    title:"QR de acceso",
-
-                    text:texto,
-
-                    url: currentQrUrl
-
-                });
-
-                return;
-            }
-
-            descargarArchivo(currentQrFile);
-
-            setTimeout(() => {
-
-                window.open(
-                    "https://wa.me/?text=" +
-                    encodeURIComponent(
-                        texto +
-                        "\n\nAdjunta la imagen QR descargada."
-                    ),
-                    "_blank"
-                );
-
-            }, 700);
-
-        } catch(err) {
-
-            console.error(err);
-
-            alert(
-                "No se pudo compartir automáticamente."
-            );
-
-        }
-
-    };
-
-    btnDownloadQr.onclick = function () {
-
-        if (currentQrFile) {
-
-            descargarArchivo(currentQrFile);
-        }
-    };
-
-    btnShareQr.onclick = async function () {
-
-        if (!currentQrFile) {
-
-            alert(
-                "Espera a que cargue la imagen del QR e intenta de nuevo."
-            );
-
-            return;
-        }
-
-        const texto =
-            "Código QR de acceso al fraccionamiento.\nToken: " +
-            currentToken;
-
-        btnShareQr.disabled = true;
-
-        const textoOriginal = btnShareQr.innerHTML;
-
-        btnShareQr.innerHTML =
-            '<i class="fa-solid fa-spinner fa-spin"></i> Preparando…';
-
-        try {
-
-            if (
-                navigator.canShare &&
-                navigator.canShare({
-                    files: [currentQrFile]
-                })
-            ) {
-
-                await navigator.share({
-
-                    title: "QR de acceso",
-
-                    text: texto,
-
-                    files: [currentQrFile],
-                });
-
-                return;
-            }
-
-            descargarArchivo(currentQrFile);
-
-            const msgWa =
-                "Hola, te comparto tu acceso al fraccionamiento.\n\n" +
-                "1) Adjunta la imagen del QR que se acaba de descargar en este chat.\n\n" +
-                "Token: " + currentToken;
-
-            setTimeout(() => {
-
-                window.open(
-                    "https://wa.me/?text=" +
-                    encodeURIComponent(msgWa),
-                    "_blank"
-                );
-
-            }, 600);
-
-        } catch (err) {
-
-            if (err.name !== "AbortError") {
-
-                descargarArchivo(currentQrFile);
-
-                alert(
-                    "No se pudo abrir el menú de compartir. La imagen se descargó: adjúntala manualmente en WhatsApp."
-                );
-            }
-
-        } finally {
-
-            btnShareQr.disabled = false;
-
-            btnShareQr.innerHTML = textoOriginal;
-        }
-    };
-
-
-    /* ========================================= */
-    /* CANCELAR QR */
-    /* ========================================= */
-
-    document.querySelectorAll(".btn-cancelar-qr")
-    .forEach(btn => {
-
-        btn.addEventListener("click", async function(){
-
-            const token =
-                this.dataset.token;
-
-            const confirmar = confirm(
-                "¿Deseas cancelar este QR?"
-            );
-
-            if(!confirmar){
-                return;
-            }
-
-            try{
-
-                const respuesta = await fetch(
-                    `/resident/cancelar-qr/${token}`,
-                    {
-                        method:"POST"
-                    }
-                );
-
-                const data =
-                    await respuesta.json();
-
-                if(data.success){
-
-                    alert(
-                        "QR cancelado correctamente"
-                    );
-
-                    location.reload();
-
-                }else{
-
-                    alert(
-                        "No se pudo cancelar el QR"
-                    );
-
-                }
-
-            }catch(error){
-
-                console.error(error);
-
-                alert(
-                    "Error al cancelar el QR"
-                );
-
-            }
-
-        });
-
-    });
-
-    /* ========================================= */
-    /* AUTO ABRIR QR RECIÉN GENERADO */
-    /* ========================================= */
-
-    {% if auto_qr %}
-
-    window.addEventListener("load", function(){
-
-        const qrElement = document.querySelector(
-            '[data-qr-token="{{ auto_qr }}"]'
-        );
-
-        if(qrElement){
-
-            qrElement.click();
-        }
-
-    });
+    {% if visitas_recientes %}
+
+    <div class="res-recent-rows">
+        {% for visita in visitas_recientes %}
+
+        {%- set nombre = visita.nombre_visitante | default('Visitante') -%}
+        {%- set iniciales = (nombre.split(' ') | map('first') | list)[:2] | join('') | upper -%}
+
+        {%- if visita.qr_estado in ['cancelado','vencido'] or visita.estado in ['cancelado','salida_registrada'] -%}
+            {%- set av_color = '#46464c' -%}
+        {%- elif visita.estado == 'dentro' -%}
+            {%- set av_color = '#1a1c2e' -%}
+        {%- else -%}
+            {%- set av_color = '#2e5bff' -%}
+        {%- endif -%}
+
+        {%- if visita.qr_estado == 'cancelado' or visita.estado == 'cancelado' -%}
+            {%- set badge_cls = 'badge-danger' -%}
+            {%- set badge_label = 'Cancelada' -%}
+        {%- elif visita.qr_estado == 'vencido' -%}
+            {%- set badge_cls = 'badge-danger' -%}
+            {%- set badge_label = 'Vencida' -%}
+        {%- elif visita.estado == 'dentro' -%}
+            {%- set badge_cls = 'badge-success' -%}
+            {%- set badge_label = 'Dentro' -%}
+        {%- elif visita.estado == 'salida_registrada' -%}
+            {%- set badge_cls = 'badge-neutral' -%}
+            {%- set badge_label = 'Finalizada' -%}
+        {%- else -%}
+            {%- set badge_cls = 'badge-warning' -%}
+            {%- set badge_label = 'Pendiente' -%}
+        {%- endif -%}
+
+        <div class="res-recent-row">
+            <div class="res-recent-avatar" style="background:{{ av_color }};">{{ iniciales }}</div>
+            <div class="res-recent-info">
+                <p class="res-recent-name">{{ nombre }}</p>
+                <p class="res-recent-sub">{{ visita.motivo | default('Sin motivo') }}</p>
+            </div>
+            <div class="res-recent-right">
+                <span class="res-badge {{ badge_cls }}">
+                    <span class="res-badge-dot"></span>
+                    {{ badge_label }}
+                </span>
+                {% if visita.fecha_visita %}
+                <p class="res-recent-date">{{ visita.fecha_visita }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('resident.visitors') }}" class="res-add-dashed">
+        <i class="fa-solid fa-arrow-right"></i>
+        Ver todas las visitas
+    </a>
+
+    {% else %}
+
+    <div class="res-recent-empty">
+        <div class="res-empty-icon">
+            <i class="fa-solid fa-calendar-xmark"></i>
+        </div>
+        <p class="res-empty-title">Sin visitas registradas</p>
+        <p class="res-empty-sub">Aún no has registrado ninguna visita.</p>
+        <a href="{{ url_for('resident.create_visit') }}" class="res-btn-new" style="display:inline-flex; margin-top:12px;">
+            <i class="fa-solid fa-plus"></i>
+            Registrar primera visita
+        </a>
+    </div>
 
     {% endif %}
 
-    /* ========================================= */
-    /* COPIAR TOKEN */
-    /* ========================================= */
+</div>
 
-    btnCopyToken.addEventListener(
-        "click",
-        async function(){
+{% endblock %}
 
-            try{
-
-                await navigator.clipboard.writeText(
-                    qrModalToken.textContent.trim()
-                );
-
-                const original =
-                    this.innerHTML;
-
-                this.innerHTML =
-                    '<i class="fa-solid fa-check"></i>';
-
-                setTimeout(()=>{
-
-                    this.innerHTML =
-                        original;
-
-                },1500);
-
-            }catch(error){
-
-                console.error(error);
-
-                alert(
-                    "No se pudo copiar el token."
-                );
-
-            }
-
-        }
-    );
-
+{% block extra_js %}
+<script>
+document.getElementById("heroDate").textContent =
+    new Date().toLocaleDateString('es-MX', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }).replace(/^./, c => c.toUpperCase());
 </script>
-
 {% endblock %}

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccessQR | {% block title %}Panel{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/alertas.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estructura/layout_residente.css') }}">
+    {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="res-body">
+
+    <!-- Ambient glow -->
+    <div class="res-ambient" aria-hidden="true"></div>
+    <!-- Dot grid -->
+    <div class="res-dotgrid" aria-hidden="true"></div>
+
+    <!-- Mobile overlay -->
+    <div class="res-overlay" id="resOverlay" aria-hidden="true"></div>
+
+    <!-- ======================================================= -->
+    <!-- SIDEBAR                                                 -->
+    <!-- ======================================================= -->
+    <aside class="res-sidebar" id="resSidebar">
+
+        <!-- Brand -->
+        <div class="res-brand">
+            <div class="res-brand-icon">
+                <img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}"
+                     alt="AccessQR"
+                     style="width:20px;height:20px;object-fit:contain;">
+            </div>
+            <span class="res-brand-name">AccessQR</span>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="res-nav">
+            <a href="{{ url_for('resident.dashboard') }}"
+               class="res-nav-item {% if request.endpoint == 'resident.dashboard' %}active{% endif %}">
+                <div class="res-nav-icon">
+                    <i class="fa-solid fa-house"></i>
+                </div>
+                <span>Inicio</span>
+                {% if request.endpoint == 'resident.dashboard' %}
+                <div class="res-nav-dot"></div>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('resident.create_visit') }}"
+               class="res-nav-item {% if request.endpoint == 'resident.create_visit' %}active{% endif %}">
+                <div class="res-nav-icon">
+                    <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <span>Nueva Visita</span>
+                {% if request.endpoint == 'resident.create_visit' %}
+                <div class="res-nav-dot"></div>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('resident.visitors') }}"
+               class="res-nav-item {% if request.endpoint == 'resident.visitors' %}active{% endif %}">
+                <div class="res-nav-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <span>Mis Visitantes</span>
+                {% if request.endpoint == 'resident.visitors' %}
+                <div class="res-nav-dot"></div>
+                {% endif %}
+            </a>
+        </nav>
+
+        <!-- User + Logout -->
+        <div class="res-user-section">
+            <div class="res-user-card">
+                <div class="res-user-avatar" id="resUserAvatar">
+                    {{ session.nombre[0] if session.nombre else '?' }}
+                </div>
+                <div class="res-user-info">
+                    <div class="res-user-name">{{ session.nombre }}</div>
+                    <div class="res-user-sub">Residente</div>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="res-logout-btn">
+                <div class="res-logout-icon">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </div>
+                Cerrar sesión
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- ======================================================= -->
+    <!-- MAIN AREA                                               -->
+    <!-- ======================================================= -->
+    <div class="res-main">
+
+        <!-- Sticky header -->
+        <header class="res-header">
+            <button class="res-menu-btn" id="resMenuBtn" aria-label="Abrir menú">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <h1 class="res-header-title">{% block page_title %}Panel{% endblock %}</h1>
+        </header>
+
+        <!-- Content -->
+        <main class="res-content">
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="res-flash">
+                        {% for category, message in messages %}
+                            <div class="alert {{ category }}">
+                                <i class="fa-solid fa-circle-info"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+
+        </main>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- BOTTOM TAB BAR (mobile)                                -->
+    <!-- ======================================================= -->
+    <nav class="res-bottom-nav">
+        <a href="{{ url_for('resident.dashboard') }}"
+           class="res-tab {% if request.endpoint == 'resident.dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-house"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="{{ url_for('resident.create_visit') }}"
+           class="res-tab {% if request.endpoint == 'resident.create_visit' %}active{% endif %}">
+            <i class="fa-solid fa-qrcode"></i>
+            <span>Nueva</span>
+        </a>
+        <a href="{{ url_for('resident.visitors') }}"
+           class="res-tab {% if request.endpoint == 'resident.visitors' %}active{% endif %}">
+            <i class="fa-solid fa-users"></i>
+            <span>Visitantes</span>
+        </a>
+    </nav>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+
+    <script>
+        /* Sidebar toggle */
+        const resSidebar = document.getElementById('resSidebar');
+        const resOverlay = document.getElementById('resOverlay');
+        const resMenuBtn = document.getElementById('resMenuBtn');
+
+        resMenuBtn.addEventListener('click', () => {
+            const open = resSidebar.classList.toggle('open');
+            if (open) {
+                resOverlay.classList.add('show');
+            } else {
+                resOverlay.classList.remove('show');
+            }
+        });
+
+        resOverlay.addEventListener('click', () => {
+            resSidebar.classList.remove('open');
+            resOverlay.classList.remove('show');
+        });
+
+        /* Avatar color determinista */
+        const avatar = document.getElementById('resUserAvatar');
+        if (avatar) {
+            const COLORS = ['#2e5bff','#009869','#d97706','#7c3aed','#0891b2','#1a1c2e'];
+            const name = "{{ session.nombre | default('') }}";
+            let h = 0;
+            for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i)) % COLORS.length;
+            avatar.style.backgroundColor = COLORS[h];
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>
