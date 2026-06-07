@@ -1,66 +1,161 @@
-/* ========================================= */
-/* ALERTAS */
-/* ========================================= */
+/* ================================================
+   FLASH TOASTS — Sistema de notificaciones
+   ================================================ */
 
-.alert{
-
-    padding:14px 18px;
-
-    border-radius:12px;
-
-    margin-bottom:12px;
-
-    font-weight:600;
-
+.flash-stack {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-width: 380px;
+    width: calc(100vw - 2.5rem);
+    pointer-events: none;
 }
 
-/* ========================================= */
-/* INFO */
-/* ========================================= */
+.flash-toast {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
+    pointer-events: all;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 
-.info{
-
-    background:#dbeafe;
-
-    color:#1e40af;
-
+    /* Entrada */
+    animation: toastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-/* ========================================= */
-/* WARNING */
-/* ========================================= */
-
-.warning{
-
-    background:#f59e0b;
-
-    color:white;
-
+.flash-toast.hiding {
+    animation: toastOut 0.3s ease forwards;
 }
 
-/* ========================================= */
-/* ERROR */
-/* ========================================= */
-
-.danger-alert{
-
-    background:#fee2e2;
-
-    color:#991b1b;
-
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(60px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
 }
 
-/* ========================================= */
-/* FLASH */
-/* ========================================= */
+@keyframes toastOut {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        max-height: 100px;
+        margin-bottom: 0;
+    }
+    to {
+        opacity: 0;
+        transform: translateX(60px) scale(0.95);
+        max-height: 0;
+        padding: 0;
+        margin-bottom: -0.6rem;
+    }
+}
 
-.flash-message{
+/* Colores por categoría */
 
-    margin-bottom:20px;
+.flash-success {
+    background: rgba(0, 200, 130, 0.12);
+    border-color: rgba(0, 200, 130, 0.3);
+    color: #00c882;
+}
 
-    border-left:5px solid #38bdf8;
+.flash-danger {
+    background: rgba(255, 75, 75, 0.12);
+    border-color: rgba(255, 75, 75, 0.3);
+    color: #ff4b4b;
+}
 
-    box-shadow:
-        0 5px 20px rgba(14,165,233,.15);
+.flash-warning {
+    background: rgba(255, 180, 0, 0.12);
+    border-color: rgba(255, 180, 0, 0.3);
+    color: #e09d00;
+}
 
+.flash-info {
+    background: rgba(46, 91, 255, 0.12);
+    border-color: rgba(46, 91, 255, 0.3);
+    color: #2e5bff;
+}
+
+/* Ícono */
+
+.flash-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Texto */
+
+.flash-text {
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: inherit;
+}
+
+/* Botón cerrar */
+
+.flash-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.5;
+    font-size: 0.85rem;
+    padding: 0;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.flash-close:hover {
+    opacity: 1;
+}
+
+/* Barra de progreso */
+
+.flash-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2.5px;
+    width: 100%;
+    background: currentColor;
+    opacity: 0.4;
+    transform-origin: left;
+    animation: progressBar 5s linear forwards;
+}
+
+@keyframes progressBar {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+/* Responsive */
+
+@media (max-width: 480px) {
+    .flash-stack {
+        top: auto;
+        bottom: 5rem;
+        right: 0.75rem;
+        left: 0.75rem;
+        width: auto;
+    }
 }

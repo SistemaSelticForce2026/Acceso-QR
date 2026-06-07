@@ -102,20 +102,6 @@
                 </div>
             </div>
 
-            <!-- Flash messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="auth-flash">
-                        {% for category, message in messages %}
-                            <div class="alert {{ category }}">
-                                <i class="fa-solid fa-circle-info"></i>
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-
             <!-- Card -->
             <div class="glass-card">
 

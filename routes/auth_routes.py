@@ -74,7 +74,10 @@ def register():
 
         if password != confirm_password:
 
-            flash("Las contraseñas no coinciden.", "danger")
+            flash(
+                "Las contraseñas no coinciden. Por favor, verifica e intenta de nuevo.",
+                "danger",
+            )
 
             return redirect(url_for("auth.register"))
 
@@ -86,7 +89,10 @@ def register():
 
         if correo_existente:
 
-            flash("El correo electrónico ya se encuentra registrado.", "danger")
+            flash(
+                "Este correo electrónico ya está registrado. ¿Olvidaste tu contraseña?",
+                "danger",
+            )
 
             return redirect(url_for("auth.register"))
 
@@ -110,8 +116,7 @@ def register():
         if casa_existente:
 
             flash(
-                f"La casa {numero_casa} ya se encuentra registrada en "
-                f"{privada.title()} - {fraccionamiento.title()}",
+                f"La casa {numero_casa} ya está registrada en {privada.title()} – {fraccionamiento.title()}.",
                 "danger",
             )
 
@@ -153,7 +158,7 @@ def register():
         # MENSAJE
         # ====================
 
-        flash("Cuenta creada correctamente.", "success")
+        flash("¡Cuenta creada con éxito! Ya puedes iniciar sesión.", "success")
 
         return redirect(url_for("auth.login"))
 
@@ -186,7 +191,10 @@ def login():
 
         if not usuario:
 
-            flash("El usuario no existe.", "danger")
+            flash(
+                "No encontramos una cuenta con ese correo. Verifica los datos o regístrate.",
+                "danger",
+            )
 
             return redirect(url_for("auth.login"))
 
@@ -229,7 +237,7 @@ def login():
                 update_data["bloqueado_hasta"] = datetime.now() + timedelta(minutes=5)
 
                 flash(
-                    "Demasiados intentos fallidos. " "Cuenta bloqueada temporalmente.",
+                    "Demasiados intentos fallidos. Cuenta bloqueada temporalmente por 5 minutos.",
                     "danger",
                 )
 
@@ -238,7 +246,7 @@ def login():
                 restantes = 5 - intentos
 
                 flash(
-                    f"Contraseña incorrecta. " f"Intentos restantes: {restantes}",
+                    f"Contraseña incorrecta. Te quedan {restantes} intentos antes del bloqueo.",
                     "warning",
                 )
 
@@ -252,7 +260,10 @@ def login():
 
         if usuario.get("estado") != "activo":
 
-            flash("Tu cuenta se encuentra inactiva.", "danger")
+            flash(
+                "Tu cuenta está inactiva. Contacta al administrador del fraccionamiento.",
+                "danger",
+            )
 
             return redirect(url_for("auth.login"))
 
@@ -366,7 +377,7 @@ def forgot_password():
 
     if not usuario:
 
-        flash("No existe una cuenta asociada a ese correo.", "danger")
+        flash("No hay ninguna cuenta asociada a ese correo electrónico.", "danger")
 
         return redirect(url_for("auth.forgot_password"))
 
@@ -401,7 +412,9 @@ def forgot_password():
     # MENSAJE
     # =====================================
 
-    flash("Código temporal generado correctamente.", "success")
+    flash(
+        "Código temporal generado. Ingrésalo a continuación para continuar.", "success"
+    )
 
     # =====================================
     # MOSTRAR TOKEN
@@ -428,7 +441,10 @@ def verify_token():
 
     if token_ingresado == token_guardado:
 
-        flash("Código validado correctamente.", "success")
+        flash(
+            "Código validado correctamente. Ahora puedes crear tu nueva contraseña.",
+            "success",
+        )
 
         return redirect(url_for("auth.reset_password"))
 
@@ -436,7 +452,10 @@ def verify_token():
     # TOKEN INCORRECTO
     # =====================================
 
-    flash("El código ingresado no es válido.", "danger")
+    flash(
+        "El código ingresado no es válido. Solicita uno nuevo e intenta de nuevo.",
+        "danger",
+    )
 
     return redirect(url_for("auth.forgot_password"))
 
@@ -457,7 +476,9 @@ def reset_password():
 
     if not correo:
 
-        flash("La sesión de recuperación expiró.", "danger")
+        flash(
+            "La sesión de recuperación expiró. Inicia el proceso nuevamente.", "danger"
+        )
 
         return redirect(url_for("auth.forgot_password"))
 
@@ -483,7 +504,10 @@ def reset_password():
 
     if password != confirm_password:
 
-        flash("Las contraseñas no coinciden.", "danger")
+        flash(
+            "Las contraseñas no coinciden. Por favor, verifica e intenta de nuevo.",
+            "danger",
+        )
 
         return redirect(url_for("auth.reset_password"))
 
@@ -514,7 +538,10 @@ def reset_password():
     # MENSAJE
     # =====================================
 
-    flash("Contraseña actualizada correctamente.", "success")
+    flash(
+        "¡Contraseña actualizada con éxito! Ya puedes iniciar sesión con tu nueva contraseña.",
+        "success",
+    )
 
     return redirect(url_for("auth.login"))
 
@@ -567,6 +594,6 @@ def logout():
 
     socketio.emit("refresh")
 
-    flash("Sesión cerrada correctamente.", "success")
+    flash("Sesión cerrada correctamente. ¡Hasta pronto!", "success")
 
     return redirect(url_for("auth.login"))

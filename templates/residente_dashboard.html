@@ -125,8 +125,28 @@
         {%- endif -%}
 
         <div class="res-recent-row">
-            <div class="res-recent-avatar" style="background:{{ av_color }};">{{ iniciales }}</div>
+
+            {% if visita.foto_visitante %}
+
+            <div class="res-avatar-photo">
+
+                <img
+                    src="{{ visita.foto_visitante['url'] }}"
+                    alt="{{ nombre }}"
+                    class="res-avatar-img zoomable-foto">
+
+            </div>
+
+            {% else %}
+
+            <div class="res-recent-avatar" style="background:{{ av_color }};">
+                {{ iniciales }}
+            </div>
+
+            {% endif %}
+
             <div class="res-recent-info">
+
                 <p class="res-recent-name">{{ nombre }}</p>
                 <p class="res-recent-sub">{{ visita.motivo | default('Sin motivo') }}</p>
             </div>
@@ -167,13 +187,43 @@
 
 </div>
 
+<div id="photoModal" class="res-photo-modal">
+    <img id="photoZoom" class="res-photo-zoom" alt="Foto ampliada">
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
+
 document.getElementById("heroDate").textContent =
     new Date().toLocaleDateString('es-MX', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
     }).replace(/^./, c => c.toUpperCase());
+
+const photoModal = document.getElementById("photoModal");
+const photoZoom  = document.getElementById("photoZoom");
+
+document.querySelectorAll(".zoomable-foto").forEach(img => {
+
+    img.addEventListener("click", function(){
+
+        photoZoom.src = this.src;
+
+        photoModal.style.display = "flex";
+
+    });
+
+});
+
+photoModal.addEventListener("click", function(){
+
+    photoModal.style.display = "none";
+
+});
+
 </script>
 {% endblock %}

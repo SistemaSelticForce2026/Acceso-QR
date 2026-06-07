@@ -1,15 +1,29 @@
+import io
 import qrcode
-import os
+import cloudinary.uploader
+
+from utils.cloudinary_config import *
+
+# =========================================
+# GENERAR QR
+# =========================================
 
 
 def generate_qr(token):
-    folder = "static/qr"
-    os.makedirs(folder, exist_ok=True)
-
-    filename = f"{token}.png"
-    path = os.path.join(folder, filename)
 
     img = qrcode.make(token)
-    img.save(path)
 
-    return f"/static/qr/{filename}"
+    buffer = io.BytesIO()
+
+    img.save(buffer, format="PNG")
+
+    buffer.seek(0)
+
+    resultado = cloudinary.uploader.upload(
+        buffer,
+        folder="accesoqr/qr",
+        public_id=token,
+        overwrite=True,
+    )
+
+    return resultado["secure_url"]

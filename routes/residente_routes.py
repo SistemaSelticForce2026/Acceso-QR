@@ -11,6 +11,11 @@ from utils.qr_generator import generate_qr
 from utils.uploads import guardar_imagen
 from utils.visita_validacion import vigencia_recurrente_meses
 
+from flask import jsonify
+from bson import ObjectId
+
+import cloudinary.uploader
+
 resident_bp = Blueprint("resident", __name__, url_prefix="/resident")
 
 
@@ -40,9 +45,7 @@ def dashboard():
     # ESTADISTICAS
     # =============================================
 
-    total_visitas = mongo.db.visits.count_documents(
-        {"residente_id": residente_id}
-    )
+    total_visitas = mongo.db.visits.count_documents({"residente_id": residente_id})
 
     visitas_dentro = mongo.db.visits.count_documents(
         {"residente_id": residente_id, "estado": "dentro"}
@@ -158,6 +161,35 @@ def cancelar_qr(token):
     )
 
     return {"success": True}
+
+
+# =====================================================
+# ELIMINAR VISITA
+# =====================================================
+
+
+@resident_bp.route("/eliminar-visita/<id>", methods=["DELETE"])
+@login_required
+@role_required("residente")
+def eliminar_visita(id):
+
+    try:
+
+        resultado = mongo.db.visits.delete_one(
+            {"_id": ObjectId(id), "residente_id": session["user_id"]}
+        )
+
+        if resultado.deleted_count == 0:
+
+            return jsonify({"success": False, "message": "Visita no encontrada"}), 404
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+
+        print("ERROR ELIMINAR:", e)
+
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 # =====================================================

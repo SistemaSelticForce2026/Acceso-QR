@@ -112,25 +112,50 @@ def dashboard():
 
     if busqueda:
         busqueda_lower = busqueda.lower()
-        visitas = [v for v in visitas if busqueda_lower in v.get("nombre_visitante", "").lower() or busqueda_lower in v.get("residente_nombre", "").lower()]
-        accesos = [a for a in accesos if busqueda_lower in a.get("visitante", "").lower() or busqueda_lower in a.get("guardia_nombre", "").lower() or busqueda_lower in a.get("accion", "").lower()]
-        incidencias = [i for i in incidencias if busqueda_lower in i.get("visitante", "").lower() or busqueda_lower in i.get("guardia_nombre", "").lower() or busqueda_lower in i.get("descripcion", "").lower()]
+        visitas = [
+            v
+            for v in visitas
+            if busqueda_lower in v.get("nombre_visitante", "").lower()
+            or busqueda_lower in v.get("residente_nombre", "").lower()
+        ]
+        accesos = [
+            a
+            for a in accesos
+            if busqueda_lower in a.get("visitante", "").lower()
+            or busqueda_lower in a.get("guardia_nombre", "").lower()
+            or busqueda_lower in a.get("accion", "").lower()
+        ]
+        incidencias = [
+            i
+            for i in incidencias
+            if busqueda_lower in i.get("visitante", "").lower()
+            or busqueda_lower in i.get("guardia_nombre", "").lower()
+            or busqueda_lower in i.get("descripcion", "").lower()
+        ]
 
     # Filtro de fechas para la tabla de visitas (calendarios independientes)
     visitas_tabla = visitas
 
     if fecha_inicio_tabla:
-        visitas_tabla = [v for v in visitas_tabla if v.get("fecha_visita", "") >= fecha_inicio_tabla]
+        visitas_tabla = [
+            v for v in visitas_tabla if v.get("fecha_visita", "") >= fecha_inicio_tabla
+        ]
 
     if fecha_fin_tabla:
-        visitas_tabla = [v for v in visitas_tabla if v.get("fecha_visita", "") <= fecha_fin_tabla]
+        visitas_tabla = [
+            v for v in visitas_tabla if v.get("fecha_visita", "") <= fecha_fin_tabla
+        ]
 
     pagina_tabla = int(request.args.get("page", 1))
     por_pagina_tabla = 5
     total_visitas_tabla = len(visitas_tabla)
-    total_paginas_tabla = max(1, (total_visitas_tabla + por_pagina_tabla - 1) // por_pagina_tabla)
-    
-    visitas_tabla_paginada = visitas_tabla[(pagina_tabla - 1) * por_pagina_tabla : pagina_tabla * por_pagina_tabla]
+    total_paginas_tabla = max(
+        1, (total_visitas_tabla + por_pagina_tabla - 1) // por_pagina_tabla
+    )
+
+    visitas_tabla_paginada = visitas_tabla[
+        (pagina_tabla - 1) * por_pagina_tabla : pagina_tabla * por_pagina_tabla
+    ]
 
     # =====================================================
     # KPIs
@@ -408,7 +433,7 @@ def residentes():
         "admin_residentes.html",
         usuarios=usuarios,
         pagina=pagina,
-        total_paginas=total_paginas
+        total_paginas=total_paginas,
     )
 
 
@@ -779,7 +804,7 @@ def guardias():
         "admin_guardias.html",
         guardias=guardias,
         pagina=pagina,
-        total_paginas=total_paginas
+        total_paginas=total_paginas,
     )
 
 
@@ -1075,7 +1100,7 @@ def accesos():
         "admin_accesos.html",
         accesos=accesos,
         pagina=pagina,
-        total_paginas=total_paginas
+        total_paginas=total_paginas,
     )
 
 
@@ -1324,7 +1349,7 @@ def incidencias():
         "admin_incidencias.html",
         incidencias=incidencias,
         pagina=pagina,
-        total_paginas=total_paginas
+        total_paginas=total_paginas,
     )
 
 

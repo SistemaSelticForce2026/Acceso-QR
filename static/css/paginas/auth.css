@@ -401,7 +401,7 @@
 /* toggle contraseña */
 .auth-eye-btn{
     position:absolute;
-    right:14px;
+    right:20px;
     top:50%;
     transform:translateY(-50%);
     margin:0;
@@ -415,14 +415,18 @@
     box-shadow:none;
     display:flex;
     align-items:center;
-    transition:color .2s;
+    justify-content:center;
+
+    cursor:pointer;
+    color:#77767d;
+}
+
+.auth-eye-btn i{
+    font-size:20px;
 }
 
 .auth-eye-btn:hover{
-    color:#191c1e;
-    background:none;
-    box-shadow:none;
-    transform:translateY(-50%);
+    color:#2e5bff;
 }
 
 /* input con toggle */
@@ -457,20 +461,6 @@
     font-weight:500;
     margin-bottom:16px;
     animation:authFadeIn .2s ease;
-}
-
-/* =========================================================
-   FLASH MESSAGES (en páginas auth)
-========================================================= */
-
-.auth-flash{
-    margin-bottom:16px;
-}
-
-.auth-flash .alert{
-    border-radius:14px;
-    font-size:13px;
-    padding:12px 16px;
 }
 
 /* =========================================================
@@ -773,36 +763,6 @@
     display:block;
 }
 
-/* =========================================================
-   CLASES DE ALERT PARA FLASH (danger / success / warning)
-========================================================= */
-
-.alert.danger{
-    background:#fee2e2;
-    color:#991b1b;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-size:13px;
-}
-
-.alert.success{
-    background:#dcfce7;
-    color:#166534;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-size:13px;
-}
-
-.alert.warning{
-    background:#fef9c3;
-    color:#854d0e;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-size:13px;
-}
 
 /* =========================================================
    DIVIDER
@@ -1013,6 +973,8 @@
     font-weight:700;
     letter-spacing:0;
 }
+
+
 
 /* =========================================================
    RESPONSIVE TABLET

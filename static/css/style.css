@@ -410,42 +410,6 @@ table td{
 }
 
 /* =========================================================
-   ALERTAS
-========================================================= */
-
-.alert{
-
-    padding: 14px 18px;
-
-    border-radius: 12px;
-
-    margin-bottom: 12px;
-
-    font-weight: bold;
-}
-
-.warning{
-
-    background: #f59e0b;
-
-    color: white;
-}
-
-.info{
-
-    background: #dbeafe;
-
-    color: #1e40af;
-}
-
-.danger-alert{
-
-    background: #fee2e2;
-
-    color: #991b1b;
-}
-
-/* =========================================================
    ACCESS ALERT
 ========================================================= */
 
@@ -1753,7 +1717,6 @@ canvas{
     color: #64748b;
 }
 
-
 /* =========================================================
    STATS PROFESIONALES
 ========================================================= */
@@ -1847,7 +1810,6 @@ canvas{
     font-size: 13px;
 }
 
-
 /* =========================================================
    TABLAS PREMIUM
 ========================================================= */
@@ -1921,7 +1883,6 @@ table tbody tr:hover{
 
     background: #f8fafc;
 }
-
 
 /* =========================================================
    EFECTOS PREMIUM GLOBALES
@@ -2369,10 +2330,10 @@ h3{
     background: rgba(37,99,235,.12);
 }
 
-
 /* =========================================================
    HEADER PANEL SEGURIDAD
 ========================================================= */
+
 .security-header{
 
     display: flex;
@@ -2402,6 +2363,7 @@ h3{
 /* =========================================================
    INDICADOR EN VIVO
 ========================================================= */
+
 .security-live{
 
     display: flex;
@@ -2423,10 +2385,10 @@ h3{
     font-weight: 600;
 }
 
-
 /* =========================================================
    GRID PANEL SEGURIDAD
 ========================================================= */
+
 .pulse{
 
     width: 10px;
@@ -2456,6 +2418,7 @@ h3{
 /* =========================================================
    TARJETAS PANEL SEGURIDAD
 ========================================================= */
+
 .security-box{
 
     padding: 20px;
@@ -2469,10 +2432,10 @@ h3{
     backdrop-filter: blur(12px);
 }
 
-
 /* =========================================================
    NUMEROS PANEL SEGURIDAD
 ========================================================= */
+
 .security-number{
 
     display: block;
@@ -2491,10 +2454,10 @@ h3{
     color: #cbd5e1;
 }
 
-
 /* =========================================================
    RESPONSIVE PANEL SEGURIDAD
 ========================================================= */
+
 @media(max-width:768px){
 
     .security-grid{
@@ -2502,7 +2465,6 @@ h3{
         grid-template-columns: 1fr;
     }
 }
-
 
 /* ===================================================== */
 /* INPUTS AUTOMÁTICOS RESIDENTE */
@@ -2515,7 +2477,6 @@ h3{
     color: #334155;
     font-weight: 600;
     cursor: not-allowed;
-
 }
 
 body.dark .readonly-input{
@@ -2523,9 +2484,7 @@ body.dark .readonly-input{
     background: #1e293b;
     border: 2px solid #334155;
     color: #e2e8f0;
-
 }
-
 
 /* ===================================================== */
 /* DASHBOARD GRID */
@@ -2540,7 +2499,6 @@ body.dark .readonly-input{
     gap: 25px;
 
     margin-top: 25px;
-
 }
 
 /* ===================================================== */
@@ -2560,7 +2518,6 @@ body.dark .readonly-input{
     margin-bottom: 25px;
 
     flex-wrap: wrap;
-
 }
 
 .card-header h2 {
@@ -2574,13 +2531,11 @@ body.dark .readonly-input{
     font-size: 1.3rem;
 
     margin-bottom: 8px;
-
 }
 
 .card-header h2 i {
 
     color: #3b82f6;
-
 }
 
 /* ===================================================== */
@@ -2598,7 +2553,6 @@ body.dark .readonly-input{
     font-weight: 700;
 
     letter-spacing: 0.5px;
-
 }
 
 .status-badge.success {
@@ -2606,7 +2560,6 @@ body.dark .readonly-input{
     background: rgba(34, 197, 94, 0.12);
 
     color: #16a34a;
-
 }
 
 .status-badge.info {
@@ -2614,7 +2567,6 @@ body.dark .readonly-input{
     background: rgba(59, 130, 246, 0.12);
 
     color: #2563eb;
-
 }
 
 /* ===================================================== */
@@ -2628,12 +2580,7 @@ body.dark .readonly-input{
     flex-direction: column;
 
     gap: 15px;
-
 }
-
-/* ===================================================== */
-/* ITEM */
-/* ===================================================== */
 
 .ranking-item {
 
@@ -2654,7 +2601,6 @@ body.dark .readonly-input{
     border: 1px solid rgba(255,255,255,0.08);
 
     transition: all 0.25s ease;
-
 }
 
 .ranking-item:hover {
@@ -2664,12 +2610,7 @@ body.dark .readonly-input{
     border-color: rgba(59,130,246,0.35);
 
     box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-
 }
-
-/* ===================================================== */
-/* INFO */
-/* ===================================================== */
 
 .ranking-info {
 
@@ -2678,7 +2619,6 @@ body.dark .readonly-input{
     align-items: center;
 
     gap: 14px;
-
 }
 
 .ranking-avatar {
@@ -2704,7 +2644,6 @@ body.dark .readonly-input{
     font-size: 1.1rem;
 
     box-shadow: 0 5px 15px rgba(59,130,246,0.25);
-
 }
 
 .vehicle-icon {
@@ -2726,17 +2665,11 @@ body.dark .readonly-input{
     color: #2563eb;
 
     font-size: 1.2rem;
-
 }
-
-/* ===================================================== */
-/* STATS */
-/* ===================================================== */
 
 .ranking-stats {
 
     text-align: center;
-
 }
 
 .ranking-number {
@@ -2748,7 +2681,6 @@ body.dark .readonly-input{
     font-weight: 800;
 
     color: #2563eb;
-
 }
 
 /* ===================================================== */
@@ -2764,7 +2696,6 @@ body.dark .readonly-input{
     font-size: 0.75rem;
 
     font-weight: 700;
-
 }
 
 .badge.success {
@@ -2772,7 +2703,6 @@ body.dark .readonly-input{
     background: rgba(34, 197, 94, 0.15);
 
     color: #16a34a;
-
 }
 
 /* ===================================================== */
@@ -2786,7 +2716,6 @@ body.dark .readonly-input{
     text-align: center;
 
     opacity: 0.7;
-
 }
 
 .empty-state i {
@@ -2796,9 +2725,7 @@ body.dark .readonly-input{
     margin-bottom: 15px;
 
     color: #94a3b8;
-
 }
-
 
 /* ===================================================== */
 /* VISITOR INFO */
@@ -2811,7 +2738,6 @@ body.dark .readonly-input{
     align-items: center;
 
     gap: 14px;
-
 }
 
 /* ===================================================== */
@@ -2825,7 +2751,6 @@ body.dark .readonly-input{
     align-items: center;
 
     gap: 14px;
-
 }
 
 .visitante-foto {
@@ -2835,7 +2760,6 @@ body.dark .readonly-input{
     height: 70px;
 
     min-width: 70px;
-
 }
 
 .visitante-foto img {
@@ -2853,7 +2777,6 @@ body.dark .readonly-input{
     box-shadow: 0 4px 12px rgba(0,0,0,.15);
 
     cursor: pointer;
-
 }
 
 /* ===================================================== */
@@ -2868,11 +2791,7 @@ body.dark .readonly-input{
 
     border-radius: 14px;
 
-    background: linear-gradient(
-        135deg,
-        #2563eb,
-        #3b82f6
-    );
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
 
     display: flex;
 
@@ -2885,7 +2804,6 @@ body.dark .readonly-input{
     font-size: 1.2rem;
 
     box-shadow: 0 4px 14px rgba(59,130,246,0.20);
-
 }
 
 /* ===================================================== */
@@ -2917,12 +2835,7 @@ body.dark .readonly-input{
     backdrop-filter: blur(6px);
 
     animation: fadeIn 0.25s ease;
-
 }
-
-/* ===================================================== */
-/* IMAGEN MODAL */
-/* ===================================================== */
 
 .modal-image {
 
@@ -2935,12 +2848,7 @@ body.dark .readonly-input{
     box-shadow: 0 0 35px rgba(255,255,255,0.15);
 
     animation: zoomIn 0.25s ease;
-
 }
-
-/* ===================================================== */
-/* CERRAR */
-/* ===================================================== */
 
 .close-modal {
 
@@ -2957,7 +2865,6 @@ body.dark .readonly-input{
     cursor: pointer;
 
     transition: 0.2s;
-
 }
 
 .close-modal:hover {
@@ -2965,7 +2872,6 @@ body.dark .readonly-input{
     transform: scale(1.1);
 
     color: #60a5fa;
-
 }
 
 /* ===================================================== */
@@ -2974,38 +2880,16 @@ body.dark .readonly-input{
 
 @keyframes fadeIn {
 
-    from {
+    from { opacity: 0; }
 
-        opacity: 0;
-
-    }
-
-    to {
-
-        opacity: 1;
-
-    }
-
+    to { opacity: 1; }
 }
 
 @keyframes zoomIn {
 
-    from {
+    from { transform: scale(0.85); opacity: 0; }
 
-        transform: scale(0.85);
-
-        opacity: 0;
-
-    }
-
-    to {
-
-        transform: scale(1);
-
-        opacity: 1;
-
-    }
-
+    to { transform: scale(1); opacity: 1; }
 }
 
 /* ===================================================== */
@@ -3021,7 +2905,6 @@ body.dark .readonly-input{
     gap: 14px;
 
     min-width: 220px;
-
 }
 
 .visitante-foto img {
@@ -3037,7 +2920,6 @@ body.dark .readonly-input{
     border: 3px solid rgba(255,255,255,.7);
 
     box-shadow: 0 4px 12px rgba(0,0,0,.15);
-
 }
 
 .visitante-data {
@@ -3047,7 +2929,6 @@ body.dark .readonly-input{
     flex-direction: column;
 
     gap: 4px;
-
 }
 
 .visitante-data strong {
@@ -3055,7 +2936,6 @@ body.dark .readonly-input{
     font-size: 15px;
 
     color: var(--text);
-
 }
 
 .visitante-data .small {
@@ -3063,7 +2943,6 @@ body.dark .readonly-input{
     color: var(--text-light);
 
     font-size: 13px;
-
 }
 
 /* ===================================================== */
@@ -3079,7 +2958,6 @@ body.dark .readonly-input{
     align-items: center;
 
     gap: 10px;
-
 }
 
 .qr-image {
@@ -3095,13 +2973,11 @@ body.dark .readonly-input{
     box-shadow: 0 5px 15px rgba(0,0,0,.15);
 
     transition: .3s;
-
 }
 
 .qr-image:hover {
 
     transform: scale(1.05);
-
 }
 
 .qr-token {
@@ -3115,9 +2991,7 @@ body.dark .readonly-input{
     font-size: 11px;
 
     color: #94a3b8;
-
 }
-
 
 /* ===================================================== */
 /* DASHBOARD GRID */
@@ -3134,7 +3008,6 @@ body.dark .readonly-input{
     margin-top: 25px;
 
     align-items: stretch;
-
 }
 
 /* ===================================================== */
@@ -3150,12 +3023,7 @@ body.dark .readonly-input{
     min-height: 430px;
 
     padding: 30px;
-
 }
-
-/* ===================================================== */
-/* TITULO */
-/* ===================================================== */
 
 .chart-card h2 {
 
@@ -3168,12 +3036,7 @@ body.dark .readonly-input{
     margin-bottom: 25px;
 
     font-size: 24px;
-
 }
-
-/* ===================================================== */
-/* ICONO */
-/* ===================================================== */
 
 .chart-card h2 i {
 
@@ -3189,42 +3052,26 @@ body.dark .readonly-input{
 
     justify-content: center;
 
-    background: linear-gradient(
-        135deg,
-        #2563eb,
-        #38bdf8
-    );
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
 
     color: white;
 
     box-shadow: 0 8px 20px rgba(37,99,235,.25);
-
 }
-
-/* ===================================================== */
-/* CANVAS */
-/* ===================================================== */
 
 .chart-card canvas {
 
     width: 100% !important;
 
     height: 320px !important;
-
 }
-
-/* ===================================================== */
-/* RESPONSIVE */
-/* ===================================================== */
 
 @media(max-width: 1100px){
 
     .dashboard-grid {
 
         grid-template-columns: 1fr;
-
     }
-
 }
 
 /* ===================================================== */
@@ -3236,10 +3083,7 @@ body.dark .readonly-input{
     position: relative;
 
     overflow: hidden;
-
 }
-
-/* Glow effect */
 
 .line-chart-card::before {
 
@@ -3251,23 +3095,14 @@ body.dark .readonly-input{
 
     height: 320px;
 
-    background: radial-gradient(
-        circle,
-        rgba(37,99,235,.18),
-        transparent 70%
-    );
+    background: radial-gradient(circle, rgba(37,99,235,.18), transparent 70%);
 
     top: -140px;
 
     right: -120px;
 
     border-radius: 50%;
-
 }
-
-/* ===================================================== */
-/* HEADER */
-/* ===================================================== */
 
 .chart-header {
 
@@ -3280,12 +3115,7 @@ body.dark .readonly-input{
     margin-bottom: 20px;
 
     gap: 20px;
-
 }
-
-/* ===================================================== */
-/* SUBTITLE */
-/* ===================================================== */
 
 .chart-subtitle {
 
@@ -3294,12 +3124,7 @@ body.dark .readonly-input{
     font-size: 14px;
 
     margin-top: 8px;
-
 }
-
-/* ===================================================== */
-/* LIVE STATUS */
-/* ===================================================== */
 
 .chart-live {
 
@@ -3322,7 +3147,6 @@ body.dark .readonly-input{
     font-weight: 600;
 
     border: 1px solid rgba(34,197,94,.2);
-
 }
 
 .live-dot-chart {
@@ -3336,62 +3160,30 @@ body.dark .readonly-input{
     background: #22c55e;
 
     animation: pulseChart 1.5s infinite;
-
 }
 
 @keyframes pulseChart {
 
-    0% {
+    0% { transform: scale(1); opacity: 1; }
 
-        transform: scale(1);
+    50% { transform: scale(1.4); opacity: .5; }
 
-        opacity: 1;
-
-    }
-
-    50% {
-
-        transform: scale(1.4);
-
-        opacity: .5;
-
-    }
-
-    100% {
-
-        transform: scale(1);
-
-        opacity: 1;
-
-    }
-
+    100% { transform: scale(1); opacity: 1; }
 }
-
-/* ===================================================== */
-/* CHART BODY */
-/* ===================================================== */
 
 .chart-body {
 
     position: relative;
 
     height: 340px;
-
 }
-
-/* ===================================================== */
-/* VISIT CHART */
-/* ===================================================== */
 
 .visit-chart-card {
 
     position: relative;
 
     overflow: hidden;
-
 }
-
-/* Glow */
 
 .visit-chart-card::before {
 
@@ -3403,20 +3195,14 @@ body.dark .readonly-input{
 
     height: 280px;
 
-    background: radial-gradient(
-        circle,
-        rgba(56,189,248,.18),
-        transparent 70%
-    );
+    background: radial-gradient(circle, rgba(56,189,248,.18), transparent 70%);
 
     top: -120px;
 
     right: -100px;
 
     border-radius: 50%;
-
 }
-
 
 /* ===================================================== */
 /* STATS FILTER */
@@ -3433,12 +3219,7 @@ body.dark .readonly-input{
     margin: 30px 0;
 
     flex-wrap: wrap;
-
 }
-
-/* ===================================================== */
-/* FILTER BUTTON */
-/* ===================================================== */
 
 .filter-btn {
 
@@ -3468,27 +3249,13 @@ body.dark .readonly-input{
 
     transition: .3s ease;
 
-    box-shadow:
-
-        0 4px 15px rgba(0,0,0,.06),
-
-        inset 0 1px 0 rgba(255,255,255,.2);
-
+    box-shadow: 0 4px 15px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.2);
 }
-
-/* ===================================================== */
-/* ICON */
-/* ===================================================== */
 
 .filter-btn i {
 
     font-size: 15px;
-
 }
-
-/* ===================================================== */
-/* HOVER */
-/* ===================================================== */
 
 .filter-btn:hover {
 
@@ -3497,39 +3264,21 @@ body.dark .readonly-input{
     background: rgba(37,99,235,.08);
 
     color: #2563eb;
-
 }
-
-/* ===================================================== */
-/* ACTIVE */
-/* ===================================================== */
 
 .filter-btn.active {
 
-    background: linear-gradient(
-        135deg,
-        #2563eb,
-        #38bdf8
-    );
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
 
     color: white;
 
-    box-shadow:
-
-        0 10px 25px rgba(37,99,235,.28);
-
+    box-shadow: 0 10px 25px rgba(37,99,235,.28);
 }
-
-/* ===================================================== */
-/* ACTIVE ICON */
-/* ===================================================== */
 
 .filter-btn.active i {
 
     color: white;
-
 }
-
 
 /* ========================================= */
 /* FOTO VISITANTE */
@@ -3558,7 +3307,6 @@ body.dark .readonly-input{
         opacity .25s ease;
 
     background:#f1f5f9;
-
 }
 
 .visitor-photo:hover{
@@ -3568,7 +3316,6 @@ body.dark .readonly-input{
     box-shadow:
         0 15px 40px rgba(0,0,0,.18),
         0 6px 20px rgba(37,99,235,.25);
-
 }
 
 /* ========================================= */
@@ -3598,7 +3345,6 @@ body.dark .readonly-input{
     backdrop-filter:blur(10px);
 
     animation:fadeIn .25s ease;
-
 }
 
 .photo-modal-content{
@@ -3612,11 +3358,9 @@ body.dark .readonly-input{
 
     border-radius:24px;
 
-    box-shadow:
-        0 20px 60px rgba(0,0,0,.45);
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
 
     animation:zoomIn .25s ease;
-
 }
 
 .close-photo{
@@ -3635,7 +3379,6 @@ body.dark .readonly-input{
     cursor:pointer;
 
     transition:.2s;
-
 }
 
 .close-photo:hover{
@@ -3643,59 +3386,14 @@ body.dark .readonly-input{
     transform:scale(1.15);
 
     color:#60a5fa;
-
 }
-
-/* ========================================= */
-/* ANIMACIONES */
-/* ========================================= */
-
-@keyframes zoomIn{
-
-    from{
-
-        transform:scale(.7);
-        opacity:0;
-
-    }
-
-    to{
-
-        transform:scale(1);
-        opacity:1;
-
-    }
-
-}
-
-@keyframes fadeIn{
-
-    from{
-
-        opacity:0;
-
-    }
-
-    to{
-
-        opacity:1;
-
-    }
-
-}
-
-/* ========================================= */
-/* RESPONSIVE */
-/* ========================================= */
 
 @media(max-width:768px){
 
     .photo-modal-content{
 
         max-width:95%;
-
     }
-
 }
 
 /* ====================================================== */
@@ -3709,12 +3407,7 @@ body.dark .readonly-input{
     display:flex;
     flex-direction:column;
     gap:28px;
-
 }
-
-/* ====================================================== */
-/* HEADER */
-/* ====================================================== */
 
 .access-header{
 
@@ -3726,21 +3419,13 @@ body.dark .readonly-input{
 
     border-radius:28px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #0f172a,
-            #111827,
-            #1e293b
-        );
+    background: linear-gradient(135deg, #0f172a, #111827, #1e293b);
 
     color:white;
 
     border:1px solid rgba(255,255,255,.08);
 
-    box-shadow:
-        0 20px 60px rgba(0,0,0,.18);
-
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
 }
 
 .access-header::before{
@@ -3760,7 +3445,6 @@ body.dark .readonly-input{
     right:-100px;
 
     filter:blur(30px);
-
 }
 
 .access-header h1{
@@ -3774,7 +3458,6 @@ body.dark .readonly-input{
     display:flex;
     align-items:center;
     gap:14px;
-
 }
 
 .page-subtitle{
@@ -3786,12 +3469,7 @@ body.dark .readonly-input{
     line-height:1.7;
 
     font-size:.98rem;
-
 }
-
-/* ====================================================== */
-/* LIVE STATUS */
-/* ====================================================== */
 
 .live-status{
 
@@ -3815,7 +3493,6 @@ body.dark .readonly-input{
     gap:10px;
 
     font-weight:600;
-
 }
 
 .pulse-dot{
@@ -3828,7 +3505,6 @@ body.dark .readonly-input{
     background:#22c55e;
 
     position:relative;
-
 }
 
 .pulse-dot::after{
@@ -3844,30 +3520,14 @@ body.dark .readonly-input{
     background:#22c55e;
 
     animation:pulse 1.5s infinite;
-
 }
 
 @keyframes pulse{
 
-    0%{
+    0%{ transform:scale(1); opacity:.8; }
 
-        transform:scale(1);
-        opacity:.8;
-
-    }
-
-    100%{
-
-        transform:scale(2.8);
-        opacity:0;
-
-    }
-
+    100%{ transform:scale(2.8); opacity:0; }
 }
-
-/* ====================================================== */
-/* CARD */
-/* ====================================================== */
 
 .access-card,
 .vehicle-card,
@@ -3883,11 +3543,9 @@ body.dark .readonly-input{
 
     border:1px solid rgba(255,255,255,.25);
 
-    box-shadow:
-        0 12px 35px rgba(15,23,42,.08);
+    box-shadow: 0 12px 35px rgba(15,23,42,.08);
 
     transition:.25s ease;
-
 }
 
 .access-card:hover,
@@ -3897,14 +3555,8 @@ body.dark .readonly-input{
 
     transform:translateY(-4px);
 
-    box-shadow:
-        0 20px 45px rgba(15,23,42,.12);
-
+    box-shadow: 0 20px 45px rgba(15,23,42,.12);
 }
-
-/* ====================================================== */
-/* TITLES */
-/* ====================================================== */
 
 .card-title{
 
@@ -3913,7 +3565,6 @@ body.dark .readonly-input{
     gap:14px;
 
     margin-bottom:24px;
-
 }
 
 .card-title i{
@@ -3927,20 +3578,13 @@ body.dark .readonly-input{
     align-items:center;
     justify-content:center;
 
-    background:
-        linear-gradient(
-            135deg,
-            #2563eb,
-            #3b82f6
-        );
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
 
     color:white;
 
     font-size:1rem;
 
-    box-shadow:
-        0 10px 25px rgba(37,99,235,.35);
-
+    box-shadow: 0 10px 25px rgba(37,99,235,.35);
 }
 
 .card-title h3{
@@ -3950,12 +3594,7 @@ body.dark .readonly-input{
     font-weight:700;
 
     color:#0f172a;
-
 }
-
-/* ====================================================== */
-/* VISITOR */
-/* ====================================================== */
 
 .visitor-profile{
 
@@ -3964,7 +3603,6 @@ body.dark .readonly-input{
     gap:22px;
 
     margin-bottom:25px;
-
 }
 
 .visitor-info h2{
@@ -3976,7 +3614,6 @@ body.dark .readonly-input{
     color:#0f172a;
 
     font-weight:800;
-
 }
 
 .badge{
@@ -3989,31 +3626,20 @@ body.dark .readonly-input{
 
     border-radius:999px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #dbeafe,
-            #bfdbfe
-        );
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
 
     color:#1d4ed8;
 
     font-size:.82rem;
 
     font-weight:700;
-
 }
-
-/* ====================================================== */
-/* INFO */
-/* ====================================================== */
 
 .info-list{
 
     display:flex;
     flex-direction:column;
     gap:14px;
-
 }
 
 .info-item{
@@ -4027,7 +3653,6 @@ body.dark .readonly-input{
     border-radius:18px;
 
     transition:.2s ease;
-
 }
 
 .info-item:hover{
@@ -4035,7 +3660,6 @@ body.dark .readonly-input{
     background:white;
 
     transform:translateX(3px);
-
 }
 
 .info-item span{
@@ -4047,7 +3671,6 @@ body.dark .readonly-input{
     font-size:.88rem;
 
     margin-bottom:5px;
-
 }
 
 .info-item strong{
@@ -4055,12 +3678,7 @@ body.dark .readonly-input{
     font-size:1rem;
 
     color:#0f172a;
-
 }
-
-/* ====================================================== */
-/* STATUS */
-/* ====================================================== */
 
 .status-badge{
 
@@ -4077,7 +3695,6 @@ body.dark .readonly-input{
     font-weight:700;
 
     margin-bottom:25px;
-
 }
 
 .status-badge.active{
@@ -4085,7 +3702,6 @@ body.dark .readonly-input{
     background:#dcfce7;
 
     color:#166534;
-
 }
 
 .status-badge.inside{
@@ -4093,7 +3709,6 @@ body.dark .readonly-input{
     background:#dbeafe;
 
     color:#1d4ed8;
-
 }
 
 .status-badge.exit{
@@ -4101,19 +3716,13 @@ body.dark .readonly-input{
     background:#fee2e2;
 
     color:#991b1b;
-
 }
-
-/* ====================================================== */
-/* TIMELINE */
-/* ====================================================== */
 
 .timeline{
 
     display:flex;
     flex-direction:column;
     gap:16px;
-
 }
 
 .timeline-item{
@@ -4129,7 +3738,6 @@ body.dark .readonly-input{
     background:#f8fafc;
 
     border:1px solid #e2e8f0;
-
 }
 
 .timeline-item i{
@@ -4147,14 +3755,8 @@ body.dark .readonly-input{
 
     color:#2563eb;
 
-    box-shadow:
-        0 6px 15px rgba(0,0,0,.08);
-
+    box-shadow: 0 6px 15px rgba(0,0,0,.08);
 }
-
-/* ====================================================== */
-/* VEHICLE */
-/* ====================================================== */
 
 .vehicle-grid{
 
@@ -4163,7 +3765,6 @@ body.dark .readonly-input{
     grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
 
     gap:18px;
-
 }
 
 .vehicle-grid div{
@@ -4175,7 +3776,6 @@ body.dark .readonly-input{
     border-radius:18px;
 
     padding:20px;
-
 }
 
 .vehicle-grid span{
@@ -4185,7 +3785,6 @@ body.dark .readonly-input{
     margin-bottom:6px;
 
     color:#64748b;
-
 }
 
 .vehicle-grid strong{
@@ -4193,12 +3792,7 @@ body.dark .readonly-input{
     font-size:1.05rem;
 
     color:#0f172a;
-
 }
-
-/* ====================================================== */
-/* BUTTONS */
-/* ====================================================== */
 
 .large-btn{
 
@@ -4217,66 +3811,43 @@ body.dark .readonly-input{
     cursor:pointer;
 
     transition:.25s ease;
-
 }
 
 .success-btn{
 
-    background:
-        linear-gradient(
-            135deg,
-            #16a34a,
-            #22c55e
-        );
+    background: linear-gradient(135deg, #16a34a, #22c55e);
 
     color:white;
-
 }
 
 .success-btn:hover{
 
     transform:translateY(-2px);
 
-    box-shadow:
-        0 15px 30px rgba(34,197,94,.3);
-
+    box-shadow: 0 15px 30px rgba(34,197,94,.3);
 }
 
 .danger{
 
-    background:
-        linear-gradient(
-            135deg,
-            #dc2626,
-            #ef4444
-        );
+    background: linear-gradient(135deg, #dc2626, #ef4444);
 
     color:white;
-
 }
 
 .danger:hover{
 
     transform:translateY(-2px);
 
-    box-shadow:
-        0 15px 30px rgba(239,68,68,.25);
-
+    box-shadow: 0 15px 30px rgba(239,68,68,.25);
 }
-
-/* ====================================================== */
-/* INCIDENTES */
-/* ====================================================== */
 
 .incident-grid{
 
     display:grid;
 
-    grid-template-columns:
-        repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
 
     gap:16px;
-
 }
 
 .incident-grid button{
@@ -4292,49 +3863,18 @@ body.dark .readonly-input{
     cursor:pointer;
 
     transition:.25s ease;
-
 }
-
-/* ====================================================== */
-/* RESPONSIVE */
-/* ====================================================== */
 
 @media(max-width:768px){
 
-    .access-container{
+    .access-container{ padding:16px; }
 
-        padding:16px;
+    .visitor-profile{ flex-direction:column; align-items:flex-start; }
 
-    }
+    .access-header{ padding:28px; }
 
-    .visitor-profile{
-
-        flex-direction:column;
-        align-items:flex-start;
-
-    }
-
-    .access-header{
-
-        padding:28px;
-
-    }
-
-    .live-status{
-
-        position:relative;
-
-        top:auto;
-        right:auto;
-
-        margin-top:20px;
-
-        width:max-content;
-
-    }
-
+    .live-status{ position:relative; top:auto; right:auto; margin-top:20px; width:max-content; }
 }
-
 
 /* ========================================= */
 /* ESCANEO COMPLETADO */
@@ -4360,31 +3900,14 @@ body.dark .readonly-input{
 
     text-align:center;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgba(34,197,94,.08),
-            rgba(59,130,246,.08)
-        );
+    background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(59,130,246,.08));
 
     border-radius:24px;
-
 }
 
-.scanner-finished i{
+.scanner-finished i{ font-size:4rem; }
 
-    font-size:4rem;
-
-}
-
-.scanner-finished h3{
-
-    font-size:1.4rem;
-
-    color:#0f172a;
-
-}
-
+.scanner-finished h3{ font-size:1.4rem; color:#0f172a; }
 
 /* ========================================= */
 /* TIMELINE STATUS */
@@ -4397,7 +3920,6 @@ body.dark .readonly-input{
     flex-direction:column;
 
     gap:6px;
-
 }
 
 .timeline-content span{
@@ -4409,7 +3931,6 @@ body.dark .readonly-input{
     font-weight:600;
 
     letter-spacing:.3px;
-
 }
 
 .timeline-content strong{
@@ -4417,7 +3938,6 @@ body.dark .readonly-input{
     font-size:1.08rem;
 
     line-height:1.4;
-
 }
 
 .timeline-content small{
@@ -4425,12 +3945,7 @@ body.dark .readonly-input{
     color:#000000;
 
     font-size:1.08rem;
-
 }
-
-/* ========================================= */
-/* HORA TIMELINE */
-/* ========================================= */
 
 .timeline-hour{
 
@@ -4439,27 +3954,11 @@ body.dark .readonly-input{
     font-weight:700;
 
     color:#1e293b;
-
 }
 
-/* ========================================= */
-/* STATUS COLORS */
-/* ========================================= */
+.status-inside{ color:#2563eb; }
 
-.status-inside{
-
-    color:#2563eb;
-
-}
-
-.status-finished{
-
-    color:#16a34a;
-
-
-
-}
-
+.status-finished{ color:#16a34a; }
 
 /* ========================================= */
 /* FINAL ACTION */
@@ -4470,7 +3969,6 @@ body.dark .readonly-input{
     margin-top:25px;
 
     border:1px solid rgba(59,130,246,.12);
-
 }
 
 .final-action-content{
@@ -4484,7 +3982,6 @@ body.dark .readonly-input{
     gap:20px;
 
     flex-wrap:wrap;
-
 }
 
 .final-action-content h3{
@@ -4500,30 +3997,15 @@ body.dark .readonly-input{
     margin-bottom:8px;
 
     color:#0f172a;
-
 }
 
-.final-action-content h3 i{
+.final-action-content h3 i{ color:#16a34a; }
 
-    color:#16a34a;
-
-}
-
-.final-action-content p{
-
-    color:#64748b;
-
-    line-height:1.6;
-
-}
+.final-action-content p{ color:#64748b; line-height:1.6; }
 
 .dashboard-btn{
 
-    background:linear-gradient(
-        135deg,
-        #2563eb,
-        #1d4ed8
-    );
+    background:linear-gradient(135deg, #2563eb, #1d4ed8);
 
     color:white;
 
@@ -4545,20 +4027,15 @@ body.dark .readonly-input{
 
     transition:.25s ease;
 
-    box-shadow:
-        0 10px 25px rgba(37,99,235,.25);
-
+    box-shadow: 0 10px 25px rgba(37,99,235,.25);
 }
 
 .dashboard-btn:hover{
 
     transform:translateY(-3px);
 
-    box-shadow:
-        0 14px 30px rgba(37,99,235,.35);
-
+    box-shadow: 0 14px 30px rgba(37,99,235,.35);
 }
-
 
 /* ===================================== */
 /* LOGO LOGIN PREMIUM */
@@ -4575,10 +4052,7 @@ body.dark .readonly-input{
     margin-bottom: 30px;
 
     position: relative;
-
 }
-
-/* CONTENEDOR VISUAL */
 
 .login-logo::before {
 
@@ -4592,18 +4066,12 @@ body.dark .readonly-input{
 
     border-radius: 50%;
 
-    background: radial-gradient(
-        rgba(0, 140, 255, 0.12),
-        transparent 70%
-    );
+    background: radial-gradient(rgba(0, 140, 255, 0.12), transparent 70%);
 
     z-index: 0;
 
     animation: pulseGlow 5s ease-in-out infinite;
-
 }
-
-/* LOGO */
 
 .login-logo img {
 
@@ -4631,16 +4099,10 @@ body.dark .readonly-input{
         0 15px 35px rgba(0,0,0,0.30),
         inset 0 1px 1px rgba(255,255,255,0.08);
 
-    filter:
-        drop-shadow(0 10px 25px rgba(0,0,0,0.35));
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.35));
 
-    transition:
-        transform 0.4s ease,
-        box-shadow 0.4s ease;
-
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
-
-/* HOVER */
 
 .login-logo img:hover {
 
@@ -4649,35 +4111,13 @@ body.dark .readonly-input{
     box-shadow:
         0 20px 45px rgba(0,0,0,0.40),
         0 0 25px rgba(0,140,255,0.18);
-
 }
-
-/* ANIMACIÓN */
 
 @keyframes pulseGlow {
 
-    0% {
+    0% { transform: scale(1); opacity: 0.7; }
 
-        transform: scale(1);
+    50% { transform: scale(1.08); opacity: 1; }
 
-        opacity: 0.7;
-
-    }
-
-    50% {
-
-        transform: scale(1.08);
-
-        opacity: 1;
-
-    }
-
-    100% {
-
-        transform: scale(1);
-
-        opacity: 0.7;
-
-    }
-
+    100% { transform: scale(1); opacity: 0.7; }
 }

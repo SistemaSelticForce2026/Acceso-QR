@@ -72,145 +72,188 @@
         {{ total_visitas }} {{ 'visita encontrada' if total_visitas == 1 else 'visitas encontradas' }}
     </p>
 
-    {# ── Visit cards ─────────────────────────────────────────────────── #}
-    {% for visita in visitas %}
+    <div class="res-table-wrapper">
 
-    {%- set nombre = visita.nombre_visitante | default('Visitante') -%}
-    {%- set iniciales = (nombre.split(' ') | map('first') | list)[:2] | join('') | upper -%}
+        <table class="res-table">
 
-    {# Estado #}
-    {%- if visita.qr_estado == 'cancelado' -%}
-        {%- set badge_cls = 'badge-danger' -%}
-        {%- set badge_label = 'QR cancelado' -%}
-    {%- elif visita.qr_estado == 'vencido' -%}
-        {%- set badge_cls = 'badge-danger' -%}
-        {%- set badge_label = 'QR vencido' -%}
-    {%- elif visita.estado == 'dentro' -%}
-        {%- set badge_cls = 'badge-success' -%}
-        {%- set badge_label = 'Dentro' -%}
-    {%- elif visita.estado == 'salida_registrada' -%}
-        {%- set badge_cls = 'badge-neutral' -%}
-        {%- set badge_label = 'Finalizada' -%}
-    {%- elif visita.estado == 'cancelado' -%}
-        {%- set badge_cls = 'badge-danger' -%}
-        {%- set badge_label = 'Cancelada' -%}
-    {%- else -%}
-        {%- set badge_cls = 'badge-warning' -%}
-        {%- set badge_label = 'Pendiente' -%}
-    {%- endif -%}
+            <thead>
+                <tr>
+                    <th>Visitante</th>
+                    <th>Modalidad</th>
+                    <th>Destino</th>
+                    <th>Horario</th>
+                    <th>Vehículo</th>
+                    <th>QR</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
 
-    {# Modalidad #}
-    {%- if visita.modalidad_visita == 'recurrente' -%}
-        {%- set modal_cls = 'badge-blue' -%}
-        {%- set modal_label = 'Recurrente' -%}
-    {%- else -%}
-        {%- set modal_cls = 'badge-neutral' -%}
-        {%- set modal_label = 'Temporal' -%}
-    {%- endif -%}
+            <tbody>
 
-    <div class="res-visit-card">
-        <div class="res-visit-body">
+            {% for visita in visitas %}
 
-            {# Avatar iniciales #}
-            <div class="res-avatar" style="background:
-                {%- if visita.estado == 'dentro' -%}
-                    #1a1c2e
-                {%- elif visita.qr_estado in ['cancelado','vencido'] or visita.estado in ['cancelado','salida_registrada'] -%}
-                    #46464c
-                {%- else -%}
-                    #2e5bff
-                {%- endif -%}
-            ;">{{ iniciales }}</div>
+            {%- if visita.qr_estado == 'cancelado' -%}
+                {%- set badge_cls = 'badge-danger' -%}
+                {%- set badge_label = 'QR cancelado' -%}
+            {%- elif visita.qr_estado == 'vencido' -%}
+                {%- set badge_cls = 'badge-danger' -%}
+                {%- set badge_label = 'QR vencido' -%}
+            {%- elif visita.estado == 'dentro' -%}
+                {%- set badge_cls = 'badge-success' -%}
+                {%- set badge_label = 'Dentro' -%}
+            {%- elif visita.estado == 'salida_registrada' -%}
+                {%- set badge_cls = 'badge-neutral' -%}
+                {%- set badge_label = 'Finalizada' -%}
+            {%- else -%}
+                {%- set badge_cls = 'badge-warning' -%}
+                {%- set badge_label = 'Pendiente' -%}
+            {%- endif -%}
 
-            {# Info #}
-            <div class="res-visit-info">
-                <p class="res-visit-name">{{ nombre }}</p>
+            <tr>
 
-                <div class="res-visit-meta">
-                    {% if visita.motivo %}
-                    <span class="res-visit-meta-item">
-                        <i class="fa-solid fa-circle-info" style="font-size:11px; color:#77767d;"></i>
-                        {{ visita.motivo }}
-                    </span>
+                <td>
+
+                    <div class="res-user-cell">
+
+                        {% if visita.foto_visitante and visita.foto_visitante['url'] %}
+                        <img
+                            src="{{ visita.foto_visitante['url'] }}"
+                            class="res-user-photo zoomable-foto">
+                        {% endif %}
+
+                        <div>
+                            <strong>{{ visita.nombre_visitante }}</strong>
+
+                            <div class="res-small">
+                                {{ visita.telefono }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    {% if visita.modalidad_visita == "recurrente" %}
+                        <span class="res-badge badge-blue">
+                            Recurrente
+                        </span>
+                    {% else %}
+                        <span class="res-badge badge-neutral">
+                            Temporal
+                        </span>
                     {% endif %}
-                    {% if visita.telefono %}
-                    <span class="res-visit-meta-item">
-                        <i class="fa-solid fa-phone" style="font-size:11px; color:#77767d;"></i>
-                        {{ visita.telefono }}
-                    </span>
+
+                </td>
+
+                <td>
+
+                    {{ visita.condominio|title }}
+
+                    <div class="res-small">
+                        Casa {{ visita.residencia_destino }}
+                    </div>
+
+                </td>
+
+                <!-- HORARIO -->
+                <td>
+
+                    {% if visita.fecha_visita %}
+                    <div>
+                        <i class="fa-regular fa-calendar"></i>
+                        {{ visita.fecha_visita[8:10] }}/{{ visita.fecha_visita[5:7] }}/{{ visita.fecha_visita[0:4] }}
+                    </div>
                     {% endif %}
-                    {% if visita.modalidad_visita == 'temporal' and visita.fecha_visita %}
-                    <span class="res-visit-meta-item">
-                        <i class="fa-regular fa-calendar" style="font-size:11px; color:#77767d;"></i>
-                        {{ visita.fecha_visita }}
-                    </span>
-                    {% endif %}
+
                     {% if visita.hora_inicio %}
-                    <span class="res-visit-meta-item">
-                        <i class="fa-regular fa-clock" style="font-size:11px; color:#77767d;"></i>
-                        Entrada: {{ visita.hora_inicio }}
-                    </span>
+                    <div class="res-small">
+                        <i class="fa-regular fa-clock"></i>
+                        {{ visita.hora_inicio | hora_ampm }}
+                    </div>
                     {% endif %}
-                    {% if visita.vehiculo and visita.vehiculo.placa %}
-                    <span class="res-visit-meta-item">
-                        <i class="fa-solid fa-car" style="font-size:11px; color:#77767d;"></i>
-                        {{ visita.vehiculo.placa }} · {{ visita.vehiculo.marca }} {{ visita.vehiculo.color }}
-                    </span>
-                    {% endif %}
-                </div>
 
-                <div class="res-visit-badges">
-                    <span class="res-badge {{ modal_cls }}">{{ modal_label }}</span>
+                </td>
+
+                <!-- VEHÍCULO -->
+                <td>
+
+                    {% if visita.vehiculo %}
+
+                    <strong>
+                        {{ visita.vehiculo.placa }}
+                    </strong>
+
+                    <div class="res-small">
+
+                        {{ visita.vehiculo.marca|title }}
+
+                        {% if visita.vehiculo.modelo %}
+                        · {{ visita.vehiculo.modelo|title }}
+                        {% endif %}
+
+                        · {{ visita.vehiculo.color|title }}
+
+                    </div>
+
+                    {% else %}
+                    —
+                    {% endif %}
+
+                </td>
+
+                <td>
+
+                    <img
+                        src="{{ visita.qr_path }}"
+                        class="res-table-qr {% if visita.qr_estado != 'cancelado' %}qr-clickable{% endif %}"
+                        data-qr-path="{{ visita.qr_path }}"
+                        data-qr-token="{{ visita.qr_token }}"
+                        data-visitante="{{ visita.nombre_visitante }}">
+
+                </td>
+
+                <td>
+
                     <span class="res-badge {{ badge_cls }}">
-                        <span class="res-badge-dot"></span>
                         {{ badge_label }}
                     </span>
-                </div>
-            </div>
 
-            {# Right: QR + cancel #}
-            <div class="res-visit-right">
-                <img src="{{ visita.qr_path }}"
-                     class="res-qr-thumb {% if visita.qr_estado == 'cancelado' %}qr-cancelado{% else %}qr-clickable{% endif %}"
-                     data-qr-path="{{ visita.qr_path }}"
-                     data-qr-token="{{ visita.qr_token }}"
-                     data-visitante="{{ nombre }}"
-                     alt="QR de {{ nombre }}">
+                </td>
 
-                {% if visita.qr_estado != 'cancelado' %}
-                <button type="button"
-                        class="res-btn-cancel btn-cancelar-qr"
-                        data-token="{{ visita.qr_token }}">
-                    <i class="fa-solid fa-ban"></i>
-                    Cancelar
-                </button>
-                {% endif %}
-            </div>
+                <td>
 
-        </div>
+                    <div class="res-actions">
+
+                        {% if visita.qr_estado != 'cancelado' %}
+                        <button
+                            class="res-btn-cancel btn-cancelar-qr"
+                            data-token="{{ visita.qr_token }}">
+                            Cancelar
+                        </button>
+                        {% endif %}
+
+                        <button
+                            class="res-btn-delete"
+                            onclick="eliminarVisita('{{ visita._id }}')">
+                            Eliminar
+                        </button>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
     </div>
-
-    {% else %}
-
-    <div class="res-empty">
-        <div class="res-empty-icon">
-            <i class="fa-solid fa-users"></i>
-        </div>
-        <p class="res-empty-title">Sin visitantes registrados</p>
-        <p class="res-empty-sub">
-            {% if busqueda or fecha_inicio or fecha_fin %}
-                No hay visitas con los filtros seleccionados.
-            {% else %}
-                Aún no has registrado ninguna visita.
-            {% endif %}
-        </p>
-        <a href="{{ url_for('resident.create_visit') }}" class="res-btn-new">
-            <i class="fa-solid fa-plus"></i>
-            Registrar primera visita
-        </a>
-    </div>
-
-    {% endfor %}
 
     {# ── Botón dashed agregar ───────────────────────────────────────── #}
     {% if visitas %}
@@ -290,8 +333,13 @@
     </div>
 </div>
 
-{% endblock %}
+<div id="photoModal" class="res-photo-modal">
+    <img id="photoZoom"
+         class="res-photo-zoom"
+         alt="Foto ampliada">
+</div>
 
+{% endblock %}
 {% block extra_js %}
 <script>
 /* ─── QR Modal ─────────────────────────────────────────────────────── */
@@ -422,6 +470,67 @@ document.querySelectorAll(".btn-cancelar-qr").forEach(btn => {
         } catch { alert("Error al cancelar el QR"); }
     });
 });
+
+/* ─── Eliminar visita ───────────────────────────────── */
+
+async function eliminarVisita(id){
+
+    if(!confirm("¿Deseas eliminar esta visita permanentemente?")){
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+            `/resident/eliminar-visita/${id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const data = await response.json();
+
+        if(data.success){
+
+            alert("Visita eliminada correctamente");
+            location.reload();
+
+        }else{
+
+            alert("No se pudo eliminar la visita");
+        }
+
+    }catch(error){
+
+        console.error(error);
+        alert("Error al eliminar la visita");
+    }
+}
+
+/* ─── Modal Foto Visitante ───────────────────────────────── */
+
+const photoModal = document.getElementById("photoModal");
+const photoZoom  = document.getElementById("photoZoom");
+
+document.querySelectorAll(".zoomable-foto").forEach(img => {
+
+    img.addEventListener("click", function(e){
+
+        e.stopPropagation();
+
+        photoZoom.src = this.src;
+        photoModal.style.display = "flex";
+
+    });
+
+});
+
+photoModal.addEventListener("click", function(){
+
+    photoModal.style.display = "none";
+
+});
+
 
 /* ─── Auto abrir QR recién generado ───────────────────────────────── */
 {% if auto_qr %}

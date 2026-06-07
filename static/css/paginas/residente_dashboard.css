@@ -109,6 +109,30 @@
     flex-shrink: 0;
 }
 
+.res-avatar-photo{
+    width:60px;
+    height:60px;
+    border-radius:14px;
+    overflow:hidden;
+    flex-shrink:0;
+    border:2px solid #fff;
+    box-shadow:0 6px 18px rgba(0,0,0,.12);
+    background:#f8fafc;
+}
+
+.res-avatar-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.res-avatar-img:hover{
+    transform:scale(1.05);
+}
+
 .res-recent-info {
     flex: 1;
     min-width: 0;
@@ -491,6 +515,38 @@
     text-transform: uppercase;
 }
 
+.res-avatar-photo{
+
+    width:60px;
+
+    height:60px;
+
+    border-radius:14px;
+
+    overflow:hidden;
+
+    flex-shrink:0;
+
+    border:2px solid #fff;
+
+    box-shadow:0 6px 18px rgba(0,0,0,.12);
+
+    background:#fff;
+
+}
+
+.res-avatar-img{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+    display:block;
+
+}
+
 .res-visit-info {
     flex: 1;
     min-width: 0;
@@ -616,6 +672,28 @@
 .res-btn-cancel:hover {
     background: rgba(186, 26, 26, 0.08);
     border-color: #ba1a1a;
+}
+
+.res-btn-delete{
+    border:1.5px solid rgba(220,38,38,.30);
+    background:#dc2626;
+    color:#fff;
+    border-radius:10px;
+    padding:5px 10px;
+    font-size:11px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    transition:.2s;
+    width:100%;
+}
+
+.res-btn-delete:hover{
+    background:#b91c1c;
 }
 
 /* ---- Empty state ------------------------------------------ */
@@ -898,4 +976,223 @@
 .res-add-dashed:hover {
     background: rgba(236, 238, 240, 0.60);
     border-style: solid;
+}
+
+/* ==========================================
+   MODAL FOTO VISITANTE PREMIUM
+========================================== */
+
+.res-photo-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:rgba(15,23,42,.85);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    justify-content:center;
+    align-items:center;
+    padding:30px;
+    cursor:pointer;
+}
+
+.res-photo-zoom{
+    max-width:90vw;
+    max-height:90vh;
+    border-radius:24px;
+    object-fit:contain;
+    background:#fff;
+    padding:10px;
+    box-shadow:
+        0 25px 80px rgba(0,0,0,.45),
+        0 10px 30px rgba(0,0,0,.25);
+    animation:photoZoom .25s ease;
+}
+
+@keyframes photoZoom{
+
+    from{
+        opacity:0;
+        transform:scale(.85);
+    }
+
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+/* =========================================================
+   TABLA MIS VISITANTES
+========================================================= */
+
+.res-table-wrapper{
+
+    background:#fff;
+
+    border-radius:24px;
+
+    padding:20px;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:0 10px 35px rgba(15,23,42,.06);
+
+    overflow-x:auto;
+
+}
+
+.res-table{
+
+    width:100%;
+
+    min-width:1200px;
+
+    border-collapse:collapse;
+
+}
+
+.res-table thead th{
+
+    padding:18px 16px;
+
+    text-align:left;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+    color:#64748b;
+
+    border-bottom:2px solid #f1f5f9;
+
+    background:#fafbfc;
+
+}
+
+.res-table th:last-child,
+.res-table td:last-child{
+
+    min-width:180px;
+
+}
+
+.res-table tbody td{
+
+    padding:18px 16px;
+
+    border-bottom:1px solid #f1f5f9;
+
+    vertical-align:middle;
+
+}
+
+.res-table tbody tr{
+
+    transition:.25s;
+
+}
+
+.res-table tbody tr:hover{
+
+    background:#f8fafc;
+
+}
+
+.res-user-cell{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    min-width:240px;
+
+}
+
+.res-user-photo{
+
+    width:65px;
+
+    height:65px;
+
+    object-fit:cover;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    border:3px solid #fff;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+
+}
+
+.res-small{
+
+    font-size:12px;
+
+    color:#64748b;
+
+    margin-top:4px;
+
+}
+
+.res-table-qr{
+
+    width:70px;
+
+    height:70px;
+
+    object-fit:contain;
+
+    border-radius:12px;
+
+    padding:4px;
+
+    background:#fff;
+
+    border:1px solid #e2e8f0;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.res-table-qr:hover{
+
+    transform:scale(1.08);
+
+}
+
+.res-actions{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+    min-width:140px;
+
+}
+
+.res-actions button{
+
+    width:100%;
+
+}
+
+.res-table strong{
+
+    color:#0f172a;
+
+    font-weight:700;
+
 }

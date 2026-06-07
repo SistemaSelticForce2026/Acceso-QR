@@ -72,28 +72,31 @@
         <!-- MENSAJES -->
         <!-- ===================================================== -->
 
-        {% with messages = get_flashed_messages() %}
-
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-
-                <div class="flash-container">
-
-                    {% for message in messages %}
-
-                        <div class="alert info flash-message">
-
-                            <i class="fa-solid fa-circle-info"></i>
-
-                            {{ message }}
-
+                <div class="flash-stack" id="flashStack">
+                    {% for category, message in messages %}
+                        <div class="flash-toast flash-{{ category }}" role="alert">
+                            <div class="flash-icon">
+                                {% if category == 'success' %}
+                                    <i class="fa-solid fa-circle-check"></i>
+                                {% elif category == 'danger' %}
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                {% elif category == 'warning' %}
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info"></i>
+                                {% endif %}
+                            </div>
+                            <span class="flash-text">{{ message }}</span>
+                            <button class="flash-close" onclick="dismissToast(this.parentElement)" aria-label="Cerrar">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="flash-progress"></div>
                         </div>
-
                     {% endfor %}
-
                 </div>
-
             {% endif %}
-
         {% endwith %}
 
         <!-- ===================================================== -->

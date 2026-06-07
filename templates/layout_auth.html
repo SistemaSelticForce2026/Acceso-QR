@@ -10,25 +10,20 @@
     <link rel="icon" type="image/png"
         href="{{ url_for('static', filename='img/favicon.png') }}">
 
-    <!-- CSS base -->
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/style.css') }}">
 
-    <!-- CSS componentes base -->
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/componentes/alertas.css') }}">
 
-    <!-- CSS auth -->
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/paginas/auth.css') }}">
 
     {% block extra_css %}{% endblock %}
 
-    <!-- Font Awesome -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <!-- Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
@@ -38,11 +33,47 @@
 
 <body>
 
+    <!-- ===================================================== -->
+    <!-- FLASH MESSAGES -->
+    <!-- ===================================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-stack" id="flashStack">
+                {% for category, message in messages %}
+                    <div class="flash-toast flash-{{ category }}" role="alert">
+                        <div class="flash-icon">
+                            {% if category == 'success' %}
+                                <i class="fa-solid fa-circle-check"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            {% else %}
+                                <i class="fa-solid fa-circle-info"></i>
+                            {% endif %}
+                        </div>
+                        <span class="flash-text">{{ message }}</span>
+                        <button class="flash-close" onclick="dismissToast(this.parentElement)" aria-label="Cerrar">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="flash-progress"></div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- ===================================================== -->
+    <!-- CONTENIDO -->
+    <!-- ===================================================== -->
+
     {% block content %}{% endblock %}
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+
     {% block extra_js %}{% endblock %}
 
 </body>

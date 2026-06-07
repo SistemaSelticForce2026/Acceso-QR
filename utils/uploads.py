@@ -1,9 +1,6 @@
-import os
-import uuid
+import cloudinary.uploader
 
-from flask import current_app
-
-from werkzeug.utils import secure_filename
+from utils.cloudinary_config import *
 
 # =========================================
 # GUARDAR IMAGEN
@@ -16,34 +13,6 @@ def guardar_imagen(archivo, subcarpeta):
 
         return None
 
-    # =====================================
-    # NOMBRE ÚNICO
-    # =====================================
+    resultado = cloudinary.uploader.upload(archivo, folder=f"accesoqr/{subcarpeta}")
 
-    nombre = f"{uuid.uuid4().hex}_{secure_filename(archivo.filename)}"
-
-    # =====================================
-    # CARPETA DESTINO
-    # =====================================
-
-    carpeta = os.path.join(current_app.root_path, "static", "uploads", subcarpeta)
-
-    os.makedirs(carpeta, exist_ok=True)
-
-    # =====================================
-    # RUTA COMPLETA
-    # =====================================
-
-    ruta = os.path.join(carpeta, nombre)
-
-    # =====================================
-    # GUARDAR ARCHIVO
-    # =====================================
-
-    archivo.save(ruta)
-
-    # =====================================
-    # RETORNAR URL
-    # =====================================
-
-    return f"/static/uploads/{subcarpeta}/{nombre}"
+    return {"url": resultado["secure_url"], "public_id": resultado["public_id"]}

@@ -280,26 +280,41 @@
                     </div>
 
                     <div class="cv-grid-2">
+
                         <div class="cv-field">
+
                             <label class="cv-label" for="placa">Placa</label>
-                            <input class="cv-input"
-                                   type="text"
-                                   name="placa"
-                                   id="placa"
-                                   placeholder="Ej. ABC-123-A"
-                                   maxlength="11"
-                                   autocomplete="off"
-                                   required>
+
+                            <input
+                                class="cv-input"
+                                type="text"
+                                name="placa"
+                                id="placa"
+                                placeholder="Ej. ABC-123-A"
+                                maxlength="15"
+                                autocomplete="off"
+                                required>
+
+                            <small class="cv-helper">
+                                Escriba la placa exactamente como aparece en el vehículo.
+                            </small>
+
                         </div>
+
                         <div class="cv-field">
+
                             <label class="cv-label" for="marca">Marca</label>
-                            <input class="cv-input"
-                                   type="text"
-                                   name="marca"
-                                   id="marca"
-                                   placeholder="Ej. Nissan"
-                                   required>
+
+                            <input
+                                class="cv-input"
+                                type="text"
+                                name="marca"
+                                id="marca"
+                                placeholder="Ej. Nissan"
+                                required>
+
                         </div>
+
                     </div>
 
                     <div class="cv-grid-2">
@@ -342,6 +357,13 @@
                     <div class="cv-warn-box" style="margin-top:8px;">
                         <i class="fa-solid fa-circle-exclamation"></i>
                         <p>El código QR será válido únicamente según la configuración indicada. Una vez generado podrás compartirlo con tu visitante.</p>
+                    </div>
+
+                    <div class="cv-warn-box" style="margin-top:12px;">
+                        <i class="fa-solid fa-car"></i>
+                        <p>
+                            La hora de salida será registrada por el guardia cuando el visitante abandone el fraccionamiento.
+                        </p>
                     </div>
 
                     <div class="cv-summary" id="confirmSummary"></div>
@@ -446,20 +468,45 @@ function goNext() {
 }
 
 function canGoNext() {
-    if (currentStep === 1) return !!selectedType;
+
+    if (currentStep === 1)
+        return !!selectedType;
+
     if (currentStep === 2) {
+
         const n = document.getElementById("nombre_visitante").value.trim();
         const t = document.getElementById("telefono").value.trim();
         const m = document.getElementById("motivo").value.trim();
-        if (!n || !t || !m) return false;
+
+        if (!n || !t || !m)
+            return false;
+
         if (selectedType === "temporal") {
+
             const f = document.getElementById("fecha_visita").value;
             const h = document.getElementById("hora_inicio").value;
+
             return !!f && !!h;
+
         }
+
         return true;
+
     }
+
+    if (currentStep === 3) {
+
+        const placa  = document.getElementById("placa").value.trim();
+        const marca  = document.getElementById("marca").value.trim();
+        const modelo = document.getElementById("modelo").value.trim();
+        const color  = document.getElementById("color").value.trim();
+
+        return placa && marca && modelo && color;
+
+    }
+
     return true;
+
 }
 
 function updateNextBtn() {
@@ -468,11 +515,39 @@ function updateNextBtn() {
     }
 }
 
-/* Listen for input in step 2 */
-["nombre_visitante","telefono","motivo","fecha_visita","hora_inicio",
- "fecha_inicio_recurrente","fecha_fin_recurrente"].forEach(id => {
+/* Listen for input */
+[
+    "nombre_visitante",
+    "telefono",
+    "motivo",
+    "fecha_visita",
+    "hora_inicio",
+    "fecha_inicio_recurrente",
+    "fecha_fin_recurrente",
+    "placa",
+    "marca",
+    "modelo",
+    "color"
+].forEach(id => {
+
     const el = document.getElementById(id);
-    if (el) el.addEventListener("input", updateNextBtn);
+
+    if (el) {
+
+        el.addEventListener("input", function(){
+
+            updateNextBtn();
+
+            if(currentStep === 3){
+
+                buildSummary();
+
+            }
+
+        });
+
+    }
+
 });
 
 /* ═══════════════════════════════════════════════════════════════════ */
@@ -571,12 +646,82 @@ function buildSummary() {
     rows.push(["Motivo", get("motivo")]);
     rows.push(["Teléfono", get("telefono")]);
 
+    rows.push(["Tipo vehículo",
+    get("tipo_vehiculo") === "motocicleta"
+        ? "Motocicleta"
+        : "Automóvil"
+    ]);
+
+    rows.push(["Placa", get("placa")]);
+    rows.push(["Marca", get("marca")]);
+    rows.push(["Modelo", get("modelo")]);
+    rows.push(["Color", get("color")]);
+
     if (selectedType === "temporal") {
-        rows.push(["Fecha", get("fecha_visita")]);
-        rows.push(["Hora entrada", get("hora_inicio")]);
+
+        const fecha = get("fecha_visita");
+
+        let fechaFormateada = "";
+
+        if(fecha){
+
+            const partes = fecha.split("-");
+
+            fechaFormateada =
+                `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+        }
+
+        const hora = get("hora_inicio");
+
+        let horaFormateada = "";
+
+        if(hora){
+
+            const [h,m] = hora.split(":");
+
+            const fechaTemp = new Date();
+
+            fechaTemp.setHours(h,m);
+
+            const horas12 = fechaTemp.getHours() % 12 || 12;
+
+            const minutos = String(
+                fechaTemp.getMinutes()
+            ).padStart(2, "0");
+
+            const periodo =
+                fechaTemp.getHours() >= 12
+                    ? "PM"
+                    : "AM";
+
+            horaFormateada =
+                `${horas12}:${minutos} ${periodo}`;
+
+        }
+
+        rows.push(["Fecha", fechaFormateada]);
+        rows.push(["Hora entrada", horaFormateada]);
+
     } else {
-        rows.push(["Vigencia desde", get("fecha_inicio_recurrente")]);
-        rows.push(["Vigencia hasta", get("fecha_fin_recurrente")]);
+        
+        const desde = get("fecha_inicio_recurrente");
+        const hasta = get("fecha_fin_recurrente");
+
+        const formatearFecha = (fecha) => {
+
+            if(!fecha) return "";
+
+            const partes = fecha.split("-");
+
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+        };
+
+        rows.push(["Vigencia desde", formatearFecha(desde)]);
+        rows.push(["Vigencia hasta", formatearFecha(hasta)]);
+
+
         const diasSel = [...diaChecks].filter(c => c.checked).map(c => c.value).join(", ");
         if (diasSel) rows.push(["Días", diasSel]);
         rows.push(["Horario", `${get("hora_desde")} – ${get("hora_hasta")}`]);
@@ -585,7 +730,7 @@ function buildSummary() {
     const html = rows.map((r, i) => `
         <div class="cv-summary-row">
             <span class="cv-summary-label">${r[0]}</span>
-            <span class="cv-summary-val">${r[1] || "—"}</span>
+            <span class="cv-summary-val">${r[1] || ""}</span>
         </div>
     `).join("");
 
@@ -631,41 +776,73 @@ setupPhotoPreview("foto_placa",     "previewPlaca", "placaBox");
 const placaInput   = document.getElementById("placa");
 const tipoVehiculo = document.getElementById("tipo_vehiculo");
 
-tipoVehiculo.addEventListener("change", () => {
-    placaInput.placeholder = tipoVehiculo.value === "motocicleta" ? "Ej. AB-123-A" : "Ej. ABC-123-A";
-    document.getElementById("marca").placeholder  = tipoVehiculo.value === "motocicleta" ? "Ej. Italika" : "Ej. Nissan";
-    document.getElementById("modelo").placeholder = tipoVehiculo.value === "motocicleta" ? "Ej. Z250" : "Ej. Versa";
+function actualizarEjemplosVehiculo(){
+
+    if(tipoVehiculo.value === "motocicleta"){
+
+        placaInput.placeholder = "Ej. 45ABC7";
+
+        document.getElementById("marca").placeholder =
+            "Ej. Italika";
+
+        document.getElementById("modelo").placeholder =
+            "Ej. Z250";
+
+    }
+
+    else{
+
+        placaInput.placeholder = "Ej. ABC-123-A";
+
+        document.getElementById("marca").placeholder =
+            "Ej. Nissan";
+
+        document.getElementById("modelo").placeholder =
+            "Ej. Versa";
+
+    }
+
+}
+
+
+tipoVehiculo.addEventListener("change", function(){
+
+    actualizarEjemplosVehiculo();
+
+    if(currentStep === 3){
+
+        buildSummary();
+
+    }
+
 });
+
+actualizarEjemplosVehiculo();
 
 placaInput.addEventListener("input", function () {
-    let v = this.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (tipoVehiculo.value === "auto") {
-        if (v.length <= 3)      this.value = v;
-        else if (v.length <= 6) this.value = v.slice(0,3) + "-" + v.slice(3);
-        else                    this.value = v.slice(0,3) + "-" + v.slice(3,6) + "-" + v.slice(6,7);
-    } else {
-        if (v.length <= 2)      this.value = v;
-        else if (v.length <= 5) this.value = v.slice(0,2) + "-" + v.slice(2);
-        else                    this.value = v.slice(0,2) + "-" + v.slice(2,5) + "-" + v.slice(5,7);
-    }
+
+    this.value = this.value
+        .toUpperCase()
+        .replace(/[^A-Z0-9-]/g, "");
+
 });
 
-/* Validación al submit */
-document.getElementById("createForm").addEventListener("submit", function (e) {
+/* VALIDACION FINAL PLACA */
+document.querySelector("form").addEventListener("submit", function(e){
+
     const placa = placaInput.value.trim();
-    let regex;
-    if (tipoVehiculo.value === "auto") {
-        regex = /^([A-Z]{3}-[0-9]{3}|[A-Z]{3}-[0-9]{3}-[A-Z0-9]|[0-9]{3}-[A-Z]{3}|[A-Z]{2}-[0-9]{3}-[A-Z]{2}|[A-Z]{3}-[0-9]{2}-[0-9]{2})$/;
-    } else {
-        regex = /^([A-Z]{2}-[0-9]{3}|[A-Z]{2}-[0-9]{3}-[A-Z0-9]{1,2}|[0-9]{2}-[A-Z]{3})$/;
-    }
-    if (!regex.test(placa)) {
+
+    const regex = /^[A-Z0-9-]{5,15}$/;
+
+    if(!regex.test(placa)){
+
         e.preventDefault();
-        alert(tipoVehiculo.value === "auto"
-            ? "Placa inválida.\n\nFormatos: ABC-123, ABC-123-A, 123-ABC, AB-123-CD, ABC-12-34"
-            : "Placa inválida.\n\nFormatos: AB-123, AB-123-A, 12-ABC");
+
+        alert(`Placa inválida.`);
         placaInput.focus();
+
     }
+
 });
 
 /* ═══════════════════════════════════════════════════════════════════ */
@@ -680,13 +857,40 @@ document.getElementById("nombre_visitante").addEventListener("input", function (
     this.setSelectionRange(sel, sel);
 });
 
-["motivo","marca","modelo","color"].forEach(id => {
+["marca","modelo","color"].forEach(id => {
+
     const el = document.getElementById(id);
-    if (el) el.addEventListener("input", function () {
-        const sel = this.selectionStart;
-        this.value = cap(this.value);
-        this.setSelectionRange(sel, sel);
-    });
+
+    if (el) {
+
+        el.addEventListener("input", function () {
+
+            const sel = this.selectionStart;
+
+            this.value = cap(this.value);
+
+            this.setSelectionRange(sel, sel);
+
+        });
+
+    }
+
+});
+
+
+const motivoInput = document.getElementById("motivo");
+
+motivoInput.addEventListener("input", function(){
+
+    const sel = this.selectionStart;
+
+    this.value = this.value
+        .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]/g, "");
+
+    this.value = cap(this.value);
+
+    this.setSelectionRange(sel, sel);
+
 });
 
 document.getElementById("telefono").addEventListener("input", function () {
