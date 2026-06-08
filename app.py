@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template, session, request
 from config import Config
 from extensions import mongo, socketio
 
@@ -40,6 +40,35 @@ def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
 
     app.config.from_object(Config)
+
+    # =====================================
+    # MODO MANTENIMIENTO
+    # =====================================
+
+    # False = Sistema normal
+    # Todos pueden ingresar:
+    # Admin, Guardias y Residentes
+
+    # True = Sistema en mantenimiento
+    # Solo los administradores pueden ingresar
+    # Guardias y Residentes verán la página
+    # mantenimiento.html
+
+    MODO_MANTENIMIENTO = False
+
+    @app.before_request
+    def mantenimiento():
+
+        if not MODO_MANTENIMIENTO:
+            return None
+
+        if request.endpoint in ["auth.login", "auth.logout", "static"]:
+            return None
+
+        if session.get("rol") == "admin":
+            return None
+
+        return render_template("mantenimiento.html"), 503
 
     # =====================================
     # CONFIGURAR UPLOADS
