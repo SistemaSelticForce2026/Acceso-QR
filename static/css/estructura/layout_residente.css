@@ -292,13 +292,26 @@
     color: #46464c;
     font-size: 16px;
     cursor: pointer;
+    margin-top: 0;
     margin-right: 12px;
     flex-shrink: 0;
     transition: background 0.2s;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.res-menu-btn:focus-visible {
+    outline: 2px solid #2e5bff;
+    outline-offset: 2px;
 }
 
 .res-menu-btn:hover {
     background: #eceef0;
+}
+
+.res-menu-btn i {
+    line-height: 1;
+    vertical-align: 0;
 }
 
 .res-header-title {
