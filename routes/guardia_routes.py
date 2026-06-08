@@ -15,6 +15,8 @@ from extensions import mongo, socketio
 from utils.auth import login_required, role_required
 from utils.visita_validacion import validar_acceso_qr, actualizar_qr_vencido_si_aplica
 
+import ast
+
 guard_bp = Blueprint("guard", __name__, url_prefix="/guard")
 
 
@@ -23,6 +25,7 @@ def _render_scan(modo, resultado=None, bloquear_camara=False):
     visita = None
 
     if resultado and resultado.get("visita"):
+
         visita = resultado.get("visita")
 
     return render_template(
@@ -120,8 +123,6 @@ def dashboard():
     if busqueda:
         filtro["nombre_visitante"] = {"$regex": busqueda, "$options": "i"}
 
-
-
     total_visitas = mongo.db.visits.count_documents(filtro)
 
     total_paginas = (total_visitas + por_pagina - 1) // por_pagina
@@ -137,6 +138,14 @@ def dashboard():
     dentro = mongo.db.visits.count_documents({"estado": "dentro"})
     salidas = mongo.db.visits.count_documents({"estado": "salida_registrada"})
     incidencias = mongo.db.incidencias.count_documents({})
+
+    print("\n===== PAGINA 1 =====")
+
+    for v in visitas:
+
+        print(v.get("nombre_visitante"), v.get("created_at"))
+
+    print("===================\n")
 
     return render_template(
         "guardia_dashboard.html",
@@ -171,6 +180,28 @@ def scan_entrada():
         token = request.form["qr_token"].strip()
         visita = mongo.db.visits.find_one({"qr_token": token})
 
+        # =====================================
+        # NORMALIZAR FOTOS CLOUDINARY
+        # =====================================
+
+        if visita:
+
+            if isinstance(visita.get("foto_visitante"), str):
+
+                try:
+                    visita["foto_visitante"] = ast.literal_eval(
+                        visita["foto_visitante"]
+                    )
+                except:
+                    pass
+
+            if isinstance(visita.get("foto_placa"), str):
+
+                try:
+                    visita["foto_placa"] = ast.literal_eval(visita["foto_placa"])
+                except:
+                    pass
+
         if not visita:
             _registrar_incidencia_qr(
                 session,
@@ -204,6 +235,28 @@ def scan_entrada():
         else:
             actualizar_qr_vencido_si_aplica(visita["_id"], visita)
             visita = mongo.db.visits.find_one({"qr_token": token})
+
+            # =====================================
+            # NORMALIZAR FOTOS CLOUDINARY
+            # =====================================
+
+            if visita:
+
+                if isinstance(visita.get("foto_visitante"), str):
+
+                    try:
+                        visita["foto_visitante"] = ast.literal_eval(
+                            visita["foto_visitante"]
+                        )
+                    except:
+                        pass
+
+                if isinstance(visita.get("foto_placa"), str):
+
+                    try:
+                        visita["foto_placa"] = ast.literal_eval(visita["foto_placa"])
+                    except:
+                        pass
 
             valido, mensaje_val = validar_acceso_qr(visita)
 
@@ -262,8 +315,32 @@ def scan_salida():
     resultado = None
 
     if request.method == "POST":
+
         token = request.form["qr_token"].strip()
+
         visita = mongo.db.visits.find_one({"qr_token": token})
+
+        # =====================================
+        # NORMALIZAR FOTOS CLOUDINARY
+        # =====================================
+
+        if visita:
+
+            if isinstance(visita.get("foto_visitante"), str):
+
+                try:
+                    visita["foto_visitante"] = ast.literal_eval(
+                        visita["foto_visitante"]
+                    )
+                except:
+                    pass
+
+            if isinstance(visita.get("foto_placa"), str):
+
+                try:
+                    visita["foto_placa"] = ast.literal_eval(visita["foto_placa"])
+                except:
+                    pass
 
         if not visita:
             _registrar_incidencia_qr(

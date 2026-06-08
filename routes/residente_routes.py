@@ -132,6 +132,13 @@ def visitors():
         .limit(por_pagina)
     )
 
+    print("\n===== PAGINA ACTUAL =====")
+
+    for v in visitas:
+        print(v.get("nombre_visitante"), v.get("created_at"))
+
+    print("=========================\n")
+
     return render_template(
         "mis_visitantes.html",
         visitas=visitas,

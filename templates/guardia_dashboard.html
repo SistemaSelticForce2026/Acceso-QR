@@ -1,343 +1,469 @@
 {% extends 'layout.html' %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/guardia_dashboard.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static',
+      filename='css/paginas/guardia_dashboard.css') }}">
 {% endblock %}
-
 {% block content %}
 
-<div class="gd-page">
+<h1>Panel de Guardia</h1>
 
-  <h1 class="gd-title">Panel de guardia</h1>
-
-
-  <div class="gd-stats">
+<div class="stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;">
 
     <div class="stat-card">
-      <div class="stat-top">
-        <div>
-          <p class="stat-label">Visitas activas</p>
-          <p class="stat-sub">Tiempo real</p>
+        <div class="stat-header">
+            <div class="stat-icon blue">
+                <i class="fa-solid fa-users"></i>
+            </div>
         </div>
-        <div class="stat-ico ico-blue">
-          <i class="fa-solid fa-users"></i>
-        </div>
-      </div>
-      <p class="stat-num">{{ activas or 0 }}</p>
+
+        <h3>Visitas activas</h3>
+
+        <p>{{ activas or 0 }}</p>
+
+        <small>Monitoreo en tiempo real</small>
     </div>
 
     <div class="stat-card">
-      <div class="stat-top">
-        <div>
-          <p class="stat-label">Dentro</p>
-          <p class="stat-sub">Visitantes presentes</p>
+        <div class="stat-header">
+            <div class="stat-icon green">
+                <i class="fa-solid fa-house-user"></i>
+            </div>
         </div>
-        <div class="stat-ico ico-green">
-          <i class="fa-solid fa-house-user"></i>
-        </div>
-      </div>
-      <p class="stat-num">{{ dentro or 0 }}</p>
+
+        <h3>Dentro del fraccionamiento</h3>
+
+        <p>{{ dentro or 0 }}</p>
+
+        <small>Visitantes presentes</small>
     </div>
 
     <div class="stat-card">
-      <div class="stat-top">
-        <div>
-          <p class="stat-label">Salidas registradas</p>
-          <p class="stat-sub">Control de egresos</p>
+        <div class="stat-header">
+            <div class="stat-icon purple">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
         </div>
-        <div class="stat-ico ico-purple">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </div>
-      </div>
-      <p class="stat-num">{{ salidas or 0 }}</p>
+
+        <h3>Salidas registradas</h3>
+
+        <p>{{ salidas or 0 }}</p>
+
+        <small>Control de egresos</small>
     </div>
 
     <div class="stat-card">
-      <div class="stat-top">
+        <div class="stat-header">
+            <div class="stat-icon red">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+        </div>
+
+        <h3>Incidencias</h3>
+
+        <p>{{ incidencias or 0 }}</p>
+
+        <small>Eventos reportados</small>
+    </div>
+
+</div>
+
+<div class="card control-card">
+
+    <div class="control-header">
+
+        <div class="control-icon">
+            <i class="fa-solid fa-qrcode"></i>
+        </div>
+
         <div>
-          <p class="stat-label">Incidencias</p>
-          <p class="stat-sub">Eventos reportados</p>
+
+            <h2>Control de acceso</h2>
+
+            <p class="small">
+                Gestiona entradas y salidas de visitantes mediante códigos QR.
+                Selecciona el modo de escaneo correspondiente para registrar
+                movimientos en tiempo real dentro del fraccionamiento.
+            </p>
+
         </div>
-        <div class="stat-ico ico-red">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-        </div>
-      </div>
-      <p class="stat-num">{{ incidencias or 0 }}</p>
+
     </div>
 
-  </div>
+    <div class="scan-mode-switch">
 
-  <!-- ── CONTROL DE ACCESO ───────────────────────────────── -->
-  <div class="gd-card access-card">
+        <a href="{{ url_for('guard.scan_entrada') }}"
+           class="scan-mode-btn active">
 
-    <div class="access-head">
-      <div class="access-ico">
-        <i class="fa-solid fa-qrcode"></i>
-      </div>
-      <div>
-        <h2>Control de acceso</h2>
-        <p class="gd-muted">
-          Gestiona entradas y salidas de visitantes mediante códigos QR.
-          Selecciona el modo de escaneo para registrar movimientos en tiempo real.
-        </p>
-      </div>
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+
+            Escanear entrada
+
+        </a>
+
+        <a href="{{ url_for('guard.scan_salida') }}"
+           class="scan-mode-btn exit">
+
+            <i class="fa-solid fa-right-from-bracket"></i>
+
+            Escanear salida
+
+        </a>
+
     </div>
 
-    <div class="scan-btns">
-      <a href="{{ url_for('guard.scan_entrada') }}" class="scan-btn sb-entrada">
-        <i class="fa-solid fa-arrow-right-to-bracket"></i>
-        Escanear entrada
-      </a>
-      <a href="{{ url_for('guard.scan_salida') }}" class="scan-btn sb-salida">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        Escanear salida
-      </a>
-    </div>
+</div>
 
-  </div>
-
-  <!-- ── VISITAS RECIENTES ───────────────────────────────── -->
-  <div class="gd-card">
+<div class="card">
 
     <h2>Visitas recientes</h2>
-    <p class="gd-muted" style="margin-bottom:1rem">
-      Datos del visitante, vehículo y fotografía de placa registrados por el residente.
-    </p>
 
-    <!-- Filtros -->
-    <form method="GET" class="filter-bar">
+    <form method="GET" style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0;">
 
-      <div class="filter-field">
-        <label>Fecha inicio</label>
-        <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}">
-      </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-weight: 600; color: #475569; font-size: .9rem;">Fecha inicio</label>
+            <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white;">
+        </div>
 
-      <div class="filter-field">
-        <label>Fecha fin</label>
-        <input type="date" name="fecha_fin" value="{{ fecha_fin }}">
-      </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-weight: 600; color: #475569; font-size: .9rem;">Fecha fin</label>
+            <input type="date" name="fecha_fin" value="{{ fecha_fin }}" style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white;">
+        </div>
 
-      <div class="filter-field">
-        <label>Buscar visitante</label>
-        <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre del visitante...">
-      </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-weight: 600; color: #475569; font-size: .9rem;">Buscar visitante</label>
+            <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre del visitante..." style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white; min-width: 200px;">
+        </div>
 
-      <div class="filter-actions">
-        <button type="submit" class="btn-filter">
-          <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        <button type="submit" class="btn" style="padding: 10px 20px;">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
         </button>
+
         {% if fecha_inicio or fecha_fin or busqueda %}
-        <a href="{{ url_for('guard.dashboard') }}" class="btn-clear">
-          <i class="fa-solid fa-rotate-left"></i> Limpiar
+        <a href="{{ url_for('guard.dashboard') }}" class="btn" style="padding: 10px 20px; background: linear-gradient(135deg, #64748b, #475569);">
+            <i class="fa-solid fa-rotate-left"></i> Limpiar
         </a>
         {% endif %}
-      </div>
 
     </form>
 
-    <!-- Tabla -->
-    <div class="tbl-wrap">
-      <table class="gd-table">
-        <thead>
-          <tr>
-            <th>Visitante</th>
-            <th>Tipo</th>
-            <th>Residencia</th>
-            <th>Horario</th>
-            <th>Vehículo</th>
-            <th>Foto placa</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>
+    <p class="small">
+        Datos del visitante, vehículo y fotografía de placa registrados por el residente.
+    </p>
 
-          {% for visita in visitas %}
-          <tr>
+    <div class="table-container">
 
-            <!-- Visitante -->
-            <td>
-              <div class="vis-cell">
-                <div class="vis-av">
-                  {% if visita.foto_visitante %}
-                    <img src="{{ visita.foto_visitante.url }}"
-                         alt="Foto visitante"
-                         class="vis-img zoomable">
+        <div class="guardias-table-wrapper">
+
+        <table class="guardias-table">
+
+            <tr>
+                <th>Visitante</th>
+                <th>Tipo de acceso</th>
+                <th>Residencia</th>
+                <th>Horario de acceso</th>
+                <th>Vehículo</th>
+                <th>Foto placa</th>
+                <th>Estado</th>
+            </tr>
+
+            {% for visita in visitas %}
+
+            <tr>
+
+                <!-- Visitante -->
+                <td>
+                  <div class="vis-cell">
+                    <div class="vis-av">
+                      {% if visita.foto_visitante %}
+                        <img src="{{ visita.foto_visitante.url }}"
+                            alt="Foto visitante"
+                            class="vis-img zoomable">
+                      {% else %}
+                        <img src="/static/img/default-user.png" alt="Sin foto" class="vis-img zoomable">
+                      {% endif %}
+                    </div>
+                    <div>
+                      <p class="vis-name">{{ visita.nombre_visitante }}</p>
+                      <p class="vis-phone">{{ visita.telefono }}</p>
+                    </div>
+                  </div>
+                </td>
+
+                <td>
+
+                    <div class="modalidad-card">
+
+                        {% if visita.modalidad_visita == "recurrente" %}
+
+                            <div class="modalidad-badge recurrente">
+
+                                <i class="fa-solid fa-repeat"></i>
+
+                                Acceso recurrente
+
+                            </div>
+
+                            <span class="modalidad-description">
+
+                                Personal autorizado recurrente
+
+                            </span>
+
+                        {% else %}
+
+                            <div class="modalidad-badge temporal">
+
+                                <i class="fa-solid fa-clock"></i>
+
+                                Acceso temporal
+
+                            </div>
+
+                            <span class="modalidad-description">
+
+                                Acceso válido por un solo ingreso
+
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    <div class="residencia-card">
+
+                        <div class="residencia-condominio">
+
+                            <i class="fa-solid fa-building"></i>
+
+                            {{ visita.condominio | capitalize }}
+
+                        </div>
+
+                        <div class="residencia-casa">
+
+                            <i class="fa-solid fa-house"></i>
+
+                            Casa {{ visita.residencia_destino }}
+
+                        </div>
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    <div class="schedule-card">
+
+                        {% if visita.modalidad_visita == "recurrente" %}
+
+                            <div class="schedule-date">
+                                <i class="fa-regular fa-calendar-days"></i>
+                                {{ visita.dia_semana | capitalize }}
+                            </div>
+
+                            <div class="schedule-time">
+                                <i class="fa-regular fa-clock"></i>
+                                <span class="inline-hour">
+                                    {{ visita.hora_programada | hora_ampm }}
+                                </span>
+                            </div>
+
+                        {% else %}
+
+                            <div class="schedule-date">
+                                <i class="fa-regular fa-calendar-days"></i>
+                                {{ visita.fecha_visita.split('-')[2] }}/{{ visita.fecha_visita.split('-')[1] }}/{{ visita.fecha_visita.split('-')[0] }}
+                            </div>
+
+                            <div class="schedule-time">
+                                <i class="fa-regular fa-clock"></i>
+                                Entrada: <span class="inline-hour">{{ visita.hora_inicio | hora_ampm }}</span>
+                            </div>
+
+                        {% endif %}
+
+                        {% if visita.hora_salida %}
+
+                            <div class="schedule-exit">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                Salida: {{ visita.hora_salida | hora_ampm }}
+                            </div>
+
+                        {% else %}
+
+                            <div class="schedule-pending">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                                Salida pendiente
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    {% if visita.vehiculo %}
+
+                    <div class="vehiculo-card">
+
+                        <div class="vehiculo-placa">
+
+                            <i class="fa-solid fa-car-side"></i>
+
+                            {{ visita.vehiculo.placa }}
+
+                        </div>
+
+                        <div class="vehiculo-info">
+
+                            <span>
+
+                                <i class="fa-solid fa-industry"></i>
+
+                                {{ visita.vehiculo.marca | title }}
+
+                            </span>
+
+                            <span>
+
+                                <i class="fa-solid fa-car"></i>
+
+                                {{ visita.vehiculo.modelo | title }}
+
+                            </span>
+
+                            <span>
+
+                                <i class="fa-solid fa-palette"></i>
+
+                                {{ visita.vehiculo.color | title }}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    {% else %}
+
+                        <span class="small">Sin vehículo</span>
+
+                    {% endif %}
+
+                </td>
+
+                <!-- Foto placa -->
+                <td>
+                  {% if visita.foto_placa %}
+                    <img src="{{ visita.foto_placa.url }}"
+                        alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
+                        class="placa-thumb zoomable">
                   {% else %}
-                    <img src="/static/img/default-user.png" alt="Sin foto" class="vis-img zoomable">
+                    <span class="gd-muted">Sin foto</span>
                   {% endif %}
-                </div>
-                <div>
-                  <p class="vis-name">{{ visita.nombre_visitante }}</p>
-                  <p class="vis-phone">{{ visita.telefono }}</p>
-                </div>
-              </div>
-            </td>
+                </td>
 
-            <!-- Tipo -->
-            <td>
-              {% if visita.modalidad_visita == "recurrente" %}
-                <span class="badge b-rec">
-                  <i class="fa-solid fa-repeat"></i> Recurrente
-                </span>
-                <p class="badge-sub">Personal autorizado</p>
-              {% else %}
-                <span class="badge b-temp">
-                  <i class="fa-solid fa-clock"></i> Temporal
-                </span>
-                <p class="badge-sub">Un solo ingreso</p>
-              {% endif %}
-            </td>
+                <td>
+                    {% if visita.estado == "activo" %}
+                        <span class="badge warning">Pendiente</span>
+                    {% elif visita.estado == "dentro" %}
+                        <span class="badge success">Dentro</span>
+                    {% elif visita.estado == "salida_registrada" %}
+                        <span class="badge dark">Finalizada</span>
+                    {% else %}
+                        <span class="badge danger">{{ visita.estado }}</span>
+                    {% endif %}
+                </td>
 
-            <!-- Residencia -->
-            <td>
-              <p class="res-name">{{ visita.condominio | capitalize }}</p>
-              <p class="res-sub">
-                <i class="fa-solid fa-house"></i>
-                Casa {{ visita.residencia_destino }}
-              </p>
-            </td>
+            </tr>
 
-            <!-- Horario -->
-            <td>
-              <div class="sch">
-                {% if visita.modalidad_visita == "recurrente" %}
-                  <span class="sch-date">
-                    <i class="fa-regular fa-calendar-days"></i>
-                    {{ visita.dia_semana | capitalize }}
-                  </span>
-                  <span class="sch-time">
-                    <i class="fa-regular fa-clock"></i>
-                    {{ visita.hora_programada | hora_ampm }}
-                  </span>
-                {% else %}
-                  <span class="sch-date">
-                    <i class="fa-regular fa-calendar-days"></i>
-                    {{ visita.fecha_visita.split('-')[2] }}/{{ visita.fecha_visita.split('-')[1] }}/{{ visita.fecha_visita.split('-')[0] }}
-                  </span>
-                  <span class="sch-time">
-                    <i class="fa-regular fa-clock"></i>
-                    Entrada: {{ visita.hora_inicio | hora_ampm }}
-                  </span>
-                {% endif %}
-                {% if visita.hora_salida %}
-                  <span class="sch-exit">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    Salida: {{ visita.hora_salida | hora_ampm }}
-                  </span>
-                {% else %}
-                  <span class="sch-pend">
-                    <i class="fa-solid fa-hourglass-half"></i>
-                    Salida pendiente
-                  </span>
-                {% endif %}
-              </div>
-            </td>
+            {% else %}
+            <tr>
+                <td colspan="7" class="small">No hay visitas registradas aún.</td>
+            </tr>
+            {% endfor %}
 
-            <!-- Vehículo -->
-            <td>
-              {% if visita.vehiculo %}
-                <p class="veh-plate">{{ visita.vehiculo.placa }}</p>
-                <p class="veh-info">{{ visita.vehiculo.marca | title }} · {{ visita.vehiculo.modelo | title }}</p>
-                <p class="veh-info">{{ visita.vehiculo.color | title }}</p>
-              {% else %}
-                <span class="gd-muted">Sin vehículo</span>
-              {% endif %}
-            </td>
-
-            <!-- Foto placa -->
-            <td>
-              {% if visita.foto_placa %}
-                <img src="{{ visita.foto_placa.url }}"
-                     alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
-                     class="placa-thumb zoomable">
-              {% else %}
-                <span class="gd-muted">Sin foto</span>
-              {% endif %}
-            </td>
-
-            <!-- Estado -->
-            <td>
-              {% if visita.estado == "activo" %}
-                <span class="badge b-pending">
-                  <i class="fa-solid fa-clock"></i> Pendiente
-                </span>
-              {% elif visita.estado == "dentro" %}
-                <span class="badge b-in">
-                  <i class="fa-solid fa-check"></i> Dentro
-                </span>
-              {% elif visita.estado == "salida_registrada" %}
-                <span class="badge b-done">
-                  <i class="fa-solid fa-flag-checkered"></i> Finalizada
-                </span>
-              {% else %}
-                <span class="badge b-other">{{ visita.estado }}</span>
-              {% endif %}
-            </td>
-
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="7" class="empty-row">No hay visitas registradas aún.</td>
-          </tr>
-          {% endfor %}
-
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Paginación -->
-    {% if total_paginas > 1 %}
-    <div class="pagination">
-
-      {% if pagina > 1 %}
-        <a href="{{ url_for('guard.dashboard', page=pagina-1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}" class="page-btn">
-          <i class="fa-solid fa-chevron-left"></i>
-        </a>
-      {% endif %}
-
-      {% for p in range(1, total_paginas + 1) %}
-        <a href="{{ url_for('guard.dashboard', page=p, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-           class="page-btn {% if p == pagina %}active{% endif %}">
-          {{ p }}
-        </a>
-      {% endfor %}
-
-      {% if pagina < total_paginas %}
-        <a href="{{ url_for('guard.dashboard', page=pagina+1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}" class="page-btn">
-          <i class="fa-solid fa-chevron-right"></i>
-        </a>
-      {% endif %}
+        </table>
 
     </div>
-    {% endif %}
-
-  </div>
 
 </div>
 
-<!-- ── MODAL IMAGEN ──────────────────────────────────────── -->
-<div id="imgModal" class="img-modal" role="dialog" aria-modal="true" aria-label="Vista ampliada de imagen">
-  <button class="modal-close" id="modalClose" aria-label="Cerrar">&times;</button>
-  <img id="modalImg" src="" alt="Imagen ampliada" class="modal-img">
+<div class="pagination-container">
+
+    {% if total_paginas > 1 %}
+
+        <div class="pagination">
+
+            {% if pagina > 1 %}
+                <a href="{{ url_for('guard.dashboard', page=pagina-1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+                   class="page-btn">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            {% endif %}
+
+            {% for p in range(1, total_paginas + 1) %}
+
+                <a href="{{ url_for(
+                            'guard.dashboard',
+                            page=p,
+                            fecha_inicio=fecha_inicio,
+                            fecha_fin=fecha_fin,
+                            busqueda=busqueda
+                        ) }}"
+                   class="page-btn {% if p == pagina %}active{% endif %}">
+                    {{ p }}
+                </a>
+
+            {% endfor %}
+
+            {% if pagina < total_paginas %}
+                <a href="{{ url_for('guard.dashboard', page=pagina+1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+                   class="page-btn">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            {% endif %}
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+<div id="imageModal" class="image-modal">
+    <span class="close-modal">&times;</span>
+    <img id="modalImage" class="modal-image">
 </div>
 
 <script>
-  const modal    = document.getElementById('imgModal');
-  const modalImg = document.getElementById('modalImg');
-  const btnClose = document.getElementById('modalClose');
+    const zoomImages = document.querySelectorAll(".zoomable");
+    const imageModal = document.getElementById("imageModal");
+    const modalImage = document.getElementById("modalImage");
+    const closeModal = document.querySelector(".close-modal");
 
-  document.querySelectorAll('.zoomable').forEach(img => {
-    img.addEventListener('click', () => {
-      modalImg.src = img.src;
-      modal.classList.add('open');
+    zoomImages.forEach(img => {
+        img.addEventListener("click", () => {
+            imageModal.style.display = "flex";
+            modalImage.src = img.src;
+        });
     });
-  });
 
-  function closeModal() { modal.classList.remove('open'); }
+    closeModal.addEventListener("click", () => {
+        imageModal.style.display = "none";
+    });
 
-  btnClose.addEventListener('click', closeModal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    imageModal.addEventListener("click", (e) => {
+        if (e.target === imageModal) imageModal.style.display = "none";
+    });
 </script>
 
 {% endblock %}

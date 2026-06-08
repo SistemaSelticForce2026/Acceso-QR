@@ -345,19 +345,11 @@ filename='css/paginas/escaner_qr.css') }}">
                     {% if resultado.visita and resultado.visita.get('foto_visitante') %}
 
                     <img
-                        src="{{ resultado.visita.get('foto_visitante') }}"
+                        src="{{ resultado.visita.foto_visitante['url'] }}"
                         alt="Foto visitante"
                         class="visitor-photo"
                         id="visitorPhoto"
                     >
-
-                    {% else %}
-
-                    <div class="visitor-no-photo">
-
-                        <i class="fa-solid fa-user"></i>
-
-                    </div>
 
                     {% endif %}
 
@@ -824,10 +816,11 @@ filename='css/paginas/escaner_qr.css') }}">
                 <div class="plate-photo-wrapper">
 
                     <img
-                        src="{{ resultado.visita.foto_placa }}"
+                        src="{{ resultado.visita.foto_placa['url'] }}"
                         alt="Foto placa"
                         class="plate-photo-large zoomable-placa"
                     >
+                    
 
                 </div>
 
