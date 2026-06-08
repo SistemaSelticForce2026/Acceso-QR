@@ -515,37 +515,6 @@
     text-transform: uppercase;
 }
 
-.res-avatar-photo{
-
-    width:60px;
-
-    height:60px;
-
-    border-radius:14px;
-
-    overflow:hidden;
-
-    flex-shrink:0;
-
-    border:2px solid #fff;
-
-    box-shadow:0 6px 18px rgba(0,0,0,.12);
-
-    background:#fff;
-
-}
-
-.res-avatar-img{
-
-    width:100%;
-
-    height:100%;
-
-    object-fit:cover;
-
-    display:block;
-
-}
 
 .res-visit-info {
     flex: 1;
@@ -694,6 +663,11 @@
 
 .res-btn-delete:hover{
     background:#b91c1c;
+}
+
+.res-visit-right .res-btn-cancel {
+    width: 100%;
+    justify-content: center;
 }
 
 /* ---- Empty state ------------------------------------------ */

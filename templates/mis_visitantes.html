@@ -72,188 +72,142 @@
         {{ total_visitas }} {{ 'visita encontrada' if total_visitas == 1 else 'visitas encontradas' }}
     </p>
 
-    <div class="res-table-wrapper">
+    {% if visitas %}
 
-        <table class="res-table">
+    {% for visita in visitas %}
 
-            <thead>
-                <tr>
-                    <th>Visitante</th>
-                    <th>Modalidad</th>
-                    <th>Destino</th>
-                    <th>Horario</th>
-                    <th>Vehículo</th>
-                    <th>QR</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
+    {%- if visita.qr_estado == 'cancelado' -%}
+        {%- set badge_cls = 'badge-danger' -%}
+        {%- set badge_label = 'QR cancelado' -%}
+    {%- elif visita.qr_estado == 'vencido' -%}
+        {%- set badge_cls = 'badge-danger' -%}
+        {%- set badge_label = 'QR vencido' -%}
+    {%- elif visita.estado == 'dentro' -%}
+        {%- set badge_cls = 'badge-success' -%}
+        {%- set badge_label = 'Dentro' -%}
+    {%- elif visita.estado == 'salida_registrada' -%}
+        {%- set badge_cls = 'badge-neutral' -%}
+        {%- set badge_label = 'Finalizada' -%}
+    {%- else -%}
+        {%- set badge_cls = 'badge-warning' -%}
+        {%- set badge_label = 'Pendiente' -%}
+    {%- endif -%}
 
-            <tbody>
+    <div class="res-visit-card">
+        <div class="res-visit-body">
 
-            {% for visita in visitas %}
+            {# ── Foto o iniciales ─── #}
+            {% if visita.foto_visitante and visita.foto_visitante['url'] %}
+            <div class="res-avatar-photo">
+                <img src="{{ visita.foto_visitante['url'] }}"
+                     alt="{{ visita.nombre_visitante }}"
+                     class="res-avatar-img zoomable-foto">
+            </div>
+            {% else %}
+            <div class="res-avatar" style="background:#2e5bff;">
+                {{ visita.nombre_visitante[0]|upper }}
+            </div>
+            {% endif %}
 
-            {%- if visita.qr_estado == 'cancelado' -%}
-                {%- set badge_cls = 'badge-danger' -%}
-                {%- set badge_label = 'QR cancelado' -%}
-            {%- elif visita.qr_estado == 'vencido' -%}
-                {%- set badge_cls = 'badge-danger' -%}
-                {%- set badge_label = 'QR vencido' -%}
-            {%- elif visita.estado == 'dentro' -%}
-                {%- set badge_cls = 'badge-success' -%}
-                {%- set badge_label = 'Dentro' -%}
-            {%- elif visita.estado == 'salida_registrada' -%}
-                {%- set badge_cls = 'badge-neutral' -%}
-                {%- set badge_label = 'Finalizada' -%}
-            {%- else -%}
-                {%- set badge_cls = 'badge-warning' -%}
-                {%- set badge_label = 'Pendiente' -%}
-            {%- endif -%}
+            {# ── Info central ─── #}
+            <div class="res-visit-info">
 
-            <tr>
+                <p class="res-visit-name">{{ visita.nombre_visitante }}</p>
 
-                <td>
+                <div class="res-visit-meta">
 
-                    <div class="res-user-cell">
-
-                        {% if visita.foto_visitante and visita.foto_visitante['url'] %}
-                        <img
-                            src="{{ visita.foto_visitante['url'] }}"
-                            class="res-user-photo zoomable-foto">
-                        {% endif %}
-
-                        <div>
-                            <strong>{{ visita.nombre_visitante }}</strong>
-
-                            <div class="res-small">
-                                {{ visita.telefono }}
-                            </div>
-                        </div>
-
-                    </div>
-
-                </td>
-
-                <td>
-
-                    {% if visita.modalidad_visita == "recurrente" %}
-                        <span class="res-badge badge-blue">
-                            Recurrente
-                        </span>
-                    {% else %}
-                        <span class="res-badge badge-neutral">
-                            Temporal
-                        </span>
-                    {% endif %}
-
-                </td>
-
-                <td>
-
-                    {{ visita.condominio|title }}
-
-                    <div class="res-small">
-                        Casa {{ visita.residencia_destino }}
-                    </div>
-
-                </td>
-
-                <!-- HORARIO -->
-                <td>
+                    <span class="res-visit-meta-item">
+                        <i class="fa-solid fa-phone"></i>
+                        {{ visita.telefono }}
+                    </span>
 
                     {% if visita.fecha_visita %}
-                    <div>
+                    <span class="res-visit-meta-item">
                         <i class="fa-regular fa-calendar"></i>
                         {{ visita.fecha_visita[8:10] }}/{{ visita.fecha_visita[5:7] }}/{{ visita.fecha_visita[0:4] }}
-                    </div>
+                    </span>
                     {% endif %}
 
                     {% if visita.hora_inicio %}
-                    <div class="res-small">
+                    <span class="res-visit-meta-item">
                         <i class="fa-regular fa-clock"></i>
                         {{ visita.hora_inicio | hora_ampm }}
-                    </div>
+                    </span>
                     {% endif %}
 
-                </td>
-
-                <!-- VEHÍCULO -->
-                <td>
-
-                    {% if visita.vehiculo %}
-
-                    <strong>
-                        {{ visita.vehiculo.placa }}
-                    </strong>
-
-                    <div class="res-small">
-
-                        {{ visita.vehiculo.marca|title }}
-
-                        {% if visita.vehiculo.modelo %}
-                        · {{ visita.vehiculo.modelo|title }}
-                        {% endif %}
-
-                        · {{ visita.vehiculo.color|title }}
-
-                    </div>
-
-                    {% else %}
-                    —
-                    {% endif %}
-
-                </td>
-
-                <td>
-
-                    <img
-                        src="{{ visita.qr_path }}"
-                        class="res-table-qr {% if visita.qr_estado != 'cancelado' %}qr-clickable{% endif %}"
-                        data-qr-path="{{ visita.qr_path }}"
-                        data-qr-token="{{ visita.qr_token }}"
-                        data-visitante="{{ visita.nombre_visitante }}">
-
-                </td>
-
-                <td>
-
-                    <span class="res-badge {{ badge_cls }}">
-                        {{ badge_label }}
+                    <span class="res-visit-meta-item">
+                        <i class="fa-solid fa-house"></i>
+                        {{ visita.condominio|title }} · Casa {{ visita.residencia_destino }}
                     </span>
 
-                </td>
+                    {% if visita.vehiculo %}
+                    <span class="res-visit-meta-item">
+                        <i class="fa-solid fa-car"></i>
+                        {{ visita.vehiculo.placa }}
+                        · {{ visita.vehiculo.marca|title }}
+                        {% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo|title }}{% endif %}
+                        · {{ visita.vehiculo.color|title }}
+                    </span>
+                    {% endif %}
 
-                <td>
+                </div>
 
-                    <div class="res-actions">
+                <div class="res-visit-badges">
+                    {% if visita.modalidad_visita == "recurrente" %}
+                    <span class="res-badge badge-blue">Recurrente</span>
+                    {% else %}
+                    <span class="res-badge badge-neutral">Temporal</span>
+                    {% endif %}
+                    <span class="res-badge {{ badge_cls }}">{{ badge_label }}</span>
+                </div>
 
-                        {% if visita.qr_estado != 'cancelado' %}
-                        <button
-                            class="res-btn-cancel btn-cancelar-qr"
-                            data-token="{{ visita.qr_token }}">
-                            Cancelar
-                        </button>
-                        {% endif %}
+            </div>
 
-                        <button
-                            class="res-btn-delete"
-                            onclick="eliminarVisita('{{ visita._id }}')">
-                            Eliminar
-                        </button>
+            {# ── Derecha: QR + acciones ─── #}
+            <div class="res-visit-right">
 
-                    </div>
+                <img
+                    src="{{ visita.qr_path }}"
+                    class="res-qr-thumb {% if visita.qr_estado == 'cancelado' %}qr-cancelado{% else %}qr-clickable{% endif %}"
+                    data-qr-path="{{ visita.qr_path }}"
+                    data-qr-token="{{ visita.qr_token }}"
+                    data-visitante="{{ visita.nombre_visitante }}"
+                    alt="QR">
 
-                </td>
+                {% if visita.qr_estado != 'cancelado' %}
+                <button class="res-btn-cancel btn-cancelar-qr" data-token="{{ visita.qr_token }}">
+                    <i class="fa-solid fa-ban"></i>
+                    Cancelar QR
+                </button>
+                {% endif %}
 
-            </tr>
+                <button class="res-btn-delete" onclick="eliminarVisita('{{ visita._id }}')">
+                    <i class="fa-solid fa-trash"></i>
+                    Eliminar
+                </button>
 
-            {% endfor %}
+            </div>
 
-            </tbody>
-
-        </table>
-
+        </div>
     </div>
+
+    {% endfor %}
+
+    {% else %}
+
+    <div class="res-empty">
+        <div class="res-empty-icon">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <p class="res-empty-title">No hay visitas registradas</p>
+        <p class="res-empty-sub">Crea tu primera visita para generar un código QR de acceso.</p>
+        <a href="{{ url_for('resident.create_visit') }}" class="res-btn-new" style="margin:0 auto;">
+            <i class="fa-solid fa-plus"></i>
+            Nueva visita
+        </a>
+    </div>
+
+    {% endif %}
 
     {# ── Botón dashed agregar ───────────────────────────────────────── #}
     {% if visitas %}
