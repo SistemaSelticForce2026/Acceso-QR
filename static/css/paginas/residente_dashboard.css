@@ -661,6 +661,80 @@
     width:100%;
 }
 
+.res-btn-edit{
+
+    border:1.5px solid rgba(37,99,235,.30);
+
+    background:#2563eb;
+
+    color:#fff;
+
+    border-radius:10px;
+
+    padding:5px 10px;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    font-family:'Inter',sans-serif;
+
+    cursor:pointer;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:4px;
+
+    transition:.2s;
+
+    width:100%;
+
+    text-decoration:none;
+
+}
+
+.res-btn-edit:hover{
+
+    background:#1d4ed8;
+
+}
+
+.res-btn-edit-disabled{
+
+    border:1.5px solid #cbd5e1;
+
+    background:#e2e8f0;
+
+    color:#64748b;
+
+    border-radius:10px;
+
+    padding:5px 10px;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    font-family:'Inter',sans-serif;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:4px;
+
+    width:100%;
+
+    cursor:not-allowed;
+
+}
+
 .res-btn-delete:hover{
     background:#b91c1c;
 }

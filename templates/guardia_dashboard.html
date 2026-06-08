@@ -133,7 +133,12 @@
 
         <div style="display: flex; flex-direction: column; gap: 6px;">
             <label style="font-weight: 600; color: #475569; font-size: .9rem;">Buscar visitante</label>
-            <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre del visitante..." style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white; min-width: 200px;">
+            <input type="text"
+                   id="searchTable"
+                   name="busqueda"
+                   value="{{ busqueda }}"
+                   placeholder="Nombre del visitante..."
+                   style="padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white; min-width: 200px;">
         </div>
 
         <button type="submit" class="btn" style="padding: 10px 20px;">
@@ -464,6 +469,37 @@
     imageModal.addEventListener("click", (e) => {
         if (e.target === imageModal) imageModal.style.display = "none";
     });
+</script>
+
+<!-- BUSCADOR TABLA -->
+<script>
+
+document.getElementById("searchTable").addEventListener("keyup", function () {
+
+    const filtro = this.value.toLowerCase();
+
+    document.querySelectorAll(".guardias-table tr").forEach(fila => {
+
+        const visitante =
+            fila.querySelector(".vis-name")?.textContent.toLowerCase() || "";
+
+        const telefono =
+            fila.querySelector(".vis-phone")?.textContent.toLowerCase() || "";
+
+        const vehiculo =
+            fila.querySelector(".vehiculo-placa")?.textContent.toLowerCase() || "";
+
+        const coincide =
+            visitante.includes(filtro) ||
+            telefono.includes(filtro) ||
+            vehiculo.includes(filtro);
+
+        fila.style.display = coincide ? "" : "none";
+
+    });
+
+});
+
 </script>
 
 {% endblock %}

@@ -47,6 +47,7 @@
                 <div class="res-filter-field" style="flex:2; min-width:180px;">
                     <label class="res-filter-label">Buscar visitante</label>
                     <input class="res-filter-input"
+                           id="searchTable"
                            type="text"
                            name="busqueda"
                            value="{{ busqueda }}"
@@ -179,6 +180,23 @@
                     <i class="fa-solid fa-ban"></i>
                     Cancelar QR
                 </button>
+                {% endif %}
+
+                {% if visita.estado not in ['dentro', 'salida_registrada', 'cancelado'] %}
+
+                <a href="{{ url_for('resident.editar_visita', visita_id=visita._id) }}"
+                   class="res-btn-edit">
+                    <i class="fa-solid fa-pen"></i>
+                    Editar
+                </a>
+
+                {% else %}
+
+                <button class="res-btn-edit-disabled" disabled>
+                    <i class="fa-solid fa-lock"></i>
+                    No editable
+                </button>
+
                 {% endif %}
 
                 <button class="res-btn-delete" onclick="eliminarVisita('{{ visita._id }}')">
@@ -480,4 +498,32 @@ window.addEventListener("load", () => {
 });
 {% endif %}
 </script>
+
+<!-- BUSCADOR TABLA -->
+<script>
+
+document.getElementById("searchTable").addEventListener("keyup", function () {
+
+    const filtro = this.value.toLowerCase();
+
+    document.querySelectorAll(".res-visit-card").forEach(card => {
+
+        const visitante =
+            card.querySelector(".res-visit-name")?.textContent.toLowerCase() || "";
+
+        const informacion =
+            card.querySelector(".res-visit-meta")?.textContent.toLowerCase() || "";
+
+        const coincide =
+            visitante.includes(filtro) ||
+            informacion.includes(filtro);
+
+        card.style.display = coincide ? "" : "none";
+
+    });
+
+});
+
+</script>
+
 {% endblock %}

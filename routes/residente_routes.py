@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from datetime import datetime, timedelta
 import uuid
 
@@ -197,6 +197,51 @@ def eliminar_visita(id):
         print("ERROR ELIMINAR:", e)
 
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# =====================================================
+# EDITAR VISITA
+# =====================================================
+
+
+@resident_bp.route("/editar-visita/<visita_id>", methods=["GET", "POST"])
+@login_required
+@role_required("residente")
+def editar_visita(visita_id):
+
+    visita = mongo.db.visits.find_one(
+        {"_id": ObjectId(visita_id), "residente_id": session["user_id"]}
+    )
+
+    if not visita:
+        return redirect(url_for("resident.visitors"))
+
+    # ==========================
+    # BLOQUEAR VISITAS UTILIZADAS
+    # ==========================
+
+    if visita.get("estado") in ["dentro", "salida_registrada", "cancelado"]:
+
+        flash("Esta visita ya no puede modificarse.", "warning")
+
+        return redirect(url_for("resident.visitors"))
+
+    if request.method == "POST":
+
+        mongo.db.visits.update_one(
+            {"_id": ObjectId(visita_id)},
+            {
+                "$set": {
+                    "telefono": request.form.get("telefono"),
+                    "fecha_visita": request.form.get("fecha_visita"),
+                    "hora_inicio": request.form.get("hora_inicio"),
+                }
+            },
+        )
+
+        return redirect(url_for("resident.visitors"))
+
+    return render_template("editar_visita.html", visita=visita)
 
 
 # =====================================================

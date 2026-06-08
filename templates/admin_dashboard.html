@@ -576,7 +576,9 @@
 
       <div class="tbl-search">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" placeholder="Buscar visitante, residente o placa...">
+        <input type="text"
+               id="searchTable"
+               placeholder="Buscar visitante, residente o placa...">
       </div>
 
       <div class="tbl-exports">
@@ -1083,6 +1085,38 @@
         }
     }
 });
+</script>
+
+<!-- BUSCADOR TABLA -->
+<script>
+
+document.getElementById("searchTable").addEventListener("keyup", function () {
+
+    const filtro = this.value.toLowerCase();
+
+    document.querySelectorAll(".ad-table tbody tr").forEach(fila => {
+
+        const visitante =
+            fila.querySelector(".vis-name")?.textContent.toLowerCase() || "";
+
+        const residente =
+            fila.querySelector(".td-residente")?.textContent.toLowerCase() || "";
+
+        const placa =
+            fila.querySelector(".veh-plate")?.textContent.toLowerCase() || "";
+
+        const coincide =
+            visitante.includes(filtro) ||
+            residente.includes(filtro) ||
+            placa.includes(filtro);
+
+        fila.style.display = coincide ? "" : "none";
+
+    });
+
+});
+
+
 </script>
 
 {% endblock %}
