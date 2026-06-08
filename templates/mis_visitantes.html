@@ -269,13 +269,9 @@
         </div>
 
         <div class="res-qr-actions">
-            <button type="button" class="res-qr-action-btn" id="btnShareToken">
+            <button type="button" class="res-qr-action-btn" id="btnShare">
                 <i class="fa-brands fa-whatsapp" style="color:#22c55e;"></i>
-                Token
-            </button>
-            <button type="button" class="res-qr-action-btn" id="btnShareQr">
-                <i class="fa-brands fa-whatsapp" style="color:#22c55e;"></i>
-                Imagen QR
+                Compartir
             </button>
             <button type="button" class="res-qr-action-btn" id="btnDownloadQr">
                 <i class="fa-solid fa-download"></i>
@@ -303,7 +299,7 @@ const qrModalToken  = document.getElementById("qrModalToken");
 const qrModalTitle  = document.getElementById("qrModalTitle");
 const qrModalSub    = document.getElementById("qrModalSubtitle");
 const qrShareHint   = document.getElementById("qrShareHint");
-const btnShareQr    = document.getElementById("btnShareQr");
+const btnShare      = document.getElementById("btnShare");
 const btnDownloadQr = document.getElementById("btnDownloadQr");
 const btnCopyToken  = document.getElementById("btnCopyToken");
 
@@ -330,7 +326,7 @@ function descargarArchivo(file) {
 document.querySelectorAll(".qr-clickable").forEach(img => {
     img.addEventListener("click", async function () {
         currentToken  = this.dataset.qrToken;
-        currentQrUrl  = window.location.origin + this.dataset.qrPath;
+        currentQrUrl  = this.dataset.qrPath;
         const visitante = this.dataset.visitante;
 
         qrModalImage.src             = this.dataset.qrPath;
@@ -338,7 +334,7 @@ document.querySelectorAll(".qr-clickable").forEach(img => {
         qrModalTitle.textContent     = "QR — " + visitante;
         qrModalSub.textContent       = "Comparte el código o el token con tu visitante.";
         qrShareHint.textContent      = "Cargando imagen del QR…";
-        btnShareQr.disabled          = true;
+        btnShare.disabled            = true;
         currentQrFile                = null;
 
         qrModal.style.display        = "flex";
@@ -348,12 +344,12 @@ document.querySelectorAll(".qr-clickable").forEach(img => {
             const { file } = await cargarImagenQr(currentQrUrl);
             currentQrFile = file;
             qrShareHint.textContent = navigator.canShare && navigator.canShare({ files: [file] })
-                ? "En móvil podrás enviar la imagen completa por WhatsApp."
-                : "Se descargará la imagen y se abrirá WhatsApp.";
+                ? "En móvil podrás compartir la imagen y el token juntos."
+                : "En escritorio se descargará la imagen y se abrirá WhatsApp.";
         } catch {
             qrShareHint.textContent = "No se pudo preparar la imagen. Recarga e intenta.";
         } finally {
-            btnShareQr.disabled = false;
+            btnShare.disabled = false;
         }
     });
 });
@@ -370,35 +366,25 @@ qrModal.addEventListener("click", e => {
     }
 });
 
-document.getElementById("btnShareToken").onclick = async () => {
-    if (!currentQrFile) { alert("Espera a que cargue el QR."); return; }
-    const texto = `Hola, te comparto tu acceso al fraccionamiento.\n\nToken: ${currentToken}\n\nPresenta este QR en caseta.`;
-    try {
-        if (navigator.share) { await navigator.share({ title: "QR de acceso", text: texto, url: currentQrUrl }); return; }
-        descargarArchivo(currentQrFile);
-        setTimeout(() => window.open("https://wa.me/?text=" + encodeURIComponent(texto + "\n\nAdjunta la imagen QR."), "_blank"), 700);
-    } catch (err) { console.error(err); }
-};
-
 btnDownloadQr.onclick = () => { if (currentQrFile) descargarArchivo(currentQrFile); };
 
-btnShareQr.onclick = async () => {
-    if (!currentQrFile) { alert("Espera e intenta de nuevo."); return; }
-    const texto = "Código QR de acceso al fraccionamiento.\nToken: " + currentToken;
-    const orig  = btnShareQr.innerHTML;
-    btnShareQr.disabled  = true;
-    btnShareQr.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+btnShare.onclick = async () => {
+    if (!currentQrFile) { alert("Espera a que cargue el QR."); return; }
+    const texto = `Hola, te comparto tu acceso al fraccionamiento.\n\nToken: ${currentToken}\n\nPresenta este QR en caseta.`;
+    const orig  = btnShare.innerHTML;
+    btnShare.disabled  = true;
+    btnShare.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
     try {
         if (navigator.canShare && navigator.canShare({ files: [currentQrFile] })) {
             await navigator.share({ title: "QR de acceso", text: texto, files: [currentQrFile] }); return;
         }
         descargarArchivo(currentQrFile);
-        setTimeout(() => window.open("https://wa.me/?text=" + encodeURIComponent("Hola, te comparto tu acceso.\n\n1) Adjunta la imagen QR descargada.\n\nToken: " + currentToken), "_blank"), 600);
+        setTimeout(() => window.open("https://wa.me/?text=" + encodeURIComponent(texto + "\n\nAdjunta la imagen QR descargada."), "_blank"), 600);
     } catch (err) {
-        if (err.name !== "AbortError") { descargarArchivo(currentQrFile); alert("Imagen descargada. Adjúntala en WhatsApp."); }
+        if (err.name !== "AbortError") { descargarArchivo(currentQrFile); alert("Imagen descargada. Adjúntala en WhatsApp junto con el token."); }
     } finally {
-        btnShareQr.disabled  = false;
-        btnShareQr.innerHTML = orig;
+        btnShare.disabled  = false;
+        btnShare.innerHTML = orig;
     }
 };
 
