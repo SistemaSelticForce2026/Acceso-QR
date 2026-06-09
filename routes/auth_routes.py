@@ -175,9 +175,14 @@ def login():
 
     if request.method == "POST":
 
-        correo = request.form["correo"].strip()
+        correo = request.form.get("correo", "").strip()
+        password = request.form.get("password", "").strip()
 
-        password = request.form["password"]
+        if not correo or not password:
+
+            flash("Correo y contraseña son campos obligatorios.", "danger")
+
+            return redirect(url_for("auth.login"))
 
         # =================
         # BUSCAR USUARIO

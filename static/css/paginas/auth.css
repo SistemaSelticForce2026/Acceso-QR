@@ -449,18 +449,13 @@
 ========================================================= */
 
 .auth-error{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:#fff0f0;
-    border:1px solid rgba(186,26,26,.20);
-    border-radius:14px;
-    padding:12px 16px;
-    font-size:13px;
-    color:#ba1a1a;
-    font-weight:500;
-    margin-bottom:16px;
-    animation:authFadeIn .2s ease;
+    display:block;
+    margin-top:6px;
+    margin-left:4px;
+    color:#dc2626;
+    font-size:.85rem;
+    font-weight:600;
+    min-height:18px;
 }
 
 /* =========================================================
