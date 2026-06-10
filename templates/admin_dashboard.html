@@ -8,50 +8,43 @@
 
 <div class="ad-page">
 
-  <!-- ══════════════════════════════════════════════════════
-       HEADER
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ HEADER ══ -->
   <div class="ad-header">
-
     <div class="ad-header-left">
-
       <h1>Panel administrativo</h1>
-
       <p class="ad-subtitle">
         Monitoreo en tiempo real de accesos, residentes, vigilancia e incidencias
         del fraccionamiento mediante validación QR segura.
       </p>
-
       <div class="live-pill">
         <span class="live-dot"></span>
         Sistema en línea · Actualización en tiempo real
         <span class="live-update">Última actualización: <strong id="fechaActual"></strong></span>
       </div>
-
     </div>
-
     <div class="ad-header-right">
       <button class="btn-refresh" onclick="window.location.reload();">
-        <i class="fa-solid fa-arrows-rotate"></i>
-        Actualizar
+        <i class="fa-solid fa-arrows-rotate"></i> Actualizar
       </button>
     </div>
-
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       HERO BANNER
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ HERO ══ -->
   <div class="ad-hero">
-
+    <div class="hero-circle"></div>
     <div class="hero-text">
       <span class="hero-tag">🟢 Sistema Seguro</span>
-      <h2>98% Operatividad General</h2>
+      <h2>
+        {% set total = (total_visitas or 0) %}
+        {% set efectivas = (salidas or 0) + (dentro or 0) %}
+        {% if total > 0 %}
+          {{ ((efectivas / total) * 100) | round | int }}% Operatividad
+        {% else %}
+          Sin registros aún
+        {% endif %}
+      </h2>
       <p>Monitoreo activo de accesos, residentes y seguridad.</p>
     </div>
-
     <div class="hero-metrics">
       <div class="hero-metric">
         <strong>{{ dentro or 0 }}</strong>
@@ -66,13 +59,9 @@
         <span>Incidencias</span>
       </div>
     </div>
-
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       STATS GRID  (9 tarjetas)
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ STATS GRID ══ -->
   <div class="ad-stats">
 
     <div class="ad-stat">
@@ -87,10 +76,10 @@
     <div class="ad-stat">
       <div class="ast-top">
         <p class="ast-label">Visitas pendientes</p>
-        <div class="ast-ico ico-amber"><i class="fa-solid fa-user-check"></i></div>
+        <div class="ast-ico ico-amber"><i class="fa-solid fa-user-clock"></i></div>
       </div>
       <p class="ast-num">{{ activas or 0 }}</p>
-      <p class="ast-sub">Accesos pendientes</p>
+      <p class="ast-sub">Aún no han ingresado</p>
     </div>
 
     <div class="ad-stat">
@@ -116,7 +105,7 @@
         <p class="ast-label">Residentes</p>
         <div class="ast-ico ico-blue"><i class="fa-solid fa-house"></i></div>
       </div>
-      <p class="ast-num">{{ total_residentes }}</p>
+      <p class="ast-num">{{ total_residentes or 0 }}</p>
       <p class="ast-sub">Usuarios registrados</p>
     </div>
 
@@ -125,7 +114,7 @@
         <p class="ast-label">Guardias</p>
         <div class="ast-ico ico-green"><i class="fa-solid fa-shield-halved"></i></div>
       </div>
-      <p class="ast-num">{{ total_guardias }}</p>
+      <p class="ast-num">{{ total_guardias or 0 }}</p>
       <p class="ast-sub">Personal activo</p>
     </div>
 
@@ -134,7 +123,7 @@
         <p class="ast-label">Incidencias</p>
         <div class="ast-ico ico-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
       </div>
-      <p class="ast-num">{{ total_incidencias }}</p>
+      <p class="ast-num">{{ total_incidencias or 0 }}</p>
       <p class="ast-sub">Eventos registrados</p>
     </div>
 
@@ -143,7 +132,7 @@
         <p class="ast-label">QR rechazados</p>
         <div class="ast-ico ico-red"><i class="fa-solid fa-ban"></i></div>
       </div>
-      <p class="ast-num">{{ rechazados }}</p>
+      <p class="ast-num">{{ rechazados or 0 }}</p>
       <p class="ast-sub">Accesos inválidos</p>
     </div>
 
@@ -152,16 +141,13 @@
         <p class="ast-label">Promedio diario</p>
         <div class="ast-ico ico-purple"><i class="fa-solid fa-chart-line"></i></div>
       </div>
-      <p class="ast-num">{{ promedio }}</p>
+      <p class="ast-num">{{ promedio or 0 }}</p>
       <p class="ast-sub">Visitas por día</p>
     </div>
 
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       FILTRO PERÍODO
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ FILTRO PERÍODO ══ -->
   <div class="period-filter">
     <button class="pf-btn {% if filtro == 'hoy' %}active{% endif %}"
             onclick="window.location='?filtro=hoy'">
@@ -177,17 +163,14 @@
     </button>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       GRÁFICAS — fila 1 (donut + barras)
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ GRÁFICAS FILA 1 ══ -->
   <div class="charts-row">
 
     <div class="ad-card chart-card">
       <div class="chart-head">
         <div>
           <h2><i class="fa-solid fa-chart-pie"></i> Estado operativo</h2>
-          <p class="chart-sub">Distribución general del estado de accesos.</p>
+          <p class="chart-sub">Distribución del estado actual de accesos.</p>
         </div>
       </div>
       <div class="chart-body">
@@ -209,10 +192,7 @@
 
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       GRÁFICAS — fila 2 (modalidades + línea de tiempo)
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ GRÁFICAS FILA 2 ══ -->
   <div class="charts-row">
 
     <div class="ad-card chart-card">
@@ -236,8 +216,8 @@
           <h2><i class="fa-solid fa-calendar-days"></i> Accesos por día</h2>
           <p class="chart-sub">Flujo operativo de accesos registrados diariamente.</p>
           <div class="mini-kpis">
-            <span>📈 Máximo: {{ dias_data|max if dias_data else 0 }}</span>
-            <span>📊 Promedio: {{ promedio }}</span>
+            <span>📈 Máximo: {{ dias_data | max if dias_data else 0 }}</span>
+            <span>📊 Promedio: {{ promedio or 0 }}</span>
           </div>
         </div>
         <div class="live-tag">
@@ -251,15 +231,11 @@
 
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       ESTADO DEL SISTEMA + ACTIVIDAD RECIENTE
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ ESTADO DEL SISTEMA + ACTIVIDAD RECIENTE ══ -->
   <div class="two-col">
 
     <div class="ad-card">
       <h2 class="section-title">Estado del sistema</h2>
-
       <div class="sys-list">
 
         <div class="sys-item">
@@ -294,72 +270,80 @@
 
     <div class="ad-card">
       <h2 class="section-title">Actividad reciente</h2>
-
       <div class="activity-list">
-        {% for acceso in actividad_reciente %}
-        <div class="activity-item">
-          <div class="activity-ico">
-            <i class="fa-solid fa-clock-rotate-left"></i>
+        {% if actividad_reciente %}
+          {% for acceso in actividad_reciente %}
+          <div class="activity-item">
+            <div class="activity-ico">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div>
+              <p class="activity-name">{{ acceso.guardia_nombre }}</p>
+              <p class="activity-sub">{{ acceso.accion }} · {{ acceso.resultado }}</p>
+            </div>
           </div>
-          <div>
-            <p class="activity-name">{{ acceso.guardia_nombre }}</p>
-            <p class="activity-sub">{{ acceso.accion }} · {{ acceso.resultado }}</p>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <i class="fa-solid fa-inbox"></i>
+            <p>Sin actividad reciente.</p>
           </div>
-        </div>
-        {% endfor %}
+        {% endif %}
       </div>
     </div>
 
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       ALERTAS + MÓDULOS
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ ALERTAS + MÓDULOS ══ -->
   <div class="two-col">
 
-    <!-- Alertas -->
     <div class="ad-card">
       <h2 class="section-title">Alertas del sistema</h2>
 
       <div class="alert-list">
-
+        {% if dentro and dentro > 0 %}
         <div class="alert-item a-warning">
           <i class="fa-solid fa-triangle-exclamation"></i>
-          <p>{{ dentro or 0 }} visitas continúan dentro del fraccionamiento.</p>
+          <p>{{ dentro }} visita{{ 's' if dentro != 1 else '' }} continúa{{ '' if dentro != 1 else 'n' }} dentro del fraccionamiento.</p>
         </div>
+        {% endif %}
 
+        {% if rechazados and rechazados > 0 %}
         <div class="alert-item a-danger">
           <i class="fa-solid fa-ban"></i>
-          <p>{{ rechazados or 0 }} accesos rechazados detectados.</p>
+          <p>{{ rechazados }} acceso{{ 's' if rechazados != 1 else '' }} rechazado{{ 's' if rechazados != 1 else '' }} detectado{{ 's' if rechazados != 1 else '' }}.</p>
         </div>
+        {% endif %}
 
         <div class="alert-item a-info">
           <i class="fa-solid fa-circle-info"></i>
           <p>Verificar placas y fotografía del visitante antes de permitir el acceso.</p>
         </div>
 
+        {% if total_incidencias and total_incidencias > 0 %}
         <div class="alert-item a-danger">
           <i class="fa-solid fa-shield-halved"></i>
-          <p>Revisar QR rechazados, visitas no autorizadas o incidencias abiertas.</p>
+          <p>Hay {{ total_incidencias }} incidencia{{ 's' if total_incidencias != 1 else '' }} registrada{{ 's' if total_incidencias != 1 else '' }}. Revisar bitácora.</p>
         </div>
-
+        {% endif %}
       </div>
 
       <!-- Centro de monitoreo -->
       <div class="monitor-panel">
-
         <div class="monitor-head">
           <h3><i class="fa-solid fa-shield-heart"></i> Centro de monitoreo</h3>
           <div class="live-tag">
             <span class="live-dot-sm"></span> En vivo
           </div>
         </div>
-
         <div class="monitor-grid">
           <div class="monitor-box">
-            <span class="monitor-num">98%</span>
-            <small>Nivel de seguridad</small>
+            <span class="monitor-num">
+              {% if (total_visitas or 0) > 0 %}
+                {{ (((salidas or 0) + (dentro or 0)) / total_visitas * 100) | round | int }}%
+              {% else %}—{% endif %}
+            </span>
+            <small>Efectividad</small>
           </div>
           <div class="monitor-box">
             <span class="monitor-num">24/7</span>
@@ -367,21 +351,19 @@
           </div>
           <div class="monitor-box">
             <span class="monitor-num">{{ activas or 0 }}</span>
-            <small>Accesos monitoreados</small>
+            <small>Pendientes de ingreso</small>
           </div>
           <div class="monitor-box">
             <span class="monitor-num">{{ rechazados or 0 }}</span>
             <small>Bloqueos detectados</small>
           </div>
         </div>
-
       </div>
     </div>
 
     <!-- Módulos -->
     <div class="ad-card">
       <h2 class="section-title">Módulos administrativos</h2>
-
       <div class="module-list">
 
         <a class="module-item" href="/admin/residentes">
@@ -443,15 +425,10 @@
 
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       TOP RESIDENTES + VEHÍCULOS
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ TOP RESIDENTES + VEHÍCULOS ══ -->
   <div class="two-col">
 
-    <!-- Top residentes -->
     <div class="ad-card">
-
       <div class="rank-header">
         <div>
           <h2 class="section-title"><i class="fa-solid fa-users"></i> Residentes con más visitas</h2>
@@ -462,10 +439,11 @@
 
       <div class="rank-list">
         {% if top_residentes %}
+          {% set max_visitas = top_residentes[0][1] if top_residentes else 1 %}
           {% for residente, total in top_residentes %}
           <div class="rank-item">
             <div class="rank-left">
-              <div class="rank-av">{{ residente[0] }}</div>
+              <div class="rank-av">{{ residente[0] | upper }}</div>
               <div>
                 <p class="rank-name">
                   {% if loop.index == 1 %}🥇
@@ -475,14 +453,14 @@
                   {{ residente }}
                 </p>
                 <div class="rank-bar">
-                  <div class="rank-fill" style="width:{{ [total * 10, 100]|min }}%"></div>
+                  <div class="rank-fill" style="width:{{ ((total / max_visitas) * 100) | round | int }}%"></div>
                 </div>
                 <p class="rank-desc">Residente activo</p>
               </div>
             </div>
             <div class="rank-count">
               <span class="rank-num">{{ total }}</span>
-              <small>visitas</small>
+              <small>visita{{ 's' if total != 1 else '' }}</small>
             </div>
           </div>
           {% endfor %}
@@ -493,12 +471,9 @@
           </div>
         {% endif %}
       </div>
-
     </div>
 
-    <!-- Vehículos frecuentes -->
     <div class="ad-card">
-
       <div class="rank-header">
         <div>
           <h2 class="section-title"><i class="fa-solid fa-car-side"></i> Vehículos frecuentes</h2>
@@ -528,36 +503,31 @@
           </div>
         {% endif %}
       </div>
-
     </div>
 
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       HISTORIAL DE VISITAS
-  ══════════════════════════════════════════════════════ -->
-
+  <!-- ══ HISTORIAL DE VISITAS ══ -->
   <div class="ad-card">
 
-    <h2 class="section-title">Historial de visitas</h2>
-    <p class="rank-sub" style="margin-bottom:1.25rem">
-      Registro operativo de accesos y visitas dentro del fraccionamiento.
-    </p>
+    <div class="hist-header">
+      <div>
+        <h2 class="section-title">Historial de visitas</h2>
+        <p class="rank-sub">Registro operativo de accesos y visitas dentro del fraccionamiento.</p>
+      </div>
+    </div>
 
     <!-- Filtro fechas -->
     <form method="GET" class="hist-filter">
       <input type="hidden" name="filtro" value="{{ filtro }}">
-
       <div class="hf-field">
         <label>Fecha inicio</label>
-        <input type="date" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla }}">
+        <input type="date" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla or '' }}">
       </div>
-
       <div class="hf-field">
         <label>Fecha fin</label>
-        <input type="date" name="fecha_fin_tabla" value="{{ fecha_fin_tabla }}">
+        <input type="date" name="fecha_fin_tabla" value="{{ fecha_fin_tabla or '' }}">
       </div>
-
       <div class="hf-actions">
         <button type="submit" class="btn-filter">
           <i class="fa-solid fa-magnifying-glass"></i> Filtrar
@@ -568,19 +538,14 @@
         </a>
         {% endif %}
       </div>
-
     </form>
 
-    <!-- Barra herramientas -->
+    <!-- Toolbar -->
     <div class="tbl-toolbar">
-
       <div class="tbl-search">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text"
-               id="searchTable"
-               placeholder="Buscar visitante, residente o placa...">
+        <input type="text" id="searchTable" placeholder="Buscar visitante, residente o placa...">
       </div>
-
       <div class="tbl-exports">
         <a href="{{ url_for('admin.exportar_visitas_pdf') }}" class="btn-export btn-pdf">
           <i class="fa-solid fa-file-pdf"></i> PDF
@@ -589,7 +554,6 @@
           <i class="fa-solid fa-file-excel"></i> Excel
         </a>
       </div>
-
     </div>
 
     <!-- Tabla -->
@@ -609,97 +573,96 @@
           </tr>
         </thead>
         <tbody>
-
           {% for visita in visitas_tabla %}
           <tr>
 
-            <!-- Visitante -->
             <td>
               <div class="vis-cell">
                 {% if visita.foto_visitante %}
                   <img src="{{ visita.foto_visitante.url }}"
                        class="vis-img zoomable-image"
-                       alt="Foto visitante">
+                       alt="Foto de {{ visita.nombre_visitante }}">
                 {% else %}
                   <div class="vis-av"><i class="fa-solid fa-user"></i></div>
                 {% endif %}
                 <div>
                   <p class="vis-name">{{ visita.nombre_visitante }}</p>
-                  <p class="vis-phone">{{ visita.telefono }}</p>
+                  <p class="vis-phone">{{ visita.telefono or '—' }}</p>
                 </div>
               </div>
             </td>
 
-            <!-- Residente -->
-            <td class="td-residente">{{ visita.residente_nombre }}</td>
+            <td class="td-residente">{{ visita.residente_nombre or '—' }}</td>
 
-            <!-- Destino -->
             <td>
               {% if visita.condominio %}
                 <p class="td-strong">{{ visita.condominio | title }}</p>
               {% endif %}
-              <p class="td-muted">Casa {{ visita.residencia_destino }}</p>
+              <p class="td-muted">Casa {{ visita.residencia_destino or '—' }}</p>
             </td>
 
-            <!-- Modalidad -->
             <td>
               {% if visita.modalidad_visita == "recurrente" %}
                 <span class="badge b-rec">Recurrente</span>
-                <p class="td-muted">{{ visita.dia_semana | capitalize }}</p>
+                {% if visita.dia_semana %}
+                  <p class="td-muted">{{ visita.dia_semana | capitalize }}</p>
+                {% endif %}
               {% elif visita.modalidad_visita == "temporal" %}
                 <span class="badge b-temp">Temporal</span>
               {% else %}
-                {{ visita.tipo_visita or "—" }}
+                <span class="td-muted">{{ visita.tipo_visita or "—" }}</span>
               {% endif %}
             </td>
 
-            <!-- Fecha -->
             <td class="td-fecha">
               {% if visita.fecha_visita %}
-                {{ visita.fecha_visita.split('-')[2] }}/{{ visita.fecha_visita.split('-')[1] }}/{{ visita.fecha_visita.split('-')[0] }}
-              {% else %}--{% endif %}
+                {% set partes = visita.fecha_visita.split('-') %}
+                {{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }}
+              {% else %}—{% endif %}
             </td>
 
-            <!-- Horario -->
             <td>
               <div class="horario">
-                <p><span class="h-label">Entrada:</span>
-                  {% if visita.hora_inicio %}
-                    {{ visita.hora_inicio }}{% if "AM" not in visita.hora_inicio and "PM" not in visita.hora_inicio %} PM{% endif %}
-                  {% else %}--{% endif %}
+                <p>
+                  <span class="h-label">Entrada:</span>
+                  {{ visita.hora_inicio or '—' }}
                 </p>
-                <p><span class="h-label">Salida:</span>
+                <p>
+                  <span class="h-label">Salida:</span>
                   {% if visita.hora_salida %}
-                    {{ visita.hora_salida }}{% if "AM" not in visita.hora_salida and "PM" not in visita.hora_salida %} PM{% endif %}
-                  {% else %}<span class="h-curso">En curso</span>{% endif %}
+                    {{ visita.hora_salida }}
+                  {% else %}
+                    <span class="h-curso">En curso</span>
+                  {% endif %}
                 </p>
               </div>
             </td>
 
-            <!-- Estado -->
             <td>
               {% if visita.estado == "activo" %}
                 <span class="badge b-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>
               {% elif visita.estado == "dentro" %}
                 <span class="badge b-in"><i class="fa-solid fa-check"></i> Dentro</span>
               {% elif visita.estado == "salida_registrada" %}
-                <span class="badge b-done">Finalizada</span>
+                <span class="badge b-done"><i class="fa-solid fa-flag-checkered"></i> Finalizada</span>
               {% else %}
                 <span class="badge b-danger">{{ visita.estado }}</span>
               {% endif %}
             </td>
 
-            <!-- Vehículo -->
             <td>
               {% if visita.vehiculo %}
                 <p class="veh-plate">{{ visita.vehiculo.placa }}</p>
-                <p class="td-muted">{{ visita.vehiculo.marca | title }}
+                <p class="td-muted">
+                  {{ visita.vehiculo.marca | title }}
                   {% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo }}{% endif %}
-                  · {{ visita.vehiculo.color | title }}</p>
-              {% else %}—{% endif %}
+                  · {{ visita.vehiculo.color | title }}
+                </p>
+              {% else %}
+                <span class="td-muted">Sin vehículo</span>
+              {% endif %}
             </td>
 
-            <!-- Foto placa -->
             <td>
               {% if visita.foto_placa %}
                 <img src="{{ visita.foto_placa.url }}"
@@ -713,6 +676,15 @@
           </tr>
           {% endfor %}
 
+          {% if not visitas_tabla %}
+          <tr>
+            <td colspan="9" class="tbl-empty">
+              <i class="fa-solid fa-inbox"></i>
+              <p>No hay visitas registradas para el período seleccionado.</p>
+            </td>
+          </tr>
+          {% endif %}
+
         </tbody>
       </table>
     </div>
@@ -721,16 +693,23 @@
     {% if total_paginas_tabla > 1 %}
     <div class="pagination">
       {% if pagina_tabla > 1 %}
-        <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla-1 }}" class="page-btn">
+        <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla - 1 }}"
+           class="page-btn" aria-label="Página anterior">
           <i class="fa-solid fa-chevron-left"></i>
         </a>
       {% endif %}
+
       {% for p in range(1, total_paginas_tabla + 1) %}
         <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ p }}"
-           class="page-btn {% if p == pagina_tabla %}active{% endif %}">{{ p }}</a>
+           class="page-btn {% if p == pagina_tabla %}active{% endif %}"
+           aria-label="Página {{ p }}" {% if p == pagina_tabla %}aria-current="page"{% endif %}>
+          {{ p }}
+        </a>
       {% endfor %}
+
       {% if pagina_tabla < total_paginas_tabla %}
-        <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla+1 }}" class="page-btn">
+        <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla + 1 }}"
+           class="page-btn" aria-label="Página siguiente">
           <i class="fa-solid fa-chevron-right"></i>
         </a>
       {% endif %}
@@ -741,40 +720,43 @@
 
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     MODAL IMAGEN
-══════════════════════════════════════════════════════ -->
-<div id="imgModal" class="img-modal" role="dialog" aria-modal="true" aria-label="Vista ampliada">
-  <button class="modal-close" id="modalClose" aria-label="Cerrar">&times;</button>
+<!-- ══ MODAL IMAGEN ══ -->
+<div id="imgModal" class="img-modal" role="dialog" aria-modal="true" aria-label="Vista ampliada de imagen">
+  <button class="modal-close" id="modalClose" aria-label="Cerrar imagen">&times;</button>
   <img id="modalImg" src="" alt="Imagen ampliada" class="modal-img">
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════════════════════ -->
+<!-- ══ SCRIPTS ══ -->
 <script>
-  /* ── Fecha ── */
-  document.getElementById('fechaActual').innerHTML = new Date().toLocaleString();
-
-  /* ── Modal ── */
-  const modal    = document.getElementById('imgModal');
-  const modalImg = document.getElementById('modalImg');
-  document.getElementById('modalClose').onclick = () => modal.classList.remove('open');
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
-  document.querySelectorAll('.zoomable-image').forEach(img => {
-    img.addEventListener('click', () => { modalImg.src = img.src; modal.classList.add('open'); });
+  document.getElementById('fechaActual').innerHTML = new Date().toLocaleString('es-MX', {
+    dateStyle: 'medium', timeStyle: 'short'
   });
 
-  /* ── Counter animation ── */
+  const modal    = document.getElementById('imgModal');
+  const modalImg = document.getElementById('modalImg');
+  const closeModal = () => modal.classList.remove('open');
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  document.querySelectorAll('.zoomable-image').forEach(img => {
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', () => {
+      modalImg.src = img.src;
+      modal.classList.add('open');
+    });
+  });
+
   document.querySelectorAll('.ast-num').forEach(el => {
     const final = parseInt(el.innerText) || 0;
+    if (final === 0) return;
     let cur = 0;
+    const step = Math.max(1, Math.ceil(final / 40));
     const t = setInterval(() => {
-      cur += Math.ceil(final / 30);
-      if (cur >= final) { cur = final; clearInterval(t); }
+      cur = Math.min(cur + step, final);
       el.innerText = cur;
-    }, 30);
+      if (cur >= final) clearInterval(t);
+    }, 25);
   });
 </script>
 
@@ -782,341 +764,149 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <script>
-  /* ── Socket ── */
   const socket = io();
   socket.on('nueva_visita', () => location.reload());
 
-  /* ── Chart defaults ── */
   Chart.defaults.color = '#94a3b8';
-  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
   Chart.defaults.plugins.legend.labels.usePointStyle = true;
   Chart.defaults.plugins.legend.labels.padding = 20;
   Chart.defaults.plugins.tooltip.backgroundColor = '#0f172a';
-  Chart.defaults.plugins.tooltip.titleColor = '#fff';
-  Chart.defaults.plugins.tooltip.bodyColor = '#cbd5e1';
+  Chart.defaults.plugins.tooltip.titleColor = '#f8fafc';
+  Chart.defaults.plugins.tooltip.bodyColor = '#94a3b8';
   Chart.defaults.plugins.tooltip.padding = 14;
-  Chart.defaults.plugins.tooltip.cornerRadius = 14;
+  Chart.defaults.plugins.tooltip.cornerRadius = 12;
+  Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,.08)';
+  Chart.defaults.plugins.tooltip.borderWidth = 1;
 
-  /* ── Gradiente línea ── */
   const ctxLine = document.getElementById('diasChart').getContext('2d');
-  const gradBlue = ctxLine.createLinearGradient(0, 0, 0, 400);
-  gradBlue.addColorStop(0, 'rgba(37,99,235,.50)');
+  const gradBlue = ctxLine.createLinearGradient(0, 0, 0, 340);
+  gradBlue.addColorStop(0, 'rgba(37,99,235,.40)');
   gradBlue.addColorStop(1, 'rgba(37,99,235,0)');
 
-  /* ── Donut estado ── */
   new Chart(document.getElementById('estadoChart'), {
-
-    type:'doughnut',
-
-    data:{
-        labels:['Pendientes','Dentro','Finalizadas'],
-
-        datasets:[{
-            data:[
-                {{ activas or 0 }},
-                {{ dentro or 0 }},
-                {{ salidas or 0 }}
-            ],
-
-            backgroundColor:[
-                '#2563eb',
-                '#22c55e',
-                '#f59e0b'
-            ],
-
-            borderColor:'#ffffff',
-            borderWidth:4,
-
-            borderRadius:6,
-            spacing:1,
-            hoverOffset:6
-        }]
+    type: 'doughnut',
+    data: {
+      labels: ['Pendientes', 'Dentro', 'Finalizadas'],
+      datasets: [{
+        data: [{{ activas or 0 }}, {{ dentro or 0 }}, {{ salidas or 0 }}],
+        backgroundColor: ['#f59e0b', '#22c55e', '#2563eb'],
+        borderColor: '#ffffff',
+        borderWidth: 4,
+        borderRadius: 6,
+        spacing: 2,
+        hoverOffset: 8
+      }]
     },
-
-    options:{
-
-        responsive:true,
-        maintainAspectRatio:false,
-
-        cutout:'68%',
-
-        plugins:{
-
-            legend:{
-                position:'bottom',
-
-                labels:{
-                    usePointStyle:true,
-                    pointStyle:'circle',
-                    padding:20,
-                    boxWidth:10,
-                    font:{
-                        size:12,
-                        weight:'600'
-                    }
-                }
-            },
-
-            tooltip:{
-                displayColors:false
-            }
-        }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 10, font: { size: 12, weight: '600' } }
+        },
+        tooltip: { displayColors: false }
+      }
     }
-});
+  });
 
-  /* ── Barras ── */
   new Chart(document.getElementById('actividadChart'), {
-
-    type:'bar',
-
-    data:{
-
-        labels:[
-            'Total',
-            'Pendientes',
-            'Dentro',
-            'Salidas'
-        ],
-
-        datasets:[{
-
-            data:[
-                {{ total_visitas or 0 }},
-                {{ activas or 0 }},
-                {{ dentro or 0 }},
-                {{ salidas or 0 }}
-            ],
-
-            backgroundColor:[
-                '#2563eb',
-                '#60a5fa',
-                '#22c55e',
-                '#f59e0b'
-            ],
-
-            categoryPercentage:0.50,
-            barPercentage:0.70,
-
-            maxBarThickness:48,
-
-            borderRadius:{
-                topLeft:12,
-                topRight:12
-            },
-
-            borderSkipped:false
-        }]
+    type: 'bar',
+    data: {
+      labels: ['Total', 'Pendientes', 'Dentro', 'Salidas', 'Rechazados'],
+      datasets: [{
+        data: [{{ total_visitas or 0 }}, {{ activas or 0 }}, {{ dentro or 0 }}, {{ salidas or 0 }}, {{ rechazados or 0 }}],
+        backgroundColor: ['#2563eb', '#f59e0b', '#22c55e', '#8b5cf6', '#ef4444'],
+        categoryPercentage: 0.55,
+        barPercentage: 0.70,
+        maxBarThickness: 52,
+        borderRadius: { topLeft: 10, topRight: 10 },
+        borderSkipped: false
+      }]
     },
-
-    options:{
-
-        responsive:true,
-        maintainAspectRatio:false,
-
-        plugins:{
-            legend:{display:false}
-        },
-
-        scales:{
-
-            x:{
-                grid:{display:false},
-                ticks:{
-                    color:'#64748b',
-                    font:{
-                        size:12,
-                        weight:'600'
-                    }
-                }
-            },
-
-            y:{
-                beginAtZero:true,
-
-                ticks:{
-                    stepSize:2,
-                    color:'#94a3b8'
-                },
-
-                grid:{
-                    color:'rgba(148,163,184,.08)'
-                }
-            }
-        }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 12, weight: '600' } } },
+        y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.07)' } }
+      }
     }
-});
+  });
 
-  /* ── Doughnut tipos ── */
   new Chart(document.getElementById('tiposChart'), {
-
-    type:'doughnut',
-
-    data:{
-
-        labels:{{ tipo_labels|tojson }},
-
-        datasets:[{
-
-            data:{{ tipo_data|tojson }},
-
-            backgroundColor:[
-                '#2563eb',
-                '#38bdf8',
-                '#22c55e',
-                '#f59e0b',
-                '#ef4444',
-                '#8b5cf6'
-            ],
-
-            borderColor:'#ffffff',
-            borderWidth:4,
-
-            borderRadius:6,
-            spacing:1,
-
-            hoverOffset:6
-        }]
+    type: 'doughnut',
+    data: {
+      labels: {{ tipo_labels | tojson }},
+      datasets: [{
+        data: {{ tipo_data | tojson }},
+        backgroundColor: ['#2563eb', '#38bdf8', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'],
+        borderColor: '#ffffff',
+        borderWidth: 4,
+        borderRadius: 6,
+        spacing: 2,
+        hoverOffset: 8
+      }]
     },
-
-    options:{
-
-        responsive:true,
-        maintainAspectRatio:false,
-
-        cutout:'68%',
-
-        plugins:{
-
-            legend:{
-
-                position:'bottom',
-
-                labels:{
-                    usePointStyle:true,
-                    pointStyle:'circle',
-                    padding:20,
-
-                    font:{
-                        size:12,
-                        weight:'600'
-                    }
-                }
-            }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, font: { size: 12, weight: '600' } }
         }
+      }
     }
-});
+  });
 
-  /* ── Línea días ── */
   new Chart(document.getElementById('diasChart'), {
-
-    type:'line',
-
-    data:{
-
-        labels:{{ dias_labels|tojson }},
-
-        datasets:[{
-
-            label:'Accesos',
-
-            data:{{ dias_data|tojson }},
-
-            borderColor:'#2563eb',
-            backgroundColor:gradBlue,
-
-            fill:true,
-
-            tension:0.35,
-
-            borderWidth:4,
-
-            pointRadius:4,
-
-            pointHoverRadius:7,
-
-            pointBackgroundColor:'#ffffff',
-
-            pointBorderColor:'#2563eb',
-
-            pointBorderWidth:2
-        }]
+    type: 'line',
+    data: {
+      labels: {{ dias_labels | tojson }},
+      datasets: [{
+        label: 'Accesos',
+        data: {{ dias_data | tojson }},
+        borderColor: '#2563eb',
+        backgroundColor: gradBlue,
+        fill: true,
+        tension: 0.38,
+        borderWidth: 3,
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#2563eb',
+        pointBorderWidth: 2.5
+      }]
     },
-
-    options:{
-
-        responsive:true,
-        maintainAspectRatio:false,
-
-        interaction:{
-            intersect:false,
-            mode:'index'
-        },
-
-        plugins:{
-            legend:{display:false}
-        },
-
-        scales:{
-
-            x:{
-                grid:{display:false},
-
-                ticks:{
-                    color:'#64748b',
-                    font:{
-                        size:12,
-                        weight:'600'
-                    }
-                }
-            },
-
-            y:{
-                beginAtZero:true,
-
-                ticks:{
-                    color:'#94a3b8',
-                    stepSize:1
-                },
-
-                grid:{
-                    color:'rgba(148,163,184,.08)'
-                }
-            }
-        }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 12, weight: '600' } } },
+        y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1, precision: 0 }, grid: { color: 'rgba(148,163,184,.07)' } }
+      }
     }
-});
+  });
 </script>
 
-<!-- BUSCADOR TABLA -->
 <script>
-
-document.getElementById("searchTable").addEventListener("keyup", function () {
-
-    const filtro = this.value.toLowerCase();
-
-    document.querySelectorAll(".ad-table tbody tr").forEach(fila => {
-
-        const visitante =
-            fila.querySelector(".vis-name")?.textContent.toLowerCase() || "";
-
-        const residente =
-            fila.querySelector(".td-residente")?.textContent.toLowerCase() || "";
-
-        const placa =
-            fila.querySelector(".veh-plate")?.textContent.toLowerCase() || "";
-
-        const coincide =
-            visitante.includes(filtro) ||
-            residente.includes(filtro) ||
-            placa.includes(filtro);
-
-        fila.style.display = coincide ? "" : "none";
-
-    });
-
+document.getElementById('searchTable').addEventListener('input', function () {
+  const filtro = this.value.toLowerCase().trim();
+  document.querySelectorAll('.ad-table tbody tr').forEach(fila => {
+    if (fila.querySelector('.tbl-empty')) return;
+    const visitante = fila.querySelector('.vis-name')?.textContent.toLowerCase() || '';
+    const residente = fila.querySelector('.td-residente')?.textContent.toLowerCase() || '';
+    const placa     = fila.querySelector('.veh-plate')?.textContent.toLowerCase() || '';
+    fila.style.display = (!filtro || visitante.includes(filtro) || residente.includes(filtro) || placa.includes(filtro)) ? '' : 'none';
+  });
 });
-
-
 </script>
 
 {% endblock %}
