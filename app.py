@@ -1,3 +1,12 @@
+from routes.api.auth_api import auth_api
+from routes.api.admin_api import admin_api
+from routes.api.residente_api import residente_api
+from routes.api.guardia_api import guardia_api
+from routes.api.qr_api import qr_api
+from routes.api.reportes_api import reportes_api
+from routes.api.upload_api import upload_api
+
+
 from flask import Flask, render_template, session, request
 from config import Config
 from extensions import mongo, socketio
@@ -105,6 +114,24 @@ def create_app():
     app.register_blueprint(resident_bp)
     app.register_blueprint(guard_bp)
     app.register_blueprint(admin_bp)
+
+    # ===========================
+    # APIS
+    # ===========================
+
+    app.register_blueprint(auth_api)
+
+    app.register_blueprint(admin_api)
+
+    app.register_blueprint(residente_api)
+
+    app.register_blueprint(guardia_api)
+
+    app.register_blueprint(qr_api)
+
+    app.register_blueprint(reportes_api)
+
+    app.register_blueprint(upload_api)
 
     return app
 
