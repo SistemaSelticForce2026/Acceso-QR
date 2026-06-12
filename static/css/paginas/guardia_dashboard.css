@@ -1,784 +1,620 @@
-/* =========================================================
-   CONTROL ACCESO
-========================================================= */
+/* ============================================================ */
+/* GUARD DASHBOARD                                            */
+/* ============================================================ */
 
-.scan-mode-switch {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-top: 18px;
+/* ---- Flat card base --------------------------------------- */
+.grd-glass-card {
+    background: #fff;
+    border: 1px solid #e7eaef;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04), 0 8px 24px -16px rgba(20, 30, 60, 0.25);
+    border-radius: 20px;
 }
 
-/* =========================================================
-   VISITANTE
-========================================================= */
+/* ============================================================ */
+/* PAGE HEADER                                                 */
+/* ============================================================ */
 
-.vis-cell {
+.grd-page-header {
+    margin-bottom: 24px;
+}
+
+.grd-eyebrow {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #2e5bff;
+    margin: 0 0 8px;
+}
+
+.grd-page-title {
+    font-size: 30px;
+    font-weight: 800;
+    color: #14192a;
+    letter-spacing: -0.025em;
+    margin: 0 0 6px;
+    line-height: 1.15;
+}
+
+.grd-page-sub {
+    font-size: 15px;
+    color: #77767d;
+    margin: 0;
+}
+
+/* ============================================================ */
+/* STATS                                                       */
+/* ============================================================ */
+
+.grd-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+.grd-stat-card {
+    background: #fff;
+    border: 1px solid #e7eaef;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04), 0 8px 24px -16px rgba(20, 30, 60, 0.25);
+    border-radius: 18px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.grd-stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+    margin-bottom: 14px;
+}
+
+.grd-stat-icon.blue   { background: oklch(0.95 0.045 262); color: oklch(0.55 0.18 262); }
+.grd-stat-icon.green  { background: oklch(0.94 0.05 155);  color: oklch(0.52 0.13 155); }
+.grd-stat-icon.purple { background: oklch(0.95 0.045 295); color: oklch(0.52 0.17 295); }
+.grd-stat-icon.red    { background: oklch(0.95 0.045 30);  color: oklch(0.56 0.18 25); }
+
+.grd-stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #131829;
+    letter-spacing: -0.03em;
+    margin: 0 0 6px;
+    line-height: 1;
+}
+
+.grd-stat-label {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #2a3142;
+    margin: 0 0 3px;
+}
+
+.grd-stat-sub {
+    font-size: 12.5px;
+    color: #77767d;
+    margin: 0;
+}
+
+/* ============================================================ */
+/* VISITS SECTION                                              */
+/* ============================================================ */
+
+.grd-visits-section {
+    display: flex;
+    flex-direction: column;
     gap: 16px;
 }
 
-.vis-av {
-    width: 120px;
-    height: 120px;
-    flex-shrink: 0;
-    border-radius: 16px;
-    overflow: hidden;
-    background: #fff;
-    border: 2px solid #e2e8f0;
+.grd-visits-header {
+    margin-bottom: 4px;
 }
 
-.vis-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: center;
-    padding: 6px;
-    box-sizing: border-box;
-    cursor: pointer;
-    transition: .25s ease;
+.grd-visits-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #14192a;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
 }
 
-.vis-img:hover {
-    transform: scale(1.05);
-}
-
-.vis-name {
-    margin: 0 0 6px;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.vis-phone {
+.grd-visits-sub {
+    font-size: 13.5px;
+    color: #77767d;
     margin: 0;
-    color: #64748b;
-    font-size: .9rem;
 }
 
-/* =========================================================
-   MODALIDAD
-========================================================= */
+/* ---- Filter card ------------------------------------------- */
+.grd-filter-card {
+    padding: 18px;
+    margin-bottom: 6px;
+}
 
-.modalidad-card {
+.grd-filter-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 14px;
+    align-items: flex-end;
+}
+
+.grd-filter-field {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px;
-    border-radius: 18px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    gap: 7px;
+    flex: 1;
+    min-width: 0;
 }
 
-.modalidad-badge {
+.grd-filter-label {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #8a93a6;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.grd-filter-input {
+    height: 44px;
+    padding: 0 13px;
+    border: 1px solid #dde2ec;
+    border-radius: 11px;
+    background: #fbfcfe;
+    font-size: 14px;
+    color: #14192a;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.grd-filter-input:focus {
+    border-color: #2e5bff;
+    box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.10);
+    background: white;
+}
+
+/* ---- Search wrap (inline icon) ----------------------------- */
+.grd-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.grd-search-ico {
+    position: absolute;
+    left: 13px;
+    color: #97a1b4;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.grd-search-wrap .grd-filter-input {
+    padding-left: 36px;
+}
+
+.grd-filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.grd-filter-btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-radius: 999px;
-    font-size: .85rem;
+    gap: 7px;
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 11px;
+    font-size: 14px;
     font-weight: 700;
-    width: max-content;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, .06);
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    border: none;
+    transition: background 0.2s, transform 0.12s;
 }
 
-.modalidad-badge.temporal {
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    color: #1d4ed8;
+.grd-filter-btn:hover {
+    transform: translateY(-1px);
 }
 
-.modalidad-badge.recurrente {
-    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-    color: #15803d;
+.grd-filter-btn.primary {
+    background: #14192a;
+    color: white;
 }
 
-.modalidad-description {
-    font-size: .88rem;
-    color: #64748b;
-    line-height: 1.6;
+.grd-filter-btn.primary:hover {
+    background: #212840;
 }
 
-/* =========================================================
-   RESIDENCIA
-========================================================= */
-
-.residencia-card {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 14px;
-    border-radius: 18px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+.grd-filter-btn.secondary {
+    background: #eceef0;
+    color: #46464c;
 }
 
-.residencia-condominio,
-.residencia-casa {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    color: #334155;
+.grd-filter-btn.secondary:hover {
+    background: #e0e3e5;
 }
 
-/* =========================================================
-   HORARIOS
-========================================================= */
-
-.schedule-card {
-    min-width: 190px;
+/* ---- Visit list -------------------------------------------- */
+.grd-visit-list {
     display: flex;
     flex-direction: column;
     gap: 14px;
-    padding: 16px;
-    border-radius: 18px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
 }
 
-.schedule-date,
-.schedule-time,
-.schedule-exit,
-.schedule-pending {
+/* ---- Visit card -------------------------------------------- */
+.grd-visit-card {
+    padding: 18px 20px;
     display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    line-height: 1.5;
+    align-items: flex-start;
+    gap: 18px;
+    transition: transform 0.14s, box-shadow 0.14s;
 }
 
-.schedule-date {
-    color: #0f172a;
+.grd-visit-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.05), 0 18px 40px -22px rgba(20, 30, 60, 0.5);
 }
 
-.schedule-time {
-    color: #2563eb;
-    gap: 6px;
+.grd-visit-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
-.schedule-pending {
-    color: #d97706;
+.grd-visit-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
 }
 
-.schedule-exit {
-    color: #16a34a;
-}
-
-.schedule-date i,
-.schedule-time i,
-.schedule-exit i,
-.schedule-pending i {
+.grd-visit-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
     flex-shrink: 0;
+    background: #eceef0;
+    border: 1px solid #e7eaef;
 }
 
-.inline-hour {
-    font-weight: 700;
-    white-space: nowrap;
+.grd-visit-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s;
 }
 
-.schedule-exit,
-.schedule-pending {
-    margin-top: 2px;
+.grd-visit-photo:hover {
+    transform: scale(1.05);
 }
 
-/* =========================================================
-   VEHICULO
-========================================================= */
-
-.vehiculo-card {
+.grd-visit-photo-placeholder {
+    width: 100%;
+    height: 100%;
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 14px;
-    border-radius: 18px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-}
-
-.vehiculo-placa {
-    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    font-weight: 800;
-    font-size: 1rem;
-    color: #0f172a;
-    background: white;
-    padding: 10px 14px;
-    border-radius: 12px;
-    width: max-content;
-    box-shadow: 0 6px 15px rgba(15, 23, 42, .08);
+    justify-content: center;
+    color: #77767d;
+    font-size: 20px;
 }
 
-.vehiculo-info {
+.grd-visit-primary {
+    flex: 1;
+    min-width: 0;
+}
+
+.grd-visit-name-row {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+}
+
+.grd-visit-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #161b2b;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.grd-visit-phone {
+    font-size: 13px;
+    color: #77767d;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.grd-visit-body {
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
-.vehiculo-info span {
+/* ---- Plate (right side) ------------------------------------ */
+.grd-visit-placa {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 9px;
+}
+
+.grd-placa-thumb {
+    width: 110px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #e7eaef;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.grd-placa-thumb:hover {
+    transform: scale(1.03);
+}
+
+/* ---- Badges ------------------------------------------------ */
+.grd-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.grd-badge.success { background: rgba(0, 152, 105, 0.12);  color: #009869; }
+.grd-badge.warning { background: rgba(217, 119, 6, 0.12);  color: #b45309; }
+.grd-badge.danger  { background: rgba(186, 26, 26, 0.12);  color: #ba1a1a; }
+.grd-badge.neutral { background: #f3f5f9; color: #5a6278; border: 1px solid #e7eaf1; }
+
+/* ---- Chips ------------------------------------------------- */
+.grd-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #e7eaf1;
+}
+
+.grd-chip.recurrente { background: rgba(46, 91, 255, 0.08); border-color: rgba(46, 91, 255, 0.20); color: #2e5bff; }
+.grd-chip.temporal   { background: rgba(217, 119, 6, 0.08); border-color: rgba(217, 119, 6, 0.20); color: #b45309; }
+.grd-chip.neutral    { background: #f3f5f9; border-color: #e7eaf1; color: #5a6278; }
+
+/* ---- Empty state ------------------------------------------- */
+.grd-empty {
+    padding: 48px 24px;
+    text-align: center;
+}
+
+.grd-empty-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: #f3f5f9;
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: #475569;
+    justify-content: center;
+    font-size: 22px;
+    color: #77767d;
+    margin: 0 auto 16px;
 }
 
-/* =========================================================
-   FOTO PLACA
-========================================================= */
+.grd-empty-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #14192a;
+    margin: 0 0 6px;
+}
 
-.placa-thumb {
-    width: 180px;
-    height: 110px;
-    box-sizing: border-box;
-    object-fit: contain;
-    object-position: center;
-    padding: 4px;
+.grd-empty-sub {
+    font-size: 13px;
+    color: #77767d;
+    margin: 0;
+}
+
+/* ---- Pagination -------------------------------------------- */
+.grd-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 10px 0;
+    margin-top: 8px;
+}
+
+.grd-page-btn {
+    min-width: 42px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #4a5266;
+    text-decoration: none;
     background: #fff;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    cursor: pointer;
-    transition: .30s ease;
+    border: 1px solid #e7eaef;
+    transition: border-color 0.15s, color 0.15s;
 }
 
-.placa-thumb:hover {
-    transform: scale(1.05);
-    box-shadow: 0 12px 25px rgba(15, 23, 42, .15);
+.grd-page-btn:hover:not(.active) {
+    border-color: #2e5bff;
+    color: #2e5bff;
 }
 
-/* =========================================================
-   MODAL IMAGEN
-========================================================= */
+.grd-page-btn.active {
+    background: #14192a;
+    color: white;
+    border-color: #14192a;
+}
 
-.image-modal {
+/* ---- Toggle segment (scanner page) ------------------------- */
+.grd-scan-toggle {
+    padding: 6px;
+    margin-bottom: 20px;
+}
+
+.grd-access-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.grd-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 14px;
+    border-radius: 11px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #6b7488;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    border: none;
+}
+
+.grd-toggle-btn.entry.active,
+.grd-toggle-btn.entry:not(.inactive) {
+    background: #2e5bff;
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgba(46, 91, 255, 0.60);
+}
+
+.grd-toggle-btn.exit.active,
+.grd-toggle-btn.exit:not(.inactive) {
+    background: #2e5bff;
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgba(46, 91, 255, 0.60);
+}
+
+.grd-toggle-btn.entry.inactive,
+.grd-toggle-btn.exit.inactive {
+    background: transparent;
+    color: #6b7488;
+    box-shadow: none;
+}
+
+.grd-toggle-btn.entry.inactive:hover,
+.grd-toggle-btn.exit.inactive:hover {
+    background: #f3f5f9;
+    color: #2a3142;
+}
+
+/* ---- Image zoom modal -------------------------------------- */
+.grd-image-modal {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, .92);
+    background: rgba(1, 2, 17, 0.75);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 9999;
-    justify-content: center;
     align-items: center;
-    padding: 30px;
+    justify-content: center;
+    padding: 20px;
 }
 
-.modal-image {
-    max-width: 98vw;
-    max-height: 98vh;
-    width: auto;
-    height: auto;
+.grd-modal-img {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 16px;
     object-fit: contain;
-    border-radius: 20px;
-    image-rendering: auto;
-    backface-visibility: hidden;
-    transform: translateZ(0);
+    box-shadow: 0 24px 60px rgba(1, 2, 17, 0.50);
 }
 
-.close-modal {
+.grd-modal-close {
     position: absolute;
-    top: 25px;
-    right: 35px;
+    top: 20px;
+    right: 24px;
+    font-size: 28px;
     color: white;
-    font-size: 2.4rem;
     cursor: pointer;
-    transition: .25s;
+    line-height: 1;
+    opacity: 0.80;
+    transition: opacity 0.2s;
 }
 
-.close-modal:hover {
-    transform: scale(1.15);
+.grd-modal-close:hover {
+    opacity: 1;
 }
 
-/* =========================================================
-   EFECTO PREMIUM
-========================================================= */
+/* ============================================================ */
+/* RESPONSIVE                                                  */
+/* ============================================================ */
 
-.modalidad-card:hover,
-.residencia-card:hover,
-.schedule-card:hover,
-.vehiculo-card:hover {
-    transform: translateY(-3px);
-    transition: .25s;
-    box-shadow: 0 15px 35px rgba(15, 23, 42, .08);
-}
-
-/* =========================================================
-   CONTROL CARD
-========================================================= */
-
-.control-card {
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 32px;
-    border-radius: 28px;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, .08);
-}
-
-.control-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 5px;
-    background: linear-gradient(90deg, #2563eb, #38bdf8);
-}
-
-.control-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 22px;
-    margin-bottom: 25px;
-}
-
-.control-icon {
-    width: 82px;
-    height: 82px;
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #2563eb, #60a5fa);
-    color: white;
-    font-size: 2rem;
-    flex-shrink: 0;
-    box-shadow: 0 15px 35px rgba(37, 99, 235, .25);
-}
-
-.control-header h2 {
-    margin: 0 0 8px;
-    font-size: 2rem;
-    font-weight: 800;
-    color: #0f172a;
-}
-
-.control-header .small {
-    margin: 0;
-    max-width: 700px;
-    line-height: 1.8;
-    font-size: 1rem;
-    color: #475569;
-}
-
-/* =========================================================
-   BOTONES ESCANEO
-========================================================= */
-
-.scan-mode-switch {
-    margin-top: 30px;
-}
-
-.scan-mode-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 15px 24px;
-    border-radius: 14px;
-    font-weight: 700;
-    text-decoration: none;
-    transition: .25s;
-    min-width: 220px;
-    justify-content: center;
-    box-shadow: 0 10px 25px rgba(15, 23, 42, .06);
-}
-
-.scan-mode-btn.active {
-    background: #dcfce7;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
-}
-
-.scan-mode-btn.exit {
-    background: #fee2e2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-}
-
-.scan-mode-btn:hover {
-    transform: translateY(-3px);
-}
-
-/* =========================================================
-   PANEL GUARDIA
-========================================================= */
-
-.stats {
-    margin-bottom: 32px;
-}
-
-/* =========================================================
-   TABLA VISITAS
-========================================================= */
-
-.table-container {
-    margin-top: 24px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.table-container table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 12px;
-}
-
-.table-container th {
-    background: #0f172a;
-    color: white;
-    padding: 16px;
-    font-size: .9rem;
-}
-
-.table-container td {
-    background: white;
-    padding: 16px;
-    vertical-align: middle;
-    border-top: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.table-container td:first-child {
-    border-left: 1px solid #e2e8f0;
-    border-radius: 16px 0 0 16px;
-}
-
-.table-container td:last-child {
-    border-right: 1px solid #e2e8f0;
-    border-radius: 0 16px 16px 0;
-}
-
-.table-container tbody tr:hover {
-    transform: translateY(-2px);
-}
-
-/* =========================================================
-   PAGINACION
-========================================================= */
-
-.pagination-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-}
-
-.pagination {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.page-btn {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    text-decoration: none;
-    font-weight: 700;
-    color: #475569;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    transition: .25s ease;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, .05);
-}
-
-.page-btn:hover {
-    transform: translateY(-3px);
-    color: #2563eb;
-    border-color: #93c5fd;
-}
-
-.page-btn.active {
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
-    color: white;
-    border-color: #2563eb;
-    box-shadow: 0 12px 25px rgba(37, 99, 235, .25);
-}
-
-/* =========================================================
-   FILTRO FECHAS
-========================================================= */
-
-.filter-form {
-    margin: 25px 0 30px;
-}
-
-.filter-group {
-    display: flex;
-    align-items: flex-end;
-    gap: 18px;
-    flex-wrap: wrap;
-}
-
-.filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.filter-field label {
-    font-size: .9rem;
-    font-weight: 700;
-    color: #475569;
-}
-
-.filter-field input {
-    width: 220px;
-    padding: 12px 16px;
-    border-radius: 14px;
-    border: 1px solid #cbd5e1;
-    background: white;
-    font-size: .95rem;
-}
-
-.filter-field input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, .10);
-}
-
-.filter-actions {
-    display: flex;
-    gap: 12px;
-}
-
-.btn-filter {
-    border: none;
-    background: #2563eb;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-filter:hover {
-    background: #1d4ed8;
-}
-
-.btn-clear {
-    text-decoration: none;
-    background: #f8fafc;
-    color: #475569;
-    border: 1px solid #cbd5e1;
-    padding: 12px 18px;
-    border-radius: 14px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-clear:hover {
-    background: #e2e8f0;
-}
-
-/* =========================================================
-   RESPONSIVE — TABLET  (≤ 1024px)
-========================================================= */
-
-@media (max-width: 1024px) {
-
-    .control-header h2 {
-        font-size: 1.6rem;
+@media (min-width: 640px) {
+    .grd-stats {
+        grid-template-columns: repeat(4, 1fr);
     }
 
-    .scan-mode-btn {
-        min-width: 180px;
-        padding: 13px 18px;
-    }
-
-    .filter-field input {
-        width: 190px;
-    }
-
-    .schedule-card {
-        min-width: 160px;
-    }
-
-    .placa-thumb {
-        width: 150px;
-        height: 90px;
-    }
-}
-
-/* =========================================================
-   RESPONSIVE — MÓVIL  (≤ 768px)
-========================================================= */
-
-@media (max-width: 768px) {
-
-    /* Control header */
-    .control-header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .control-header h2 {
-        font-size: 1.4rem;
-    }
-
-    .control-header .small {
-        font-size: .92rem;
-    }
-
-    .control-icon {
+    .grd-visit-avatar {
         width: 68px;
         height: 68px;
-        font-size: 1.6rem;
     }
 
-    /* Botones escaneo */
-    .scan-mode-switch {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .scan-mode-btn {
-        min-width: 100%;
-        padding: 14px 16px;
-    }
-
-    /* Visitante */
-    .vis-cell {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .vis-av {
-        width: 90px;
-        height: 90px;
-    }
-
-    /* Placa */
-    .placa-thumb {
-        width: 100%;
-        max-width: 260px;
-        height: auto;
-    }
-
-    /* Filtro */
-    .filter-group {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filter-field input {
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .filter-actions {
-        flex-direction: column;
-    }
-
-    .btn-filter,
-    .btn-clear {
-        width: 100%;
-        justify-content: center;
-    }
-
-    /* Tabla */
-    .table-container {
-        margin-top: 16px;
-    }
-
-    .table-container th,
-    .table-container td {
-        padding: 12px 10px;
-        font-size: .85rem;
-    }
-
-    /* Horario */
-    .schedule-card {
-        min-width: unset;
-        width: 100%;
-    }
-
-    /* Paginación */
-    .pagination {
-        gap: 6px;
-    }
-
-    .page-btn {
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
-    }
-
-    /* Cards generales */
-    .modalidad-card,
-    .residencia-card,
-    .vehiculo-card {
-        padding: 12px;
-    }
-
-    /* Modal imagen */
-    .image-modal {
-        padding: 16px;
-    }
-
-    .close-modal {
-        top: 14px;
-        right: 18px;
-        font-size: 2rem;
+    .grd-placa-thumb {
+        width: 130px;
+        height: 84px;
     }
 }
 
-/* =========================================================
-   RESPONSIVE — MÓVIL PEQUEÑO  (≤ 480px)
-========================================================= */
-
-@media (max-width: 480px) {
-
-    .control-header h2 {
-        font-size: 1.2rem;
+@media (max-width: 560px) {
+    .grd-visit-card {
+        flex-direction: column;
     }
 
-    .control-icon {
-        width: 58px;
-        height: 58px;
-        font-size: 1.4rem;
-        border-radius: 18px;
+    .grd-visit-placa {
+        align-items: flex-start;
+        border-top: 1px solid #e7eaef;
+        padding-top: 14px;
+        width: 100%;
     }
 
-    .scan-mode-btn {
-        font-size: .88rem;
-        padding: 12px 14px;
+    .grd-placa-thumb {
+        width: 100%;
+        max-width: 260px;
+        height: 80px;
+    }
+}
+
+@media (min-width: 1040px) {
+    .grd-visit-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
     }
 
-    .modalidad-badge {
-        font-size: .78rem;
-        padding: 8px 12px;
-    }
-
-    .table-container th,
-    .table-container td {
-        padding: 10px 8px;
-        font-size: .8rem;
-    }
-
-    .page-btn {
-        width: 34px;
-        height: 34px;
-        font-size: .82rem;
-    }
-
-    .vehiculo-placa {
-        font-size: .9rem;
-        padding: 8px 12px;
-    }
-
-    .vis-name {
-        font-size: .95rem;
-    }
-
-    .vis-phone {
-        font-size: .82rem;
+    .grd-visit-list > .grd-empty {
+        grid-column: 1 / -1;
     }
 }

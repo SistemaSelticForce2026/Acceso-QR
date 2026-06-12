@@ -1,9 +1,8 @@
-{% extends 'layout.html' %}
+{% extends 'layout_guardia.html' %}
 
 {% block extra_css %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/escaner_qr.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/guardia_dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/escaner_qr.css') }}">
 {% endblock %}
 
 {% set modo = modo|default('entrada') %}
@@ -16,49 +15,28 @@ filename='css/paginas/escaner_qr.css') }}">
     <!-- HEADER -->
   <!-- =========== -->
 
-    <div class="page-header access-header">
-
-        <div>
-
-            <h1>
-                {% if modo == 'salida' %}
-                <i class="fa-solid fa-door-open"></i>
-                Escáner de salida
-                {% else %}
-                <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                Escáner de entrada
-                {% endif %}
-            </h1>
-
-            <p class="page-subtitle">
-                {% if modo == 'salida' %}
-                Escanee el QR para registrar la salida del visitante que está dentro del fraccionamiento.
-                {% else %}
-                Escanee el QR para autorizar el ingreso del visitante al fraccionamiento.
-                {% endif %}
-            </p>
-
-        </div>
-
-        <div class="live-status scan-mode-badge {% if modo == 'salida' %}exit-mode{% else %}entry-mode{% endif %}">
-            <span class="pulse-dot"></span>
-            {% if modo == 'salida' %}Salida activa{% else %}Modo entrada{% endif %}
-        </div>
-
+    <div class="grd-page-header">
+        <p class="grd-eyebrow">Verificar acceso</p>
+        <h1 class="grd-page-title">{% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}</h1>
+        <p class="grd-page-sub">
+            {% if modo == 'salida' %}Escanea el QR para confirmar la salida del visitante.
+            {% else %}Escanea el QR para autorizar el ingreso del visitante.{% endif %}
+        </p>
     </div>
 
-    <div class="scan-mode-switch">
-        <a href="{{ url_for('guard.scan_entrada') }}"
-           class="scan-mode-btn {% if modo != 'salida' %}active{% endif %}">
-            <i class="fa-solid fa-arrow-right-to-bracket"></i> Escanear entrada
-        </a>
-        <a href="{{ url_for('guard.scan_salida') }}"
-           class="scan-mode-btn exit {% if modo == 'salida' %}active{% endif %}">
-            <i class="fa-solid fa-door-open"></i> Escanear salida
-        </a>
-        <a href="{{ url_for('guard.dashboard') }}" class="scan-mode-btn secondary">
-            <i class="fa-solid fa-house"></i> Dashboard
-        </a>
+    <div class="grd-glass-card grd-scan-toggle">
+        <div class="grd-access-toggle">
+            <a href="{{ url_for('guard.scan_entrada') }}"
+               class="grd-toggle-btn entry {% if modo == 'salida' %}inactive{% endif %}">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                Entrada
+            </a>
+            <a href="{{ url_for('guard.scan_salida') }}"
+               class="grd-toggle-btn exit {% if modo != 'salida' %}inactive{% endif %}">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Salida
+            </a>
+        </div>
     </div>
 
 
@@ -73,119 +51,138 @@ filename='css/paginas/escaner_qr.css') }}">
 
     <div class="card scanner-wrapper">
 
-        <div class="scanner-top">
+        <div class="grd-scanwrap">
 
-            <div>
+            <!-- Kiosk (izquierda) -->
+            <div class="grd-scan-kiosk">
 
-                <h2>
-                    <i class="fa-solid fa-qrcode"></i>
-                    {% if modo == 'salida' %}Escanear QR — Salida{% else %}Escanear QR — Entrada{% endif %}
-                </h2>
+                <div class="scanner-top">
 
-                <p class="small" id="scannerMessage">
-                    {% if modo == 'salida' %}
-                    Coloque el QR del visitante que sale del fraccionamiento.
-                    {% else %}
-                    Coloque el QR del visitante que ingresa al fraccionamiento.
-                    {% endif %}
-                </p>
+                    <div>
 
-            </div>
+                        <h2>
+                            <i class="fa-solid fa-qrcode"></i>
+                            Escanear QR
+                        </h2>
 
-            <div class="camera-status">
+                        <p class="small" id="scannerMessage"></p>
 
-                <span class="status-circle"></span>
+                    </div>
 
-                Cámara operativa
+                    <div class="camera-status scanner-cam ok" id="camStatus">
+                        <span class="sc-cam-dot"></span>
+                        <span class="sc-cam-txt">Cámara operativa</span>
+                    </div>
 
-            </div>
+                </div>
 
-        </div>
+                <!-- CAMARA -->
 
-        <!-- =========== -->
-        <!-- CAMARA -->
-        <!-- =========== -->
+                <div class="scanner-camera-box">
 
-        <div class="scanner-camera-box">
+                    <div id="reader"></div>
 
-            <div id="reader"></div>
+                    <div class="scanner-overlay">
 
-            <div class="scanner-overlay">
+                        <div class="scanner-target">
+                            <span class="sc-corner tl"></span>
+                            <span class="sc-corner tr"></span>
+                            <span class="sc-corner bl"></span>
+                            <span class="sc-corner br"></span>
+                            <span class="sc-scan-line"></span>
+                        </div>
 
-                <div class="scanner-frame"></div>
+                    </div>
 
-                <div class="scanner-line"></div>
+                </div>
 
-            </div>
+                <div class="scanner-footer">
 
-        </div>
+                    <div class="scanner-indicator">
 
-        <div class="scanner-footer">
+                        <i class="fa-solid fa-expand"></i>
 
-            <div class="scanner-indicator">
+                        Alinee el QR dentro del recuadro
 
-                <i class="fa-solid fa-expand"></i>
+                    </div>
 
-                Alinee el QR dentro del recuadro
+                    <div class="scanner-indicator">
 
-            </div>
+                        <i class="fa-solid fa-bolt"></i>
 
-            <div class="scanner-indicator">
+                        Validación automática
 
-                <i class="fa-solid fa-bolt"></i>
-
-                Validación automática
-
-            </div>
-
-        </div>
-
-        <!-- INPUT -->
-
-        <form method="POST"
-            id="qrForm"
-            action="{{ form_action }}"
-            class="manual-token-form">
-
-            <!-- TOKEN OCULTO -->
-            <input type="hidden"
-                name="qr_token"
-                id="qr_token">
-
-            <!-- TOKEN MANUAL -->
-            <div class="manual-token-box">
-
-                <label for="manual_token">
-
-                    <i class="fa-solid fa-keyboard"></i>
-                    Ingresar token manualmente
-
-                </label>
-
-                <div class="manual-token-actions">
-
-                    <input
-                        type="text"
-                        id="manual_token"
-                        placeholder="Pegue aquí el token QR..."
-                        autocomplete="off"
-                    >
-
-                    <button
-                        type="button"
-                        class="btn"
-                        id="manualSubmit">
-
-                        <i class="fa-solid fa-paper-plane"></i>
-                        {% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}
-
-                    </button>
+                    </div>
 
                 </div>
 
             </div>
 
-        </form>
+            <!-- Panel lateral (derecha) -->
+            <div class="grd-scan-side">
+
+                <form method="POST"
+                    id="qrForm"
+                    action="{{ form_action }}"
+                    class="manual-token-form">
+
+                    <!-- TOKEN OCULTO -->
+                    <input type="hidden"
+                        name="qr_token"
+                        id="qr_token">
+
+                    <!-- TOKEN MANUAL -->
+                    <div class="manual-token-box">
+
+                        <label for="manual_token">
+
+                            <i class="fa-solid fa-keyboard"></i>
+                            Ingresar token manualmente
+
+                        </label>
+
+                        <div class="manual-token-actions">
+
+                            <input
+                                type="text"
+                                id="manual_token"
+                                placeholder="Pegue aquí el token QR..."
+                                autocomplete="off"
+                            >
+
+                            <button
+                                type="button"
+                                class="btn"
+                                id="manualSubmit">
+
+                                <i class="fa-solid fa-paper-plane"></i>
+                                {% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+                <!-- ACTIVIDAD RECIENTE -->
+                <div class="grd-recent">
+
+                    <div class="grd-recent-h">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Actividad reciente
+                    </div>
+
+                    <div id="recentActivity" class="grd-recent-list">
+                        <p class="grd-recent-empty">Sin actividad reciente</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
 
@@ -934,35 +931,30 @@ filename='css/paginas/escaner_qr.css') }}">
 
             </div>
 
-            <div class="modern-access-actions">
+            <div class="grd-scan-actions">
+
+                <button type="button"
+                        class="grd-btn-reject"
+                        id="openRejectModal">
+                    <i class="fa-solid fa-ban"></i>
+                    Rechazar
+                </button>
 
                 <form method="POST"
                     action="{{ url_for('guard.confirm_access') }}"
-                    style="width:100%;">
+                    class="grd-authorize-form">
 
                     <input type="hidden"
                         name="qr_token"
                         value="{{ resultado.visita.qr_token }}">
 
                     <button type="submit"
-                            class="modern-access-btn success">
-
-                        <i class="fa-solid fa-barrier-open"></i>
-
+                            class="grd-btn-authorize">
+                        <i class="fa-solid fa-circle-check"></i>
                         Autorizar acceso
-
                     </button>
 
                 </form>
-
-                <a href="{{ url_for('guard.scan_salida') }}"
-                class="modern-access-btn secondary">
-
-                    <i class="fa-solid fa-door-open"></i>
-
-                    Registrar salida
-
-                </a>
 
             </div>
 
@@ -976,104 +968,122 @@ filename='css/paginas/escaner_qr.css') }}">
 
 
         <!-- ===================================================== -->
-        <!-- ALERTAS DE SEGURIDAD -->
+        <!-- MODAL: MOTIVO DE RECHAZO -->
         <!-- ===================================================== -->
 
-        {% if modo != 'salida' %}
+        {% if modo != 'salida' and resultado.estado == 'permitido' %}
 
-        <div class="card modern-incident-card">
+        <div class="grd-reject-modal" id="rejectModal">
 
-            <div class="modern-access-header">
+            <div class="grd-reject-sheet">
 
-                <div class="modern-access-icon danger">
+                <div class="grd-reject-head">
 
-                    <i class="fa-solid fa-shield-virus"></i>
+                    <span class="grd-reject-ico">
+                        <i class="fa-solid fa-ban"></i>
+                    </span>
+
+                    <div class="grd-reject-head-txt">
+                        <h3>Motivo de la no autorización</h3>
+                        <p>
+                            Selecciona la razón por la que se rechaza el acceso
+                            {% if resultado.visita %}de <strong>{{ resultado.visita.nombre_visitante }}</strong>{% endif %}.
+                        </p>
+                    </div>
+
+                    <button type="button"
+                            class="grd-reject-x"
+                            id="closeRejectModal"
+                            aria-label="Cerrar">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
 
                 </div>
 
-                <div>
+                <form method="POST"
+                    action="{{ url_for('guard.incidencia_manual') }}"
+                    id="rejectForm">
 
-                    <h3>Alertas de seguridad</h3>
+                    <input type="hidden" name="modo" value="{{ modo }}">
+                    <input type="hidden" name="qr_token"
+                        value="{{ resultado.visita.qr_token if resultado.visita else '' }}">
+                    <input type="hidden" name="tipo_incidencia" id="rejectTipo" value="">
 
-                    <p>
-                        Seleccione una alerta únicamente si detecta irregularidades durante la validación.
-                    </p>
+                    <div class="grd-reasons">
 
-                </div>
+                        <button type="button" class="grd-reason" data-tipo="placa_no_coincide">
+                            <span class="grd-reason-ico amber"><i class="fa-solid fa-car"></i></span>
+                            <span class="grd-reason-txt">
+                                <strong>Placa incorrecta</strong>
+                                <small>La placa del vehículo no coincide con la registrada.</small>
+                            </span>
+                            <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
+                        </button>
+
+                        <button type="button" class="grd-reason" data-tipo="persona_sospechosa">
+                            <span class="grd-reason-ico red"><i class="fa-solid fa-user-secret"></i></span>
+                            <span class="grd-reason-txt">
+                                <strong>Identidad sospechosa</strong>
+                                <small>Se detectó una persona con comportamiento sospechoso.</small>
+                            </span>
+                            <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
+                        </button>
+
+                        <button type="button" class="grd-reason" data-tipo="visitante_agresivo">
+                            <span class="grd-reason-ico red"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                            <span class="grd-reason-txt">
+                                <strong>Conducta agresiva</strong>
+                                <small>El visitante presentó una actitud agresiva.</small>
+                            </span>
+                            <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
+                        </button>
+
+                        <button type="button" class="grd-reason" data-tipo="datos_no_coinciden">
+                            <span class="grd-reason-ico violet"><i class="fa-solid fa-file-circle-xmark"></i></span>
+                            <span class="grd-reason-txt">
+                                <strong>Información inválida</strong>
+                                <small>Los datos del visitante no coinciden con lo registrado.</small>
+                            </span>
+                            <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
+                        </button>
+
+                        <button type="button" class="grd-reason" data-tipo="sin_autorizacion">
+                            <span class="grd-reason-ico red"><i class="fa-solid fa-lock"></i></span>
+                            <span class="grd-reason-txt">
+                                <strong>Acceso no autorizado</strong>
+                                <small>La persona intenta ingresar sin autorización.</small>
+                            </span>
+                            <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
+                        </button>
+
+                    </div>
+
+                    <textarea class="grd-reject-note"
+                        name="detalle"
+                        rows="2"
+                        placeholder="Detalle adicional del rechazo (opcional)…"></textarea>
+
+                    <div class="grd-reject-actions">
+
+                        <button type="button"
+                                class="grd-btn-reject"
+                                id="cancelReject">
+                            Cancelar
+                        </button>
+
+                        <button type="submit"
+                                class="grd-reject-confirm is-disabled"
+                                id="confirmReject"
+                                disabled>
+                            <i class="fa-solid fa-ban"></i>
+                            Confirmar rechazo
+                        </button>
+
+                    </div>
+
+                </form>
 
             </div>
-
-            <form method="POST"
-                action="{{ url_for('guard.incidencia_manual') }}">
-
-                <input type="hidden"
-                    name="modo"
-                    value="{{ modo }}">
-
-                <input type="hidden"
-                    name="qr_token"
-                    value="{{ resultado.visita.qr_token if resultado.visita else '' }}">
-
-                <div class="modern-incident-grid">
-
-                    <button type="submit"
-                            name="tipo_incidencia"
-                            value="placa_no_coincide"
-                            class="modern-alert-btn">
-
-                        <i class="fa-solid fa-car"></i>
-
-                        Placa incorrecta
-
-                    </button>
-
-                    <button type="submit"
-                            name="tipo_incidencia"
-                            value="persona_sospechosa"
-                            class="modern-alert-btn">
-
-                        <i class="fa-solid fa-user-secret"></i>
-
-                        Identidad sospechosa
-
-                    </button>
-
-                    <button type="submit"
-                            name="tipo_incidencia"
-                            value="visitante_agresivo"
-                            class="modern-alert-btn">
-
-                        <i class="fa-solid fa-ban"></i>
-
-                        Conducta agresiva
-
-                    </button>
-
-                    <button type="submit"
-                            name="tipo_incidencia"
-                            value="datos_no_coinciden"
-                            class="modern-alert-btn">
-
-                        <i class="fa-solid fa-file-circle-xmark"></i>
-
-                        Información inválida
-
-                    </button>
-
-                    <button type="submit"
-                            name="tipo_incidencia"
-                            value="sin_autorizacion"
-                            class="modern-alert-btn">
-
-                        <i class="fa-solid fa-lock"></i>
-
-                        Acceso no autorizado
-
-                    </button>
-
-                </div>
-
-            </form>
 
         </div>
 
@@ -1219,27 +1229,20 @@ function onScanFailure(error){}
 
 async function iniciarCamara(){
 
+    const camStatus = document.getElementById("camStatus");
+
     try{
 
-        scannerMessage.innerHTML = `
-
-            <span style="color:#2563eb; font-weight:600;">
-
-                <i class="fa-solid fa-camera"></i>
-
-                Solicitando permisos de cámara...
-
-            </span>
-
-        `;
-
         // =====================================
-        // PEDIR PERMISO PRIMERO
+        // PEDIR PERMISO PRIMERO Y LIBERAR LA CAMARA
         // =====================================
 
-        await navigator.mediaDevices.getUserMedia({
+        const probe = await navigator.mediaDevices.getUserMedia({
             video:true
         });
+
+        // Suelta el stream de prueba para que el escaner pueda abrir la camara
+        probe.getTracks().forEach((track) => track.stop());
 
         // =====================================
         // OBTENER CAMARAS
@@ -1327,6 +1330,12 @@ async function iniciarCamara(){
 
     catch(err){
 
+        if (camStatus) {
+            camStatus.classList.remove("ok");
+            camStatus.classList.add("off");
+            camStatus.querySelector(".sc-cam-txt").textContent = "Cámara no disponible";
+        }
+
         console.log(err);
 
         document.getElementById("reader").innerHTML = `
@@ -1348,6 +1357,10 @@ async function iniciarCamara(){
                     Verifique los permisos del navegador o continúe con el ingreso manual.
                 </p>
 
+                <p class="scanner-error-detail">
+                    Detalle: ${err.name || 'Error'}${err.message ? ' — ' + err.message : ''}
+                </p>
+
                 <button
                     type="button"
                     class="scanner-retry-btn"
@@ -1364,17 +1377,6 @@ async function iniciarCamara(){
 
         `;
 
-        scannerMessage.innerHTML = `
-
-            <span style="color:#ef4444; font-weight:600;">
-
-                <i class="fa-solid fa-camera-slash"></i>
-
-                Cámara no disponible
-
-            </span>
-
-        `;
 
     }
 
@@ -1504,6 +1506,87 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 });
+
+/* ========================================= */
+/* ACTIVIDAD RECIENTE                        */
+/* ========================================= */
+
+{% if resultado and resultado.visita %}
+(function () {
+    const acts = JSON.parse(sessionStorage.getItem('grdRecentActivity') || '[]');
+    acts.unshift({
+        dir: '{{ "out" if modo == "salida" else "in" }}',
+        name: '{{ resultado.visita.nombre_visitante | e }}',
+        place: '{{ resultado.visita.condominio | e }} · Casa {{ resultado.visita.residencia_destino | e }}',
+        time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+    });
+    if (acts.length > 5) acts.length = 5;
+    sessionStorage.setItem('grdRecentActivity', JSON.stringify(acts));
+})();
+{% endif %}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const el = document.getElementById('recentActivity');
+    if (!el) return;
+    const acts = JSON.parse(sessionStorage.getItem('grdRecentActivity') || '[]');
+    if (!acts.length) return;
+    el.innerHTML = acts.map(function (a) {
+        const icon = a.dir === 'in' ? 'fa-arrow-right-to-bracket' : 'fa-right-from-bracket';
+        return '<div class="grd-recent-row">'
+            + '<span class="grd-recent-dir ' + a.dir + '"><i class="fa-solid ' + icon + '"></i></span>'
+            + '<div class="grd-recent-body"><strong>' + a.name + '</strong><span>' + a.place + '</span></div>'
+            + '<span class="grd-recent-time">' + a.time + '</span>'
+            + '</div>';
+    }).join('');
+});
+
+/* ========================================= */
+/* MODAL DE RECHAZO                          */
+/* ========================================= */
+
+(function () {
+    const modal = document.getElementById('rejectModal');
+    if (!modal) return;
+
+    const openBtn = document.getElementById('openRejectModal');
+    const closeBtn = document.getElementById('closeRejectModal');
+    const cancelBtn = document.getElementById('cancelReject');
+    const confirmBtn = document.getElementById('confirmReject');
+    const tipoInput = document.getElementById('rejectTipo');
+    const reasons = modal.querySelectorAll('.grd-reason');
+
+    function openModal() {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+    });
+
+    reasons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            reasons.forEach(function (b) { b.classList.remove('is-on'); });
+            btn.classList.add('is-on');
+            tipoInput.value = btn.dataset.tipo;
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove('is-disabled');
+        });
+    });
+})();
 
 </script>
 

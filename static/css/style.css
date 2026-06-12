@@ -1893,41 +1893,6 @@ html{
     scroll-behavior: smooth;
 }
 
-/* =========================================================
-   SCROLLBAR PREMIUM
-========================================================= */
-
-::-webkit-scrollbar{
-
-    width: 10px;
-
-    height: 10px;
-}
-
-::-webkit-scrollbar-track{
-
-    background: #e2e8f0;
-}
-
-::-webkit-scrollbar-thumb{
-
-    background: linear-gradient(
-        180deg,
-        #2563eb,
-        #38bdf8
-    );
-
-    border-radius: 20px;
-}
-
-::-webkit-scrollbar-thumb:hover{
-
-    background: linear-gradient(
-        180deg,
-        #1d4ed8,
-        #0ea5e9
-    );
-}
 
 /* =========================================================
    EFECTOS GLASSMORPHISM

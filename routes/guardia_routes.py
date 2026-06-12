@@ -383,6 +383,7 @@ def incidencia_manual():
     token = request.form.get("qr_token", "").strip()
     modo = request.form.get("modo", "entrada")
     tipo_incidencia = request.form["tipo_incidencia"]
+    detalle = request.form.get("detalle", "").strip()
 
     visita = mongo.db.visits.find_one({"qr_token": token}) if token else None
 
@@ -394,10 +395,15 @@ def incidencia_manual():
         "sin_autorizacion": "La persona intenta ingresar sin autorización.",
     }
 
+    descripcion_base = descripciones.get(
+        tipo_incidencia, "Incidencia registrada por el guardia."
+    )
+    descripcion = f"{descripcion_base} {detalle}".strip() if detalle else descripcion_base
+
     _registrar_incidencia_qr(
         session,
         tipo_incidencia,
-        descripciones.get(tipo_incidencia, "Incidencia registrada por el guardia."),
+        descripcion,
         visita=visita,
     )
 
@@ -405,17 +411,10 @@ def incidencia_manual():
         "estado": "incidencia",
         "mensaje": "Incidencia registrada correctamente.",
         "visita": visita,
-        "incidencia": descripciones.get(tipo_incidencia),
+        "incidencia": descripcion,
     }
 
     return _render_scan(modo, resultado, bloquear_camara=True)
-
-
-@guard_bp.route("/exit", methods=["POST"])
-@login_required
-@role_required("guardia")
-def register_exit():
-    return redirect(url_for("guard.scan_salida"))
 
 
 @guard_bp.route("/confirm-access", methods=["POST"])
