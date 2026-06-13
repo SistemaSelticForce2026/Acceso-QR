@@ -54,6 +54,8 @@ def _registrar_incidencia_qr(session, tipo, descripcion, visita=None, token=None
         incidencia["visitante"] = visita.get("nombre_visitante")
         incidencia["residencia_destino"] = visita.get("residencia_destino")
     mongo.db.incidencias.insert_one(incidencia)
+    socketio.emit("actualizar_dashboard")
+    socketio.emit("refresh")
 
 
 def _registrar_salida(visita, session):
@@ -89,6 +91,8 @@ def _registrar_salida(visita, session):
 
     mongo.db.visits.update_one({"_id": visita["_id"]}, {"$set": update_salida})
     visita.update(update_salida)
+    socketio.emit("actualizar_dashboard")
+    socketio.emit("refresh")
     return visita
 
 
@@ -278,6 +282,11 @@ def scan_entrada():
                 }
                 if visita.get("modalidad_visita", "temporal") == "temporal":
                     update_entrada["entrada_consumida"] = True
+                else:
+                    # Recurrente: limpiar el ciclo anterior (día previo)
+                    update_entrada["hora_salida"] = None
+                    update_entrada["fecha_salida"] = None
+                    update_entrada["hora_entrada_real"] = None
 
                 mongo.db.access_logs.insert_one(
                     {
@@ -293,6 +302,8 @@ def scan_entrada():
                 mongo.db.visits.update_one(
                     {"_id": visita["_id"]}, {"$set": update_entrada}
                 )
+                socketio.emit("actualizar_dashboard")
+                socketio.emit("refresh")
 
                 visita["estado"] = "pendiente_autorizacion"
                 visita["hora_escaneo"] = ahora.strftime("%H:%M:%S")
@@ -398,7 +409,9 @@ def incidencia_manual():
     descripcion_base = descripciones.get(
         tipo_incidencia, "Incidencia registrada por el guardia."
     )
-    descripcion = f"{descripcion_base} {detalle}".strip() if detalle else descripcion_base
+    descripcion = (
+        f"{descripcion_base} {detalle}".strip() if detalle else descripcion_base
+    )
 
     _registrar_incidencia_qr(
         session,
@@ -449,6 +462,9 @@ def confirm_access():
                 "observaciones": "Guardia confirmó físicamente al visitante",
             }
         )
+
+        socketio.emit("actualizar_dashboard")
+        socketio.emit("refresh")
 
     flash("Acceso autorizado correctamente.", "success")
 

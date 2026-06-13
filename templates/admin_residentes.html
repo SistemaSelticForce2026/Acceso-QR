@@ -1,297 +1,161 @@
 {% extends 'layout.html' %}
 
 {% block extra_css %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/admin_residentes.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/admin_residentes.css') }}">
 {% endblock %}
 
 {% block content %}
 
-<h1>Gestión de Residentes</h1>
+<div class="ar-header">
+    <p class="ar-eyebrow">Administración</p>
+    <h1 class="ar-title">Gestión de residentes</h1>
+    <p class="ar-sub">Administración general de residentes registrados en el sistema.</p>
+</div>
 
-<p class="small">
-    Administración general de residentes registrados dentro del sistema residencial.
-</p>
+<!-- STATS -->
+<div class="ar-stats">
 
-<div class="stats">
-
-    <div class="stat-card">
-
-        <h3>Total residentes</h3>
-
-        <p>{{ usuarios|length }}</p>
-
+    <div class="ar-stat">
+        <div class="ar-stat-icon blue"><i class="fa-solid fa-users"></i></div>
+        <div class="ar-stat-meta">
+            <p class="num">{{ usuarios|length }}</p>
+            <p class="lbl">Total residentes</p>
+        </div>
     </div>
 
-    <div class="stat-card">
-
-        <h3>Residentes activos</h3>
-
-        <p>
-            {{ usuarios | selectattr("estado", "equalto", "activo") | list | length }}
-        </p>
-
+    <div class="ar-stat">
+        <div class="ar-stat-icon green"><i class="fa-solid fa-user-check"></i></div>
+        <div class="ar-stat-meta">
+            <p class="num">{{ usuarios | selectattr("estado", "equalto", "activo") | list | length }}</p>
+            <p class="lbl">Residentes activos</p>
+        </div>
     </div>
 
-    <div class="stat-card">
-
-        <h3>Privadas registradas</h3>
-
-        <p>
-            {{ usuarios | map(attribute='privada') | unique | list | length }}
-        </p>
-
+    <div class="ar-stat">
+        <div class="ar-stat-icon violet"><i class="fa-solid fa-building"></i></div>
+        <div class="ar-stat-meta">
+            <p class="num">{{ usuarios | map(attribute='privada') | unique | list | length }}</p>
+            <p class="lbl">Privadas registradas</p>
+        </div>
     </div>
 
 </div>
 
 <div class="card">
 
-    <!-- ========================================= -->
-    <!-- HEADER -->
-    <!-- ========================================= -->
-
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:25px;">
-
+    <div class="ar-card-head">
         <div>
-
-            <h2>Directorio de residentes</h2>
-
-            <p class="small">
-                Consulta y monitoreo de usuarios autorizados dentro del fraccionamiento.
-            </p>
-
+            <h2 class="ar-card-title">Directorio de residentes</h2>
+            <p class="ar-sub">Consulta y monitoreo de usuarios autorizados.</p>
         </div>
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-
+        <div class="ar-card-actions">
             <a href="{{ url_for('admin.registrar_residente') }}" class="btn">
-                Registrar residente
+                <i class="fa-solid fa-plus"></i> Registrar residente
             </a>
-
             <a href="{{ url_for('admin.exportar_residentes_pdf') }}" class="btn secondary">
-                Exportar listado
+                <i class="fa-solid fa-file-arrow-down"></i> Exportar listado
             </a>
-
         </div>
-
     </div>
 
-    <!-- ========================================= -->
-    <!-- TABLA RESPONSIVE -->
-    <!-- ========================================= -->
-
+    <!-- TABLA -->
     <div class="resident-table-wrapper">
-
         <table class="resident-table">
-
             <tr>
-
                 <th>Residente</th>
-
                 <th>Contacto</th>
-
                 <th>Domicilio</th>
-
                 <th>Estado</th>
-
                 <th>Acciones</th>
-
             </tr>
 
             {% for usuario in usuarios %}
-
             <tr>
-
-                <!-- ========================================= -->
                 <!-- RESIDENTE -->
-                <!-- ========================================= -->
-
                 <td>
-
-                    <div class="resident-name">
-                        {{ usuario.nombre }}
+                    <div class="ar-user">
+                        <div class="ar-avatar">{{ usuario.nombre[0]|upper }}</div>
+                        <div>
+                            <div class="resident-name">{{ usuario.nombre }}</div>
+                            <div class="resident-small">ID: {{ usuario._id }}</div>
+                        </div>
                     </div>
-
-                    <div class="resident-small">
-
-                        ID residente:
-                        {{ usuario._id }}
-
-                    </div>
-
                 </td>
 
-                <!-- ========================================= -->
                 <!-- CONTACTO -->
-                <!-- ========================================= -->
-
                 <td>
-
-                    <div class="resident-email">
-                        {{ usuario.correo }}
-                    </div>
-
-                    <div class="resident-small">
-                        {{ usuario.telefono }}
-                    </div>
-
+                    <div class="resident-email">{{ usuario.correo }}</div>
+                    <div class="resident-small"><i class="fa-solid fa-phone ar-ico"></i> {{ usuario.telefono }}</div>
                 </td>
 
-                <!-- ========================================= -->
                 <!-- DOMICILIO -->
-                <!-- ========================================= -->
-
                 <td>
-
-                    <strong>
-                        {{ usuario.fraccionamiento | title }}
-                    </strong>
-
-                    <div class="resident-small">
-
-                        {{ usuario.privada | title }}
-                        |
-                        Casa {{ usuario.numero_casa }}
-
-                    </div>
-
+                    <strong>{{ usuario.fraccionamiento | title }}</strong>
+                    <div class="resident-small">{{ usuario.privada | title }} · Casa {{ usuario.numero_casa }}</div>
                 </td>
 
-                <!-- ========================================= -->
                 <!-- ESTADO -->
-                <!-- ========================================= -->
-
                 <td>
-
                     {% if usuario.estado == "activo" %}
-
-                        <span class="badge success">
-                            Activo
-                        </span>
-
+                        <span class="ar-badge ok"><span class="dot"></span> Activo</span>
                     {% else %}
-
-                        <span class="badge danger">
-                            Inactivo
-                        </span>
-
+                        <span class="ar-badge off"><span class="dot"></span> Inactivo</span>
                     {% endif %}
-
                 </td>
 
-                <!-- ========================================= -->
                 <!-- ACCIONES -->
-                <!-- ========================================= -->
-
                 <td>
-
                     <div class="action-buttons">
-
-                        <a href="{{ url_for('admin.ver_residente', id=usuario._id) }}"
-                           class="btn small-btn">
-
-                            Ver perfil
-
+                        <a href="{{ url_for('admin.ver_residente', id=usuario._id) }}" class="btn small-btn">
+                            <i class="fa-solid fa-eye"></i> Ver perfil
                         </a>
-
-                        <a href="{{ url_for('admin.editar_residente', id=usuario._id) }}"
-                           class="btn secondary small-btn">
-
-                            Editar
-
+                        <a href="{{ url_for('admin.editar_residente', id=usuario._id) }}" class="btn secondary small-btn">
+                            <i class="fa-solid fa-pen"></i> Editar
                         </a>
 
                         {% if usuario.estado == "activo" %}
-
-                        <a href="{{ url_for('admin.bloquear_residente', id=usuario._id) }}"
-                           class="btn danger-btn small-btn"
+                        <a href="{{ url_for('admin.bloquear_residente', id=usuario._id) }}" class="btn danger-btn small-btn"
                            onclick="return confirm('¿Deseas bloquear este residente?')">
-
-                            <i class="fa-solid fa-user-lock"></i>
-                            Bloquear
-
+                            <i class="fa-solid fa-user-lock"></i> Bloquear
                         </a>
-
-                        <a href="{{ url_for('admin.eliminar_residente', id=usuario._id) }}"
-                           class="btn danger-btn small-btn"
+                        <a href="{{ url_for('admin.eliminar_residente', id=usuario._id) }}" class="btn danger-btn small-btn"
                            onclick="return confirm('¿Deseas eliminar este residente permanentemente?')">
-
-                            <i class="fa-solid fa-trash"></i>
-                            Eliminar
-
+                            <i class="fa-solid fa-trash"></i> Eliminar
                         </a>
-
                         {% else %}
-
-                        <a href="{{ url_for('admin.desbloquear_residente', id=usuario._id) }}"
-                           class="btn success-btn small-btn"
+                        <a href="{{ url_for('admin.desbloquear_residente', id=usuario._id) }}" class="btn success-btn small-btn"
                            onclick="return confirm('¿Deseas desbloquear este residente?')">
-
-                            <i class="fa-solid fa-lock-open"></i>
-                            Desbloquear
-
+                            <i class="fa-solid fa-lock-open"></i> Desbloquear
                         </a>
-
                         {% endif %}
-
                     </div>
-
                 </td>
-
             </tr>
-
             {% endfor %}
-
         </table>
-
     </div>
 
 </div>
 
-<div class="pagination-container" style="display:flex; justify-content:center; margin-top:20px;">
-    {% if total_paginas > 1 %}
-        <div class="pagination" style="display:flex; gap:10px; flex-wrap:wrap;">
-            {% if pagina > 1 %}
-                <a href="{{ url_for('admin.residentes', page=pagina-1) }}" class="btn secondary" style="padding:10px 15px;">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </a>
-            {% endif %}
-            {% for p in range(1, total_paginas + 1) %}
-                <a href="{{ url_for('admin.residentes', page=p) }}" class="btn {% if p != pagina %}secondary{% endif %}" style="padding:10px 15px;">
-                    {{ p }}
-                </a>
-            {% endfor %}
-            {% if pagina < total_paginas %}
-                <a href="{{ url_for('admin.residentes', page=pagina+1) }}" class="btn secondary" style="padding:10px 15px;">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </a>
-            {% endif %}
-        </div>
+<!-- PAGINACIÓN -->
+{% if total_paginas > 1 %}
+<div class="ar-pagination">
+    {% if pagina > 1 %}
+        <a href="{{ url_for('admin.residentes', page=pagina-1) }}" class="ar-page"><i class="fa-solid fa-chevron-left"></i></a>
+    {% endif %}
+    {% for p in range(1, total_paginas + 1) %}
+        <a href="{{ url_for('admin.residentes', page=p) }}" class="ar-page {% if p == pagina %}active{% endif %}">{{ p }}</a>
+    {% endfor %}
+    {% if pagina < total_paginas %}
+        <a href="{{ url_for('admin.residentes', page=pagina+1) }}" class="ar-page"><i class="fa-solid fa-chevron-right"></i></a>
     {% endif %}
 </div>
-
-<!-- ========================================= -->
-<!-- ACTIVIDAD -->
-<!-- ========================================= -->
+{% endif %}
 
 <div class="card">
-
-    <h2>Actividad reciente</h2>
-
-    <div class="alert info">
-
-        Los residentes registrados pueden generar accesos QR para visitantes y trabajadores autorizados.
-
-    </div>
-
-    <div class="alert warning">
-
-        Verificar periódicamente usuarios inactivos o con información incompleta.
-
-    </div>
-
+    <h2 class="ar-card-title">Actividad reciente</h2>
+    <div class="alert info">Los residentes registrados pueden generar accesos QR para visitantes y trabajadores autorizados.</div>
+    <div class="alert warning">Verificar periódicamente usuarios inactivos o con información incompleta.</div>
 </div>
 
 {% endblock %}

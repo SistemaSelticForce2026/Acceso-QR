@@ -11,9 +11,9 @@
 
 <div class="access-container">
 
-  <!-- =========== -->
-    <!-- HEADER -->
-  <!-- =========== -->
+    <!-- =========== -->
+    <!-- HEADER      -->
+    <!-- =========== -->
 
     <div class="grd-page-header">
         <p class="grd-eyebrow">Verificar acceso</p>
@@ -40,9 +40,9 @@
     </div>
 
 
-  <!-- =========== -->
-    <!-- ESCANER -->
-  <!-- =========== -->
+    <!-- =========== -->
+    <!-- ESCANER     -->
+    <!-- =========== -->
 
     {% if not bloquear_camara and (
         not resultado
@@ -57,33 +57,23 @@
             <div class="grd-scan-kiosk">
 
                 <div class="scanner-top">
-
                     <div>
-
                         <h2>
                             <i class="fa-solid fa-qrcode"></i>
                             Escanear QR
                         </h2>
-
                         <p class="small" id="scannerMessage"></p>
-
                     </div>
-
                     <div class="camera-status scanner-cam ok" id="camStatus">
                         <span class="sc-cam-dot"></span>
                         <span class="sc-cam-txt">Cámara operativa</span>
                     </div>
-
                 </div>
 
                 <!-- CAMARA -->
-
                 <div class="scanner-camera-box">
-
                     <div id="reader"></div>
-
                     <div class="scanner-overlay">
-
                         <div class="scanner-target">
                             <span class="sc-corner tl"></span>
                             <span class="sc-corner tr"></span>
@@ -91,29 +81,18 @@
                             <span class="sc-corner br"></span>
                             <span class="sc-scan-line"></span>
                         </div>
-
                     </div>
-
                 </div>
 
                 <div class="scanner-footer">
-
                     <div class="scanner-indicator">
-
                         <i class="fa-solid fa-expand"></i>
-
                         Alinee el QR dentro del recuadro
-
                     </div>
-
                     <div class="scanner-indicator">
-
                         <i class="fa-solid fa-bolt"></i>
-
                         Validación automática
-
                     </div>
-
                 </div>
 
             </div>
@@ -122,23 +101,19 @@
             <div class="grd-scan-side">
 
                 <form method="POST"
-                    id="qrForm"
-                    action="{{ form_action }}"
-                    class="manual-token-form">
+                      id="qrForm"
+                      action="{{ form_action }}"
+                      class="manual-token-form">
 
                     <!-- TOKEN OCULTO -->
-                    <input type="hidden"
-                        name="qr_token"
-                        id="qr_token">
+                    <input type="hidden" name="qr_token" id="qr_token">
 
                     <!-- TOKEN MANUAL -->
                     <div class="manual-token-box">
 
                         <label for="manual_token">
-
                             <i class="fa-solid fa-keyboard"></i>
                             Ingresar token manualmente
-
                         </label>
 
                         <div class="manual-token-actions">
@@ -154,10 +129,8 @@
                                 type="button"
                                 class="btn"
                                 id="manualSubmit">
-
                                 <i class="fa-solid fa-paper-plane"></i>
                                 {% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}
-
                             </button>
 
                         </div>
@@ -168,16 +141,13 @@
 
                 <!-- ACTIVIDAD RECIENTE -->
                 <div class="grd-recent">
-
                     <div class="grd-recent-h">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                         Actividad reciente
                     </div>
-
                     <div id="recentActivity" class="grd-recent-list">
                         <p class="grd-recent-empty">Sin actividad reciente</p>
                     </div>
-
                 </div>
 
             </div>
@@ -189,548 +159,395 @@
     {% endif %}
 
 
-  <!-- =========== -->
-    <!-- RESULTADO -->
-  <!-- =========== -->
+    <!-- =========== -->
+    <!-- RESULTADO   -->
+    <!-- =========== -->
 
     {% if resultado %}
 
     <div class="result-container">
 
+        {# ============================================================ #}
+        {# RAZONES EQUIVALENTES — ajusta estas listas según tu backend  #}
+        {# (usa el comentario DEBUG de abajo para ver el valor real)    #}
+        {# ============================================================ #}
+        {% set razon  = resultado.get("razon") %}
+        {% set R_DIA   = ["dia_no_autorizado", "dia_incorrecto", "dia_no_corresponde", "fuera_de_dia", "dia_invalido"] %}
+        {% set R_FUT   = ["fecha_futura", "no_iniciado", "pase_no_activo"] %}
+        {% set R_VEN   = ["fecha_vencida", "pase_vencido", "fecha_expirada", "expirado"] %}
+        {% set R_USADO = ["qr_usado", "ya_usado", "acceso_activo", "ya_dentro", "acceso_registrado", "pase_usado"] %}
+
         <!-- =========== -->
-        <!-- ALERTA -->
+        <!-- ALERTA      -->
         <!-- =========== -->
 
-        <div class="access-alert 
-        
-            {% if resultado.estado == 'permitido' %}
-                success
-            {% elif resultado.estado == 'salida_pendiente' %}
-                warning
-            {% elif resultado.estado == 'salida_registrada' %}
-                success
-            {% else %}
-                danger
-            {% endif %}
-        
+        <div class="access-alert
+            {% if resultado.estado == 'permitido' %}success
+            {% elif resultado.estado == 'salida_pendiente' %}warning
+            {% elif resultado.estado == 'salida_registrada' %}success
+            {% elif resultado.estado == 'denegado' and razon in R_FUT %}warning
+            {% else %}danger{% endif %}
         ">
 
             <div class="alert-icon">
-
                 {% if resultado.estado == "permitido" %}
-
                     <i class="fa-solid fa-circle-check"></i>
-
                 {% elif resultado.estado == "salida_pendiente" %}
-
                     <i class="fa-solid fa-user-clock"></i>
-
                 {% elif resultado.estado == "salida_registrada" %}
-
                     <i class="fa-solid fa-door-open"></i>
-
+                {% elif resultado.estado == "denegado" and razon in R_DIA %}
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                {% elif resultado.estado == "denegado" and razon in R_FUT %}
+                    <i class="fa-solid fa-calendar-clock"></i>
+                {% elif resultado.estado == "denegado" and razon in R_VEN %}
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                {% elif resultado.estado == "denegado" and razon in R_USADO %}
+                    <i class="fa-solid fa-rotate-left"></i>
                 {% else %}
-
                     <i class="fa-solid fa-triangle-exclamation"></i>
-
                 {% endif %}
-
             </div>
 
             <div class="alert-content">
 
+                {# DEBUG: invisible para el guardia. Mira el código fuente (clic derecho → Ver código) para leer la razón real y agregarla a la lista de arriba. #}
+                <!-- DEBUG → estado: {{ resultado.estado }} · razon: {{ razon }} -->
+
                 <h2>
-
                     {% if resultado.estado == "permitido" %}
-
                         QR validado correctamente
-
                     {% elif resultado.estado == "salida_pendiente" %}
-
                         Salida pendiente detectada
-
                     {% elif resultado.estado == "salida_registrada" %}
-
                         Salida registrada correctamente
-
+                    {% elif resultado.estado == "denegado" and razon in R_DIA %}
+                        Día no autorizado
+                    {% elif resultado.estado == "denegado" and razon in R_FUT %}
+                        Pase aún no vigente
+                    {% elif resultado.estado == "denegado" and razon in R_VEN %}
+                        Pase vencido
+                    {% elif resultado.estado == "denegado" and razon in R_USADO %}
+                        Pase ya utilizado
                     {% else %}
-
                         Acceso rechazado
-
                     {% endif %}
-
                 </h2>
 
                 <p>
-
                     {% if resultado.estado == "permitido" %}
-
-                    Código QR validado correctamente.
-                    Espere la autorización manual del guardia para permitir el acceso.
-
+                        Código QR validado correctamente.
+                        Espere la autorización manual del guardia para permitir el acceso.
                     {% elif resultado.estado == "salida_pendiente" %}
-
                         El visitante mantiene un acceso activo dentro del residencial.
                         Se requiere registrar la salida antes de generar un nuevo ingreso.
-
                     {% elif resultado.estado == "salida_registrada" %}
-
                         El flujo de salida fue completado correctamente y el acceso quedó cerrado.
-
+                    {% elif resultado.estado == "denegado" and razon in R_DIA %}
+                        El día de hoy no corresponde con los días autorizados de este pase.
+                    {% elif resultado.estado == "denegado" and razon in R_FUT %}
+                        Este pase aún no está activo para la fecha actual.
+                    {% elif resultado.estado == "denegado" and razon in R_VEN %}
+                        Este pase ya venció y no puede utilizarse.
+                    {% elif resultado.estado == "denegado" and razon in R_USADO %}
+                        Este pase ya fue utilizado y cuenta con un acceso registrado en el sistema.
                     {% else %}
-
-                        La validación fue rechazada por inconsistencias en el código o estado del acceso.
-
+                        Este pase no es válido en este momento.
+                        Verifica la fecha, el día autorizado o el estado del acceso.
                     {% endif %}
-
                 </p>
+
+                <!-- ============================================================ -->
+                <!-- DETALLE ESPECÍFICO DE RECHAZO POR DÍA / FECHA / USO          -->
+                <!-- ============================================================ -->
+
+                {% if resultado.estado == "denegado" and razon in R_DIA %}
+                <div class="grd-deny-detail amber">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                    <div>
+                        <strong>
+                            Este pase no es válido el día de hoy{% if resultado.get("dia_hoy") %} ({{ resultado.dia_hoy }}){% endif %}.
+                        </strong>
+                        <span>
+                            {% if resultado.get("dias_autorizados_label") %}
+                                Días autorizados: <b>{{ resultado.dias_autorizados_label }}</b>.
+                            {% endif %}
+                            {% if resultado.get("proximo_acceso") %}
+                                Próximo acceso disponible: <b>{{ resultado.proximo_acceso }}</b>.
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                {% elif resultado.estado == "denegado" and razon in R_FUT %}
+                <div class="grd-deny-detail blue">
+                    <i class="fa-solid fa-calendar-clock"></i>
+                    <div>
+                        <strong>Este pase todavía no está activo.</strong>
+                        <span>
+                            {% if resultado.get("fecha_visita") %}
+                                Será válido a partir del <b>{{ resultado.fecha_visita }}</b>.
+                            {% endif %}
+                            La fecha programada aún no ha llegado.
+                        </span>
+                    </div>
+                </div>
+
+                {% elif resultado.estado == "denegado" and razon in R_VEN %}
+                <div class="grd-deny-detail red">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                    <div>
+                        <strong>Este pase ha vencido.</strong>
+                        <span>
+                            {% if resultado.get("fecha_visita") %}
+                                Fue válido el <b>{{ resultado.fecha_visita }}</b> y ya no puede utilizarse.
+                            {% else %}
+                                La fecha de validez ya pasó y no puede utilizarse.
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                {% elif resultado.estado == "denegado" and razon in R_USADO %}
+                <div class="grd-deny-detail amber">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <div>
+                        <strong>Este QR ya fue utilizado.</strong>
+                        <span>
+                            El visitante ya cuenta con un acceso registrado.
+                            Para un nuevo ingreso, primero debe registrarse su salida.
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
 
             </div>
 
         </div>
 
 
-        {% if resultado.visita %}
-
+        {% if resultado.visita and resultado.estado in ["permitido", "salida_pendiente", "salida_registrada"] %}
 
         {% if modo == 'salida' and resultado.estado == "salida_registrada" %}
-
         <div class="exit-complete-banner">
-
             <div class="exit-complete-icon">
-
                 <i class="fa-solid fa-circle-check"></i>
-
             </div>
-
             <div>
-
                 <h3>Salida finalizada correctamente</h3>
-
-                <p>
-                    El visitante abandonó el residencial y el acceso fue cerrado correctamente en el sistema.
-                </p>
-
+                <p>El visitante abandonó el residencial y el acceso fue cerrado correctamente en el sistema.</p>
             </div>
-
         </div>
-
         {% endif %}
 
+        {# --- normalización de campos --- #}
+        {% set h_ini = resultado.visita.get('hora_desde') or resultado.visita.get('valido_inicio') or resultado.visita.get('hora_inicio') %}
+        {% set h_fin = resultado.visita.get('hora_hasta') or resultado.visita.get('valido_final') or resultado.visita.get('hora_fin') %}
+        {% set est   = (resultado.visita.get('estado') or '') | lower %}
+
+
         <!-- =========== -->
-        <!-- GRID -->
+        <!-- GRID        -->
         <!-- =========== -->
 
         <div class="dashboard-grid access-grid">
 
             <!-- =========== -->
-            <!-- VISITANTE -->
+            <!-- VISITANTE   -->
             <!-- =========== -->
 
             <div class="card access-card">
 
                 <div class="card-title">
-
                     <i class="fa-solid fa-id-card"></i>
-
                     <h3>Perfil validado</h3>
-
                 </div>
 
                 <div class="visitor-profile">
 
                     {% if resultado.visita and resultado.visita.get('foto_visitante') %}
-
                     <img
                         src="{{ resultado.visita.foto_visitante['url'] }}"
                         alt="Foto visitante"
                         class="visitor-photo"
                         id="visitorPhoto"
                     >
-
                     {% endif %}
 
                     <div class="visitor-info">
-
-                        <h2>
-                            {{ resultado.visita.nombre_visitante }}
-                        </h2>
-
+                        <h2>{{ resultado.visita.nombre_visitante }}</h2>
                         <span class="badge">
-
                             {% if resultado.visita.modalidad_visita == "recurrente" %}
                                 Visita recurrente
                             {% else %}
                                 Visita temporal
                             {% endif %}
-
                         </span>
-
                     </div>
 
                 </div>
 
-                <!-- ========================================= -->
                 <!-- CONTACTO -->
-                <!-- ========================================= -->
-
                 <div class="resident-contact-panel">
 
-                    <!-- ========================================= -->
-                    <!-- RESIDENTE -->
-                    <!-- ========================================= -->
-
                     <div class="resident-contact-item">
-
                         <div class="resident-contact-icon resident">
-
                             <i class="fa-solid fa-user-shield"></i>
-
                         </div>
-
                         <div class="resident-contact-content">
-
-                            <span>
-                                Residente responsable
-                            </span>
-
-                            <strong>
-                                {{ resultado.visita.residente_nombre }}
-                            </strong>
-
+                            <span>Residente responsable</span>
+                            <strong>{{ resultado.visita.residente_nombre }}</strong>
                         </div>
-
                     </div>
-
-                    <!-- ========================================= -->
-                    <!-- TELEFONO RESIDENTE -->
-                    <!-- ========================================= -->
 
                     {% if resultado.visita.get("telefono_residente") %}
-
                     <div class="resident-contact-item">
-
                         <div class="resident-contact-icon phone">
-
                             <i class="fa-solid fa-mobile-screen"></i>
-
                         </div>
-
                         <div>
-
-                            <span>
-                                Número del residente
-                            </span>
-
-                            <strong>
-                                {{ resultado.visita.telefono_residente }}
-                            </strong>
-
+                            <span>Número del residente</span>
+                            <strong>{{ resultado.visita.telefono_residente }}</strong>
                         </div>
-
                     </div>
-
                     {% endif %}
 
-                    <!-- ========================================= -->
-                    <!-- TELEFONO VISITANTE -->
-                    <!-- ========================================= -->
-
                     <div class="resident-contact-item">
-
                         <div class="resident-contact-icon visitor">
-
                             <i class="fa-solid fa-phone"></i>
-
                         </div>
-
                         <div>
-
-                            <span>
-                                Número del visitante
-                            </span>
-
-                            <strong>
-                                {{ resultado.visita.telefono }}
-                            </strong>
-
+                            <span>Número del visitante</span>
+                            <strong>{{ resultado.visita.telefono }}</strong>
                         </div>
-
                     </div>
 
                 </div>
-                
 
                 <div class="info-list">
 
                     <div class="info-item">
-
                         <span>Modalidad</span>
-
                         <strong>
-
                             {% if resultado.visita.modalidad_visita == "recurrente" %}
-
                                 Recurrente
-
                                 {% if resultado.visita.get("dias_autorizados") %}
-
-                                    ·
-
-                                    {{ resultado.visita.dias_autorizados | join(', ') | capitalize }}
-
+                                    · {{ resultado.visita.dias_autorizados | join(', ') | capitalize }}
                                 {% endif %}
-
-                                ·
-
-                                {{ resultado.visita.hora_desde | hora_ampm }}
-                                a
-                                {{ resultado.visita.hora_hasta | hora_ampm }}
-
+                                {% if h_ini and h_fin %}
+                                    · {{ h_ini | hora_ampm }} a {{ h_fin | hora_ampm }}
+                                {% endif %}
                             {% else %}
-
                                 Temporal — {{ resultado.visita.fecha_visita }}
-
                             {% endif %}
-
                         </strong>
-
                     </div>
 
                     <div class="info-item">
-
                         <span>Motivo</span>
-
-                        <strong>
-                            {{ resultado.visita.motivo }}
-                        </strong>
-
+                        <strong>{{ resultado.visita.motivo }}</strong>
                     </div>
 
                     <div class="info-item">
-
                         <span>Condominio</span>
-
-                        <strong>
-                            {{ resultado.visita.condominio }}
-                        </strong>
-
+                        <strong>{{ resultado.visita.condominio }}</strong>
                     </div>
 
                     <div class="info-item">
-
                         <span>Residencia</span>
-
-                        <strong>
-                            {{ resultado.visita.residencia_destino }}
-                        </strong>
-
+                        <strong>{{ resultado.visita.residencia_destino }}</strong>
                     </div>
 
                 </div>
+
             </div>
 
 
             <!-- =========== -->
-            <!-- ESTADO -->
+            <!-- ESTADO      -->
             <!-- =========== -->
 
             <div class="card access-card">
 
                 <div class="card-title">
-
                     <i class="fa-solid fa-clock-rotate-left"></i>
-
                     <h3>Monitoreo de acceso</h3>
-
                 </div>
 
                 <div class="status-panel">
-
-                    <div class="status-badge 
-                    
-                        {% if resultado.visita.get('estado') == 'dentro' %}
-                            inside
-
-                        {% elif resultado.visita.get('estado') == 'salida_registrada' %}
-                            exit
-
-                        {% elif resultado.visita.get('estado') == 'activo' %}
-                            pending
-
-                        {% else %}
-                            active
-                        {% endif %}
-                                        
+                    <div class="status-badge
+                        {% if resultado.estado == 'salida_registrada' %}exit
+                        {% elif est in ['dentro','adentro','ingresado'] %}inside
+                        {% elif est in ['salida_registrada','salida','fuera'] %}exit
+                        {% else %}pending{% endif %}
                     ">
-
-                        {% if resultado.visita.get("estado") == "activo" %}
-                            Acceso autorizado
-                        {% elif resultado.visita.get("estado") == "dentro" %}
+                        {% if resultado.estado == 'salida_registrada' %}
+                            Salida completada
+                        {% elif est in ['dentro','adentro','ingresado'] %}
                             Visitante dentro
-                        {% elif resultado.visita.get("estado") == "salida_registrada" %}
+                        {% elif est in ['salida_registrada','salida','fuera'] %}
                             Salida completada
                         {% else %}
                             Pendiente de autorización
                         {% endif %}
-
                     </div>
-
                 </div>
 
                 <div class="timeline">
 
                     <div class="timeline-item">
-
                         <i class="fa-solid fa-calendar-days"></i>
-
                         <div>
-
                             {% if resultado.visita.modalidad_visita == "recurrente" %}
-
                                 <span>Horario autorizado</span>
-
                                 <strong>
-
-                                    {{ resultado.visita.hora_desde | hora_ampm }}
-
-                                    -
-
-                                    {{ resultado.visita.hora_hasta | hora_ampm }}
-
+                                    {% if h_ini and h_fin %}
+                                        {{ h_ini | hora_ampm }} a {{ h_fin | hora_ampm }}
+                                    {% else %}
+                                        Sin horario definido
+                                    {% endif %}
                                 </strong>
-
                             {% else %}
-
                                 <span>Hora programada</span>
-
-                                <strong>
-
-                                    {{ resultado.visita.get("hora_inicio", "") | hora_ampm }}
-
-                                </strong>
-
+                                <strong>{{ resultado.visita.get("hora_inicio", "") | hora_ampm or "—" }}</strong>
                             {% endif %}
-
                         </div>
-
                     </div>
 
                     {% if resultado.visita.hora_entrada_real %}
-
                     <div class="timeline-item success-line">
-
                         <i class="fa-solid fa-arrow-right-to-bracket"></i>
-
                         <div>
-
                             <span>Entrada registrada</span>
-
-                            <strong>
-                                {{ resultado.visita.hora_entrada_real | hora_ampm }}
-                            </strong>
-
+                            <strong>{{ resultado.visita.hora_entrada_real | hora_ampm }}</strong>
                         </div>
-
                     </div>
-
                     {% endif %}
 
                     {% if resultado.visita.hora_salida %}
-
                     <div class="timeline-item exit-line">
-
                         <i class="fa-solid fa-arrow-right-from-bracket"></i>
-
                         <div class="timeline-content">
-
-                            <span>
-
-                                Estado final :
-
-                            </span>
-
-                            <strong class="status-finished">
-
-                                Visitante salió del fraccionamiento
-
-                            </strong>
-
-                            <small>
-
-                                Salida registrada a las
-
-                                <strong class="timeline-hour">
-                                    {{ resultado.visita.hora_salida | hora_ampm }}
-                                </strong>
-
-                            </small>
-
+                            <span>Estado final:</span>
+                            <strong class="status-finished">Visitante salió del fraccionamiento</strong>
+                            <small>Salida registrada a las <strong class="timeline-hour">{{ resultado.visita.hora_salida | hora_ampm }}</strong></small>
                         </div>
-
                     </div>
 
                     {% else %}
-
                     <div class="timeline-item pending-line">
-
                         <i class="fa-solid fa-hourglass-half"></i>
-
                         <div class="timeline-content">
-
-                            <span>
-
-                                Estado actual :
-
-                            </span>
-
-                            {% if resultado.visita.get("estado") == "activo" %}
-
-                            <strong class="status-pending">
-
-                                Pendiente de autorización del guardia
-
-                            </strong>
-
-                            <small>
-
-                                El visitante aún NO ha ingresado al fraccionamiento.
-
-                            </small>
-
-                            {% elif resultado.visita.get("estado") == "dentro" %}
-
-                            <strong class="status-inside">
-
-                                Visitante dentro del residencial
-
-                            </strong>
-
-                            <small>
-
-                                Acceso activo dentro del fraccionamiento
-
-                            </small>
-
+                            <span>Estado actual:</span>
+                            {% if est in ['dentro', 'adentro', 'ingresado'] %}
+                                <strong class="status-inside">Visitante dentro del residencial</strong>
+                                <small>Acceso autorizado y activo dentro del fraccionamiento.</small>
                             {% else %}
-
-                            <strong class="status-invalid">
-
-                                Estado no reconocido
-
-                            </strong>
-
-                            <small>
-
-                                Verifique el flujo operativo del acceso.
-
-                            </small>
-
-                        {% endif %}
+                                <strong class="status-pending">Pendiente de autorización del guardia</strong>
+                                <small>El visitante aún no ha ingresado al fraccionamiento.</small>
+                            {% endif %}
                         </div>
-
                     </div>
-
                     {% endif %}
 
                 </div>
@@ -741,219 +558,123 @@
 
 
         <!-- =========== -->
-        <!-- VEHICULO -->
+        <!-- VEHICULO    -->
         <!-- =========== -->
 
         {% if resultado.visita.vehiculo %}
-
         <div class="card vehicle-card">
 
             <div class="card-title">
-
                 <i class="fa-solid fa-car-side"></i>
-
                 <h3>Unidad vehicular registrada</h3>
-
             </div>
 
             <div class="vehicle-grid">
-
                 <div>
-
                     <span>Placa</span>
-
-                    <strong>
-                        {{ resultado.visita.vehiculo.placa }}
-                    </strong>
-
+                    <strong>{{ resultado.visita.vehiculo.placa }}</strong>
                 </div>
-
                 <div>
-
                     <span>Marca</span>
-
-                    <strong>
-                        {{ resultado.visita.vehiculo.marca }}
-                    </strong>
-
+                    <strong>{{ resultado.visita.vehiculo.marca }}</strong>
                 </div>
-
                 <div>
-
                     <span>Modelo</span>
-
-                    <strong>
-                        {{ resultado.visita.vehiculo.modelo }}
-                    </strong>
-
+                    <strong>{{ resultado.visita.vehiculo.modelo }}</strong>
                 </div>
-
                 <div>
-
                     <span>Color</span>
-
-                    <strong>
-                        {{ resultado.visita.vehiculo.color }}
-                    </strong>
-
+                    <strong>{{ resultado.visita.vehiculo.color }}</strong>
                 </div>
-
             </div>
 
             {% if resultado.visita.foto_placa %}
-
             <div class="plate-photo-section">
-
-                <span class="plate-photo-title">
-
-                    Fotografía de la placa registrada
-
-                </span>
-
+                <span class="plate-photo-title">Fotografía de la placa registrada</span>
                 <div class="plate-photo-wrapper">
-
                     <img
                         src="{{ resultado.visita.foto_placa['url'] }}"
                         alt="Foto placa"
                         class="plate-photo-large zoomable-placa"
                     >
-                    
-
                 </div>
-
             </div>
-
             {% endif %}
 
         </div>
-
         {% endif %}
 
 
         <!-- ===================================================== -->
-        <!-- CONTROL DE ACCESO -->
+        <!-- CONTROL DE ACCESO                                      -->
         <!-- ===================================================== -->
 
         {% if modo != 'salida' %}
-
         <div class="card modern-access-card">
 
             <div class="modern-access-header">
-
                 <div class="modern-access-icon">
-
                     <i class="fa-solid fa-shield-halved"></i>
-
                 </div>
-
                 <div>
-
                     <h3>Control de acceso</h3>
-
-                    <p>
-                        Validación operativa del visitante y autorización de ingreso residencial.
-                    </p>
-
+                    <p>Validación operativa del visitante y autorización de ingreso residencial.</p>
                 </div>
-
             </div>
 
             {% if resultado.estado == "permitido" %}
 
             <div class="access-status-panel">
-
                 <div class="status-chip success">
-
                     <i class="fa-solid fa-circle-check"></i>
-
                     QR validado correctamente
-
                 </div>
-
                 <div class="status-description">
-
                     Verifique visualmente la identidad del visitante y los datos registrados antes de abrir el acceso.
-
                 </div>
-
             </div>
 
             <div class="access-summary-grid">
 
                 <div class="summary-card">
-
                     <span>Visitante</span>
-
-                    <strong>
-                        {{ resultado.visita.nombre_visitante }}
-                    </strong>
-
+                    <strong>{{ resultado.visita.nombre_visitante }}</strong>
                 </div>
 
                 <div class="summary-card">
-
                     <span>Residencia</span>
-
-                    <strong>
-                        {{ resultado.visita.condominio }}
-                        · Casa {{ resultado.visita.residencia_destino }}
-                    </strong>
-
+                    <strong>{{ resultado.visita.condominio }} · Casa {{ resultado.visita.residencia_destino }}</strong>
                 </div>
 
                 <div class="summary-card">
-
                     <span>Tipo de acceso</span>
-
                     <strong>
-
-                        {% if resultado.visita.modalidad_visita == "recurrente" %}
-                            Recurrente
-                        {% else %}
-                            Temporal
-                        {% endif %}
-
+                        {% if resultado.visita.modalidad_visita == "recurrente" %}Recurrente{% else %}Temporal{% endif %}
                     </strong>
-
                 </div>
 
                 <div class="summary-card">
-
                     <span>Estado</span>
-
-                    <strong class="status-green">
-
-                        Pendiente de autorización
-
-                    </strong>
-
+                    <strong class="status-green">Pendiente de autorización</strong>
                 </div>
 
             </div>
 
             <div class="grd-scan-actions">
 
-                <button type="button"
-                        class="grd-btn-reject"
-                        id="openRejectModal">
+                <button type="button" class="grd-btn-reject" id="openRejectModal">
                     <i class="fa-solid fa-ban"></i>
                     Rechazar
                 </button>
 
                 <form method="POST"
-                    action="{{ url_for('guard.confirm_access') }}"
-                    class="grd-authorize-form">
-
-                    <input type="hidden"
-                        name="qr_token"
-                        value="{{ resultado.visita.qr_token }}">
-
-                    <button type="submit"
-                            class="grd-btn-authorize">
+                      action="{{ url_for('guard.confirm_access') }}"
+                      class="grd-authorize-form">
+                    <input type="hidden" name="qr_token" value="{{ resultado.visita.qr_token }}">
+                    <button type="submit" class="grd-btn-authorize">
                         <i class="fa-solid fa-circle-check"></i>
                         Autorizar acceso
                     </button>
-
                 </form>
 
             </div>
@@ -961,28 +682,24 @@
             {% endif %}
 
         </div>
-
         {% endif %}
 
         </div>
 
 
         <!-- ===================================================== -->
-        <!-- MODAL: MOTIVO DE RECHAZO -->
+        <!-- MODAL: MOTIVO DE RECHAZO                               -->
         <!-- ===================================================== -->
 
         {% if modo != 'salida' and resultado.estado == 'permitido' %}
 
         <div class="grd-reject-modal" id="rejectModal">
-
             <div class="grd-reject-sheet">
 
                 <div class="grd-reject-head">
-
                     <span class="grd-reject-ico">
                         <i class="fa-solid fa-ban"></i>
                     </span>
-
                     <div class="grd-reject-head-txt">
                         <h3>Motivo de la no autorización</h3>
                         <p>
@@ -990,23 +707,18 @@
                             {% if resultado.visita %}de <strong>{{ resultado.visita.nombre_visitante }}</strong>{% endif %}.
                         </p>
                     </div>
-
-                    <button type="button"
-                            class="grd-reject-x"
-                            id="closeRejectModal"
-                            aria-label="Cerrar">
+                    <button type="button" class="grd-reject-x" id="closeRejectModal" aria-label="Cerrar">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
-
                 </div>
 
                 <form method="POST"
-                    action="{{ url_for('guard.incidencia_manual') }}"
-                    id="rejectForm">
+                      action="{{ url_for('guard.incidencia_manual') }}"
+                      id="rejectForm">
 
                     <input type="hidden" name="modo" value="{{ modo }}">
                     <input type="hidden" name="qr_token"
-                        value="{{ resultado.visita.qr_token if resultado.visita else '' }}">
+                           value="{{ resultado.visita.qr_token if resultado.visita else '' }}">
                     <input type="hidden" name="tipo_incidencia" id="rejectTipo" value="">
 
                     <div class="grd-reasons">
@@ -1064,58 +776,40 @@
                         placeholder="Detalle adicional del rechazo (opcional)…"></textarea>
 
                     <div class="grd-reject-actions">
-
-                        <button type="button"
-                                class="grd-btn-reject"
-                                id="cancelReject">
-                            Cancelar
-                        </button>
-
-                        <button type="submit"
-                                class="grd-reject-confirm is-disabled"
-                                id="confirmReject"
-                                disabled>
+                        <button type="button" class="grd-btn-reject" id="cancelReject">Cancelar</button>
+                        <button type="submit" class="grd-reject-confirm is-disabled" id="confirmReject" disabled>
                             <i class="fa-solid fa-ban"></i>
                             Confirmar rechazo
                         </button>
-
                     </div>
 
                 </form>
 
             </div>
-
         </div>
 
         {% endif %}
 
         {% endif %}
 
-        {% endif %}
+    </div>
 
-        </div>
-
-<!-- ======================================== -->
-<!-- MODAL FOTO -->
-<!-- ======================================== -->
-
-<div class="photo-modal" id="photoModal">
-
-    <span class="close-photo" id="closePhoto">
-        &times;
-    </span>
-
-    <img
-        src=""
-        class="photo-modal-content"
-        id="photoZoom"
-        alt="Zoom foto"
-    >
+    {% endif %}
 
 </div>
 
+<!-- ======================================== -->
+<!-- MODAL FOTO                               -->
+<!-- ======================================== -->
+
+<div class="photo-modal" id="photoModal">
+    <span class="close-photo" id="closePhoto">&times;</span>
+    <img src="" class="photo-modal-content" id="photoZoom" alt="Zoom foto">
+</div>
+
+
 <!-- ===================================================== -->
-<!-- SCRIPT -->
+<!-- SCRIPT                                                -->
 <!-- ===================================================== -->
 
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -1124,386 +818,181 @@
 
 {% if not bloquear_camara %}
 
-const qrInput = document.getElementById("qr_token");
-
-const qrForm = document.getElementById("qrForm");
-
-const manualToken = document.getElementById("manual_token");
-
-const manualSubmit = document.getElementById("manualSubmit");
-
+const qrInput       = document.getElementById("qr_token");
+const qrForm        = document.getElementById("qrForm");
+const manualToken   = document.getElementById("manual_token");
+const manualSubmit  = document.getElementById("manualSubmit");
 const scannerMessage = document.getElementById("scannerMessage");
 
-const beep = new Audio(
-    "https://actions.google.com/sounds/v1/cartoon/pop.ogg"
-);
+const beep = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
 
 const html5QrCode = new Html5Qrcode("reader");
 
 let scanned = false;
 let cameraStopped = false;
 
-manualSubmit.addEventListener("click", () => {
-
-    const token = manualToken.value.trim();
-
-    if(!token){
-
-        alert("Ingrese un token válido");
-
-        return;
-
+/* ── Bloquear Enter en el input manual: solo el botón envía ── */
+manualToken.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
     }
-
-    qrInput.value = token;
-
-    qrForm.submit();
-
 });
 
-function onScanSuccess(decodedText){
+/* ── Envío manual solo desde el botón ── */
+manualSubmit.addEventListener("click", () => {
+    const token = manualToken.value.trim();
+    if (!token) {
+        alert("Ingrese un token válido");
+        return;
+    }
+    qrInput.value = token;
+    qrForm.submit();
+});
 
-    if(scanned) return;
-
+function onScanSuccess(decodedText) {
+    if (scanned) return;
     scanned = true;
 
     beep.play();
-
     navigator.vibrate?.(200);
 
     qrInput.value = decodedText;
 
     scannerMessage.innerHTML = `
-
         <span style="color:#22c55e; font-weight:600;">
-
             <i class="fa-solid fa-circle-check"></i>
-
             Código QR detectado correctamente...
-
         </span>
-
     `;
 
     setTimeout(() => {
-
-        if(cameraStopped) return;
-
+        if (cameraStopped) return;
         cameraStopped = true;
 
         html5QrCode.stop()
-
-        .then(() => {
-
-            document.getElementById("reader").innerHTML = `
-
-                <div class="scanner-finished">
-
-                    <i class="fa-solid fa-circle-check"></i>
-
-                    <h3>QR procesado correctamente</h3>
-
-                    <p>
-                        Esperando siguiente validación...
-                    </p>
-
-                </div>
-
-            `;
-
-            qrForm.submit();
-
-        })
-
-        .catch(() => {
-
-            qrForm.submit();
-
-        });
-
+            .then(() => {
+                document.getElementById("reader").innerHTML = `
+                    <div class="scanner-finished">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <h3>QR procesado correctamente</h3>
+                        <p>Esperando siguiente validación...</p>
+                    </div>
+                `;
+                qrForm.submit();
+            })
+            .catch(() => {
+                qrForm.submit();
+            });
     }, 1000);
-
 }
 
-function onScanFailure(error){}
+function onScanFailure(error) {}
 
-async function iniciarCamara(){
-
+async function iniciarCamara() {
     const camStatus = document.getElementById("camStatus");
 
-    try{
-
-        // =====================================
-        // PEDIR PERMISO PRIMERO Y LIBERAR LA CAMARA
-        // =====================================
-
-        const probe = await navigator.mediaDevices.getUserMedia({
-            video:true
-        });
-
-        // Suelta el stream de prueba para que el escaner pueda abrir la camara
-        probe.getTracks().forEach((track) => track.stop());
-
-        // =====================================
-        // OBTENER CAMARAS
-        // =====================================
+    try {
+        const probe = await navigator.mediaDevices.getUserMedia({ video: true });
+        probe.getTracks().forEach(track => track.stop());
 
         const devices = await Html5Qrcode.getCameras();
-
-        if(!devices || !devices.length){
-
-            throw new Error("No hay cámaras disponibles");
-
-        }
-
-        // =====================================
-        // CAMARA DEFAULT
-        // =====================================
+        if (!devices || !devices.length) throw new Error("No hay cámaras disponibles");
 
         let cameraId = devices[0].id;
 
-        // =====================================
-        // BUSCAR CAMARA TRASERA
-        // =====================================
-
         const backCamera = devices.find(device => {
-
             const label = device.label.toLowerCase();
-
             return (
                 label.includes("back") ||
                 label.includes("rear") ||
                 label.includes("environment") ||
                 label.includes("trasera")
             );
-
         });
 
-        if(backCamera){
-
-            cameraId = backCamera.id;
-
-        }
-
-        // =====================================
-        // INICIAR ESCANER
-        // =====================================
+        if (backCamera) cameraId = backCamera.id;
 
         await html5QrCode.start(
-
             cameraId,
-
-            {
-
-                fps:10,
-
-                qrbox:{
-                    width:260,
-                    height:260
-                },
-
-                aspectRatio:1.777,
-
-                disableFlip:false
-
-            },
-
+            { fps: 10, qrbox: { width: 260, height: 260 }, aspectRatio: 1.777, disableFlip: false },
             onScanSuccess,
-
             onScanFailure
-
         );
 
         scannerMessage.innerHTML = `
-
             <span style="color:#22c55e; font-weight:600;">
-
                 <i class="fa-solid fa-circle-check"></i>
-
                 Cámara iniciada correctamente
-
             </span>
-
         `;
 
-    }
-
-    catch(err){
-
+    } catch (err) {
         if (camStatus) {
             camStatus.classList.remove("ok");
             camStatus.classList.add("off");
             camStatus.querySelector(".sc-cam-txt").textContent = "Cámara no disponible";
         }
 
-        console.log(err);
-
         document.getElementById("reader").innerHTML = `
-
             <div class="scanner-error-state">
-
                 <div class="scanner-error-icon">
-
                     <i class="fa-solid fa-camera-slash"></i>
-
                 </div>
-
-                <h3>
-                    Cámara no disponible
-                </h3>
-
+                <h3>Cámara no disponible</h3>
                 <p>
                     No fue posible acceder a la cámara del dispositivo.
                     Verifique los permisos del navegador o continúe con el ingreso manual.
                 </p>
-
                 <p class="scanner-error-detail">
                     Detalle: ${err.name || 'Error'}${err.message ? ' — ' + err.message : ''}
                 </p>
-
-                <button
-                    type="button"
-                    class="scanner-retry-btn"
-                    onclick="location.reload()"
-                >
-
+                <button type="button" class="scanner-retry-btn" onclick="location.reload()">
                     <i class="fa-solid fa-rotate"></i>
-
                     Reintentar cámara
-
                 </button>
-
             </div>
-
         `;
-
-
     }
-
 }
-
-// =====================================
-// INICIAR
-// =====================================
 
 iniciarCamara();
 
 {% endif %}
 
 /* ========================================= */
-/* ZOOM FOTOS */
+/* ZOOM FOTOS                                */
 /* ========================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
     const photoModal = document.getElementById("photoModal");
-
-    const photoZoom = document.getElementById("photoZoom");
-
+    const photoZoom  = document.getElementById("photoZoom");
     const closePhoto = document.getElementById("closePhoto");
 
-
-    /* ========================================= */
-    /* ABRIR ZOOM */
-    /* ========================================= */
-
-    function abrirZoom(src){
-
-        if(!photoModal || !photoZoom) return;
-
+    function abrirZoom(src) {
+        if (!photoModal || !photoZoom) return;
         photoZoom.src = src;
-
         photoModal.style.display = "flex";
-
         document.body.style.overflow = "hidden";
-
     }
-
-
-    /* ========================================= */
-    /* FOTO VISITANTE */
-    /* ========================================= */
 
     const visitorPhoto = document.getElementById("visitorPhoto");
+    if (visitorPhoto) visitorPhoto.onclick = () => abrirZoom(visitorPhoto.src);
 
-    if(visitorPhoto){
-
-        visitorPhoto.onclick = () => {
-
-            abrirZoom(visitorPhoto.src);
-
-        };
-
-    }
-
-
-    /* ========================================= */
-    /* FOTO PLACAS */
-    /* ========================================= */
-
-    document.querySelectorAll(".zoomable-placa").forEach((img) => {
-
-        img.onclick = () => {
-
-            abrirZoom(img.src);
-
-        };
-
+    document.querySelectorAll(".zoomable-placa").forEach(img => {
+        img.onclick = () => abrirZoom(img.src);
     });
 
-
-    /* ========================================= */
-    /* CERRAR */
-    /* ========================================= */
-
-    function cerrarZoom(){
-
+    function cerrarZoom() {
         photoModal.style.display = "none";
-
         document.body.style.overflow = "auto";
-
     }
 
+    if (closePhoto) closePhoto.onclick = cerrarZoom;
 
-    /* ========================================= */
-    /* BOTON X */
-    /* ========================================= */
+    photoModal.onclick = e => { if (e.target === photoModal) cerrarZoom(); };
 
-    if(closePhoto){
-
-        closePhoto.onclick = cerrarZoom;
-
-    }
-
-
-    /* ========================================= */
-    /* CLIC AFUERA */
-    /* ========================================= */
-
-    photoModal.onclick = (e) => {
-
-        if(e.target === photoModal){
-
-            cerrarZoom();
-
-        }
-
-    };
-
-
-    /* ========================================= */
-    /* ESC */
-    /* ========================================= */
-
-    document.onkeydown = (e) => {
-
-        if(e.key === "Escape"){
-
-            cerrarZoom();
-
-        }
-
-    };
+    document.onkeydown = e => { if (e.key === "Escape") cerrarZoom(); };
 
 });
 
@@ -1511,14 +1000,14 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ACTIVIDAD RECIENTE                        */
 /* ========================================= */
 
-{% if resultado and resultado.visita %}
+{% if resultado and resultado.visita and resultado.estado in ["permitido", "salida_registrada"] %}
 (function () {
     const acts = JSON.parse(sessionStorage.getItem('grdRecentActivity') || '[]');
     acts.unshift({
-        dir: '{{ "out" if modo == "salida" else "in" }}',
-        name: '{{ resultado.visita.nombre_visitante | e }}',
+        dir:   '{{ "out" if modo == "salida" else "in" }}',
+        name:  '{{ resultado.visita.nombre_visitante | e }}',
         place: '{{ resultado.visita.condominio | e }} · Casa {{ resultado.visita.residencia_destino | e }}',
-        time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+        time:  new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
     });
     if (acts.length > 5) acts.length = 5;
     sessionStorage.setItem('grdRecentActivity', JSON.stringify(acts));
@@ -1548,38 +1037,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('rejectModal');
     if (!modal) return;
 
-    const openBtn = document.getElementById('openRejectModal');
-    const closeBtn = document.getElementById('closeRejectModal');
+    const openBtn   = document.getElementById('openRejectModal');
+    const closeBtn  = document.getElementById('closeRejectModal');
     const cancelBtn = document.getElementById('cancelReject');
     const confirmBtn = document.getElementById('confirmReject');
     const tipoInput = document.getElementById('rejectTipo');
-    const reasons = modal.querySelectorAll('.grd-reason');
+    const reasons   = modal.querySelectorAll('.grd-reason');
 
-    function openModal() {
-        modal.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
+    function openModal()  { modal.classList.add('open');    document.body.style.overflow = 'hidden'; }
+    function closeModal() { modal.classList.remove('open'); document.body.style.overflow = '';       }
 
-    function closeModal() {
-        modal.classList.remove('open');
-        document.body.style.overflow = '';
-    }
-
-    if (openBtn) openBtn.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (openBtn)   openBtn.addEventListener('click', openModal);
+    if (closeBtn)  closeBtn.addEventListener('click', closeModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
-    });
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
-    document.addEventListener('keydown', function (e) {
+    document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
     });
 
     reasons.forEach(function (btn) {
         btn.addEventListener('click', function () {
-            reasons.forEach(function (b) { b.classList.remove('is-on'); });
+            reasons.forEach(b => b.classList.remove('is-on'));
             btn.classList.add('is-on');
             tipoInput.value = btn.dataset.tipo;
             confirmBtn.disabled = false;

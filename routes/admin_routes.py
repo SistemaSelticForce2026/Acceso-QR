@@ -52,6 +52,40 @@ from reportlab.lib.pagesizes import letter
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
+
+# =========================================================
+# HELPER: METADATA PDF (reutilizable en todos los reportes)
+# =========================================================
+
+
+def _pdf_metadata(titulo, asunto):
+    """Devuelve una función onPage que escribe la metadata del PDF."""
+
+    def _aplicar(canvas, doc):
+        canvas.setTitle(f"Acceso QR | {titulo}")
+        canvas.setAuthor("Acceso QR")
+        canvas.setSubject(asunto)
+        canvas.setCreator("Acceso QR | Sistema Residencial")
+
+    return _aplicar
+
+
+def _registrar_historial_reporte(nombre, tipo, formato):
+    """Guarda un registro cada vez que se exporta un reporte."""
+    from flask import session
+
+    mongo.db.reportes.insert_one(
+        {
+            "nombre": nombre,
+            "tipo": tipo,
+            "formato": formato,
+            "usuario": session.get("nombre", "Administrador"),
+            "fecha": datetime.now(),
+            "estado": "Generado",
+        }
+    )
+
+
 # =========================================================
 # DASHBOARD ADMIN
 # =========================================================
@@ -96,19 +130,17 @@ def dashboard():
         )
     )
 
-    accesos = list(mongo.db.access_logs.find().sort("fecha_hora", -1))
+    accesos = list(
+        mongo.db.access_logs.find({"fecha_hora": {"$gte": fecha_inicio}}).sort(
+            "fecha_hora", -1
+        )
+    )
 
-    accesos = [
-        a for a in accesos if a.get("fecha_hora") and a["fecha_hora"] >= fecha_inicio
-    ]
-
-    incidencias = list(mongo.db.incidencias.find().sort("fecha_hora", -1))
-
-    incidencias = [
-        i
-        for i in incidencias
-        if i.get("fecha_hora") and i["fecha_hora"] >= fecha_inicio
-    ]
+    incidencias = list(
+        mongo.db.incidencias.find({"fecha_hora": {"$gte": fecha_inicio}}).sort(
+            "fecha_hora", -1
+        )
+    )
 
     if busqueda:
         busqueda_lower = busqueda.lower()
@@ -168,6 +200,10 @@ def dashboard():
     activas = len([v for v in visitas if v.get("estado") == "activo"])
 
     salidas = len([v for v in visitas if v.get("estado") == "salida_registrada"])
+
+    pendientes_autorizacion = len(
+        [v for v in visitas if v.get("estado") == "pendiente_autorizacion"]
+    )
 
     total_residentes = mongo.db.users.count_documents({"rol": "residente"})
 
@@ -405,6 +441,7 @@ def dashboard():
         fecha_fin_tabla=fecha_fin_tabla,
         pagina_tabla=pagina_tabla,
         total_paginas_tabla=total_paginas_tabla,
+        pendientes_autorizacion=pendientes_autorizacion,
     )
 
 
@@ -515,6 +552,7 @@ def registrar_residente():
         nuevo = {
             "nombre": nombre,
             "correo": correo,
+            "password": generate_password_hash("Residente123*"),
             "telefono": telefono,
             "fraccionamiento": fraccionamiento,
             "privada": privada,
@@ -767,14 +805,22 @@ def exportar_residentes_pdf():
 
     elementos.append(tabla)
 
-    pdf.build(elementos)
+    metadata = _pdf_metadata("Reporte de Residentes", "Reporte de Residentes")
+
+    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
 
     buffer.seek(0)
+
+    _registrar_historial_reporte(
+        f"Reporte_Residentes_{datetime.now().strftime('%d%m%Y')}.pdf",
+        "Residentes",
+        "PDF",
+    )
 
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"residentes_{datetime.now().strftime('%d%m%Y')}.pdf",
+        download_name=f"Acceso_QR_Reporte_Residentes_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
 
@@ -1062,14 +1108,22 @@ def exportar_guardias_pdf():
 
     elementos.append(tabla)
 
-    pdf.build(elementos)
+    metadata = _pdf_metadata("Reporte de Guardias", "Reporte de Guardias")
+
+    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
 
     buffer.seek(0)
+
+    _registrar_historial_reporte(
+        f"Reporte_Guardias_{datetime.now().strftime('%d%m%Y')}.pdf",
+        "Guardias",
+        "PDF",
+    )
 
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"guardias_{datetime.now().strftime('%d%m%Y')}.pdf",
+        download_name=f"Acceso_QR_Reporte_Guardias_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
 
@@ -1202,14 +1256,22 @@ def exportar_accesos_pdf():
 
     elementos.append(tabla)
 
-    pdf.build(elementos)
+    metadata = _pdf_metadata("Reporte de Accesos", "Reporte de Accesos")
+
+    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
 
     buffer.seek(0)
+
+    _registrar_historial_reporte(
+        f"Reporte_Accesos_{datetime.now().strftime('%d%m%Y')}.pdf",
+        "Accesos",
+        "PDF",
+    )
 
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"accesos_{datetime.now().strftime('%d%m%Y')}.pdf",
+        download_name=f"Acceso_QR_Reporte_Accesos_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
 
@@ -1315,10 +1377,16 @@ def exportar_accesos_excel():
 
     output.seek(0)
 
+    _registrar_historial_reporte(
+        f"Reporte_Accesos_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        "Accesos",
+        "Excel",
+    )
+
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"accesos_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        download_name=f"Acceso_QR_Reporte_Accesos_{datetime.now().strftime('%d%m%Y')}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
@@ -1457,6 +1525,9 @@ def exportar_incidencias_pdf():
         if fecha:
             fecha = fecha.strftime("%d/%m/%Y %I:%M %p")
 
+        else:
+            fecha = ""
+
         descripcion = incidencia.get("descripcion", "Sin descripción")
 
         data.append(
@@ -1561,14 +1632,22 @@ def exportar_incidencias_pdf():
     # CREAR PDF
     # =========================================
 
-    pdf.build(elementos)
+    metadata = _pdf_metadata("Reporte de Incidencias", "Reporte de Incidencias")
+
+    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
 
     buffer.seek(0)
+
+    _registrar_historial_reporte(
+        f"Reporte_Incidencias_{datetime.now().strftime('%d%m%Y')}.pdf",
+        "Incidencias",
+        "PDF",
+    )
 
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"incidencias_{datetime.now().strftime('%d%m%Y')}.pdf",
+        download_name=f"Acceso_QR_Reporte_Incidencias_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
 
@@ -1699,10 +1778,16 @@ def exportar_incidencias_excel():
 
     output.seek(0)
 
+    _registrar_historial_reporte(
+        f"Reporte_Incidencias_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        "Incidencias",
+        "Excel",
+    )
+
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"incidencias_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        download_name=f"Acceso_QR_Reporte_Incidencias_{datetime.now().strftime('%d%m%Y')}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
@@ -1776,12 +1861,29 @@ def exportar_visitas_pdf():
 
     for visita in visitas:
 
+        placa = ""
+
+        vehiculo = visita.get("vehiculo", {})
+
+        if isinstance(vehiculo, dict):
+            placa = vehiculo.get("placa", "")
+
+        estado = visita.get("estado", "")
+
+        estado_map = {
+            "activo": "Activo",
+            "dentro": "Dentro",
+            "salida_registrada": "Finalizada",
+            "cancelado": "Cancelado",
+            "vencido": "Vencido",
+        }
+
         data.append(
             [
                 Paragraph(visita.get("nombre_visitante", ""), estilo_normal),
                 Paragraph(visita.get("residente_nombre", ""), estilo_normal),
-                Paragraph(visita.get("placas", ""), estilo_normal),
-                Paragraph(visita.get("estado", ""), estilo_normal),
+                Paragraph(placa, estilo_normal),
+                Paragraph(estado_map.get(estado, estado), estilo_normal),
             ]
         )
 
@@ -1814,14 +1916,22 @@ def exportar_visitas_pdf():
 
     elementos.append(tabla)
 
-    pdf.build(elementos)
+    metadata = _pdf_metadata("Reporte de Visitas", "Reporte de Visitas")
+
+    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
 
     buffer.seek(0)
+
+    _registrar_historial_reporte(
+        f"Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.pdf",
+        "Visitas",
+        "PDF",
+    )
 
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"visitas_{datetime.now().strftime('%d%m%Y')}.pdf",
+        download_name=f"Acceso_QR_Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
 
@@ -1844,12 +1954,29 @@ def exportar_visitas_excel():
 
     for visita in visitas:
 
+        placa = ""
+
+        vehiculo = visita.get("vehiculo", {})
+
+        if isinstance(vehiculo, dict):
+            placa = vehiculo.get("placa", "")
+
+        estado = visita.get("estado", "")
+
+        estado_map = {
+            "activo": "Activo",
+            "dentro": "Dentro",
+            "salida_registrada": "Finalizada",
+            "cancelado": "Cancelado",
+            "vencido": "Vencido",
+        }
+
         data.append(
             {
                 "Visitante": visita.get("nombre_visitante", ""),
                 "Residente": visita.get("residente_nombre", ""),
-                "Placas": visita.get("placas", ""),
-                "Estado": visita.get("estado", ""),
+                "Placas": placa,
+                "Estado": estado_map.get(estado, estado),
             }
         )
 
@@ -1942,10 +2069,16 @@ def exportar_visitas_excel():
 
     output.seek(0)
 
+    _registrar_historial_reporte(
+        f"Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        "Visitas",
+        "Excel",
+    )
+
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"visitas_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        download_name=f"Acceso_QR_Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
@@ -2080,10 +2213,16 @@ def exportar_residentes_excel():
 
     output.seek(0)
 
+    _registrar_historial_reporte(
+        f"Reporte_Residentes_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        "Residentes",
+        "Excel",
+    )
+
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"residentes_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        download_name=f"Acceso_QR_Reporte_Residentes_{datetime.now().strftime('%d%m%Y')}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
@@ -2216,10 +2355,16 @@ def exportar_guardias_excel():
 
     output.seek(0)
 
+    _registrar_historial_reporte(
+        f"Reporte_Guardias_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        "Guardias",
+        "Excel",
+    )
+
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"guardias_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        download_name=f"Acceso_QR_Reporte_Guardias_{datetime.now().strftime('%d%m%Y')}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
@@ -2365,14 +2510,24 @@ def exportar_sistema_pdf():
     # CREAR PDF
     # =====================================================
 
-    pdf.build(elementos)
+    metadata = _pdf_metadata(
+        "Reporte General del Sistema", "Reporte General del Sistema"
+    )
+
+    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
 
     buffer.seek(0)
+
+    _registrar_historial_reporte(
+        f"Reporte_General_{datetime.now().strftime('%d%m%Y')}.pdf",
+        "General",
+        "PDF",
+    )
 
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"sistema_{datetime.now().strftime('%d%m%Y')}.pdf",
+        download_name=f"Acceso_QR_Reporte_General_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
 
@@ -2481,10 +2636,16 @@ def exportar_sistema_excel():
 
     output.seek(0)
 
+    _registrar_historial_reporte(
+        f"Reporte_General_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        "General",
+        "Excel",
+    )
+
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"sistema_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        download_name=f"Acceso_QR_Reporte_General_{datetime.now().strftime('%d%m%Y')}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
@@ -2499,58 +2660,28 @@ def exportar_sistema_excel():
 @role_required("admin")
 def historial_reportes():
 
-    reportes = [
-        {
-            "nombre": "visitas_17052026.pdf",
-            "tipo": "Visitas",
-            "formato": "PDF",
-            "usuario": "Administrador",
-            "fecha": "17/05/2026 11:45 PM",
-            "estado": "Generado",
-        },
-        {
-            "nombre": "visitas_17052026.xlsx",
-            "tipo": "Visitas",
-            "formato": "Excel",
-            "usuario": "Administrador",
-            "fecha": "17/05/2026 11:42 PM",
-            "estado": "Generado",
-        },
-        {
-            "nombre": "accesos_17052026.pdf",
-            "tipo": "Accesos",
-            "formato": "PDF",
-            "usuario": "Administrador",
-            "fecha": "17/05/2026 11:35 PM",
-            "estado": "Generado",
-        },
-        {
-            "nombre": "accesos_17052026.xlsx",
-            "tipo": "Accesos",
-            "formato": "Excel",
-            "usuario": "Administrador",
-            "fecha": "17/05/2026 11:31 PM",
-            "estado": "Generado",
-        },
-        {
-            "nombre": "incidencias_17052026.pdf",
-            "tipo": "Incidencias",
-            "formato": "PDF",
-            "usuario": "Administrador",
-            "fecha": "17/05/2026 11:28 PM",
-            "estado": "Generado",
-        },
-        {
-            "nombre": "guardias_17052026.xlsx",
-            "tipo": "Guardias",
-            "formato": "Excel",
-            "usuario": "Administrador",
-            "fecha": "17/05/2026 11:20 PM",
-            "estado": "Generado",
-        },
-    ]
+    pagina = int(request.args.get("page", 1))
+    por_pagina = 15
+    total = mongo.db.reportes.count_documents({})
+    total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
 
-    return render_template("admin_historial_reportes.html", reportes=reportes)
+    reportes = list(
+        mongo.db.reportes.find()
+        .sort("fecha", -1)
+        .skip((pagina - 1) * por_pagina)
+        .limit(por_pagina)
+    )
+
+    for r in reportes:
+        if isinstance(r.get("fecha"), datetime):
+            r["fecha"] = r["fecha"].strftime("%d/%m/%Y %I:%M %p")
+
+    return render_template(
+        "admin_historial_reportes.html",
+        reportes=reportes,
+        pagina=pagina,
+        total_paginas=total_paginas,
+    )
 
 
 # =========================================================

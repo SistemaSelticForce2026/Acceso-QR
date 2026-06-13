@@ -222,3 +222,17 @@ function mostrarToast(texto, tipo = "info") {
     }, 3200);
 
 }
+
+// =====================================================
+// REFRESH GLOBAL
+// =====================================================
+
+socket.on("refresh", () => {
+
+    console.log("Refrescando sistema");
+
+    refrescarSistema(
+        "Sistema actualizado"
+    );
+
+});

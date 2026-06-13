@@ -594,6 +594,7 @@
 .badge-neutral .res-badge-dot { background: #77767d; }
 
 .badge-blue    { background: rgba(46,91,255,0.10); color: #2e5bff; }
+.badge-blue .res-badge-dot { background: #2e5bff; }
 
 /* ---- QR thumbnail ----------------------------------------- */
 .res-qr-thumb {

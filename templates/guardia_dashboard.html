@@ -114,6 +114,20 @@
 
     </form>
 
+    {# ============================================================ #}
+    {# Etiquetas legibles para el tipo de visitante recurrente      #}
+    {# (deben coincidir con los data-tipo del formulario)           #}
+    {# ============================================================ #}
+    {% set TIPO_LABELS = {
+        'domestica':     'Empleado(a) doméstico(a)',
+        'jardinero':     'Jardinero',
+        'mantenimiento': 'Mantenimiento',
+        'proveedor':     'Proveedor frecuente',
+        'chofer':        'Chofer',
+        'familiar':      'Familiar frecuente',
+        'otro':          'Otro'
+    } %}
+
     <!-- Lista de visitas -->
     <div class="grd-visit-list">
 
@@ -141,14 +155,18 @@
                     <div class="grd-visit-primary">
                         <div class="grd-visit-name-row">
                             <p class="grd-visit-name">{{ visita.nombre_visitante }}</p>
-                            {% if visita.estado == "activo" %}
-                                <span class="grd-badge warning">Pendiente</span>
-                            {% elif visita.estado == "dentro" %}
+                            {% if visita.estado == "dentro" %}
                                 <span class="grd-badge success">Dentro</span>
+                            {% elif visita.estado == "pendiente_autorizacion" %}
+                                <span class="grd-badge warning">Pendiente</span>
+                            {% elif visita.estado == "activo" %}
+                                <span class="grd-badge info">Vigente</span>
                             {% elif visita.estado == "salida_registrada" %}
                                 <span class="grd-badge neutral">Finalizada</span>
+                            {% elif visita.estado in ["vencido", "cancelado"] %}
+                                <span class="grd-badge danger">{{ visita.estado | capitalize }}</span>
                             {% else %}
-                                <span class="grd-badge danger">{{ visita.estado }}</span>
+                                <span class="grd-badge neutral">{{ visita.estado | capitalize }}</span>
                             {% endif %}
                         </div>
                         <p class="grd-visit-phone">
@@ -178,10 +196,59 @@
                     </span>
 
                     {% if visita.modalidad_visita == "recurrente" %}
+
+                        {# --- Campos reales que envía el formulario del residente --- #}
+                        {% set h_ini   = visita.get('hora_desde') or visita.get('valido_inicio') or visita.get('hora_inicio') %}
+                        {% set h_fin   = visita.get('hora_hasta') or visita.get('valido_final') or visita.get('hora_fin') %}
+                        {% set dias    = visita.get('dias') or visita.get('dias_autorizados') %}
+                        {% set tipo_v  = visita.get('tipo_recurrente') or visita.get('tipo_visitante') or visita.get('tipo') %}
+                        {% set vig_ini = visita.get('fecha_inicio_recurrente') or visita.get('fecha_inicio') or visita.get('valido_desde') %}
+                        {% set vig_fin = visita.get('fecha_fin_recurrente') or visita.get('fecha_fin') or visita.get('valido_hasta') %}
+
+                        {# Tipo de visitante #}
+                        {% if tipo_v %}
+                        <span class="grd-chip neutral">
+                            <i class="fa-solid fa-user-tag"></i>
+                            {{ TIPO_LABELS.get(tipo_v, tipo_v | capitalize) }}
+                        </span>
+                        {% endif %}
+
+                        {# Vigencia: de cuándo a cuándo #}
+                        {% if vig_ini and vig_fin %}
+                        <span class="grd-chip neutral">
+                            <i class="fa-regular fa-calendar-check"></i>
+                            {% if vig_ini is string and '-' in vig_ini %}{{ vig_ini.split('-')[2] }}/{{ vig_ini.split('-')[1] }}/{{ vig_ini.split('-')[0] }}{% else %}{{ vig_ini }}{% endif %}
+                            &rarr;
+                            {% if vig_fin is string and '-' in vig_fin %}{{ vig_fin.split('-')[2] }}/{{ vig_fin.split('-')[1] }}/{{ vig_fin.split('-')[0] }}{% else %}{{ vig_fin }}{% endif %}
+                        </span>
+                        {% endif %}
+
+                        {# Días autorizados #}
                         <span class="grd-chip neutral">
                             <i class="fa-regular fa-calendar-days"></i>
-                            {{ visita.dia_semana | capitalize }} · {{ visita.hora_programada | hora_ampm }}
+                            {% if dias %}
+                                {{ dias | join(', ') | capitalize }}
+                            {% elif visita.get('dia_semana') %}
+                                {{ visita.dia_semana | capitalize }}
+                            {% else %}
+                                Sin días definidos
+                            {% endif %}
                         </span>
+
+                        {# Horario permitido (según el preset elegido) #}
+                        <span class="grd-chip neutral">
+                            <i class="fa-solid fa-clock"></i>
+                            {% if h_ini and h_fin %}
+                                {% if h_ini in ['00:00', '00:00:00'] and h_fin in ['23:59', '23:59:00'] %}
+                                    Sin restricción de horario
+                                {% else %}
+                                    {{ h_ini | hora_ampm }} a {{ h_fin | hora_ampm }}
+                                {% endif %}
+                            {% else %}
+                                Sin horario definido
+                            {% endif %}
+                        </span>
+
                     {% else %}
                         <span class="grd-chip neutral">
                             <i class="fa-regular fa-calendar-days"></i>

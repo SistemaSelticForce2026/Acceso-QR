@@ -41,6 +41,32 @@ def hora_ampm(valor):
     return valor
 
 
+# ===============================
+# ÍNDICES DE BASE DE DATOS
+# ===============================
+def crear_indices():
+    """Crea los índices una sola vez al arrancar.
+    create_index es idempotente: si ya existe, no hace nada."""
+
+    # --- Índices de rendimiento (siempre seguros) ---
+    mongo.db.users.create_index("rol")
+    mongo.db.visits.create_index("qr_token")
+    mongo.db.visits.create_index("residente_id")
+    mongo.db.visits.create_index("estado")
+    mongo.db.visits.create_index("created_at")
+    mongo.db.visits.create_index("fecha_visita")
+    mongo.db.access_logs.create_index("fecha_hora")
+    mongo.db.incidencias.create_index("fecha_hora")
+    mongo.db.reportes.create_index("fecha")
+
+    # --- Índice único de correo (puede fallar si ya hay correos duplicados) ---
+    try:
+        mongo.db.users.create_index("correo", unique=True)
+    except Exception as e:
+        print("AVISO: no se pudo crear índice único en 'correo':", e)
+        print("       Revisa si ya tienes correos repetidos en la base.")
+
+
 # ================
 # CREAR APP
 # ================
@@ -86,6 +112,10 @@ def create_app():
     app.config["UPLOAD_FOLDER"] = Config.UPLOAD_FOLDER
 
     mongo.init_app(app)
+
+    # Crear índices una sola vez al arrancar
+    with app.app_context():
+        crear_indices()
 
     socketio.init_app(
         app,

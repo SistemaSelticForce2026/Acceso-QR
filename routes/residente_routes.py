@@ -56,7 +56,10 @@ def dashboard():
     )
 
     visitas_pendientes = mongo.db.visits.count_documents(
-        {"residente_id": residente_id, "estado": "activo"}
+        {
+            "residente_id": residente_id,
+            "estado": {"$in": ["activo", "pendiente_autorizacion"]},
+        }
     )
 
     return render_template(
@@ -132,13 +135,6 @@ def visitors():
         .limit(por_pagina)
     )
 
-    print("\n===== PAGINA ACTUAL =====")
-
-    for v in visitas:
-        print(v.get("nombre_visitante"), v.get("created_at"))
-
-    print("=========================\n")
-
     return render_template(
         "mis_visitantes.html",
         visitas=visitas,
@@ -166,7 +162,8 @@ def cancelar_qr(token):
         {"qr_token": token, "residente_id": session["user_id"]},
         {"$set": {"qr_estado": "cancelado", "estado": "cancelado"}},
     )
-
+    socketio.emit("actualizar_dashboard")  # <-- AGREGAR
+    socketio.emit("refresh")  # <-- AGREGAR
     return {"success": True}
 
 
@@ -187,9 +184,10 @@ def eliminar_visita(id):
         )
 
         if resultado.deleted_count == 0:
-
             return jsonify({"success": False, "message": "Visita no encontrada"}), 404
 
+        socketio.emit("actualizar_dashboard")  # <-- AGREGAR
+        socketio.emit("refresh")  # <-- AGREGAR
         return jsonify({"success": True})
 
     except Exception as e:
@@ -228,16 +226,69 @@ def editar_visita(visita_id):
 
     if request.method == "POST":
 
-        mongo.db.visits.update_one(
-            {"_id": ObjectId(visita_id)},
-            {
-                "$set": {
-                    "telefono": request.form.get("telefono"),
-                    "fecha_visita": request.form.get("fecha_visita"),
-                    "hora_inicio": request.form.get("hora_inicio"),
-                }
-            },
-        )
+        # ==============================================
+        # ACTUALIZAR SEGÚN MODALIDAD
+        # ==============================================
+
+        if visita.get("modalidad_visita") == "recurrente":
+
+            dias_autorizados = request.form.getlist("dias[]")
+            hora_desde = request.form.get("hora_desde")
+            hora_hasta = request.form.get("hora_hasta")
+            tipo_recurrente = request.form.get("tipo_recurrente")
+            fecha_inicio_recurrente = request.form.get("fecha_inicio_recurrente")
+            fecha_fin_recurrente = request.form.get("fecha_fin_recurrente")
+
+            try:
+                vigencia_desde = datetime.strptime(fecha_inicio_recurrente, "%Y-%m-%d")
+            except (TypeError, ValueError):
+                vigencia_desde = visita.get("vigencia_desde") or datetime.now()
+
+            try:
+                vigencia_hasta = datetime.strptime(fecha_fin_recurrente, "%Y-%m-%d")
+            except (TypeError, ValueError):
+                vigencia_hasta = visita.get("vigencia_hasta")
+
+            mongo.db.visits.update_one(
+                {"_id": ObjectId(visita_id)},
+                {
+                    "$set": {
+                        "telefono": request.form.get("telefono"),
+                        "tipo_recurrente": tipo_recurrente,
+                        "dias": dias_autorizados,
+                        "dias_autorizados": dias_autorizados,
+                        "hora_desde": hora_desde,
+                        "hora_hasta": hora_hasta,
+                        "hora_programada": hora_desde,
+                        "fecha_inicio_recurrente": fecha_inicio_recurrente,
+                        "fecha_fin_recurrente": fecha_fin_recurrente,
+                        "vigencia_desde": vigencia_desde,
+                        "vigencia_hasta": vigencia_hasta,
+                    }
+                },
+            )
+
+        else:
+
+            mongo.db.visits.update_one(
+                {"_id": ObjectId(visita_id)},
+                {
+                    "$set": {
+                        "telefono": request.form.get("telefono"),
+                        "fecha_visita": request.form.get("fecha_visita"),
+                        "hora_inicio": request.form.get("hora_inicio"),
+                    }
+                },
+            )
+
+        # ====================================
+        # AVISAR A LOS DASHBOARDS (correcto)
+        # ====================================
+
+        socketio.emit("actualizar_dashboard")
+        socketio.emit("refresh")
+
+        flash("Visita actualizada correctamente.", "success")
 
         return redirect(url_for("resident.visitors"))
 
@@ -287,7 +338,7 @@ def create_visit():
         foto_placa = guardar_imagen(request.files.get("foto_placa"), "placas")
 
         # =============================================
-        # VARIABLES
+        # VARIABLES BASE (siempre definidas)
         # =============================================
 
         vigencia_desde = None
@@ -295,8 +346,15 @@ def create_visit():
 
         dias_autorizados = []
 
-        hora_programada = None
+        # Campos recurrentes (nombres reales del formulario)
+        tipo_recurrente = None
+        hora_desde = None
+        hora_hasta = None
+        fecha_inicio_recurrente = None
+        fecha_fin_recurrente = None
 
+        # Compatibilidad con validación / código anterior
+        hora_programada = None
         hora_limite_salida = None
 
         fecha_visita = request.form.get("fecha_visita")
@@ -310,54 +368,50 @@ def create_visit():
         if modalidad == "recurrente":
 
             # =========================================
-            # DATOS DEL FORMULARIO
+            # DATOS REALES DEL FORMULARIO
             # =========================================
+
+            tipo_recurrente = request.form.get("tipo_recurrente")
 
             dias_autorizados = request.form.getlist("dias[]")
 
-            hora_programada = request.form.get("hora_programada")
+            hora_desde = request.form.get("hora_desde")
 
-            hora_limite_salida = request.form.get("hora_salida")
+            hora_hasta = request.form.get("hora_hasta")
 
-            vigencia_qr = request.form.get("vigencia_qr")
+            fecha_inicio_recurrente = request.form.get("fecha_inicio_recurrente")
 
-            hora_inicio = hora_programada
-
-            # =========================================
-            # FECHA ACTUAL
-            # =========================================
-
-            vigencia_desde = datetime.now()
+            fecha_fin_recurrente = request.form.get("fecha_fin_recurrente")
 
             # =========================================
-            # CALCULAR VIGENCIA
+            # VIGENCIA REAL (según lo que eligió el residente)
+            # Se guardan como datetime para la validación del QR.
             # =========================================
 
-            if vigencia_qr == "1_semana":
+            try:
+                vigencia_desde = datetime.strptime(fecha_inicio_recurrente, "%Y-%m-%d")
+            except (TypeError, ValueError):
+                vigencia_desde = datetime.now()
 
-                vigencia_hasta = vigencia_desde + timedelta(days=7)
-
-            elif vigencia_qr == "15_dias":
-
-                vigencia_hasta = vigencia_desde + timedelta(days=15)
-
-            elif vigencia_qr == "1_mes":
-
-                vigencia_hasta = vigencia_desde + timedelta(days=30)
-
-            elif vigencia_qr == "3_meses":
-
-                vigencia_hasta = vigencia_desde + timedelta(days=90)
-
-            else:
-
+            try:
+                vigencia_hasta = datetime.strptime(fecha_fin_recurrente, "%Y-%m-%d")
+            except (TypeError, ValueError):
                 vigencia_hasta = vigencia_desde + timedelta(days=30)
 
             # =========================================
-            # FECHA BASE
+            # COMPATIBILIDAD
             # =========================================
 
-            fecha_visita = vigencia_desde.strftime("%Y-%m-%d")
+            hora_programada = hora_desde
+            hora_inicio = hora_desde
+
+            # =========================================
+            # FECHA BASE: el primer día válido del rango
+            # =========================================
+
+            fecha_visita = fecha_inicio_recurrente or vigencia_desde.strftime(
+                "%Y-%m-%d"
+            )
 
         # =============================================
         # CREAR OBJETO VISITA
@@ -378,11 +432,20 @@ def create_visit():
             "residencia_destino": residente["numero_casa"],
             "fecha_visita": fecha_visita,
             "hora_inicio": hora_inicio,
+            # ---- Campos recurrentes (los que lee el dashboard) ----
+            "tipo_recurrente": tipo_recurrente,
+            "dias": dias_autorizados,
             "dias_autorizados": dias_autorizados,
+            "hora_desde": hora_desde,
+            "hora_hasta": hora_hasta,
+            "fecha_inicio_recurrente": fecha_inicio_recurrente,
+            "fecha_fin_recurrente": fecha_fin_recurrente,
+            # ---- Compatibilidad / validación ----
             "hora_programada": hora_programada,
             "hora_limite_salida": hora_limite_salida,
             "vigencia_desde": vigencia_desde,
             "vigencia_hasta": vigencia_hasta,
+            # ---- Estado de salida ----
             "hora_salida": None,
             "fecha_salida": None,
             "entrada_consumida": False,

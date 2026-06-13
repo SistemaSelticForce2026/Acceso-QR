@@ -142,17 +142,20 @@
   align-items: center;
   justify-content: center;
   height: 38px;
+  width: 160px;                   
   padding: 0 20px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
+  font-family: inherit;           
   color: #fff;
   background: #185FA5;
-  border: none;
+  border: 1px solid transparent;   
+  box-sizing: border-box;          
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
   line-height: 1;
-  vertical-align: middle;
+  margin: 0;
 }
 
 .btn-save:hover {

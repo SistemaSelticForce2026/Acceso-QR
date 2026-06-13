@@ -86,6 +86,9 @@
     {%- elif visita.estado == 'dentro' -%}
         {%- set badge_cls = 'badge-success' -%}
         {%- set badge_label = 'Dentro' -%}
+    {%- elif visita.estado == 'activo' -%}
+        {%- set badge_cls = 'badge-blue' -%}
+        {%- set badge_label = 'Vigente' -%}
     {%- elif visita.estado == 'salida_registrada' -%}
         {%- set badge_cls = 'badge-neutral' -%}
         {%- set badge_label = 'Finalizada' -%}
@@ -175,27 +178,22 @@
                     data-visitante="{{ visita.nombre_visitante }}"
                     alt="QR">
 
-                {% if visita.qr_estado != 'cancelado' %}
+                {% if visita.qr_estado not in ['cancelado', 'vencido']
+                    and visita.estado not in ['salida_registrada', 'dentro'] %}
                 <button class="res-btn-cancel btn-cancelar-qr" data-token="{{ visita.qr_token }}">
                     <i class="fa-solid fa-ban"></i>
                     Cancelar QR
                 </button>
                 {% endif %}
 
-                {% if visita.estado not in ['dentro', 'salida_registrada', 'cancelado'] %}
+                {% if visita.estado not in ['dentro', 'salida_registrada']
+                    and visita.qr_estado not in ['cancelado', 'vencido'] %}
 
                 <a href="{{ url_for('resident.editar_visita', visita_id=visita._id) }}"
-                   class="res-btn-edit">
+                class="res-btn-edit">
                     <i class="fa-solid fa-pen"></i>
                     Editar
                 </a>
-
-                {% else %}
-
-                <button class="res-btn-edit-disabled" disabled>
-                    <i class="fa-solid fa-lock"></i>
-                    No editable
-                </button>
 
                 {% endif %}
 
@@ -433,36 +431,184 @@ document.querySelectorAll(".btn-cancelar-qr").forEach(btn => {
 
 async function eliminarVisita(id){
 
-    if(!confirm("¿Deseas eliminar esta visita permanentemente?")){
+    const result = await Swal.fire({
+
+        icon: 'warning',
+
+        title: 'Eliminar visitante',
+
+        html: `
+            <div style="
+                color:#64748b;
+                font-size:14px;
+                line-height:1.7;
+                text-align:center;
+            ">
+                El registro del visitante será eliminado del sistema.
+
+                <div style="
+                    margin-top:16px;
+                    padding:14px;
+                    border-radius:14px;
+                    background:#fef2f2;
+                    border:1px solid #fecaca;
+                    color:#b91c1c;
+                    font-size:13px;
+                    font-weight:600;
+                ">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Esta acción es permanente y no podrá deshacerse.
+                </div>
+            </div>
+        `,
+
+        showCancelButton: true,
+
+        confirmButtonText:
+            '<i class="fa-solid fa-trash"></i> Eliminar',
+
+        cancelButtonText:
+            '<i class="fa-solid fa-xmark"></i> Cancelar',
+
+        reverseButtons: true,
+
+        confirmButtonColor: '#dc2626',
+
+        cancelButtonColor: '#64748b',
+
+        background: '#ffffff',
+
+        width: '480px',
+
+        borderRadius: '24px',
+
+        customClass: {
+            popup: 'swal-premium',
+            confirmButton: 'swal-btn-confirm',
+            cancelButton: 'swal-btn-cancel'
+        }
+
+    });
+
+    if(!result.isConfirmed){
+
         return;
+
     }
 
     try{
 
         const response = await fetch(
+
             `/resident/eliminar-visita/${id}`,
+
             {
                 method: "DELETE"
             }
+
         );
 
         const data = await response.json();
 
         if(data.success){
 
-            alert("Visita eliminada correctamente");
+            await Swal.fire({
+
+            icon: 'success',
+
+            title: 'Visitante eliminado',
+
+            html: `
+                <div style="
+                    text-align:center;
+                    color:#64748b;
+                    line-height:1.7;
+                    font-size:14px;
+                ">
+
+                    El visitante fue eliminado correctamente
+                    del sistema Access QR.
+
+                    <div style="
+                        margin-top:16px;
+                        padding:12px;
+                        border-radius:14px;
+                        background:#ecfdf5;
+                        border:1px solid #bbf7d0;
+                        color:#15803d;
+                        font-size:13px;
+                        font-weight:600;
+                    ">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Registro eliminado exitosamente
+                    </div>
+
+                </div>
+            `,
+
+            showConfirmButton: false,
+
+            timer: 1000,
+
+            timerProgressBar: false,
+
+            background: '#ffffff',
+
+            width: '460px'
+
+        });
+
             location.reload();
 
         }else{
 
-            alert("No se pudo eliminar la visita");
+            Swal.fire({
+
+                icon: 'error',
+
+                title: 'No se pudo eliminar',
+
+                html: `
+                    <div style="
+                        color:#64748b;
+                        font-size:14px;
+                    ">
+                        Ocurrió un problema al intentar eliminar el visitante.
+                    </div>
+                `,
+
+                confirmButtonColor: '#dc2626'
+
+            });
+
         }
 
     }catch(error){
 
         console.error(error);
-        alert("Error al eliminar la visita");
+
+        Swal.fire({
+
+            icon: 'error',
+
+            title: 'Error del sistema',
+
+            html: `
+                <div style="
+                    color:#64748b;
+                    font-size:14px;
+                ">
+                    No fue posible completar la solicitud.
+                    Inténtalo nuevamente.
+                </div>
+            `,
+
+            confirmButtonColor: '#dc2626'
+
+        });
+
     }
+
 }
 
 /* ─── Modal Foto Visitante ───────────────────────────────── */

@@ -116,6 +116,9 @@
         {%- elif visita.estado == 'dentro' -%}
             {%- set badge_cls = 'badge-success' -%}
             {%- set badge_label = 'Dentro' -%}
+        {%- elif visita.estado == 'activo' -%}
+            {%- set badge_cls = 'badge-blue' -%}
+            {%- set badge_label = 'Vigente' -%}
         {%- elif visita.estado == 'salida_registrada' -%}
             {%- set badge_cls = 'badge-neutral' -%}
             {%- set badge_label = 'Finalizada' -%}

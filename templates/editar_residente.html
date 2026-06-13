@@ -1,85 +1,71 @@
 {% extends 'layout.html' %}
 
 {% block extra_css %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/editar_residente.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/editar_residente.css') }}">
 {% endblock %}
 
 {% block content %}
 
-<div class="card form-card">
+<div class="er-wrap">
 
-    <h1>Editar residente</h1>
+    <a href="{{ url_for('admin.residentes') }}" class="er-back">
+        <i class="fa-solid fa-arrow-left"></i> Volver al directorio
+    </a>
 
-    <p class="small">
-        Actualiza la información del residente.
-    </p>
+    <div class="er-card">
 
-    <form method="POST">
-
-        <label>Nombre completo</label>
-        <input 
-            type="text" 
-            name="nombre"
-            value="{{ usuario.nombre }}"
-            required
-        >
-
-        <label>Correo electrónico</label>
-        <input 
-            type="email" 
-            name="correo"
-            value="{{ usuario.correo }}"
-            required
-        >
-
-        <label>Teléfono</label>
-        <input 
-            type="text" 
-            name="telefono"
-            value="{{ usuario.telefono }}"
-            required
-        >
-
-        <label>Fraccionamiento</label>
-        <input 
-            type="text" 
-            name="fraccionamiento"
-            value="{{ usuario.fraccionamiento }}"
-            required
-        >
-
-        <label>Privada</label>
-        <input 
-            type="text" 
-            name="privada"
-            value="{{ usuario.privada }}"
-            required
-        >
-
-        <label>Número de casa</label>
-        <input 
-            type="text" 
-            name="numero_casa"
-            value="{{ usuario.numero_casa }}"
-            required
-        >
-
-        <div class="form-actions">
-
-            <button type="submit" class="btn">
-                Guardar cambios
-            </button>
-
-            <a href="{{ url_for('admin.residentes') }}" class="btn secondary">
-                Cancelar
-            </a>
-
+        <div class="er-head">
+            <div class="er-head-icon"><i class="fa-solid fa-user-pen"></i></div>
+            <div>
+                <h1 class="er-title">Editar residente</h1>
+                <p class="er-sub">Actualiza la información del residente.</p>
+            </div>
         </div>
 
-    </form>
+        <form method="POST">
+            <div class="er-grid">
 
+                <div class="er-field full">
+                    <label>Nombre completo</label>
+                    <input type="text" name="nombre" value="{{ usuario.nombre }}" required>
+                </div>
+
+                <div class="er-field">
+                    <label>Correo electrónico</label>
+                    <input type="email" name="correo" value="{{ usuario.correo }}" required>
+                </div>
+
+                <div class="er-field">
+                    <label>Teléfono</label>
+                    <input type="text" name="telefono" value="{{ usuario.telefono }}" required>
+                </div>
+
+                <div class="er-field">
+                    <label>Fraccionamiento</label>
+                    <input type="text" name="fraccionamiento" value="{{ usuario.fraccionamiento }}" required>
+                </div>
+
+                <div class="er-field">
+                    <label>Privada</label>
+                    <input type="text" name="privada" value="{{ usuario.privada }}" required>
+                </div>
+
+                <div class="er-field">
+                    <label>Número de casa</label>
+                    <input type="text" name="numero_casa" value="{{ usuario.numero_casa }}" required>
+                </div>
+
+            </div>
+
+            <div class="er-actions">
+                <a href="{{ url_for('admin.residentes') }}" class="er-btn er-cancel">Cancelar</a>
+                <button type="submit" class="er-btn er-save">
+                    <i class="fa-solid fa-check"></i> Guardar cambios
+                </button>
+            </div>
+        </form>
+
+    </div>
 </div>
 
 {% endblock %}
