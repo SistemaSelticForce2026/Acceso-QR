@@ -14,9 +14,10 @@ let timeoutActualizacion = null;
 
 // =====================================================
 // RECARGA SUAVE
+// mostrar = false  -> recarga en silencio (sin toast)
 // =====================================================
 
-function refrescarSistema(tipo = "Sistema actualizado") {
+function refrescarSistema(tipo = "Información actualizada", mostrar = true) {
 
     if (actualizando) return;
 
@@ -24,7 +25,11 @@ function refrescarSistema(tipo = "Sistema actualizado") {
 
     document.body.classList.add("updating");
 
-    mostrarToast(tipo, "success");
+    if (mostrar && tipo) {
+
+        mostrarToast(tipo, "success");
+
+    }
 
     clearTimeout(timeoutActualizacion);
 
@@ -38,25 +43,21 @@ function refrescarSistema(tipo = "Sistema actualizado") {
 
 
 // =====================================================
-// NUEVA VISITA
+// NUEVA VISITA  (un solo mensaje, limpio)
 // =====================================================
 
 socket.on("nueva_visita", (data) => {
 
     console.log("Nueva visita registrada");
 
-    mostrarToast(
-        "Nueva visita registrada",
-        "info"
+    const visitante = (data && data.visitante) ? data.visitante : "";
+
+    refrescarSistema(
+        visitante
+            ? `Nueva visita registrada · ${visitante}`
+            : "Nueva visita registrada",
+        true
     );
-
-    setTimeout(() => {
-
-        refrescarSistema(
-            "Actualizando información"
-        );
-
-    }, 900);
 
 });
 
@@ -69,9 +70,7 @@ socket.on("actualizar_visitas", () => {
 
     console.log("Actualizando visitas");
 
-    refrescarSistema(
-        "Lista de visitas actualizada"
-    );
+    refrescarSistema("Lista de visitas actualizada");
 
 });
 
@@ -84,9 +83,7 @@ socket.on("actualizar_residentes", () => {
 
     console.log("Actualizando residentes");
 
-    refrescarSistema(
-        "Información de residentes actualizada"
-    );
+    refrescarSistema("Información de residentes actualizada");
 
 });
 
@@ -99,24 +96,20 @@ socket.on("actualizar_guardias", () => {
 
     console.log("Actualizando guardias");
 
-    refrescarSistema(
-        "Información de guardias actualizada"
-    );
+    refrescarSistema("Información de guardias actualizada");
 
 });
 
 
 // =====================================================
-// DASHBOARD
+// DASHBOARD  (recarga en SILENCIO, sin mostrar aviso)
 // =====================================================
 
 socket.on("actualizar_dashboard", () => {
 
     console.log("Actualizando dashboard");
 
-    refrescarSistema(
-        "Dashboard actualizado"
-    );
+    refrescarSistema(null, false);
 
 });
 
@@ -129,9 +122,7 @@ socket.on("actualizar_reportes", () => {
 
     console.log("Actualizando reportes");
 
-    refrescarSistema(
-        "Reportes actualizados"
-    );
+    refrescarSistema("Reportes actualizados");
 
 });
 
@@ -144,9 +135,7 @@ socket.on("actualizar_accesos", () => {
 
     console.log("Actualizando accesos");
 
-    refrescarSistema(
-        "Control de accesos actualizado"
-    );
+    refrescarSistema("Control de accesos actualizado");
 
 });
 
@@ -159,9 +148,20 @@ socket.on("actualizar_incidencias", () => {
 
     console.log("Actualizando incidencias");
 
-    refrescarSistema(
-        "Incidencias actualizadas"
-    );
+    refrescarSistema("Incidencias actualizadas");
+
+});
+
+
+// =====================================================
+// REFRESH GLOBAL  (mensaje profesional)
+// =====================================================
+
+socket.on("refresh", () => {
+
+    console.log("Refrescando sistema");
+
+    refrescarSistema("Información actualizada");
 
 });
 
@@ -222,17 +222,3 @@ function mostrarToast(texto, tipo = "info") {
     }, 3200);
 
 }
-
-// =====================================================
-// REFRESH GLOBAL
-// =====================================================
-
-socket.on("refresh", () => {
-
-    console.log("Refrescando sistema");
-
-    refrescarSistema(
-        "Sistema actualizado"
-    );
-
-});
