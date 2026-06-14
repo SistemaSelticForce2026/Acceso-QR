@@ -573,9 +573,9 @@ def registrar_residente():
 
         mongo.db.users.insert_one(nuevo)
 
-        socketio.emit("actualizar_residentes")
+        socketio.emit("actualizar_residentes", to="rol:admin")
 
-        socketio.emit("actualizar_dashboard")
+        socketio.emit("actualizar_dashboard", to="rol:admin")
 
         # =================================================
         # MENSAJE
@@ -635,9 +635,9 @@ def editar_residente(id):
             },
         )
 
-        socketio.emit("actualizar_residentes")
+        socketio.emit("actualizar_residentes", to="rol:admin")
 
-        socketio.emit("actualizar_dashboard")
+        socketio.emit("actualizar_dashboard", to="rol:admin")
 
         flash("Residente actualizado correctamente")
 
@@ -658,9 +658,9 @@ def bloquear_residente(id):
 
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
 
-    socketio.emit("actualizar_residentes")
+    socketio.emit("actualizar_residentes", to="rol:admin")
 
-    socketio.emit("actualizar_dashboard")
+    socketio.emit("actualizar_dashboard", to="rol:admin")
 
     flash("Residente bloqueado correctamente")
 
@@ -679,9 +679,9 @@ def eliminar_residente(id):
 
     mongo.db.users.delete_one({"_id": ObjectId(id)})
 
-    socketio.emit("actualizar_residentes")
+    socketio.emit("actualizar_residentes", to="rol:admin")
 
-    socketio.emit("actualizar_dashboard")
+    socketio.emit("actualizar_dashboard", to="rol:admin")
 
     flash("Residente eliminado correctamente.", "success")
 
@@ -700,7 +700,7 @@ def desbloquear_residente(id):
 
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
 
-    socketio.emit("actualizar_residentes")
+    socketio.emit("actualizar_residentes", to="rol:admin")
 
     flash("Residente desbloqueado correctamente", "success")
 
@@ -920,9 +920,9 @@ def registrar_guardia():
 
         mongo.db.users.insert_one(nuevo)
 
-        socketio.emit("actualizar_guardias")
+        socketio.emit("actualizar_guardias", to="rol:admin")
 
-        socketio.emit("actualizar_dashboard")
+        socketio.emit("actualizar_dashboard", to="rol:admin")
 
         # =========================================
         # MENSAJE
@@ -971,9 +971,9 @@ def editar_guardia(id):
             },
         )
 
-        socketio.emit("actualizar_guardias")
+        socketio.emit("actualizar_guardias", to="rol:admin")
 
-        socketio.emit("actualizar_dashboard")
+        socketio.emit("actualizar_dashboard", to="rol:admin")
 
         flash("Guardia actualizado correctamente")
 
@@ -989,9 +989,9 @@ def desactivar_guardia(id):
 
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
 
-    socketio.emit("actualizar_guardias")
+    socketio.emit("actualizar_guardias", to="rol:admin")
 
-    socketio.emit("actualizar_dashboard")
+    socketio.emit("actualizar_dashboard", to="rol:admin")
 
     flash("Guardia desactivado correctamente")
 
@@ -1005,9 +1005,9 @@ def activar_guardia(id):
 
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
 
-    socketio.emit("actualizar_guardias")
+    socketio.emit("actualizar_guardias", to="rol:admin")
 
-    socketio.emit("actualizar_dashboard")
+    socketio.emit("actualizar_dashboard", to="rol:admin")
 
     flash("Guardia activado correctamente")
 

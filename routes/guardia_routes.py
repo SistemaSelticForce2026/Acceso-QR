@@ -54,8 +54,7 @@ def _registrar_incidencia_qr(session, tipo, descripcion, visita=None, token=None
         incidencia["visitante"] = visita.get("nombre_visitante")
         incidencia["residencia_destino"] = visita.get("residencia_destino")
     mongo.db.incidencias.insert_one(incidencia)
-    socketio.emit("actualizar_dashboard")
-    socketio.emit("refresh")
+    socketio.emit("actualizar_dashboard", to="rol:admin")
 
 
 def _registrar_salida(visita, session):
@@ -91,8 +90,8 @@ def _registrar_salida(visita, session):
 
     mongo.db.visits.update_one({"_id": visita["_id"]}, {"$set": update_salida})
     visita.update(update_salida)
-    socketio.emit("actualizar_dashboard")
-    socketio.emit("refresh")
+    socketio.emit("actualizar_dashboard", to="rol:admin")
+    socketio.emit("actualizar_dashboard", to=f"user:{visita['residente_id']}")
     return visita
 
 
@@ -302,8 +301,10 @@ def scan_entrada():
                 mongo.db.visits.update_one(
                     {"_id": visita["_id"]}, {"$set": update_entrada}
                 )
-                socketio.emit("actualizar_dashboard")
-                socketio.emit("refresh")
+                socketio.emit("actualizar_dashboard", to="rol:admin")
+                socketio.emit(
+                    "actualizar_dashboard", to=f"user:{visita['residente_id']}"
+                )
 
                 visita["estado"] = "pendiente_autorizacion"
                 visita["hora_escaneo"] = ahora.strftime("%H:%M:%S")
@@ -463,8 +464,8 @@ def confirm_access():
             }
         )
 
-        socketio.emit("actualizar_dashboard")
-        socketio.emit("refresh")
+        socketio.emit("actualizar_dashboard", to="rol:admin")
+        socketio.emit("actualizar_dashboard", to=f"user:{visita['residente_id']}")
 
     flash("Acceso autorizado correctamente.", "success")
 

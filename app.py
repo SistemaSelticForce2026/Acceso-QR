@@ -13,6 +13,8 @@ from extensions import mongo, socketio
 
 from datetime import datetime
 
+from flask_socketio import join_room
+
 # ======================
 # FILTRO HORA AM / PM
 # ======================
@@ -65,6 +67,19 @@ def crear_indices():
     except Exception as e:
         print("AVISO: no se pudo crear índice único en 'correo':", e)
         print("       Revisa si ya tienes correos repetidos en la base.")
+
+
+# ===============================
+# SALAS POR ROL / USUARIO
+# ===============================
+@socketio.on("connect")
+def on_connect():
+    rol = session.get("rol")
+    user_id = session.get("user_id")
+    if rol:
+        join_room(f"rol:{rol}")
+    if user_id:
+        join_room(f"user:{user_id}")
 
 
 # ================

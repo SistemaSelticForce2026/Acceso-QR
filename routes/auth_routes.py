@@ -149,12 +149,6 @@ def register():
         mongo.db.users.insert_one(usuario)
 
         # ====================
-        # REFRESH SOCKET
-        # ====================
-
-        socketio.emit("refresh")
-
-        # ====================
         # MENSAJE
         # ====================
 
@@ -326,12 +320,6 @@ def login():
                     "estado": "activo",
                 }
             )
-
-        # ===================
-        # SOCKET REFRESH
-        # ===================
-
-        socketio.emit("refresh")
 
         # ===================
         # REDIRECCIONES
@@ -596,8 +584,6 @@ def logout():
     # ======================
 
     session.clear()
-
-    socketio.emit("refresh")
 
     flash("Sesión cerrada correctamente. ¡Hasta pronto!", "success")
 

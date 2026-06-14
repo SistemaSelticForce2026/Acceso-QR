@@ -162,8 +162,7 @@ def cancelar_qr(token):
         {"qr_token": token, "residente_id": session["user_id"]},
         {"$set": {"qr_estado": "cancelado", "estado": "cancelado"}},
     )
-    socketio.emit("actualizar_dashboard")  # <-- AGREGAR
-    socketio.emit("refresh")  # <-- AGREGAR
+    socketio.emit("actualizar_dashboard", to="rol:admin")
     return {"success": True}
 
 
@@ -186,8 +185,7 @@ def eliminar_visita(id):
         if resultado.deleted_count == 0:
             return jsonify({"success": False, "message": "Visita no encontrada"}), 404
 
-        socketio.emit("actualizar_dashboard")  # <-- AGREGAR
-        socketio.emit("refresh")  # <-- AGREGAR
+        socketio.emit("actualizar_dashboard", to="rol:admin")
         return jsonify({"success": True})
 
     except Exception as e:
@@ -285,8 +283,7 @@ def editar_visita(visita_id):
         # AVISAR A LOS DASHBOARDS (correcto)
         # ====================================
 
-        socketio.emit("actualizar_dashboard")
-        socketio.emit("refresh")
+        socketio.emit("actualizar_dashboard", to="rol:admin")
 
         flash("Visita actualizada correctamente.", "success")
 
@@ -473,14 +470,13 @@ def create_visit():
         # SOCKET NUEVA VISITA
         # =============================================
 
-        socketio.emit(
-            "nueva_visita",
-            {
-                "mensaje": "Nueva visita registrada",
-                "visitante": visita["nombre_visitante"],
-                "residente": visita["residente_nombre"],
-            },
-        )
+        datos_visita = {
+            "mensaje": "Nueva visita registrada",
+            "visitante": visita["nombre_visitante"],
+            "residente": visita["residente_nombre"],
+        }
+        socketio.emit("nueva_visita", datos_visita, to="rol:admin")
+        socketio.emit("nueva_visita", datos_visita, to="rol:guardia")
 
         # =============================================
         # REDIRECCIONAR Y ABRIR QR AUTOMÁTICAMENTE
