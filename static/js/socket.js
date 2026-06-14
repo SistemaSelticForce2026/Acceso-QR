@@ -17,7 +17,7 @@ let timeoutActualizacion = null;
 // mostrar = false  -> recarga en silencio (sin toast)
 // =====================================================
 
-function refrescarSistema(tipo = "Información actualizada", mostrar = true) {
+function refrescarSistema(tipo = "", mostrar = false) {
 
     if (actualizando) return;
 
@@ -43,7 +43,7 @@ function refrescarSistema(tipo = "Información actualizada", mostrar = true) {
 
 
 // =====================================================
-// NUEVA VISITA  (un solo mensaje, limpio)
+// NUEVA VISITA  (único mensaje que sí se muestra)
 // =====================================================
 
 socket.on("nueva_visita", (data) => {
@@ -63,46 +63,46 @@ socket.on("nueva_visita", (data) => {
 
 
 // =====================================================
-// VISITAS
+// VISITAS  (silencioso)
 // =====================================================
 
 socket.on("actualizar_visitas", () => {
 
     console.log("Actualizando visitas");
 
-    refrescarSistema("Lista de visitas actualizada");
+    refrescarSistema(null, false);
 
 });
 
 
 // =====================================================
-// RESIDENTES
+// RESIDENTES  (silencioso)
 // =====================================================
 
 socket.on("actualizar_residentes", () => {
 
     console.log("Actualizando residentes");
 
-    refrescarSistema("Información de residentes actualizada");
+    refrescarSistema(null, false);
 
 });
 
 
 // =====================================================
-// GUARDIAS
+// GUARDIAS  (silencioso)
 // =====================================================
 
 socket.on("actualizar_guardias", () => {
 
     console.log("Actualizando guardias");
 
-    refrescarSistema("Información de guardias actualizada");
+    refrescarSistema(null, false);
 
 });
 
 
 // =====================================================
-// DASHBOARD  (recarga en SILENCIO, sin mostrar aviso)
+// DASHBOARD  (silencioso)
 // =====================================================
 
 socket.on("actualizar_dashboard", () => {
@@ -115,53 +115,53 @@ socket.on("actualizar_dashboard", () => {
 
 
 // =====================================================
-// REPORTES
+// REPORTES  (silencioso)
 // =====================================================
 
 socket.on("actualizar_reportes", () => {
 
     console.log("Actualizando reportes");
 
-    refrescarSistema("Reportes actualizados");
+    refrescarSistema(null, false);
 
 });
 
 
 // =====================================================
-// ACCESOS
+// ACCESOS  (silencioso)
 // =====================================================
 
 socket.on("actualizar_accesos", () => {
 
     console.log("Actualizando accesos");
 
-    refrescarSistema("Control de accesos actualizado");
+    refrescarSistema(null, false);
 
 });
 
 
 // =====================================================
-// INCIDENCIAS
+// INCIDENCIAS  (silencioso)
 // =====================================================
 
 socket.on("actualizar_incidencias", () => {
 
     console.log("Actualizando incidencias");
 
-    refrescarSistema("Incidencias actualizadas");
+    refrescarSistema(null, false);
 
 });
 
 
 // =====================================================
-// REFRESH GLOBAL  (mensaje profesional)
+// REFRESH GLOBAL  (silencioso: solo recarga, sin mensaje)
 // =====================================================
 
 socket.on("refresh", () => {
 
     console.log("Refrescando sistema");
 
-    refrescarSistema("Información actualizada");
+    refrescarSistema(null, false);
 
 });
 
