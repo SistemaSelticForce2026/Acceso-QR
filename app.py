@@ -1,3 +1,10 @@
+import os
+import time
+
+os.environ["TZ"] = "America/Mexico_City"
+if hasattr(time, "tzset"):
+    time.tzset()
+
 from routes.api.auth_api import auth_api
 from routes.api.admin_api import admin_api
 from routes.api.residente_api import residente_api
