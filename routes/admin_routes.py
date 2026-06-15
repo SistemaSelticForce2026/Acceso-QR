@@ -95,321 +95,245 @@ def _registrar_historial_reporte(nombre, tipo, formato):
 @login_required
 @role_required("admin")
 def dashboard():
-
-    from collections import Counter
-
+ 
+    import re
+    from datetime import datetime as _dt
+ 
     filtro = request.args.get("filtro", "hoy")
-
     busqueda = request.args.get("busqueda", "").strip()
-
     fecha_inicio_tabla = request.args.get("fecha_inicio_tabla", "").strip()
-
     fecha_fin_tabla = request.args.get("fecha_fin_tabla", "").strip()
-
+ 
     hoy = datetime.now()
-
-    if filtro == "hoy":
-
-        fecha_inicio = datetime(hoy.year, hoy.month, hoy.day)
-
-    elif filtro == "semana":
-
+ 
+    if filtro == "semana":
         fecha_inicio = hoy - timedelta(days=7)
-
     elif filtro == "mes":
-
         fecha_inicio = hoy - timedelta(days=30)
-
     else:
-
+        filtro = "hoy"
         fecha_inicio = datetime(hoy.year, hoy.month, hoy.day)
-
-    visitas = list(
-        mongo.db.visits.find({"created_at": {"$gte": fecha_inicio}}).sort(
-            "created_at", -1
-        )
-    )
-
-    accesos = list(
-        mongo.db.access_logs.find({"fecha_hora": {"$gte": fecha_inicio}}).sort(
-            "fecha_hora", -1
-        )
-    )
-
-    incidencias = list(
-        mongo.db.incidencias.find({"fecha_hora": {"$gte": fecha_inicio}}).sort(
-            "fecha_hora", -1
-        )
-    )
-
+ 
+    # -----------------------------------------------------
+    # FILTROS BASE (incluyen búsqueda si la hay)
+    # -----------------------------------------------------
+    match_visitas = {"created_at": {"$gte": fecha_inicio}}
+    match_accesos = {"fecha_hora": {"$gte": fecha_inicio}}
+    match_incidencias = {"fecha_hora": {"$gte": fecha_inicio}}
+ 
     if busqueda:
-        busqueda_lower = busqueda.lower()
-        visitas = [
-            v
-            for v in visitas
-            if busqueda_lower in v.get("nombre_visitante", "").lower()
-            or busqueda_lower in v.get("residente_nombre", "").lower()
+        rx = {"$regex": re.escape(busqueda), "$options": "i"}
+        match_visitas["$or"] = [
+            {"nombre_visitante": rx},
+            {"residente_nombre": rx},
         ]
-        accesos = [
-            a
-            for a in accesos
-            if busqueda_lower in a.get("visitante", "").lower()
-            or busqueda_lower in a.get("guardia_nombre", "").lower()
-            or busqueda_lower in a.get("accion", "").lower()
+        match_accesos["$or"] = [
+            {"visitante": rx},
+            {"guardia_nombre": rx},
+            {"accion": rx},
         ]
-        incidencias = [
-            i
-            for i in incidencias
-            if busqueda_lower in i.get("visitante", "").lower()
-            or busqueda_lower in i.get("guardia_nombre", "").lower()
-            or busqueda_lower in i.get("descripcion", "").lower()
+        match_incidencias["$or"] = [
+            {"visitante": rx},
+            {"guardia_nombre": rx},
+            {"descripcion": rx},
         ]
-
-    # Filtro de fechas para la tabla de visitas (calendarios independientes)
-    visitas_tabla = visitas
-
+ 
+    visits = mongo.db.visits
+    logs = mongo.db.access_logs
+    incs = mongo.db.incidencias
+ 
+    # -----------------------------------------------------
+    # KPIs de visitas: conteo por estado en UNA sola pasada
+    # -----------------------------------------------------
+    estado_counts = {
+        row["_id"]: row["n"]
+        for row in visits.aggregate([
+            {"$match": match_visitas},
+            {"$group": {"_id": "$estado", "n": {"$sum": 1}}},
+        ])
+    }
+ 
+    total_visitas = sum(estado_counts.values())
+    dentro = estado_counts.get("dentro", 0)
+    activas = estado_counts.get("activo", 0)
+    salidas = estado_counts.get("salida_registrada", 0)
+    pendientes_autorizacion = estado_counts.get("pendiente_autorizacion", 0)
+ 
+    total_residentes = mongo.db.users.count_documents({"rol": "residente"})
+    total_guardias = mongo.db.users.count_documents({"rol": "guardia"})
+    total_incidencias = incs.count_documents(match_incidencias)
+    rechazados = logs.count_documents({**match_accesos, "resultado": "rechazado"})
+ 
+    # -----------------------------------------------------
+    # TIPOS DE VISITA (gráfica)
+    # -----------------------------------------------------
+    tipo_labels, tipo_data = [], []
+    for row in visits.aggregate([
+        {"$match": match_visitas},
+        {"$group": {"_id": {"$ifNull": ["$modalidad_visita", "General"]},
+                    "n": {"$sum": 1}}},
+        {"$sort": {"n": -1}},
+    ]):
+        tipo_labels.append(row["_id"] or "General")
+        tipo_data.append(row["n"])
+ 
+    # -----------------------------------------------------
+    # VISITAS POR DÍA (gráfica)
+    # -----------------------------------------------------
+    dias_raw = {
+        row["_id"]: row["n"]
+        for row in visits.aggregate([
+            {"$match": match_visitas},
+            {"$group": {"_id": "$fecha_visita", "n": {"$sum": 1}}},
+        ])
+        if row["_id"]
+    }
+    fechas_ordenadas = sorted(
+        dias_raw.keys(), key=lambda x: _dt.strptime(x, "%Y-%m-%d")
+    )
+    dias_labels = [
+        _dt.strptime(f, "%Y-%m-%d").strftime("%d/%m") for f in fechas_ordenadas
+    ]
+    dias_data = [dias_raw[f] for f in fechas_ordenadas]
+ 
+    # -----------------------------------------------------
+    # TOP RESIDENTES (5) y RESIDENTES ACTIVOS (10)
+    # -----------------------------------------------------
+    residentes_rank = [
+        (row["_id"] or "Sin residente", row["n"])
+        for row in visits.aggregate([
+            {"$match": match_visitas},
+            {"$group": {"_id": "$residente_nombre", "n": {"$sum": 1}}},
+            {"$sort": {"n": -1}},
+            {"$limit": 10},
+        ])
+    ]
+    top_residentes = residentes_rank[:5]
+    residentes_activos = residentes_rank
+ 
+    # -----------------------------------------------------
+    # VISITAS POR PRIVADA (gráfica)
+    # -----------------------------------------------------
+    privadas_labels, privadas_data = [], []
+    for row in visits.aggregate([
+        {"$match": match_visitas},
+        {"$group": {"_id": {"$ifNull": ["$condominio", "General"]},
+                    "n": {"$sum": 1}}},
+        {"$sort": {"n": -1}},
+    ]):
+        privadas_labels.append(row["_id"] or "General")
+        privadas_data.append(row["n"])
+ 
+    # -----------------------------------------------------
+    # HORAS PICO (desde accesos)
+    # -----------------------------------------------------
+    horas_raw = {
+        row["_id"]: row["n"]
+        for row in logs.aggregate([
+            {"$match": match_accesos},
+            {"$group": {"_id": {"$hour": "$fecha_hora"}, "n": {"$sum": 1}}},
+            {"$sort": {"_id": 1}},
+        ])
+        if row["_id"] is not None
+    }
+    horas_labels = [
+        _dt.strptime(f"{h:02d}", "%H").strftime("%I %p") for h in sorted(horas_raw)
+    ]
+    horas_data = [horas_raw[h] for h in sorted(horas_raw)]
+ 
+    # -----------------------------------------------------
+    # TOP GUARDIAS (5)
+    # -----------------------------------------------------
+    top_guardias = [
+        (row["_id"] or "Desconocido", row["n"])
+        for row in logs.aggregate([
+            {"$match": match_accesos},
+            {"$group": {"_id": "$guardia_nombre", "n": {"$sum": 1}}},
+            {"$sort": {"n": -1}},
+            {"$limit": 5},
+        ])
+    ]
+ 
+    # -----------------------------------------------------
+    # LISTAS CORTAS (solo lo que se muestra, con límite)
+    # -----------------------------------------------------
+    actividad_reciente = list(
+        logs.find(match_accesos).sort("fecha_hora", -1).limit(5)
+    )
+    accesos_rechazados = list(
+        logs.find({**match_accesos, "resultado": "rechazado"})
+        .sort("fecha_hora", -1)
+        .limit(10)
+    )
+    visitas_dentro = list(
+        visits.find({**match_visitas, "estado": "dentro"})
+        .sort("created_at", -1)
+        .limit(50)
+    )
+ 
+    # Placas únicas (lo resuelve Mongo, no Python)
+    vehiculos = visits.distinct("vehiculo.placa", match_visitas)
+ 
+    # -----------------------------------------------------
+    # TABLA DE VISITAS (paginada EN LA BD)
+    # -----------------------------------------------------
+    if fecha_inicio_tabla or fecha_fin_tabla:
+        match_tabla = {}
+        if busqueda:
+            match_tabla["$or"] = match_visitas["$or"]
+    else:
+        match_tabla = dict(match_visitas)
+    rango_fecha = {}
     if fecha_inicio_tabla:
-        visitas_tabla = [
-            v for v in visitas_tabla if v.get("fecha_visita", "") >= fecha_inicio_tabla
-        ]
-
+        rango_fecha["$gte"] = fecha_inicio_tabla
     if fecha_fin_tabla:
-        visitas_tabla = [
-            v for v in visitas_tabla if v.get("fecha_visita", "") <= fecha_fin_tabla
-        ]
-
+        rango_fecha["$lte"] = fecha_fin_tabla
+    if rango_fecha:
+        match_tabla["fecha_visita"] = rango_fecha
+ 
     pagina_tabla = int(request.args.get("page", 1))
     por_pagina_tabla = 5
-    total_visitas_tabla = len(visitas_tabla)
+    total_visitas_tabla = visits.count_documents(match_tabla)
     total_paginas_tabla = max(
         1, (total_visitas_tabla + por_pagina_tabla - 1) // por_pagina_tabla
     )
-
-    visitas_tabla_paginada = visitas_tabla[
-        (pagina_tabla - 1) * por_pagina_tabla : pagina_tabla * por_pagina_tabla
-    ]
-
-    # =====================================================
-    # KPIs
-    # =====================================================
-
-    total_visitas = len(visitas)
-
-    dentro = len([v for v in visitas if v.get("estado") == "dentro"])
-
-    activas = len([v for v in visitas if v.get("estado") == "activo"])
-
-    salidas = len([v for v in visitas if v.get("estado") == "salida_registrada"])
-
-    pendientes_autorizacion = len(
-        [v for v in visitas if v.get("estado") == "pendiente_autorizacion"]
+    visitas_tabla_paginada = list(
+        visits.find(match_tabla)
+        .sort("fecha_visita", -1)   # ordena por la fecha de la visita
+        .skip((pagina_tabla - 1) * por_pagina_tabla)
+        .limit(por_pagina_tabla)
     )
-
-    total_residentes = mongo.db.users.count_documents({"rol": "residente"})
-
-    total_guardias = mongo.db.users.count_documents({"rol": "guardia"})
-
-    total_incidencias = len(incidencias)
-
-    rechazados = len([a for a in accesos if a.get("resultado") == "rechazado"])
-
-    # =====================================================
-    # TIPOS VISITA
-    # =====================================================
-
-    tipos_counter = Counter()
-
-    for visita in visitas:
-
-        tipo = visita.get("modalidad_visita") or visita.get("tipo_visita", "General")
-
-        tipos_counter[tipo] += 1
-
-    tipo_labels = list(tipos_counter.keys())
-    tipo_data = list(tipos_counter.values())
-
-    # =====================================================
-    # VISITAS POR DIA (ORDENADO Y PROFESIONAL)
-    # =====================================================
-
-    dias_counter = Counter()
-
-    for visita in visitas:
-
-        fecha = visita.get("fecha_visita")
-
-        if fecha:
-
-            dias_counter[str(fecha)] += 1
-
-    # ==========================================
-    # ORDENAR FECHAS CRONOLOGICAMENTE
-    # ==========================================
-
-    fechas_ordenadas = sorted(
-        dias_counter.keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d")
-    )
-
-    # ==========================================
-    # FORMATO BONITO PARA LA GRAFICA
-    # 31/05 -> 01/06 -> 02/06
-    # ==========================================
-
-    dias_labels = [
-        datetime.strptime(fecha, "%Y-%m-%d").strftime("%d/%m")
-        for fecha in fechas_ordenadas
-    ]
-
-    dias_data = [dias_counter[fecha] for fecha in fechas_ordenadas]
-
-    # =====================================================
-    # TOP RESIDENTES
-    # =====================================================
-
-    residentes_counter = Counter()
-
-    for visita in visitas:
-
-        residente = visita.get("residente_nombre", "Sin residente")
-
-        residentes_counter[residente] += 1
-
-    top_residentes = residentes_counter.most_common(5)
-
-    # =====================================================
-    # ACTIVIDAD RECIENTE
-    # =====================================================
-
-    actividad_reciente = accesos[:5]
-
-    # =====================================================
-    # HORAS PICO
-    # =====================================================
-
-    horas_counter = Counter()
-
-    for acceso in accesos:
-
-        fecha = acceso.get("fecha_hora")
-
-        if fecha:
-
-            hora = fecha.strftime("%I %p")
-
-            horas_counter[hora] += 1
-
-    horas_ordenadas = sorted(
-        horas_counter.items(), key=lambda x: datetime.strptime(x[0], "%I %p")
-    )
-
-    horas_labels = [h[0] for h in horas_ordenadas]
-
-    horas_data = [h[1] for h in horas_ordenadas]
-
-    # =====================================================
-    # VISITAS POR PRIVADA
-    # =====================================================
-
-    privadas_counter = Counter()
-
-    for visita in visitas:
-
-        privada = visita.get("condominio", "General")
-
-        privadas_counter[privada] += 1
-
-    privadas_labels = list(privadas_counter.keys())
-
-    privadas_data = list(privadas_counter.values())
-
-    # =====================================================
-    # VISITAS DENTRO
-    # =====================================================
-
-    visitas_dentro = [v for v in visitas if v.get("estado") == "dentro"]
-
-    # =====================================================
-    # ALERTAS AUTOMATICAS
-    # =====================================================
-
+ 
+    # -----------------------------------------------------
+    # ALERTAS / PROMEDIO
+    # -----------------------------------------------------
     alertas = []
-
     if rechazados >= 5:
-
         alertas.append("Demasiados QR rechazados")
-
     if dentro >= 20:
-
         alertas.append("Muchas personas dentro")
-
-    # =====================================================
-    # SEGURIDAD
-    # =====================================================
-
-    accesos_rechazados = [a for a in accesos if a.get("resultado") == "rechazado"][:10]
-
-    # =====================================================
-    # TOP GUARDIAS
-    # =====================================================
-
-    guardias_counter = Counter()
-
-    for acceso in accesos:
-
-        guardia = acceso.get("guardia_nombre", "Desconocido")
-
-        guardias_counter[guardia] += 1
-
-    top_guardias = guardias_counter.most_common(5)
-
-    # =====================================================
-    # RESIDENTES ACTIVOS
-    # =====================================================
-
-    residentes_activos = residentes_counter.most_common(10)
-
-    # =====================================================
-    # VEHICULOS FRECUENTES
-    # =====================================================
-
-    vehiculos = []
-
-    for visita in visitas:
-
-        vehiculo = visita.get("vehiculo")
-
-        if vehiculo:
-
-            placa = vehiculo.get("placa")
-
-            if placa:
-
-                vehiculos.append(placa)
-
-    vehiculos = list(set(vehiculos))
-
-    # =====================================================
-    # ANALITICA
-    # =====================================================
-
+ 
     if filtro == "hoy":
-
         promedio = total_visitas
-
     elif filtro == "semana":
-
         promedio = round(total_visitas / 7, 2)
-
     else:
-
         promedio = round(total_visitas / 30, 2)
-
+ 
+    # Vistas previas cortas (por si el template las usa en alguna tabla).
+    # Los datos completos viven en sus páginas paginadas dedicadas.
+    visitas_preview = visitas_tabla_paginada
+    accesos_preview = actividad_reciente
+    incidencias_preview = list(
+        incs.find(match_incidencias).sort("fecha_hora", -1).limit(50)
+    )
+ 
     return render_template(
         "admin_dashboard.html",
         filtro=filtro,
-        visitas=visitas,
-        accesos=accesos,
-        incidencias=incidencias,
+        visitas=visitas_preview,
+        accesos=accesos_preview,
+        incidencias=incidencias_preview,
         total_visitas=total_visitas,
         dentro=dentro,
         activas=activas,
