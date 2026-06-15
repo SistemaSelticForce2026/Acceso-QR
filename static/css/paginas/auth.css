@@ -422,11 +422,7 @@
 }
 
 .auth-eye-btn i{
-    font-size:20px;
-}
-
-.auth-eye-btn:hover{
-    color:#2e5bff;
+    font-size:14px;
 }
 
 /* input con toggle */

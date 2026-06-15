@@ -10,15 +10,8 @@
 
 <div class="cv-wrapper">
 
-    <!-- Back -->
-    <a href="{{ url_for('resident.dashboard') }}" class="cv-back">
-        <i class="fa-solid fa-arrow-left" style="font-size:11px;" aria-hidden="true"></i>
-        Volver al panel
-    </a>
-
     <!-- Header -->
     <div class="cv-header">
-        <p class="cv-eyebrow">Generación de pase</p>
         <h1 class="cv-title">Nueva visita</h1>
         <p class="cv-subtitle">Registra un acceso y genera el código QR para tu visitante</p>
     </div>
@@ -64,8 +57,10 @@
                             <div class="cv-type-icon">
                                 <i class="fa-regular fa-calendar" aria-hidden="true"></i>
                             </div>
-                            <p class="cv-type-name">Visita temporal</p>
-                            <p class="cv-type-desc">Un solo día, un solo acceso</p>
+                            <div class="cv-type-text">
+                                <p class="cv-type-name">Visita única</p>
+                                <p class="cv-type-desc">Acceso por un día</p>
+                            </div>
                         </button>
 
                         <button type="button" class="cv-type-card" data-type="recurrente" id="cardRecurrente"
@@ -73,8 +68,10 @@
                             <div class="cv-type-icon">
                                 <i class="fa-solid fa-repeat" aria-hidden="true"></i>
                             </div>
-                            <p class="cv-type-name">Visita recurrente</p>
-                            <p class="cv-type-desc">Acceso periódico: empleados, proveedores…</p>
+                            <div class="cv-type-text">
+                                <p class="cv-type-name">Visita frecuente</p>
+                                <p class="cv-type-desc">Acceso recurrente programado</p>
+                            </div>
                         </button>
 
                     </div>
@@ -574,7 +571,7 @@ function showStep(n) {
 
     footerLeft.innerHTML = n > 1
         ? '<button type="button" class="cv-btn-back" id="btnBack"><i class="fa-solid fa-arrow-left" style="font-size:11px;" aria-hidden="true"></i> Anterior</button>'
-        : '';
+        : '<a href="{{ url_for("resident.dashboard") }}" class="cv-btn-back"><i class="fa-solid fa-house" style="font-size:11px;" aria-hidden="true"></i> Ir a inicio</a>';
 
     if (n > 1) {
         $("btnBack").addEventListener("click", () => {
