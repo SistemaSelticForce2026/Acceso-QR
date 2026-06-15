@@ -1,0 +1,70 @@
+{% extends 'layout_residente.html' %}
+
+{% block title %}Editar Visita{% endblock %}
+{% block page_title %}Editar Visita{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/editar_visita.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="edit-card">
+
+    <div class="edit-header">
+        <h1>Editar visita</h1>
+        <p>Actualiza la información de tu visitante.</p>
+    </div>
+
+    <form method="POST">
+
+        <div class="edit-grid">
+
+            <div class="edit-field">
+                <label>Nombre del visitante</label>
+                <input type="text"
+                       value="{{ visita.nombre_visitante }}"
+                       disabled>
+            </div>
+
+            <div class="edit-field">
+                <label>Teléfono</label>
+                <input type="text"
+                       name="telefono"
+                       value="{{ visita.telefono }}">
+            </div>
+
+            <div class="edit-field">
+                <label>Fecha de visita</label>
+                <input type="date"
+                       name="fecha_visita"
+                       value="{{ visita.fecha_visita }}">
+            </div>
+
+            <div class="edit-field">
+                <label>Hora de entrada</label>
+                <input type="time"
+                       name="hora_inicio"
+                       value="{{ visita.hora_inicio }}">
+            </div>
+
+        </div>
+
+        <div class="edit-actions">
+
+            <a href="{{ url_for('resident.visitors') }}"
+               class="btn-back">
+                Cancelar
+            </a>
+
+            <button type="submit"
+                    class="btn-save">
+                Guardar cambios
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}

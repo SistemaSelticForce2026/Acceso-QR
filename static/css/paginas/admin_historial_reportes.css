@@ -1,0 +1,77 @@
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.page-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:20px;
+
+    flex-wrap:wrap;
+
+    margin-bottom:24px;
+
+}
+
+.page-subtitle{
+
+    color:#64748b;
+
+    margin-top:6px;
+
+    line-height:1.6;
+
+}
+
+/* =========================================================
+   ICONO TABLA
+========================================================= */
+
+.table-icon{
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:12px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#f8fafc;
+
+    border:1px solid #e2e8f0;
+
+    color:#475569;
+
+}
+
+.table-icon i{
+
+    font-size:1.1rem;
+
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:768px){
+
+    .page-header{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+}

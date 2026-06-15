@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.env
+instance/
+venv/
+.vscode/
+
+# Configuración local con credenciales
+config.py
+
+# Archivos subidos y QR generados en runtime
+static/uploads/
+static/qr/

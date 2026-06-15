@@ -1,0 +1,227 @@
+{% extends 'layout_auth.html' %}
+{% block title %}Recuperar contraseña{% endblock %}
+
+{% block content %}
+
+<div class="auth-layout" style="background:#f7f9fb; min-height:100vh;">
+
+    <div class="auth-form-panel" style="align-items:center; padding:32px 24px;">
+        <div class="auth-form-inner auth-animate" style="max-width:460px;">
+
+            <!-- Logo -->
+            <div class="auth-mobile-logo" style="display:flex; margin-bottom:24px;">
+                <div class="auth-mobile-icon">
+                    <img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}"
+                        alt="AccessQR Logo"
+                        style="width:24px;height:24px;object-fit:contain;">
+                </div>
+                <div>
+                    <div class="auth-mobile-name">AccessQR</div>
+                    <div class="auth-mobile-sub">Control de Accesos</div>
+                </div>
+            </div>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="auth-flash">
+                        {% for category, message in messages %}
+                            <div class="alert {{ category }}">
+                                <i class="fa-solid fa-circle-info"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Card -->
+            <div class="glass-card">
+
+                <!-- Icono + título -->
+                <div style="text-align:center; margin-bottom:22px;">
+                    <div class="auth-recovery-icon">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div class="auth-card-eyebrow" style="margin-top:16px;">
+                        Acceso seguro
+                    </div>
+                    <h2 class="auth-card-title" style="text-align:center;">
+                        Restablecer acceso
+                    </h2>
+                    <p class="auth-card-subtitle" style="text-align:center;">
+                        Ingresa tu correo para generar un código temporal de recuperación.
+                    </p>
+                </div>
+
+                <!-- Security box -->
+                <div class="auth-security-box {% if token_generado %}auth-security-active{% else %}auth-security-inactive{% endif %}">
+                    <i class="fa-solid fa-shield-halved auth-security-icon"></i>
+                    <div class="auth-security-body">
+                        {% if token_generado %}
+                            <strong>Código temporal activo</strong>
+                            <p>El código de recuperación fue generado correctamente.</p>
+                            <div class="auth-recovery-timer" id="recoveryTimer">05:00</div>
+                        {% else %}
+                            <strong>Validación segura</strong>
+                            <p>Verifica tu identidad para continuar con el proceso de recuperación.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Formulario correo -->
+                {% if not token_generado %}
+                <form method="POST" id="recoveryForm" style="margin-top:20px;">
+
+                    <div class="auth-field">
+                        <label class="auth-label" for="correo">Correo electrónico</label>
+                        <div class="auth-input-wrap">
+                            <span class="auth-input-icon">
+                                <i class="fa-solid fa-envelope"></i>
+                            </span>
+                            <input
+                                class="auth-input"
+                                type="email"
+                                id="correo"
+                                name="correo"
+                                placeholder="correo@ejemplo.com"
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-auth-primary" id="sendBtn">
+                        <span id="sendText">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            Generar código temporal
+                        </span>
+                        <span class="auth-spinner" id="sendSpinner" style="display:none;"></span>
+                    </button>
+
+                </form>
+                {% endif %}
+
+                <!-- Token generado -->
+                {% if token_generado %}
+
+                <div class="auth-token-box">
+                    <div class="auth-token-header">
+                        <i class="fa-solid fa-shield-keyhole"></i>
+                        Código temporal generado
+                    </div>
+                    <div class="auth-token-code">{{ token_generado }}</div>
+                </div>
+
+                <form method="POST" action="/verify-token" id="verifyForm" style="margin-top:20px;">
+
+                    <div class="auth-field">
+                        <label class="auth-label" for="token">Ingresar código temporal</label>
+                        <div class="auth-input-wrap">
+                            <span class="auth-input-icon">
+                                <i class="fa-solid fa-key"></i>
+                            </span>
+                            <input
+                                class="auth-input"
+                                type="text"
+                                id="token"
+                                name="token"
+                                placeholder="000000"
+                                maxlength="6"
+                                required
+                                autocomplete="off"
+                                inputmode="numeric"
+                                style="letter-spacing:0.25em; font-weight:700;"
+                            >
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-auth-primary btn-auth-success" id="verifyBtn">
+                        <span id="verifyText">
+                            <i class="fa-solid fa-check"></i>
+                            Validar código
+                        </span>
+                        <span class="auth-spinner" id="verifySpinner" style="display:none;"></span>
+                    </button>
+
+                </form>
+
+                {% endif %}
+
+                <hr class="auth-divider">
+
+                <p class="auth-footer-link">
+                    ¿Recordaste tu contraseña?
+                    <a href="/login">Volver al inicio de sesión</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+{% if token_generado %}
+<script>
+const timerEl = document.getElementById("recoveryTimer");
+
+if (timerEl) {
+    const DURACION = 300;
+    let expiracion = localStorage.getItem("recovery_expiration");
+
+    if (!expiracion) {
+        expiracion = Date.now() + DURACION * 1000;
+        localStorage.setItem("recovery_expiration", expiracion);
+    }
+
+    function tick() {
+        const restante = Math.floor((expiracion - Date.now()) / 1000);
+
+        if (restante <= 0) {
+            timerEl.textContent = "Código expirado";
+            timerEl.classList.add("auth-timer-expired");
+            localStorage.removeItem("recovery_expiration");
+            return;
+        }
+
+        const m = String(Math.floor(restante / 60)).padStart(2, '0');
+        const s = String(restante % 60).padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+
+        if (restante <= 60) timerEl.classList.add("auth-timer-warning");
+        else timerEl.classList.remove("auth-timer-warning");
+    }
+
+    tick();
+    setInterval(tick, 1000);
+}
+</script>
+{% endif %}
+
+<script>
+// Spinner en envío de correo
+const recoveryForm = document.getElementById("recoveryForm");
+if (recoveryForm) {
+    recoveryForm.addEventListener("submit", () => {
+        document.getElementById("sendBtn").disabled = true;
+        document.getElementById("sendText").style.display = "none";
+        document.getElementById("sendSpinner").style.display = "block";
+    });
+}
+
+// Spinner en validación de token
+const verifyForm = document.getElementById("verifyForm");
+if (verifyForm) {
+    verifyForm.addEventListener("submit", () => {
+        document.getElementById("verifyBtn").disabled = true;
+        document.getElementById("verifyText").style.display = "none";
+        document.getElementById("verifySpinner").style.display = "block";
+    });
+}
+</script>
+
+{% endblock %}

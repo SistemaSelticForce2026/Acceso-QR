@@ -1,0 +1,234 @@
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/editar_guardia.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="resident-profile">
+
+    <!-- HEADER -->
+    <div class="profile-header">
+
+        <div class="profile-avatar">
+            {{ guardia.nombre[0] }}
+        </div>
+
+        <div class="profile-info">
+
+            <h1>Editar guardia</h1>
+
+            <p>
+                Actualización de información operativa y administrativa del personal de vigilancia.
+            </p>
+
+            <div class="profile-badges">
+
+                {% if guardia.estado == "activo" %}
+
+                    <span class="badge success">
+                        Guardia activo
+                    </span>
+
+                {% else %}
+
+                    <span class="badge danger">
+                        Guardia inactivo
+                    </span>
+
+                {% endif %}
+
+                <span class="badge">
+                    {{ guardia.turno }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- GRID -->
+    <div class="profile-grid">
+
+        <!-- FORM -->
+        <div class="card">
+
+            <h2>Información del guardia</h2>
+
+            <form method="POST">
+
+                <div class="info-group">
+
+                    <div class="info-item">
+
+                        <span>Nombre completo</span>
+
+                        <input
+                            type="text"
+                            name="nombre"
+                            value="{{ guardia.nombre }}"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Correo electrónico</span>
+
+                        <input
+                            type="email"
+                            name="correo"
+                            value="{{ guardia.correo }}"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Teléfono</span>
+
+                        <input
+                            type="text"
+                            name="telefono"
+                            value="{{ guardia.telefono }}"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Turno operativo</span>
+
+                        <select name="turno" required>
+
+                            <option
+                                value="Matutino"
+                                {% if guardia.turno == "Matutino" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Turno matutino
+                            </option>
+
+                            <option
+                                value="Vespertino"
+                                {% if guardia.turno == "Vespertino" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Turno vespertino
+                            </option>
+
+                            <option
+                                value="Nocturno"
+                                {% if guardia.turno == "Nocturno" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Turno nocturno
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Estado operativo</span>
+
+                        <select name="estado">
+
+                            <option
+                                value="activo"
+                                {% if guardia.estado == "activo" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Activo
+                            </option>
+
+                            <option
+                                value="inactivo"
+                                {% if guardia.estado == "inactivo" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Inactivo
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <div class="form-actions">
+
+                    <button type="submit" class="btn">
+                        Guardar cambios
+                    </button>
+
+                    <a href="{{ url_for('admin.guardias') }}"
+                       class="btn secondary">
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+        <!-- PANEL -->
+        <div class="card">
+
+            <h2>Información operativa</h2>
+
+            <div class="info-group">
+
+                <div class="info-item">
+
+                    <span>ID del guardia</span>
+
+                    <strong>
+                        {{ guardia._id }}
+                    </strong>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span>Funciones</span>
+
+                    <strong>
+                        Validación QR, control de accesos y monitoreo.
+                    </strong>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span>Seguridad</span>
+
+                    <strong>
+                        Verificar periódicamente permisos y credenciales.
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

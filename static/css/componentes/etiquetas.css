@@ -1,0 +1,109 @@
+/* ========================================= */
+/* BADGES */
+/* ========================================= */
+
+.badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:6px 12px;
+
+    border-radius:999px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+}
+
+/* ========================================= */
+/* ESTADOS */
+/* ========================================= */
+
+.status-badge{
+
+    color:white;
+
+}
+
+.status-badge.activo{
+
+    background:#16a34a;
+
+}
+
+.status-badge.inactivo{
+
+    background:#dc2626;
+
+}
+
+.status-badge.pendiente{
+
+    background:#f59e0b;
+
+}
+
+/* ========================================= */
+/* MODALIDADES */
+/* ========================================= */
+
+.modalidad-badge{
+
+    background:#dbeafe;
+
+    color:#1e40af;
+
+}
+
+/* ========================================= */
+/* RESIDENCIAS */
+/* ========================================= */
+
+.residencia-condominio{
+
+    background:#ecfccb;
+
+    color:#3f6212;
+
+}
+
+.residencia-casa{
+
+    background:#fef3c7;
+
+    color:#92400e;
+
+}
+
+/* ========================================= */
+/* TEXTOS */
+/* ========================================= */
+
+.text-success{
+
+    color:#16a34a;
+
+}
+
+.text-danger{
+
+    color:#dc2626;
+
+}
+
+.text-warning{
+
+    color:#f59e0b;
+
+}
+
+.text-info{
+
+    color:#2563eb;
+
+}

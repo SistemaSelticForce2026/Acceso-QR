@@ -1,0 +1,145 @@
+/* ========================================= */
+/* GRID ESTADISTICAS */
+/* ========================================= */
+
+.stats{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:24px;
+
+    margin-bottom:30px;
+
+}
+
+/* ========================================= */
+/* CABECERA */
+/* ========================================= */
+
+.card-header{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    margin-bottom:20px;
+
+}
+
+/* ========================================= */
+/* TITULO */
+/* ========================================= */
+
+.card-title{
+
+    font-size:18px;
+
+    font-weight:700;
+
+}
+
+/* ========================================= */
+/* ESTADISTICAS */
+/* ========================================= */
+
+.stat-card h2{
+
+    font-size:2rem;
+
+    margin-top:10px;
+
+}
+
+.stat-card h3{
+
+    margin:0;
+
+}
+
+/* ========================================= */
+/* ICONOS */
+/* ========================================= */
+
+.stat-top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.stat-top i{
+
+    font-size:24px;
+
+    color:#2563eb;
+
+}
+
+/* ========================================= */
+/* INFORMACION */
+/* ========================================= */
+
+.info-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:12px 0;
+
+}
+
+/* ========================================= */
+/* STATUS */
+/* ========================================= */
+
+.status-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:12px 16px;
+
+    border-radius:14px;
+
+    background:#f8fafc;
+
+}
+
+/* ========================================= */
+/* RESPONSIVE */
+/* ========================================= */
+
+@media(max-width:1200px){
+
+    .stats{
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    .stats{
+
+        grid-template-columns:1fr;
+
+    }
+
+}

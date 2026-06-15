@@ -1,0 +1,226 @@
+/* =========================================================
+   PERFIL RESIDENTE
+========================================================= */
+
+.resident-profile{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:24px;
+
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.profile-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:24px;
+
+    padding:24px;
+
+    border-radius:20px;
+
+    background:white;
+
+    border:1px solid #e2e8f0;
+
+    box-shadow:
+        0 10px 30px rgba(15,23,42,.05);
+
+}
+
+/* =========================================================
+   AVATAR
+========================================================= */
+
+.profile-avatar{
+
+    width:90px;
+
+    height:90px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #16a34a,
+            #22c55e
+        );
+
+    color:white;
+
+    font-size:2rem;
+
+    font-weight:700;
+
+    flex-shrink:0;
+
+}
+
+/* =========================================================
+   INFORMACION
+========================================================= */
+
+.profile-info{
+
+    flex:1;
+
+}
+
+.profile-info h1{
+
+    margin-bottom:8px;
+
+}
+
+.profile-info p{
+
+    color:#64748b;
+
+    line-height:1.6;
+
+    margin-bottom:12px;
+
+}
+
+/* =========================================================
+   BADGES
+========================================================= */
+
+.profile-badges{
+
+    display:flex;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+}
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.profile-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        2fr 1fr;
+
+    gap:24px;
+
+}
+
+/* =========================================================
+   INFORMACION GENERAL
+========================================================= */
+
+.info-group{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+}
+
+.info-item{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+}
+
+.info-item span{
+
+    font-size:.9rem;
+
+    font-weight:600;
+
+    color:#64748b;
+
+}
+
+.info-item strong{
+
+    color:#0f172a;
+
+    line-height:1.5;
+
+    word-break:break-word;
+
+}
+
+/* =========================================================
+   BOTONES
+========================================================= */
+
+.action-buttons{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+
+    margin-top:20px;
+
+}
+
+.action-buttons .btn{
+
+    width:100%;
+
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:992px){
+
+    .profile-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    .profile-header{
+
+        flex-direction:column;
+
+        text-align:center;
+
+    }
+
+    .profile-badges{
+
+        justify-content:center;
+
+    }
+
+}

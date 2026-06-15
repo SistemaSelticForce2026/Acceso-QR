@@ -1,0 +1,356 @@
+/* =========================================================
+   MODO OSCURO ACCESSQR
+========================================================= */
+
+.dark-mode{
+
+    background:
+        linear-gradient(
+            180deg,
+            #0b1210,
+            #111827
+        );
+
+    color:#f8fafc;
+
+}
+
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+.dark-mode .navbar{
+
+    background:
+        rgba(11,18,16,.95);
+
+    border-bottom:
+        1px solid #2b3a33;
+
+    backdrop-filter:blur(18px);
+
+}
+
+.dark-mode .navbar a{
+
+    color:#f8fafc;
+
+}
+
+.dark-mode .navbar a::after{
+
+    background:#22c55e;
+
+}
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.dark-mode .card,
+.dark-mode .stat-card,
+.dark-mode .form-card{
+
+    background:
+        linear-gradient(
+            180deg,
+            #18221d,
+            #111827
+        );
+
+    border:1px solid #2b3a33;
+
+    color:#f8fafc;
+
+    box-shadow:
+        0 12px 30px rgba(0,0,0,.25);
+
+}
+
+.dark-mode .card::before,
+.dark-mode .stat-card::before{
+
+    background:
+        linear-gradient(
+            90deg,
+            #22c55e,
+            #4ade80
+        );
+
+}
+
+/* =========================================================
+   TITULOS
+========================================================= */
+
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4{
+
+    color:#f8fafc;
+
+}
+
+.dark-mode .small,
+.dark-mode p,
+.dark-mode span{
+
+    color:#cbd5e1;
+
+}
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea{
+
+    background:#0f172a;
+
+    color:#f8fafc;
+
+    border:1px solid #334155;
+
+}
+
+.dark-mode input:hover,
+.dark-mode select:hover,
+.dark-mode textarea:hover{
+
+    border-color:#22c55e;
+
+}
+
+.dark-mode input:focus,
+.dark-mode select:focus,
+.dark-mode textarea:focus{
+
+    border-color:#22c55e;
+
+    box-shadow:
+        0 0 0 4px rgba(34,197,94,.15);
+
+}
+
+.dark-mode .readonly-input{
+
+    background:#1f2937;
+
+    border:1px solid #374151;
+
+    color:#f8fafc;
+
+}
+
+/* =========================================================
+   BOTONES
+========================================================= */
+
+.dark-mode .btn,
+.dark-mode button{
+
+    background:
+        linear-gradient(
+            135deg,
+            #16a34a,
+            #22c55e
+        );
+
+    color:white;
+
+}
+
+.dark-mode .btn:hover,
+.dark-mode button:hover{
+
+    box-shadow:
+        0 0 18px rgba(34,197,94,.35);
+
+}
+
+.dark-mode .btn-secondary{
+
+    background:#1f2937 !important;
+
+    color:#f8fafc !important;
+
+}
+
+.dark-mode .btn-secondary:hover{
+
+    background:#374151 !important;
+
+}
+
+/* =========================================================
+   TABLAS
+========================================================= */
+
+.dark-mode table{
+
+    background:#18221d;
+
+    color:#f8fafc;
+
+}
+
+.dark-mode table th{
+
+    background:#0b1210;
+
+    color:#4ade80;
+
+}
+
+.dark-mode table td{
+
+    border-color:#2b3a33;
+
+}
+
+.dark-mode table tbody tr:hover{
+
+    background:
+        rgba(34,197,94,.06);
+
+}
+
+/* =========================================================
+   ESTADISTICAS
+========================================================= */
+
+.dark-mode .stat-card h2{
+
+    color:#f8fafc;
+
+}
+
+.dark-mode .stat-card h3{
+
+    color:#cbd5e1;
+
+}
+
+.dark-mode .stat-card small{
+
+    color:#94a3b8;
+
+}
+
+.dark-mode .stat-top i{
+
+    background:
+        rgba(34,197,94,.12);
+
+    color:#4ade80;
+
+}
+
+/* =========================================================
+   ALERTAS
+========================================================= */
+
+.dark-mode .info{
+
+    background:#052e16;
+
+    color:#86efac;
+
+}
+
+.dark-mode .warning{
+
+    background:#3f2500;
+
+    color:#facc15;
+
+}
+
+.dark-mode .danger-alert{
+
+    background:#450a0a;
+
+    color:#f87171;
+
+}
+
+/* =========================================================
+   MODULOS
+========================================================= */
+
+.dark-mode .module-item,
+.dark-mode .module-list div{
+
+    background:#18221d;
+
+    color:#f8fafc;
+
+    border:1px solid #2b3a33;
+
+}
+
+.dark-mode .module-item:hover{
+
+    background:#14532d;
+
+}
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.dark-mode .status-item{
+
+    background:#18221d;
+
+    border:1px solid #2b3a33;
+
+}
+
+.dark-mode .status-item strong{
+
+    color:#f8fafc;
+
+}
+
+.dark-mode .status-label{
+
+    color:#cbd5e1;
+
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.dark-mode .footer{
+
+    color:#94a3b8;
+
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.dark-mode ::-webkit-scrollbar-track{
+
+    background:#111827;
+
+}
+
+.dark-mode ::-webkit-scrollbar-thumb{
+
+    background:
+        linear-gradient(
+            180deg,
+            #16a34a,
+            #22c55e
+        );
+
+    border-radius:20px;
+
+}

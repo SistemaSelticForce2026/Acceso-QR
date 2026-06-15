@@ -1,0 +1,170 @@
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/editar_guardia.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="resident-profile">
+
+    <!-- HEADER -->
+    <div class="profile-header">
+
+        <div class="profile-avatar">
+            {{ guardia.nombre[0] }}
+        </div>
+
+        <div class="profile-info">
+
+            <h1>{{ guardia.nombre }}</h1>
+
+            <p>
+                Guardia de seguridad registrado dentro del sistema residencial
+            </p>
+
+            <div class="profile-badges">
+
+                {% if guardia.estado == "activo" %}
+
+                    <span class="badge success">
+                        Activo
+                    </span>
+
+                {% else %}
+
+                    <span class="badge danger">
+                        Inactivo
+                    </span>
+
+                {% endif %}
+
+                <span class="badge">
+                    Personal de vigilancia
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- GRID -->
+    <div class="profile-grid">
+
+        <!-- INFORMACIÓN -->
+        <div class="card">
+
+            <h2>Información general</h2>
+
+            <div class="info-group">
+
+                <div class="info-item">
+                    <span>Nombre completo</span>
+                    <strong>{{ guardia.nombre }}</strong>
+                </div>
+
+                <div class="info-item">
+                    <span>Correo electrónico</span>
+                    <strong>{{ guardia.correo }}</strong>
+                </div>
+
+                <div class="info-item">
+                    <span>Teléfono</span>
+                    <strong>{{ guardia.telefono }}</strong>
+                </div>
+
+                <div class="info-item">
+
+                    <span>Turno asignado</span>
+
+                    {% if guardia.turno == "matutino" %}
+
+                        <strong class="turno-matutino">
+                            Matutino
+                        </strong>
+
+                    {% elif guardia.turno == "vespertino" %}
+
+                        <strong class="turno-vespertino">
+                            Vespertino
+                        </strong>
+
+                    {% elif guardia.turno == "nocturno" %}
+
+                        <strong class="turno-nocturno">
+                            Nocturno
+                        </strong>
+
+                    {% else %}
+
+                        <strong>
+                            {{ guardia.turno }}
+                        </strong>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="info-item">
+                    <span>Rol dentro del sistema</span>
+                    <strong>Guardia de seguridad</strong>
+                </div>
+
+                <div class="info-item">
+                    <span>Estado operativo</span>
+
+                    {% if guardia.estado == "activo" %}
+
+                        <strong class="estado-activo">
+                            Activo
+                        </strong>
+
+                    {% else %}
+
+                        <strong class="estado-inactivo">
+                            Inactivo
+                        </strong>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="info-item">
+                    <span>ID de guardia</span>
+                    <strong>{{ guardia._id }}</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ACCIONES -->
+        <div class="card">
+
+            <h2>Acciones rápidas</h2>
+
+            <div class="action-buttons">
+
+                <a href="{{ url_for('admin.desactivar_guardia', id=guardia._id) }}"
+                   class="btn danger-btn"
+                   onclick="return confirm('¿Deseas desactivar este guardia?')">
+                    Desactivar guardia
+                </a>
+
+                <a href="{{ url_for('admin.guardias') }}"
+                   class="btn secondary">
+                    Volver al listado
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

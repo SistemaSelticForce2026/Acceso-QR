@@ -1,0 +1,59 @@
+{% extends 'layout.html' %}
+
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='css/paginas/registrar_residente.css') }}">
+{% endblock %}
+
+{% block content %}
+
+{% block content %}
+
+<div class="card form-card">
+
+    <h1>Registrar residente</h1>
+
+    <p class="small">
+        Completa la información del nuevo residente.
+    </p>
+
+    <form method="POST">
+
+        <label>Nombre completo</label>
+        <input type="text" name="nombre" required>
+
+        <label>Correo electrónico</label>
+        <input type="email" name="correo" required>
+
+        <label>Teléfono</label>
+        <input type="text" name="telefono" required>
+
+        <label>Fraccionamiento</label>
+        <input type="text" name="fraccionamiento" required>
+
+        <label>Privada</label>
+        <input type="text" name="privada" required>
+
+        <label>Número de casa</label>
+        <input type="text" name="numero_casa" required>
+
+        <div class="form-actions">
+
+            <button type="submit" class="btn">
+                Registrar residente
+            </button>
+
+            <a href="{{ url_for('admin.residentes') }}" class="btn secondary">
+                Cancelar
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

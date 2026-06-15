@@ -1,0 +1,291 @@
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/paginas/admin_incidencias.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
+    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+</a>
+
+{# ===== Encabezado ===== #}
+<div class="page-header">
+    <div class="page-title-wrap">
+        <div class="head-badge"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+            <h1>Bitácora de Incidencias</h1>
+            <p class="page-subtitle">
+                Registro y monitoreo de anomalías, accesos sospechosos, validaciones QR fallidas y reportes generados por vigilancia.
+            </p>
+        </div>
+    </div>
+
+    <div class="header-actions">
+        <a href="{{ url_for('admin.exportar_incidencias_pdf') }}" class="btn export-btn pdf-btn">
+            <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+        </a>
+        <a href="{{ url_for('admin.exportar_incidencias_excel') }}" class="btn export-btn excel-btn">
+            <i class="fa-solid fa-file-excel"></i> Exportar Excel
+        </a>
+    </div>
+</div>
+
+{# ===== Estadísticas ===== #}
+{% set qr_inv   = incidencias | selectattr("tipo_incidencia", "equalto", "qr_invalido") | list | length %}
+{% set placas   = incidencias | selectattr("tipo_incidencia", "equalto", "placa_no_coincide") | list | length %}
+{% set sin_aut  = incidencias | selectattr("tipo_incidencia", "equalto", "sin_autorizacion") | list | length %}
+<div class="stats">
+
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+            <h3>Total incidencias</h3>
+            <p>{{ incidencias|length }}</p>
+        </div>
+    </div>
+
+    <div class="stat-card is-orange">
+        <div class="stat-icon orange"><i class="fa-solid fa-qrcode"></i></div>
+        <div>
+            <h3>QR inválidos</h3>
+            <p>{{ qr_inv }}</p>
+        </div>
+    </div>
+
+    <div class="stat-card is-yellow">
+        <div class="stat-icon yellow"><i class="fa-solid fa-car"></i></div>
+        <div>
+            <h3>Placas no coinciden</h3>
+            <p>{{ placas }}</p>
+        </div>
+    </div>
+
+    <div class="stat-card is-darkred">
+        <div class="stat-icon dark-red"><i class="fa-solid fa-ban"></i></div>
+        <div>
+            <h3>Sin autorización</h3>
+            <p>{{ sin_aut }}</p>
+        </div>
+    </div>
+
+</div>
+
+{# ===== Tabla ===== #}
+<div class="card table-card">
+
+    <div class="table-header">
+        <div>
+            <h2>Registro de incidencias</h2>
+            <p class="small">
+                Historial completo de eventos detectados por caseta y monitoreo.
+            </p>
+        </div>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="buscarIncidencia"
+                   placeholder="Buscar incidencia…" autocomplete="off">
+        </div>
+    </div>
+
+    {% if incidencias and incidencias|length > 0 %}
+    <div class="toolbar-meta">
+        <span id="contadorIncidencias" class="resultado-conteo"></span>
+    </div>
+
+    <div class="table-container">
+        <table id="tablaIncidencias">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Guardia</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Fecha y hora</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for incidencia in incidencias %}
+                <tr class="fila-incidencia"
+                    data-buscar="{{ (incidencia.tipo_incidencia ~ ' ' ~ incidencia.guardia_nombre ~ ' ' ~ (incidencia.descripcion or '') ~ ' ' ~ incidencia.estado) | lower }}">
+
+                    {# --- Tipo --- #}
+                    <td>
+                        {% if incidencia.tipo_incidencia == "qr_invalido" %}
+                            <span class="badge danger">QR inválido</span>
+                        {% elif incidencia.tipo_incidencia == "placa_no_coincide" %}
+                            <span class="badge warning">Placa no coincide</span>
+                        {% elif incidencia.tipo_incidencia == "persona_sospechosa" %}
+                            <span class="badge danger">Persona sospechosa</span>
+                        {% elif incidencia.tipo_incidencia == "visitante_agresivo" %}
+                            <span class="badge danger">Visitante agresivo</span>
+                        {% elif incidencia.tipo_incidencia == "datos_no_coinciden" %}
+                            <span class="badge warning">Datos no coinciden</span>
+                        {% elif incidencia.tipo_incidencia == "sin_autorizacion" %}
+                            <span class="badge dark">Sin autorización</span>
+                        {% else %}
+                            <span class="badge dark">{{ incidencia.tipo_incidencia }}</span>
+                        {% endif %}
+                    </td>
+
+                    {# --- Guardia --- #}
+                    <td>
+                        <div class="guardia-info">
+                            <div class="guardia-avatar" data-nombre="{{ incidencia.guardia_nombre }}">
+                                {{ incidencia.guardia_nombre[0] | upper if incidencia.guardia_nombre else 'G' }}
+                            </div>
+                            <div>
+                                <strong>{{ incidencia.guardia_nombre }}</strong>
+                                <p>Personal de vigilancia</p>
+                            </div>
+                        </div>
+                    </td>
+
+                    {# --- Descripción --- #}
+                    <td class="descripcion">
+                        {% if incidencia.descripcion %}
+                            {{ incidencia.descripcion }}
+                        {% else %}
+                            Incidencia detectada automáticamente por el sistema.
+                        {% endif %}
+                    </td>
+
+                    {# --- Estado --- #}
+                    <td>
+                        {% if incidencia.estado == "abierta" %}
+                            <span class="badge warning">Abierta</span>
+                        {% elif incidencia.estado == "cerrada" %}
+                            <span class="badge success">Cerrada</span>
+                        {% else %}
+                            <span class="badge dark">En revisión</span>
+                        {% endif %}
+                    </td>
+
+                    {# --- Fecha --- #}
+                    <td>
+                        <div class="fecha-box">
+                            <i class="fa-regular fa-clock"></i>
+                            <span>{{ incidencia.fecha_hora.strftime('%d/%m/%Y %I:%M %p') if incidencia.fecha_hora else 'Sin fecha' }}</span>
+                        </div>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="incidencias-empty" id="sinResultados" hidden>
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <h3>Sin coincidencias</h3>
+        <p>Ninguna incidencia coincide con tu búsqueda.</p>
+    </div>
+
+    {% else %}
+    <div class="incidencias-empty">
+        <i class="fa-solid fa-shield-halved"></i>
+        <h3>Sin incidencias registradas</h3>
+        <p>No se han detectado anomalías. Cuando caseta reporte un evento, aparecerá aquí.</p>
+    </div>
+    {% endif %}
+
+</div>
+
+{# ===== Paginación ===== #}
+{% if total_paginas and total_paginas > 1 %}
+<div class="pagination-container" style="margin-bottom:1.75rem;">
+    <div class="pagination">
+        {% if pagina > 1 %}
+        <a href="{{ url_for('admin.incidencias', page=pagina-1) }}" class="btn secondary">
+            <i class="fa-solid fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        {% for p in range(1, total_paginas + 1) %}
+        <a href="{{ url_for('admin.incidencias', page=p) }}"
+           class="btn {% if p != pagina %}secondary{% endif %}">{{ p }}</a>
+        {% endfor %}
+        {% if pagina < total_paginas %}
+        <a href="{{ url_for('admin.incidencias', page=pagina+1) }}" class="btn secondary">
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{# ===== Centro de monitoreo ===== #}
+<div class="card monitor-card">
+    <h2>Centro de monitoreo</h2>
+
+    <div class="alert info">
+        <i class="fa-solid fa-circle-info"></i>
+        Todas las incidencias quedan almacenadas para auditoría y seguimiento administrativo.
+    </div>
+
+    <div class="alert warning">
+        <i class="fa-solid fa-shield-halved"></i>
+        Verificar múltiples intentos fallidos o accesos repetitivos sospechosos.
+    </div>
+
+    <div class="alert danger-alert">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Las incidencias críticas deben atenderse inmediatamente por seguridad.
+    </div>
+</div>
+
+<script>
+(function () {
+    function normalizar(t){
+        return (t || '').toString().toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    /* Color de avatar según el nombre */
+    function colorAvatares(){
+        var paletas = [
+            ['#2563eb','#60a5fa'], ['#7c3aed','#a78bfa'], ['#0891b2','#22d3ee'],
+            ['#059669','#34d399'], ['#d97706','#fbbf24'], ['#db2777','#f472b6']
+        ];
+        document.querySelectorAll('.guardia-avatar').forEach(function(av){
+            var n = av.getAttribute('data-nombre') || '';
+            var h = 0;
+            for(var i=0;i<n.length;i++){ h = (h*31 + n.charCodeAt(i)) >>> 0; }
+            var c = paletas[h % paletas.length];
+            av.style.background = 'linear-gradient(135deg,'+c[0]+','+c[1]+')';
+        });
+    }
+
+    /* Buscador (ignora acentos) + contador + sin resultados */
+    function iniciarBuscador(){
+        var input    = document.getElementById('buscarIncidencia');
+        var filas    = Array.prototype.slice.call(document.querySelectorAll('.fila-incidencia'));
+        var contador = document.getElementById('contadorIncidencias');
+        var vacio    = document.getElementById('sinResultados');
+        function pintar(v){
+            if(contador){ contador.textContent = v + ' de ' + filas.length + ' incidencia' + (filas.length===1?'':'s'); }
+        }
+        function filtrar(){
+            var q = normalizar(input ? input.value.trim() : '');
+            var visibles = 0;
+            filas.forEach(function(fila){
+                var ok = normalizar(fila.getAttribute('data-buscar')).indexOf(q) !== -1;
+                fila.style.display = ok ? '' : 'none';
+                if(ok) visibles++;
+            });
+            if(vacio) vacio.hidden = visibles !== 0;
+            pintar(visibles);
+        }
+        pintar(filas.length);
+        if(input) input.addEventListener('input', filtrar);
+    }
+
+    function init(){ colorAvatares(); iniciarBuscador(); }
+    if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); }
+    else { init(); }
+})();
+</script>
+
+{% endblock %}

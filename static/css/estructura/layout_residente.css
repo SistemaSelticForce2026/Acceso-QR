@@ -1,0 +1,441 @@
+/* ============================================================ */
+/* RESIDENT LAYOUT — Sidebar + Header + Bottom Nav             */
+/* ============================================================ */
+
+/* ---- Reset para el layout ---------------------------------- */
+.res-body {
+    margin: 0;
+    background: #f7f9fb;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ---- Ambient glow (esquina superior derecha) --------------- */
+.res-ambient {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 600px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(46, 91, 255, 0.05);
+    filter: blur(140px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ---- Dot grid background ----------------------------------- */
+.res-dotgrid {
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, #c7c5cd 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.28;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ---- Mobile overlay ---------------------------------------- */
+.res-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(1, 2, 17, 0.20);
+    backdrop-filter: blur(4px);
+    z-index: 39;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.res-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+/* ============================================================ */
+/* SIDEBAR                                                     */
+/* ============================================================ */
+
+.res-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 260px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-right: 1px solid rgba(255, 255, 255, 0.50);
+    box-shadow: 4px 0 40px rgba(26, 28, 46, 0.06);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-out;
+}
+
+.res-sidebar.open {
+    transform: translateX(0);
+}
+
+/* ---- Brand ------------------------------------------------- */
+.res-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 28px 24px;
+}
+
+.res-brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    background: #1a1c2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(1, 2, 17, 0.30);
+    flex-shrink: 0;
+}
+
+.res-brand-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #010211;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+/* ---- Nav items --------------------------------------------- */
+.res-nav {
+    flex: 1;
+    padding: 4px 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+}
+
+.res-nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #46464c;
+    transition: color 0.2s, background 0.2s;
+}
+
+.res-nav-item:hover {
+    color: #010211;
+    background: rgba(236, 238, 240, 0.70);
+}
+
+.res-nav-item.active {
+    color: #010211;
+    background: #eceef0;
+    border: 1px solid rgba(199, 197, 205, 0.60);
+}
+
+.res-nav-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eceef0;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    font-size: 14px;
+    color: #46464c;
+}
+
+.res-nav-item.active .res-nav-icon {
+    background: #1a1c2e;
+    color: white;
+    box-shadow: 0 3px 10px rgba(1, 2, 17, 0.25);
+}
+
+.res-nav-dot {
+    margin-left: auto;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2e5bff;
+    flex-shrink: 0;
+}
+
+/* ---- User section ------------------------------------------ */
+.res-user-section {
+    padding: 12px;
+    padding-bottom: 20px;
+    border-top: 1px solid rgba(199, 197, 205, 0.40);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.res-user-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: rgba(236, 238, 240, 0.70);
+}
+
+.res-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #2e5bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.res-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.res-user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #010211;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.res-user-sub {
+    font-size: 11px;
+    color: #77767d;
+    margin-top: 2px;
+}
+
+.res-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #77767d;
+    transition: color 0.2s, background 0.2s;
+}
+
+.res-logout-btn:hover {
+    color: #ba1a1a;
+    background: rgba(255, 218, 214, 0.50);
+}
+
+.res-logout-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #eceef0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+/* ============================================================ */
+/* MAIN AREA                                                   */
+/* ============================================================ */
+
+.res-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: relative;
+    z-index: 10;
+}
+
+/* ---- Sticky header ----------------------------------------- */
+.res-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 16px;
+    background: rgba(255, 255, 255, 0.80);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(199, 197, 205, 0.30);
+}
+
+.res-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #46464c;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 0;
+    margin-right: 12px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.res-menu-btn:focus-visible {
+    outline: 2px solid #2e5bff;
+    outline-offset: 2px;
+}
+
+.res-menu-btn:hover {
+    background: #eceef0;
+}
+
+.res-menu-btn i {
+    line-height: 1;
+    vertical-align: 0;
+}
+
+.res-header-title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: #010211;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.res-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ---- Content area ------------------------------------------ */
+.res-content {
+    flex: 1;
+    padding: 28px 16px 96px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* ============================================================ */
+/* BOTTOM NAV (mobile)                                        */
+/* ============================================================ */
+
+.res-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(199, 197, 205, 0.30);
+    height: 64px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.res-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 500;
+    color: #77767d;
+    padding: 8px 0;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.res-tab.active {
+    color: #2e5bff;
+}
+
+.res-tab.active::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #2e5bff;
+}
+
+.res-tab i {
+    font-size: 18px;
+}
+
+/* ============================================================ */
+/* FLASH MESSAGES                                             */
+/* ============================================================ */
+
+.res-flash {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ============================================================ */
+/* DESKTOP — sidebar siempre visible                          */
+/* ============================================================ */
+
+@media (min-width: 1024px) {
+    .res-sidebar {
+        transform: translateX(0);
+    }
+
+    .res-main {
+        padding-left: 260px;
+    }
+
+    .res-menu-btn {
+        display: none;
+    }
+
+    .res-bottom-nav {
+        display: none;
+    }
+
+    .res-content {
+        padding: 32px 32px 40px;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+    .res-content {
+        padding: 24px 24px 96px;
+    }
+
+    .res-header {
+        padding: 0 24px;
+    }
+}

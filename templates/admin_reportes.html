@@ -1,0 +1,240 @@
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/paginas/admin_reportes.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
+    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+</a>
+
+{# ===== Encabezado ===== #}
+<div class="page-header">
+    <div class="page-title-wrap">
+        <div class="head-badge"><i class="fa-solid fa-file-lines"></i></div>
+        <div>
+            <h1>Centro de Reportes</h1>
+            <p class="page-subtitle">
+                Administración y generación de reportes operativos del sistema AccessQR.
+            </p>
+        </div>
+    </div>
+
+    <div class="header-actions">
+        <a href="{{ url_for('admin.historial_reportes') }}" class="btn dark-btn">
+            <i class="fa-solid fa-clock-rotate-left"></i> Historial
+        </a>
+        <button class="btn" onclick="window.location.reload();">
+            <i class="fa-solid fa-rotate"></i> Actualizar
+        </button>
+    </div>
+</div>
+
+{# ===== Estadísticas ===== #}
+<div class="stats">
+
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-file-lines"></i></div>
+        <div>
+            <h3>Reportes disponibles</h3>
+            <p>6 módulos activos</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-file-pdf"></i></div>
+        <div>
+            <h3>Formato PDF</h3>
+            <p>Exportación habilitada</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-file-excel"></i></div>
+        <div>
+            <h3>Formato Excel</h3>
+            <p>Compatible con Office</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon orange"><i class="fa-solid fa-arrows-rotate"></i></div>
+        <div>
+            <h3>Última actualización</h3>
+            <p>{{ moment().format('DD/MM/YYYY') if moment else 'Hoy' }}</p>
+        </div>
+    </div>
+
+</div>
+
+{# ===== Reportes ===== #}
+<div class="dashboard-grid">
+
+    {# ---------- OPERATIVOS ---------- #}
+    <div class="card">
+        <div class="section-header">
+            <h2>Reportes operativos</h2>
+            <p class="small">Información relacionada con accesos, visitas y monitoreo de seguridad.</p>
+        </div>
+
+        <div class="module-list">
+
+            {# VISITAS #}
+            <div class="module-item">
+                <div class="module-top">
+                    <div class="module-icon blue"><i class="fa-solid fa-users"></i></div>
+                    <div>
+                        <strong>Reporte de visitas</strong>
+                        <span>Historial de visitantes autorizados registrados dentro del sistema.</span>
+                    </div>
+                </div>
+                <div class="module-meta">
+                    <span class="badge success">Disponible</span>
+                    <small>Última generación: hoy</small>
+                </div>
+                <div class="report-actions">
+                    <a href="{{ url_for('admin.exportar_visitas_pdf') }}" class="btn pdf-btn">
+                        <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('admin.exportar_visitas_excel') }}" class="btn excel-btn">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </a>
+                </div>
+            </div>
+
+            {# ACCESOS #}
+            <div class="module-item">
+                <div class="module-top">
+                    <div class="module-icon green"><i class="fa-solid fa-door-open"></i></div>
+                    <div>
+                        <strong>Reporte de accesos</strong>
+                        <span>Registro de entradas, salidas y validaciones realizadas.</span>
+                    </div>
+                </div>
+                <div class="module-meta">
+                    <span class="badge success">Operativo</span>
+                    <small>Seguridad activa</small>
+                </div>
+                <div class="report-actions">
+                    <a href="{{ url_for('admin.exportar_accesos_pdf') }}" class="btn pdf-btn">
+                        <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('admin.exportar_accesos_excel') }}" class="btn excel-btn">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </a>
+                </div>
+            </div>
+
+            {# INCIDENCIAS #}
+            <div class="module-item">
+                <div class="module-top">
+                    <div class="module-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                        <strong>Reporte de incidencias</strong>
+                        <span>Eventos sospechosos y anomalías registradas por vigilancia.</span>
+                    </div>
+                </div>
+                <div class="module-meta">
+                    <span class="badge warning">Monitoreo activo</span>
+                    <small>Revisión administrativa</small>
+                </div>
+                <div class="report-actions">
+                    <a href="{{ url_for('admin.exportar_incidencias_pdf') }}" class="btn pdf-btn">
+                        <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('admin.exportar_incidencias_excel') }}" class="btn excel-btn">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {# ---------- ADMINISTRATIVOS ---------- #}
+    <div class="card">
+        <div class="section-header">
+            <h2>Reportes administrativos</h2>
+            <p class="small">Información relacionada con residentes y personal autorizado.</p>
+        </div>
+
+        <div class="module-list">
+
+            {# RESIDENTES #}
+            <div class="module-item">
+                <div class="module-top">
+                    <div class="module-icon purple"><i class="fa-solid fa-house"></i></div>
+                    <div>
+                        <strong>Reporte de residentes</strong>
+                        <span>Directorio actualizado de residentes activos e inactivos.</span>
+                    </div>
+                </div>
+                <div class="module-meta">
+                    <span class="badge success">Actualizado</span>
+                    <small>Información sincronizada</small>
+                </div>
+                <div class="report-actions">
+                    <a href="{{ url_for('admin.exportar_residentes_pdf') }}" class="btn pdf-btn">
+                        <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('admin.exportar_residentes_excel') }}" class="btn excel-btn">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </a>
+                </div>
+            </div>
+
+            {# GUARDIAS #}
+            <div class="module-item">
+                <div class="module-top">
+                    <div class="module-icon orange"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div>
+                        <strong>Reporte de guardias</strong>
+                        <span>Información del personal de vigilancia y turnos activos.</span>
+                    </div>
+                </div>
+                <div class="module-meta">
+                    <span class="badge success">Activo</span>
+                    <small>Supervisión habilitada</small>
+                </div>
+                <div class="report-actions">
+                    <a href="{{ url_for('admin.exportar_guardias_pdf') }}" class="btn pdf-btn">
+                        <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('admin.exportar_guardias_excel') }}" class="btn excel-btn">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </a>
+                </div>
+            </div>
+
+            {# GENERAL #}
+            <div class="module-item">
+                <div class="module-top">
+                    <div class="module-icon dark"><i class="fa-solid fa-chart-line"></i></div>
+                    <div>
+                        <strong>Reporte general del sistema</strong>
+                        <span>Resumen operativo completo del sistema residencial.</span>
+                    </div>
+                </div>
+                <div class="module-meta">
+                    <span class="badge success">Sistema estable</span>
+                    <small>Estado operativo normal</small>
+                </div>
+                <div class="report-actions">
+                    <a href="{{ url_for('admin.exportar_sistema_pdf') }}" class="btn pdf-btn">
+                        <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+                    </a>
+                    <a href="{{ url_for('admin.exportar_sistema_excel') }}" class="btn excel-btn">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,301 @@
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/paginas/admin_configuracion.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
+    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+</a>
+
+{# ===== Mensajes de confirmación (flash) ===== #}
+{% with mensajes = get_flashed_messages(with_categories=true) %}
+    {% if mensajes %}
+    <div class="flash-stack">
+        {% for categoria, mensaje in mensajes %}
+        <div class="flash flash-{{ categoria }}">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>{{ mensaje }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
+
+{# ===== Encabezado ===== #}
+<div class="page-header">
+    <div class="head-badge"><i class="fa-solid fa-sliders"></i></div>
+    <div>
+        <h1>Configuración del Fraccionamiento</h1>
+        <p class="small">
+            Administración de parámetros generales, seguridad y funcionamiento del sistema residencial.
+        </p>
+    </div>
+</div>
+
+{# ===== Estadísticas ===== #}
+<div class="stats">
+
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+            <h3>Estado del sistema</h3>
+            <p><span class="dot"></span> Operativo</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-building-shield"></i></div>
+        <div>
+            <h3>Casetas activas</h3>
+            <p>1</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon cyan"><i class="fa-solid fa-qrcode"></i></div>
+        <div>
+            <h3>Accesos QR</h3>
+            <p>Habilitados</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon orange"><i class="fa-solid fa-arrows-rotate"></i></div>
+        <div>
+            <h3>Última actualización</h3>
+            <p>Hoy</p>
+        </div>
+    </div>
+
+</div>
+
+{# ===== Formularios ===== #}
+<div class="dashboard-grid">
+
+    {# --- Información general --- #}
+    <div class="card">
+        <h2>Información general</h2>
+
+        <form class="config-form" method="POST" action="{{ url_for('admin.configuracion') }}">
+            <label>Nombre del fraccionamiento</label>
+            <input type="text" name="nombre" value="Residencial Access QR"
+                   maxlength="80" required>
+
+            <label>Dirección</label>
+            <input type="text" name="direccion" value="Av. Principal #120"
+                   maxlength="120" required>
+
+            <label>Teléfono administrativo</label>
+            <input type="tel" name="telefono" value="7221234567"
+                   pattern="[0-9]{10}" maxlength="10" inputmode="numeric"
+                   title="Ingresa 10 dígitos, solo números" required>
+            <small class="field-hint">10 dígitos, sin espacios ni guiones.</small>
+
+            <label>Correo administrativo</label>
+            <input type="email" name="correo" value="admin@accessqr.com"
+                   autocomplete="email" required>
+            <small class="field-hint">Se usará para notificaciones del sistema.</small>
+
+            <label>Número de privadas</label>
+            <input type="number" name="privadas" value="6" min="1" max="99" required>
+
+            <button type="submit">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
+            </button>
+        </form>
+    </div>
+
+    {# --- Configuración de accesos --- #}
+    <div class="card">
+        <h2>Configuración de accesos</h2>
+
+        <form class="config-form" method="POST" action="{{ url_for('admin.configuracion') }}">
+            <label>Duración máxima del QR</label>
+            <select name="duracion_qr">
+                <option>1 hora</option>
+                <option selected>3 horas</option>
+                <option>6 horas</option>
+                <option>12 horas</option>
+                <option>24 horas</option>
+            </select>
+
+            <label>Permitir múltiples accesos</label>
+            <select name="multiples_accesos">
+                <option>Sí</option>
+                <option selected>No</option>
+            </select>
+
+            <label>Validación de vehículo</label>
+            <select name="validacion_vehiculo">
+                <option selected>Obligatoria</option>
+                <option>Opcional</option>
+            </select>
+
+            <label>Fotografía obligatoria del visitante</label>
+            <select name="foto_visitante">
+                <option selected>Sí</option>
+                <option>No</option>
+            </select>
+
+            <label>Registro automático de incidencias</label>
+            <select name="registro_incidencias">
+                <option selected>Habilitado</option>
+                <option>Deshabilitado</option>
+            </select>
+
+            <button type="submit">
+                <i class="fa-solid fa-rotate"></i> Actualizar configuración
+            </button>
+        </form>
+    </div>
+
+</div>
+
+{# ===== Seguridad y avanzadas (interruptores) ===== #}
+<div class="dashboard-grid">
+
+    {# --- Seguridad --- #}
+    <div class="card">
+        <h2>Seguridad del sistema</h2>
+        <div class="module-list">
+
+            <div class="module-item">
+                <div class="module-left">
+                    <div class="module-icon"><i class="fa-solid fa-user-lock"></i></div>
+                    <div>
+                        <strong>Control de sesiones</strong>
+                        <span>Administración de accesos de administradores y guardias.</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked><span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="module-item">
+                <div class="module-left">
+                    <div class="module-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                    <div>
+                        <strong>Bitácora de actividad</strong>
+                        <span>Registro de cambios y operaciones críticas del sistema.</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked><span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="module-item">
+                <div class="module-left">
+                    <div class="module-icon green"><i class="fa-solid fa-database"></i></div>
+                    <div>
+                        <strong>Respaldos automáticos</strong>
+                        <span>Generación de copias de seguridad de la base de datos.</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked><span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+    </div>
+
+    {# --- Avanzadas --- #}
+    <div class="card">
+        <h2>Configuraciones avanzadas</h2>
+        <div class="module-list">
+
+            <div class="module-item">
+                <div class="module-left">
+                    <div class="module-icon slate"><i class="fa-solid fa-video"></i></div>
+                    <div>
+                        <strong>Integración con cámaras</strong>
+                        <span>Asociación de cámaras IP para monitoreo de accesos.</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox"><span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="module-item">
+                <div class="module-left">
+                    <div class="module-icon amber"><i class="fa-solid fa-car"></i></div>
+                    <div>
+                        <strong>Lectura automática de placas</strong>
+                        <span>Configuración de reconocimiento vehicular.</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox"><span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="module-item">
+                <div class="module-left">
+                    <div class="module-icon"><i class="fa-solid fa-bell"></i></div>
+                    <div>
+                        <strong>Notificaciones en tiempo real</strong>
+                        <span>Alertas automáticas para residentes y administración.</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked><span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{# ===== Estado operativo ===== #}
+<div class="card">
+    <h2>Estado operativo</h2>
+
+    <div class="alert info">
+        <i class="fa-solid fa-circle-info"></i>
+        El sistema de control de acceso se encuentra funcionando correctamente.
+    </div>
+
+    <div class="alert warning">
+        <i class="fa-solid fa-shield-halved"></i>
+        Se recomienda actualizar periódicamente contraseñas administrativas y revisar accesos activos.
+    </div>
+
+    <div class="alert danger-alert">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Cualquier modificación en configuraciones críticas debe realizarse únicamente por administradores autorizados.
+    </div>
+</div>
+
+<script>
+(function () {
+    var sucio = false;
+
+    document.querySelectorAll('.config-form').forEach(function(form){
+        var btn = form.querySelector('button[type="submit"]');
+        if(btn) btn.disabled = true;                 // arranca desactivado
+        function marcarSucio(){
+            sucio = true;
+            if(btn) btn.disabled = false;            // se activa al editar
+        }
+        form.querySelectorAll('input, select, textarea').forEach(function(campo){
+            campo.addEventListener('input', marcarSucio);
+            campo.addEventListener('change', marcarSucio);
+        });
+        form.addEventListener('submit', function(){ sucio = false; });
+    });
+
+    window.addEventListener('beforeunload', function(e){
+        if(sucio){ e.preventDefault(); e.returnValue = ''; }
+    });
+})();
+</script>
+
+{% endblock %}

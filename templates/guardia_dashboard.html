@@ -1,0 +1,371 @@
+{% extends 'layout_guardia.html' %}
+
+{% block title %}Panel de Guardia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/guardia_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<!-- ======================================================= -->
+<!-- SECTION HEADER                                         -->
+<!-- ======================================================= -->
+
+<div class="grd-page-header">
+    <p class="grd-eyebrow">Control de acceso</p>
+    <h1 class="grd-page-title">Visitas</h1>
+    <p class="grd-page-sub">Monitoreo en tiempo real de visitantes y accesos registrados.</p>
+</div>
+
+<!-- ======================================================= -->
+<!-- STATS                                                   -->
+<!-- ======================================================= -->
+
+<div class="grd-stats">
+
+    <div class="grd-stat-card">
+        <div class="grd-stat-icon blue"><i class="fa-solid fa-users"></i></div>
+        <p class="grd-stat-value">{{ activas or 0 }}</p>
+        <p class="grd-stat-label">Visitas activas</p>
+        <p class="grd-stat-sub">Monitoreo en tiempo real</p>
+    </div>
+
+    <div class="grd-stat-card">
+        <div class="grd-stat-icon green"><i class="fa-solid fa-house-user"></i></div>
+        <p class="grd-stat-value">{{ dentro or 0 }}</p>
+        <p class="grd-stat-label">Dentro</p>
+        <p class="grd-stat-sub">Visitantes presentes</p>
+    </div>
+
+    <div class="grd-stat-card">
+        <div class="grd-stat-icon purple"><i class="fa-solid fa-right-from-bracket"></i></div>
+        <p class="grd-stat-value">{{ salidas or 0 }}</p>
+        <p class="grd-stat-label">Salidas</p>
+        <p class="grd-stat-sub">Control de egresos</p>
+    </div>
+
+    <div class="grd-stat-card">
+        <div class="grd-stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <p class="grd-stat-value">{{ incidencias or 0 }}</p>
+        <p class="grd-stat-label">Incidencias</p>
+        <p class="grd-stat-sub">Eventos reportados</p>
+    </div>
+
+</div>
+
+<!-- ======================================================= -->
+<!-- VISITAS RECIENTES                                       -->
+<!-- ======================================================= -->
+
+<div class="grd-visits-section">
+
+    <div class="grd-visits-header">
+        <h2 class="grd-visits-title">Visitas registradas</h2>
+        <p class="grd-visits-sub">Historial de visitantes autorizados por los residentes.</p>
+    </div>
+
+    <!-- Filtros -->
+    <form method="GET" class="grd-glass-card grd-filter-card">
+
+        <div class="grd-filter-grid">
+
+            <div class="grd-filter-field">
+                <label class="grd-filter-label">Fecha inicio</label>
+                <input class="grd-filter-input"
+                       type="date"
+                       name="fecha_inicio"
+                       value="{{ fecha_inicio }}">
+            </div>
+
+            <div class="grd-filter-field">
+                <label class="grd-filter-label">Fecha fin</label>
+                <input class="grd-filter-input"
+                       type="date"
+                       name="fecha_fin"
+                       value="{{ fecha_fin }}">
+            </div>
+
+            <div class="grd-filter-field" style="flex: 2; min-width: 0;">
+                <label class="grd-filter-label">Buscar visitante</label>
+                <div class="grd-search-wrap">
+                    <i class="fa-solid fa-magnifying-glass grd-search-ico"></i>
+                    <input class="grd-filter-input"
+                           id="searchTable"
+                           type="text"
+                           name="busqueda"
+                           value="{{ busqueda }}"
+                           placeholder="Nombre, teléfono o placa...">
+                </div>
+            </div>
+
+            <button type="submit" class="grd-filter-btn primary">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Filtrar
+            </button>
+            {% if fecha_inicio or fecha_fin or busqueda %}
+            <a href="{{ url_for('guard.dashboard') }}" class="grd-filter-btn secondary">
+                <i class="fa-solid fa-rotate-left"></i>
+                Limpiar
+            </a>
+            {% endif %}
+
+        </div>
+
+    </form>
+
+    {# ============================================================ #}
+    {# Etiquetas legibles para el tipo de visitante recurrente      #}
+    {# (deben coincidir con los data-tipo del formulario)           #}
+    {# ============================================================ #}
+    {% set TIPO_LABELS = {
+        'domestica':     'Empleado(a) doméstico(a)',
+        'jardinero':     'Jardinero',
+        'mantenimiento': 'Mantenimiento',
+        'proveedor':     'Proveedor frecuente',
+        'chofer':        'Chofer',
+        'familiar':      'Familiar frecuente',
+        'otro':          'Otro'
+    } %}
+
+    <!-- Lista de visitas -->
+    <div class="grd-visit-list">
+
+        {% for visita in visitas %}
+
+        <div class="grd-glass-card grd-visit-card">
+
+            <div class="grd-visit-main">
+
+                <!-- Cabecera: foto + nombre + estado -->
+                <div class="grd-visit-head">
+
+                    <div class="grd-visit-avatar">
+                        {% if visita.foto_visitante %}
+                            <img src="{{ visita.foto_visitante.url }}"
+                                 alt="Foto visitante"
+                                 class="grd-visit-photo zoomable">
+                        {% else %}
+                            <div class="grd-visit-photo-placeholder">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="grd-visit-primary">
+                        <div class="grd-visit-name-row">
+                            <p class="grd-visit-name">{{ visita.nombre_visitante }}</p>
+                            {% if visita.estado == "dentro" %}
+                                <span class="grd-badge success">Dentro</span>
+                            {% elif visita.estado == "pendiente_autorizacion" %}
+                                <span class="grd-badge warning">Pendiente</span>
+                            {% elif visita.estado == "activo" %}
+                                <span class="grd-badge info">Vigente</span>
+                            {% elif visita.estado == "salida_registrada" %}
+                                <span class="grd-badge neutral">Finalizada</span>
+                            {% elif visita.estado in ["vencido", "cancelado"] %}
+                                <span class="grd-badge danger">{{ visita.estado | capitalize }}</span>
+                            {% else %}
+                                <span class="grd-badge neutral">{{ visita.estado | capitalize }}</span>
+                            {% endif %}
+                        </div>
+                        <p class="grd-visit-phone">
+                            <i class="fa-solid fa-phone"></i>
+                            {{ visita.telefono }}
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Cuerpo: tipo, residencia, horario, vehículo -->
+                <div class="grd-visit-body">
+
+                    {% if visita.modalidad_visita == "recurrente" %}
+                        <span class="grd-chip recurrente">
+                            <i class="fa-solid fa-repeat"></i> Recurrente
+                        </span>
+                    {% else %}
+                        <span class="grd-chip temporal">
+                            <i class="fa-solid fa-clock"></i> Temporal
+                        </span>
+                    {% endif %}
+
+                    <span class="grd-chip neutral">
+                        <i class="fa-solid fa-building"></i>
+                        {{ visita.condominio | capitalize }} · Casa {{ visita.residencia_destino }}
+                    </span>
+
+                    {% if visita.modalidad_visita == "recurrente" %}
+
+                        {# --- Campos reales que envía el formulario del residente --- #}
+                        {% set h_ini   = visita.get('hora_desde') or visita.get('valido_inicio') or visita.get('hora_inicio') %}
+                        {% set h_fin   = visita.get('hora_hasta') or visita.get('valido_final') or visita.get('hora_fin') %}
+                        {% set dias    = visita.get('dias') or visita.get('dias_autorizados') %}
+                        {% set tipo_v  = visita.get('tipo_recurrente') or visita.get('tipo_visitante') or visita.get('tipo') %}
+                        {% set vig_ini = visita.get('fecha_inicio_recurrente') or visita.get('fecha_inicio') or visita.get('valido_desde') %}
+                        {% set vig_fin = visita.get('fecha_fin_recurrente') or visita.get('fecha_fin') or visita.get('valido_hasta') %}
+
+                        {# Tipo de visitante #}
+                        {% if tipo_v %}
+                        <span class="grd-chip neutral">
+                            <i class="fa-solid fa-user-tag"></i>
+                            {{ TIPO_LABELS.get(tipo_v, tipo_v | capitalize) }}
+                        </span>
+                        {% endif %}
+
+                        {# Vigencia: de cuándo a cuándo #}
+                        {% if vig_ini and vig_fin %}
+                        <span class="grd-chip neutral">
+                            <i class="fa-regular fa-calendar-check"></i>
+                            {% if vig_ini is string and '-' in vig_ini %}{{ vig_ini.split('-')[2] }}/{{ vig_ini.split('-')[1] }}/{{ vig_ini.split('-')[0] }}{% else %}{{ vig_ini }}{% endif %}
+                            &rarr;
+                            {% if vig_fin is string and '-' in vig_fin %}{{ vig_fin.split('-')[2] }}/{{ vig_fin.split('-')[1] }}/{{ vig_fin.split('-')[0] }}{% else %}{{ vig_fin }}{% endif %}
+                        </span>
+                        {% endif %}
+
+                        {# Días autorizados #}
+                        <span class="grd-chip neutral">
+                            <i class="fa-regular fa-calendar-days"></i>
+                            {% if dias %}
+                                {{ dias | join(', ') | capitalize }}
+                            {% elif visita.get('dia_semana') %}
+                                {{ visita.dia_semana | capitalize }}
+                            {% else %}
+                                Sin días definidos
+                            {% endif %}
+                        </span>
+
+                        {# Horario permitido (según el preset elegido) #}
+                        <span class="grd-chip neutral">
+                            <i class="fa-solid fa-clock"></i>
+                            {% if h_ini and h_fin %}
+                                {% if h_ini in ['00:00', '00:00:00'] and h_fin in ['23:59', '23:59:00'] %}
+                                    Sin restricción de horario
+                                {% else %}
+                                    {{ h_ini | hora_ampm }} a {{ h_fin | hora_ampm }}
+                                {% endif %}
+                            {% else %}
+                                Sin horario definido
+                            {% endif %}
+                        </span>
+
+                    {% else %}
+                        <span class="grd-chip neutral">
+                            <i class="fa-regular fa-calendar-days"></i>
+                            {{ visita.fecha_visita.split('-')[2] }}/{{ visita.fecha_visita.split('-')[1] }}/{{ visita.fecha_visita.split('-')[0] }}
+                            · {{ visita.hora_inicio | hora_ampm }}
+                        </span>
+                    {% endif %}
+
+                    {% if visita.hora_salida %}
+                        <span class="grd-chip neutral">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            Salida: {{ visita.hora_salida | hora_ampm }}
+                        </span>
+                    {% endif %}
+
+                    {% if visita.vehiculo %}
+                        <span class="grd-chip neutral">
+                            <i class="fa-solid fa-car-side"></i>
+                            {{ visita.vehiculo.placa }} · {{ visita.vehiculo.marca | title }} {{ visita.vehiculo.modelo | title }}
+                        </span>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            <!-- Foto de placa (derecha) -->
+            {% if visita.foto_placa %}
+            <div class="grd-visit-placa">
+                <img src="{{ visita.foto_placa.url }}"
+                     alt="Foto placa"
+                     class="grd-placa-thumb zoomable">
+            </div>
+            {% endif %}
+
+        </div>
+
+        {% else %}
+
+        <div class="grd-glass-card grd-empty">
+            <div class="grd-empty-icon">
+                <i class="fa-solid fa-users-slash"></i>
+            </div>
+            <p class="grd-empty-title">Sin visitas registradas</p>
+            <p class="grd-empty-sub">No hay visitas que coincidan con los filtros aplicados.</p>
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    <!-- Paginación -->
+    {% if total_paginas > 1 %}
+    <div class="grd-pagination">
+
+        {% if pagina > 1 %}
+            <a href="{{ url_for('guard.dashboard', page=pagina-1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+               class="grd-page-btn">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+        {% endif %}
+
+        {% for p in range(1, total_paginas + 1) %}
+            <a href="{{ url_for('guard.dashboard', page=p, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+               class="grd-page-btn {% if p == pagina %}active{% endif %}">
+                {{ p }}
+            </a>
+        {% endfor %}
+
+        {% if pagina < total_paginas %}
+            <a href="{{ url_for('guard.dashboard', page=pagina+1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+               class="grd-page-btn">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Modal zoom imagen -->
+<div id="imageModal" class="grd-image-modal">
+    <span class="grd-modal-close" id="grdModalClose">&times;</span>
+    <img id="grdModalImg" class="grd-modal-img">
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    /* Zoom modal */
+    const grdModal    = document.getElementById('imageModal');
+    const grdModalImg = document.getElementById('grdModalImg');
+    const grdClose    = document.getElementById('grdModalClose');
+
+    document.querySelectorAll('.zoomable').forEach(img => {
+        img.addEventListener('click', () => {
+            grdModal.style.display = 'flex';
+            grdModalImg.src = img.src;
+        });
+    });
+
+    grdClose.addEventListener('click', () => grdModal.style.display = 'none');
+    grdModal.addEventListener('click', e => {
+        if (e.target === grdModal) grdModal.style.display = 'none';
+    });
+
+    /* Buscador cliente */
+    document.getElementById('searchTable').addEventListener('keyup', function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.grd-visit-card').forEach(card => {
+            const name    = card.querySelector('.grd-visit-name')?.textContent.toLowerCase()  || '';
+            const phone   = card.querySelector('.grd-visit-phone')?.textContent.toLowerCase() || '';
+            const placa   = card.querySelector('.grd-chip.neutral:last-of-type')?.textContent.toLowerCase() || '';
+            card.style.display = (name.includes(q) || phone.includes(q) || placa.includes(q)) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

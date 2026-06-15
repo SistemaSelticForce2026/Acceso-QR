@@ -1,0 +1,232 @@
+{% extends 'layout_residente.html' %}
+{% block title %}Inicio{% endblock %}
+{% block page_title %}Inicio{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/residente_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+{# ─── Hero ─────────────────────────────────────────────────────────── #}
+<div class="res-hero">
+    <h1>¡Bienvenido, {{ session.nombre.split(' ')[0] }}!</h1>
+    <p class="res-hero-date" id="heroDate"></p>
+</div>
+
+{# ─── Fila superior: CTA + stat grid ──────────────────────────────── #}
+<div class="res-top-row">
+
+    {# CTA dark card #}
+    <a href="{{ url_for('resident.create_visit') }}" class="res-cta-card">
+        <div class="res-cta-orb"></div>
+        <div class="res-cta-icon">
+            <i class="fa-solid fa-qrcode"></i>
+        </div>
+        <p class="res-cta-title">Nueva Visita</p>
+        <p class="res-cta-sub">Genera un pase QR para tu visitante</p>
+        <div class="res-cta-link">
+            Generar ahora <i class="fa-solid fa-arrow-right" style="font-size:11px;"></i>
+        </div>
+    </a>
+
+    {# Stat grid 2×2 #}
+    <div class="res-stat-grid">
+
+        <div class="res-stat-card">
+            <div class="res-stat-top">
+                <span class="res-stat-lbl">Total visitas</span>
+                <div class="res-stat-icon res-icon-blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+            <p class="res-stat-num res-num-blue">{{ total_visitas }}</p>
+            <p class="res-stat-sub">Visitas registradas</p>
+        </div>
+
+        <div class="res-stat-card">
+            <div class="res-stat-top">
+                <span class="res-stat-lbl">Dentro</span>
+                <div class="res-stat-icon res-icon-green">
+                    <i class="fa-solid fa-building-shield"></i>
+                </div>
+            </div>
+            <p class="res-stat-num res-num-green">{{ visitas_dentro }}</p>
+            <p class="res-stat-sub">Actualmente dentro</p>
+        </div>
+
+        <div class="res-stat-card">
+            <div class="res-stat-top">
+                <span class="res-stat-lbl">Finalizadas</span>
+                <div class="res-stat-icon res-icon-neutral">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+            <p class="res-stat-num res-num-neutral">{{ visitas_finalizadas }}</p>
+            <p class="res-stat-sub">Visitas terminadas</p>
+        </div>
+
+        <div class="res-stat-card">
+            <div class="res-stat-top">
+                <span class="res-stat-lbl">Pendientes</span>
+                <div class="res-stat-icon res-icon-amber">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+            <p class="res-stat-num res-num-amber">{{ visitas_pendientes }}</p>
+            <p class="res-stat-sub">Esperando acceso</p>
+        </div>
+
+    </div>
+
+</div>
+
+{# ─── Visitas recientes ────────────────────────────────────────────── #}
+<div class="res-recent-card">
+
+    <div class="res-recent-head">
+        <h2 class="res-section-title" style="margin:0;">Visitas recientes</h2>
+        <a href="{{ url_for('resident.visitors') }}" class="res-see-all-link">
+            Ver todas <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+        </a>
+    </div>
+
+    {% if visitas_recientes %}
+
+    <div class="res-recent-rows">
+        {% for visita in visitas_recientes %}
+
+        {%- set nombre = visita.nombre_visitante | default('Visitante') -%}
+        {%- set iniciales = (nombre.split(' ') | map('first') | list)[:2] | join('') | upper -%}
+
+        {%- if visita.qr_estado in ['cancelado','vencido'] or visita.estado in ['cancelado','salida_registrada'] -%}
+            {%- set av_color = '#46464c' -%}
+        {%- elif visita.estado == 'dentro' -%}
+            {%- set av_color = '#1a1c2e' -%}
+        {%- else -%}
+            {%- set av_color = '#2e5bff' -%}
+        {%- endif -%}
+
+        {%- if visita.qr_estado == 'cancelado' or visita.estado == 'cancelado' -%}
+            {%- set badge_cls = 'badge-danger' -%}
+            {%- set badge_label = 'Cancelada' -%}
+        {%- elif visita.qr_estado == 'vencido' -%}
+            {%- set badge_cls = 'badge-danger' -%}
+            {%- set badge_label = 'Vencida' -%}
+        {%- elif visita.estado == 'dentro' -%}
+            {%- set badge_cls = 'badge-success' -%}
+            {%- set badge_label = 'Dentro' -%}
+        {%- elif visita.estado == 'activo' -%}
+            {%- set badge_cls = 'badge-blue' -%}
+            {%- set badge_label = 'Vigente' -%}
+        {%- elif visita.estado == 'salida_registrada' -%}
+            {%- set badge_cls = 'badge-neutral' -%}
+            {%- set badge_label = 'Finalizada' -%}
+        {%- else -%}
+            {%- set badge_cls = 'badge-warning' -%}
+            {%- set badge_label = 'Pendiente' -%}
+        {%- endif -%}
+
+        <div class="res-recent-row">
+
+            {% if visita.foto_visitante %}
+
+            <div class="res-avatar-photo">
+
+                <img
+                    src="{{ visita.foto_visitante['url'] }}"
+                    alt="{{ nombre }}"
+                    class="res-avatar-img zoomable-foto">
+
+            </div>
+
+            {% else %}
+
+            <div class="res-recent-avatar" style="background:{{ av_color }};">
+                {{ iniciales }}
+            </div>
+
+            {% endif %}
+
+            <div class="res-recent-info">
+
+                <p class="res-recent-name">{{ nombre }}</p>
+                <p class="res-recent-sub">{{ visita.motivo | default('Sin motivo') }}</p>
+            </div>
+            <div class="res-recent-right">
+                <span class="res-badge {{ badge_cls }}">
+                    <span class="res-badge-dot"></span>
+                    {{ badge_label }}
+                </span>
+                {% if visita.fecha_visita %}
+                <p class="res-recent-date">{{ visita.fecha_visita }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('resident.visitors') }}" class="res-add-dashed">
+        <i class="fa-solid fa-arrow-right"></i>
+        Ver todas las visitas
+    </a>
+
+    {% else %}
+
+    <div class="res-recent-empty">
+        <div class="res-empty-icon">
+            <i class="fa-solid fa-calendar-xmark"></i>
+        </div>
+        <p class="res-empty-title">Sin visitas registradas</p>
+        <p class="res-empty-sub">Aún no has registrado ninguna visita.</p>
+        <a href="{{ url_for('resident.create_visit') }}" class="res-btn-new" style="display:inline-flex; margin-top:12px;">
+            <i class="fa-solid fa-plus"></i>
+            Registrar primera visita
+        </a>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<div id="photoModal" class="res-photo-modal">
+    <img id="photoZoom" class="res-photo-zoom" alt="Foto ampliada">
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+document.getElementById("heroDate").textContent =
+    new Date().toLocaleDateString('es-MX', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    }).replace(/^./, c => c.toUpperCase());
+
+const photoModal = document.getElementById("photoModal");
+const photoZoom  = document.getElementById("photoZoom");
+
+document.querySelectorAll(".zoomable-foto").forEach(img => {
+
+    img.addEventListener("click", function(){
+
+        photoZoom.src = this.src;
+
+        photoModal.style.display = "flex";
+
+    });
+
+});
+
+photoModal.addEventListener("click", function(){
+
+    photoModal.style.display = "none";
+
+});
+
+</script>
+{% endblock %}

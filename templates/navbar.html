@@ -1,0 +1,19 @@
+<nav class="navbar">
+
+    <h2>Acceso QR</h2>
+
+    <div class="nav-right">
+
+        <button id="themeToggle" class="theme-btn">
+            🌙
+        </button>
+
+        {% if session.get("user_id") %}
+
+            <a href="/logout">Cerrar sesión</a>
+
+        {% endif %}
+
+    </div>
+
+</nav>

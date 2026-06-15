@@ -1,0 +1,296 @@
+{% extends 'layout_auth.html' %}
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block content %}
+
+<div class="auth-layout">
+
+    <!-- ============================================ -->
+    <!-- PANEL IZQUIERDO — MARCA                      -->
+    <!-- ============================================ -->
+
+    <div class="auth-brand">
+
+        <div class="auth-orb-top"></div>
+        <div class="auth-orb-bottom"></div>
+
+        <!-- Logo -->
+        <div class="auth-brand-logo">
+            <div class="auth-brand-icon">
+                <img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}" alt="AccessQR Logo" style="width:28px;height:28px;object-fit:contain;">
+            </div>
+            <div>
+                <div class="auth-brand-name">AccessQR</div>
+                <div class="auth-brand-sub">Control de Accesos</div>
+            </div>
+        </div>
+
+        <!-- Headline + features -->
+        <div class="auth-brand-body">
+            <h1 class="auth-brand-headline">
+                Acceso seguro<br>
+                <span>a tu fraccionamiento</span>
+            </h1>
+            <p class="auth-brand-desc">
+                Gestiona visitantes, genera códigos QR y
+                monitorea accesos en tiempo real.
+            </p>
+
+            <div class="auth-features">
+
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <div>
+                        <div class="auth-feature-title">Accesos con QR</div>
+                        <div class="auth-feature-desc">
+                            Genera códigos únicos e intransferibles para cada visita.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <div class="auth-feature-title">Gestión de visitantes</div>
+                        <div class="auth-feature-desc">
+                            Crea y administra tu catálogo de visitantes frecuentes.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div>
+                        <div class="auth-feature-title">Alertas en tiempo real</div>
+                        <div class="auth-feature-desc">
+                            Recibe notificaciones de cada entrada y salida.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="auth-brand-footer">
+            © 2025 AccessQR · Acceso restringido a personal autorizado
+        </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PANEL DERECHO — FORMULARIO                   -->
+    <!-- ============================================ -->
+
+    <div class="auth-form-panel">
+        <div class="auth-form-inner auth-animate">
+
+            <!-- Logo móvil -->
+            <div class="auth-mobile-logo">
+                <div class="auth-mobile-icon">
+                    <img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}" alt="AccessQR Logo" style="width:24px;height:24px;object-fit:contain;">
+                </div>
+                <div>
+                    <div class="auth-mobile-name">AccessQR</div>
+                    <div class="auth-mobile-sub">Control de Accesos</div>
+                </div>
+            </div>
+
+            <!-- Card -->
+            <div class="glass-card">
+
+                <!-- Alerta bloqueo -->
+                {% if bloqueo_activo %}
+                <div class="auth-lock-alert">
+                    <div class="auth-lock-header">
+                        <i class="fa-solid fa-lock"></i>
+                        Cuenta bloqueada temporalmente
+                    </div>
+                    <p class="auth-lock-desc">
+                        Demasiados intentos fallidos detectados.
+                        Espera antes de volver a intentarlo.
+                    </p>
+                    <div class="auth-timer-box">
+                        <span id="timer">00:00</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="auth-card-eyebrow">Bienvenido de vuelta</div>
+                <h2 class="auth-card-title">Inicia sesión</h2>
+                <p class="auth-card-subtitle">Accede a tu panel de control</p>
+
+                <form method="POST" action="/login" id="loginForm">
+
+                    <!-- Email -->
+                    <div class="auth-field">
+                        <label class="auth-label" for="correo">
+                            Correo electrónico
+                        </label>
+                        <div class="auth-input-wrap">
+                            <span class="auth-input-icon">
+                                <i class="fa-solid fa-envelope"></i>
+                            </span>
+
+                            <input
+                                class="auth-input"
+                                type="email"
+                                id="correo"
+                                name="correo"
+                                placeholder="correo@ejemplo.com"
+                                required
+                                autocomplete="email"
+                                {% if bloqueo_activo %}disabled{% endif %}
+                            >
+                        </div>
+
+                    </div>
+
+                    <!-- Password -->
+                    <div class="auth-field">
+                        <label class="auth-label" for="password">
+                            Contraseña
+                        </label>
+                        <div class="auth-input-wrap">
+                            <span class="auth-input-icon">
+                                <i class="fa-solid fa-lock"></i>
+                            </span>
+                            <input
+                                class="auth-input has-toggle"
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="••••••••"
+                                required
+                                autocomplete="current-password"
+                                {% if bloqueo_activo %}disabled{% endif %}
+                            >
+                            <button
+                                type="button"
+                                class="auth-eye-btn"
+                                id="togglePassword"
+                                aria-label="Mostrar contraseña"
+                            >
+                                <i class="fa-regular fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <!-- Recuperar contraseña -->
+                    <div style="margin-bottom:20px;">
+                        <a href="{{ url_for('auth.forgot_password') }}" class="auth-forgot">
+                            <i class="fa-solid fa-key"></i>
+                            Recuperar contraseña
+                        </a>
+                    </div>
+
+                    <!-- Botón -->
+                    <button
+                        type="submit"
+                        class="btn-auth-primary"
+                        id="submitBtn"
+                        {% if bloqueo_activo %}disabled{% endif %}
+                    >
+                        <span id="btnText">
+                            Ingresar al sistema
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                        <span id="btnSpinner" class="auth-spinner" style="display:none;"></span>
+                    </button>
+
+                </form>
+
+                <hr class="auth-divider">
+
+                <p class="auth-footer-link">
+                    ¿Eres residente y aún no tienes cuenta?
+                    <a href="/register">Crear cuenta</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+{% if bloqueo_activo %}
+<script>
+let segundos = {{ segundos_restantes }};
+const timer = document.getElementById("timer");
+
+function actualizarTimer() {
+    const m = String(Math.floor(segundos / 60)).padStart(2, '0');
+    const s = String(segundos % 60).padStart(2, '0');
+    timer.textContent = `${m}:${s}`;
+    if (segundos <= 0) { location.reload(); }
+    segundos--;
+}
+
+actualizarTimer();
+setInterval(actualizarTimer, 1000);
+</script>
+{% endif %}
+
+<script>
+// Toggle password visibility
+const togglePassword = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('password');
+const eyeIcon = document.getElementById('eyeIcon');
+
+if (togglePassword) {
+
+    togglePassword.addEventListener('click', () => {
+
+        const visible = passwordInput.type === 'text';
+
+        passwordInput.type = visible ? 'password' : 'text';
+
+        eyeIcon.className =
+            visible
+                ? 'fa-regular fa-eye'
+                : 'fa-regular fa-eye-slash';
+
+        togglePassword.setAttribute(
+            'aria-label',
+            visible
+                ? 'Mostrar contraseña'
+                : 'Ocultar contraseña'
+        );
+
+    });
+
+}
+
+// Loading spinner on submit
+const loginForm = document.getElementById('loginForm');
+const submitBtn = document.getElementById('submitBtn');
+const btnText = document.getElementById('btnText');
+const btnSpinner = document.getElementById('btnSpinner');
+
+if (loginForm) {
+
+    loginForm.addEventListener('submit', function () {
+
+        submitBtn.disabled = true;
+
+        btnText.style.display = 'none';
+
+        btnSpinner.style.display = 'block';
+
+    });
+
+}
+</script>
+
+{% endblock %}

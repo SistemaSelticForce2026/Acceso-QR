@@ -1,0 +1,91 @@
+/* COMPONENTES */
+@import url("componentes/alertas.css");
+@import url("componentes/botones.css");
+@import url("componentes/dashboard.css");
+@import url("componentes/escaner.css");
+@import url("componentes/etiquetas.css");
+@import url("componentes/formularios.css");
+@import url("componentes/modales.css");
+@import url("componentes/tablas.css");
+@import url("componentes/tarjetas.css");
+
+/* ESTRUCTURA */
+@import url("estructura/navbar.css");
+@import url("estructura/footer.css");
+@import url("estructura/notificaciones.css");
+
+/* PAGINAS */
+@import url("paginas/admin_dashboard.css");
+@import url("paginas/admin_guardias.css");
+@import url("paginas/admin_residentes.css");
+@import url("paginas/admin_reportes.css");
+@import url("paginas/admin_historial_reportes.css");
+@import url("paginas/admin_incidencias.css");
+@import url("paginas/admin_configuracion.css");
+@import url("paginas/ver_guardia.css");
+@import url("paginas/ver_residente.css");
+@import url("paginas/registrar_guardia.css");
+@import url("paginas/registrar_residente.css");
+@import url("paginas/editar_guardia.css");
+@import url("paginas/editar_residente.css");
+@import url("paginas/guardia_dashboard.css");
+
+/* =========================================================
+   RESET GENERAL
+========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+/* =========================================================
+   BODY
+========================================================= */
+
+body{
+    font-family:'Inter',sans-serif;
+    background:#f1f5f9;
+    color:#1e293b;
+    min-height:100vh;
+    overflow-x:hidden;
+}
+
+/* =========================================================
+   CONTENEDOR
+========================================================= */
+
+.container{
+    width:100%;
+    max-width:1600px;
+    margin:auto;
+    padding:30px;
+}
+
+/* =========================================================
+   TITULOS
+========================================================= */
+
+h1,
+h2,
+h3{
+    font-weight:700;
+}
+
+a{
+    text-decoration:none;
+}
+
+/* =========================================================
+   RESPONSIVE GLOBAL
+========================================================= */
+
+@media (max-width:768px){
+
+    .container{
+        padding:20px;
+    }
+
+}
+
