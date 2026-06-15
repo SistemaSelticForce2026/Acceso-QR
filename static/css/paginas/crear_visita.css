@@ -8,31 +8,9 @@
     margin: 0 auto;
 }
 
-/* ---- Back link -------------------------------------------- */
-.cv-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #77767d;
-    text-decoration: none;
-    margin-bottom: 24px;
-    transition: color 0.2s;
-}
-.cv-back:hover { color: #010211; }
-
 /* ---- Page header ------------------------------------------ */
 .cv-header { margin-bottom: 28px; }
 
-.cv-eyebrow {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: #77767d;
-    margin: 0 0 4px;
-}
 .cv-title {
     font-size: 26px;
     font-weight: 700;
@@ -164,8 +142,10 @@
 
 .cv-type-card {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
+    justify-content: flex-start;
+    gap: 12px;
     padding: 20px;
     border-radius: 16px;
     border: 2px solid rgba(199, 197, 205, 0.60);
@@ -196,7 +176,8 @@
     align-items: center;
     justify-content: center;
     font-size: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
+    flex-shrink: 0;
     transition: background 0.2s, color 0.2s;
     background: #eceef0;
     color: #46464c;
@@ -547,6 +528,7 @@ input[type="file"].cv-input::file-selector-button:hover {
     font-size: 13px;
     font-weight: 600;
     font-family: 'Inter', sans-serif;
+    text-decoration: none;
     cursor: pointer;
     transition: background 0.2s;
     margin-top: 0;

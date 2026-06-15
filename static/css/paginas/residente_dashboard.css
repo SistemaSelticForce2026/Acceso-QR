@@ -12,15 +12,6 @@
     flex-wrap: wrap;
 }
 
-.res-eyebrow {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: #77767d;
-    margin: 0 0 4px;
-}
-
 .res-page-heading {
     font-size: 26px;
     font-weight: 700;
@@ -356,9 +347,6 @@
 }
 
 /* ---- Visits section --------------------------------------- */
-.res-visits-section {
-    margin-top: 24px;
-}
 
 .res-section-head {
     display: flex;
