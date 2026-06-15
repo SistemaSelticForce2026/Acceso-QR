@@ -40,6 +40,32 @@
     text-transform: uppercase; letter-spacing: .04em;
 }
 
+.btn-volver-dashboard {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #475569;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(15,23,42,.07);
+    transition: all .2s cubic-bezier(.4,0,.2,1);
+    margin-bottom: 1.25rem;
+    font-family: inherit;
+}
+.btn-volver-dashboard i { transition: transform .2s; }
+.btn-volver-dashboard:hover {
+    transform: translateY(-2px);
+    border-color: #93c5fd;
+    color: #2563eb;
+    box-shadow: 0 4px 16px rgba(15,23,42,.09);
+}
+.btn-volver-dashboard:hover i { transform: translateX(-3px); }
+
 /* ========================================= */
 /* HEADER DE LA CARD                         */
 /* ========================================= */

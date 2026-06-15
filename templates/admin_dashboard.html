@@ -726,12 +726,24 @@
   <img id="modalImg" src="" alt="Imagen ampliada" class="modal-img">
 </div>
 
+<!-- ══ TOAST TIEMPO REAL ══ -->
+<div id="updateToast" class="update-toast">
+  <span class="ut-dot"></span>
+  <span id="updateToastText">Nuevos registros</span>
+  <button onclick="location.reload()">Actualizar</button>
+</div>
+
 <!-- ══ SCRIPTS ══ -->
 <script>
-  document.getElementById('fechaActual').innerHTML = new Date().toLocaleString('es-MX', {
-    dateStyle: 'medium', timeStyle: 'short'
-  });
+  // Fecha en vivo (se actualiza sola)
+  function actualizarFecha() {
+    const el = document.getElementById('fechaActual');
+    if (el) el.textContent = new Date().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+  actualizarFecha();
+  setInterval(actualizarFecha, 60000);
 
+  // Modal de imagen
   const modal    = document.getElementById('imgModal');
   const modalImg = document.getElementById('modalImg');
   const closeModal = () => modal.classList.remove('open');
@@ -747,25 +759,70 @@
     });
   });
 
+  // Conteo animado con separador de miles + easing
   document.querySelectorAll('.ast-num').forEach(el => {
-    const final = parseInt(el.innerText) || 0;
-    if (final === 0) return;
-    let cur = 0;
-    const step = Math.max(1, Math.ceil(final / 40));
-    const t = setInterval(() => {
-      cur = Math.min(cur + step, final);
-      el.innerText = cur;
-      if (cur >= final) clearInterval(t);
-    }, 25);
+    const final = parseInt(el.innerText.replace(/\D/g, '')) || 0;
+    if (final === 0) { el.innerText = '0'; return; }
+    const dur = 900, ini = performance.now();
+    function frame(now) {
+      const p = Math.min((now - ini) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.innerText = Math.round(final * eased).toLocaleString('es-MX');
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
   });
+
+  // Paginación tipo ranking (residentes y vehículos)
+  function paginarRanking(lista, porPagina) {
+    const items = Array.from(lista.querySelectorAll('.rank-item'));
+    if (items.length <= porPagina) return;
+    let pagina = 0;
+    const totalPaginas = Math.ceil(items.length / porPagina);
+
+    const nav = document.createElement('div');
+    nav.className = 'rank-pager';
+    nav.innerHTML =
+      '<button class="rp-btn rp-prev" aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>' +
+      '<span class="rp-info"></span>' +
+      '<button class="rp-btn rp-next" aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>';
+    lista.after(nav);
+
+    const info = nav.querySelector('.rp-info');
+    const prev = nav.querySelector('.rp-prev');
+    const next = nav.querySelector('.rp-next');
+
+    function render() {
+      items.forEach((it, i) => {
+        it.style.display = (i >= pagina * porPagina && i < (pagina + 1) * porPagina) ? '' : 'none';
+      });
+      info.textContent = (pagina + 1) + ' / ' + totalPaginas;
+      prev.disabled = pagina === 0;
+      next.disabled = pagina === totalPaginas - 1;
+    }
+    prev.onclick = () => { if (pagina > 0) { pagina--; render(); } };
+    next.onclick = () => { if (pagina < totalPaginas - 1) { pagina++; render(); } };
+    render();
+  }
+  document.querySelectorAll('.rank-list').forEach(lista => paginarRanking(lista, 5));
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <script>
+  // Tiempo real: en vez de recargar de golpe, avisa con un toast
   const socket = io();
-  socket.on('nueva_visita', () => location.reload());
+  let nuevosRegistros = 0;
+  socket.on('nueva_visita', () => {
+    nuevosRegistros++;
+    const toast = document.getElementById('updateToast');
+    const txt   = document.getElementById('updateToastText');
+    if (toast && txt) {
+      txt.textContent = nuevosRegistros + (nuevosRegistros === 1 ? ' nuevo registro' : ' nuevos registros');
+      toast.classList.add('show');
+    }
+  });
 
   Chart.defaults.color = '#94a3b8';
   Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
@@ -778,6 +835,45 @@
   Chart.defaults.plugins.tooltip.cornerRadius = 12;
   Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,.08)';
   Chart.defaults.plugins.tooltip.borderWidth = 1;
+
+  // Plugin: total al centro de las donas + "Sin datos"
+  const totalCentro = {
+    id: 'totalCentro',
+    afterDraw(chart) {
+      if (chart.config.type !== 'doughnut') return;
+      const d = chart.data.datasets[0]?.data || [];
+      const total = d.reduce((a, b) => a + (Number(b) || 0), 0);
+      const { ctx, chartArea: { left, right, top, bottom } } = chart;
+      const cx = (left + right) / 2, cy = (top + bottom) / 2;
+      ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (total === 0) {
+        ctx.fillStyle = '#94a3b8'; ctx.font = "600 13px Inter, sans-serif";
+        ctx.fillText('Sin datos', cx, cy);
+      } else {
+        ctx.fillStyle = '#0f172a'; ctx.font = "800 26px Inter, sans-serif";
+        ctx.fillText(total.toLocaleString('es-MX'), cx, cy - 7);
+        ctx.fillStyle = '#94a3b8'; ctx.font = "700 10px Inter, sans-serif";
+        ctx.fillText('TOTAL', cx, cy + 14);
+      }
+      ctx.restore();
+    }
+  };
+  // Plugin: estado vacío para barras/líneas
+  const estadoVacio = {
+    id: 'estadoVacio',
+    afterDraw(chart) {
+      if (chart.config.type === 'doughnut') return;
+      const total = (chart.data.datasets || [])
+        .reduce((s, ds) => s + (ds.data || []).reduce((a, b) => a + (Number(b) || 0), 0), 0);
+      if (total > 0) return;
+      const { ctx, chartArea: { left, right, top, bottom } } = chart;
+      ctx.save(); ctx.fillStyle = '#94a3b8'; ctx.font = "600 13px Inter, sans-serif";
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('Sin datos en este período', (left + right) / 2, (top + bottom) / 2);
+      ctx.restore();
+    }
+  };
+  Chart.register(totalCentro, estadoVacio);
 
   const ctxLine = document.getElementById('diasChart').getContext('2d');
   const gradBlue = ctxLine.createLinearGradient(0, 0, 0, 340);

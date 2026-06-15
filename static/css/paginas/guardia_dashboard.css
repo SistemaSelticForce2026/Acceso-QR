@@ -387,7 +387,7 @@
 
 .grd-badge.success { background: rgba(0, 152, 105, 0.12);  color: #009869; }
 .grd-badge.warning { background: rgba(217, 119, 6, 0.12);  color: #b45309; }
-.grd-badge.danger  { background: rgba(186, 26, 26, 0.12);  color: #ba1a1a; }
+.grd-badge.danger  { background: #ba1a1a;  color: #ffffff; }
 .grd-badge.neutral { background: #f3f5f9; color: #5a6278; border: 1px solid #e7eaf1; }
 .grd-badge.info    { background: rgba(46, 91, 255, 0.12); color: #2e5bff; }
 

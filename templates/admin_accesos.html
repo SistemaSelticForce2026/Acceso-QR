@@ -1,416 +1,354 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/paginas/admin_accesos.css') }}">
+{% endblock %}
+
 {% block content %}
 
+<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
+    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+</a>
+
+{# ===== Encabezado ===== #}
 <div class="page-header">
-
-    <div>
-
-        <h1>Historial de accesos</h1>
-
-        <p class="page-subtitle">
-            Registro completo de entradas, salidas, accesos autorizados y validaciones QR realizadas en caseta.
-        </p>
-
+    <div class="page-title-wrap">
+        <div class="head-badge"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <div>
+            <h1>Historial de accesos</h1>
+            <p class="page-subtitle">
+                Registro completo de entradas, salidas, accesos autorizados y validaciones QR realizadas en caseta.
+            </p>
+        </div>
     </div>
 
     <div class="header-actions">
-
-        <a href="{{ url_for('admin.exportar_accesos_pdf') }}"
-           class="btn">
-
-            <i class="fa-solid fa-file-pdf"></i>
-            Exportar PDF
-
+        <a href="{{ url_for('admin.exportar_accesos_pdf') }}" class="btn pdf-btn">
+            <i class="fa-solid fa-file-pdf"></i> Exportar PDF
         </a>
-
-        <a href="{{ url_for('admin.exportar_accesos_excel') }}"
-           class="btn success-btn">
-
-            <i class="fa-solid fa-file-excel"></i>
-            Exportar Excel
-
+        <a href="{{ url_for('admin.exportar_accesos_excel') }}" class="btn success-btn">
+            <i class="fa-solid fa-file-excel"></i> Exportar Excel
         </a>
-
     </div>
-
 </div>
 
-<!-- =========== -->
-<!-- ESTADÍSTICAS -->
-<!-- =========== -->
-
-
+{# ===== Estadísticas ===== #}
+{% set entradas    = accesos | selectattr("accion", "equalto", "entrada") | list | length %}
+{% set salidas     = accesos | selectattr("accion", "equalto", "salida") | list | length %}
+{% set rechazados  = accesos | selectattr("resultado", "equalto", "denegado") | list | length %}
 <div class="stats">
 
     <div class="stat-card">
-
-        <div class="stat-icon blue">
-            
-        </div>
-
+        <div class="stat-icon blue"><i class="fa-solid fa-database"></i></div>
         <h3>Total registros</h3>
-
-        <p>
-            {{ accesos|length }}
-        </p>
-
-        <span>
-            Accesos almacenados
-        </span>
-
+        <p>{{ accesos|length }}</p>
+        <span>Accesos almacenados</span>
     </div>
 
-    <div class="stat-card">
-
-        <div class="stat-icon green">
-            
-        </div>
-
+    <div class="stat-card is-green">
+        <div class="stat-icon green"><i class="fa-solid fa-right-to-bracket"></i></div>
         <h3>Entradas</h3>
-
-        <p>
-            {{ accesos | selectattr("accion", "equalto", "entrada") | list | length }}
-        </p>
-
-        <span>
-            Accesos permitidos
-        </span>
-
+        <p>{{ entradas }}</p>
+        <span>Accesos permitidos</span>
     </div>
 
-    <div class="stat-card">
-
-        <div class="stat-icon dark-icon">
-            
-        </div>
-
+    <div class="stat-card is-slate">
+        <div class="stat-icon dark-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
         <h3>Salidas</h3>
-
-        <p>
-            {{ accesos | selectattr("accion", "equalto", "salida") | list | length }}
-        </p>
-
-        <span>
-            Salidas registradas
-        </span>
-
+        <p>{{ salidas }}</p>
+        <span>Salidas registradas</span>
     </div>
 
-    <div class="stat-card">
-
-        <div class="stat-icon red">
-            
-        </div>
-
+    <div class="stat-card is-red">
+        <div class="stat-icon red"><i class="fa-solid fa-ban"></i></div>
         <h3>Rechazados</h3>
-
-        <p>
-            {{ accesos | selectattr("resultado", "equalto", "denegado") | list | length }}
-        </p>
-
-        <span>
-            Accesos denegados
-        </span>
-
+        <p>{{ rechazados }}</p>
+        <span>Accesos denegados</span>
     </div>
 
 </div>
 
-  <!-- =========== -->
-
-<!-- TABLA -->
-  <!-- =========== -->
-
-
+{# ===== Tabla / Bitácora ===== #}
 <div class="card">
 
     <div class="table-header">
-
         <div>
-
             <h2>Bitácora operativa</h2>
-
             <p class="table-subtitle">
                 Monitoreo en tiempo real de movimientos registrados en el sistema AccessQR.
             </p>
-
         </div>
-
         <div class="table-status">
-
-            <span class="online-dot"></span>
-
-            Sistema monitoreando accesos
-
+            <span class="online-dot"></span> Sistema monitoreando accesos
         </div>
+    </div>
 
+    {% if accesos and accesos|length > 0 %}
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="buscarAcceso"
+                   placeholder="Buscar por guardia u observaciones…" autocomplete="off">
+        </div>
+        <span id="contadorAccesos" class="resultado-conteo"></span>
     </div>
 
     <div class="table-responsive">
-
         <table class="modern-table">
-
             <thead>
-
                 <tr>
-
                     <th>Guardia</th>
                     <th>Acción</th>
                     <th>Resultado</th>
                     <th>Observaciones</th>
                     <th>Fecha y hora</th>
-
                 </tr>
-
             </thead>
-
-            <tbody>
-
+            <tbody id="tablaAccesos">
                 {% for acceso in accesos %}
+                <tr class="fila-acceso"
+                    data-buscar="{{ (acceso.guardia_nombre ~ ' ' ~ (acceso.observaciones or '')) | lower }}">
 
-                <tr>
-
+                    {# --- Guardia --- #}
                     <td>
-
                         <div class="user-cell">
-
-                            <div class="user-avatar">
-
-                                {{ acceso.guardia_nombre[0] }}
-
+                            <div class="user-avatar" data-nombre="{{ acceso.guardia_nombre }}">
+                                {{ acceso.guardia_nombre[0] | upper if acceso.guardia_nombre else 'G' }}
                             </div>
-
                             <div>
-
-                                <strong>
-                                    {{ acceso.guardia_nombre }}
-                                </strong>
-
-                                <span>
-                                    ID:
-                                    {{ acceso.guardia_id }}
+                                <strong>{{ acceso.guardia_nombre }}</strong>
+                                <span title="ID completo: {{ acceso.guardia_id }}">
+                                    <i class="fa-solid fa-id-badge"></i>
+                                    #{{ (acceso.guardia_id | string)[:8] }}
+                                    <button type="button" class="id-copy"
+                                            data-id="{{ acceso.guardia_id }}" aria-label="Copiar ID">
+                                        <i class="fa-regular fa-copy"></i>
+                                    </button>
                                 </span>
-
                             </div>
-
                         </div>
-
                     </td>
 
+                    {# --- Acción --- #}
                     <td>
-
                         {% if acceso.accion == "entrada" %}
-
-                            <span class="badge success">
-                                Entrada
-                            </span>
-
+                            <span class="badge success">Entrada</span>
                         {% elif acceso.accion == "salida" %}
-
-                            <span class="badge dark">
-                                Salida
-                            </span>
-
+                            <span class="badge dark">Salida</span>
                         {% else %}
-
-                            <span class="badge danger">
-                                {{ acceso.accion }}
-                            </span>
-
+                            <span class="badge danger">{{ acceso.accion }}</span>
                         {% endif %}
+                    </td>
 
-                    </td> 
-
-                    <td> 
-
+                    {# --- Resultado --- #}
+                    <td>
                         {% if acceso.resultado == "permitido" %}
-
-                            <span class="badge success">
-                                Permitido
-                            </span>
-
+                            <span class="badge success">Permitido</span>
                         {% elif acceso.resultado == "salida_registrada" %}
-
-                            <span class="badge dark">
-                                Salida registrada
-                            </span>
-
+                            <span class="badge dark">Salida registrada</span>
                         {% else %}
-
-                            <span class="badge danger">
-                                Denegado
-                            </span>
-
+                            <span class="badge danger">Denegado</span>
                         {% endif %}
-
                     </td>
 
+                    {# --- Observaciones --- #}
                     <td>
-
                         {% if acceso.observaciones %}
-
-                            {{ acceso.observaciones }}
-
+                            <span class="obs-text">{{ acceso.observaciones }}</span>
                         {% else %}
-
-                            <span class="muted">
-                                Sin observaciones
-                            </span>
-
+                            <span class="muted">Sin observaciones</span>
                         {% endif %}
-
                     </td>
 
+                    {# --- Fecha y hora --- #}
                     <td>
-
                         <div class="fecha-box">
-
-                            <strong>
-                                {{ acceso.fecha_hora.strftime('%d/%m/%Y') }}
-                            </strong>
-
+                            <strong>{{ acceso.fecha_hora.strftime('%d/%m/%Y') }}</strong>
                             <span class="hora-text">
+                                <i class="fa-regular fa-clock"></i>
                                 {{ acceso.fecha_hora.strftime('%I:%M %p') }}
                             </span>
-
                         </div>
-
                     </td>
 
                 </tr>
-
                 {% endfor %}
-
             </tbody>
-
         </table>
-
     </div>
 
-</div>
+    <div class="accesos-empty" id="sinResultados" hidden>
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <h3>Sin coincidencias</h3>
+        <p>Ningún registro coincide con tu búsqueda.</p>
+    </div>
 
-<div class="pagination-container" style="display:flex; justify-content:center; margin-top:20px; margin-bottom: 20px;">
-    {% if total_paginas > 1 %}
-        <div class="pagination" style="display:flex; gap:10px; flex-wrap:wrap;">
-            {% if pagina > 1 %}
-                <a href="{{ url_for('admin.accesos', page=pagina-1) }}" class="btn secondary" style="padding:10px 15px;">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </a>
-            {% endif %}
-            {% for p in range(1, total_paginas + 1) %}
-                <a href="{{ url_for('admin.accesos', page=p) }}" class="btn {% if p != pagina %}secondary{% endif %}" style="padding:10px 15px;">
-                    {{ p }}
-                </a>
-            {% endfor %}
-            {% if pagina < total_paginas %}
-                <a href="{{ url_for('admin.accesos', page=pagina+1) }}" class="btn secondary" style="padding:10px 15px;">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </a>
-            {% endif %}
-        </div>
+    {% else %}
+    <div class="accesos-empty">
+        <i class="fa-solid fa-folder-open"></i>
+        <h3>Aún no hay accesos registrados</h3>
+        <p>Cuando un guardia valide un código QR en caseta, el movimiento aparecerá aquí.</p>
+    </div>
     {% endif %}
+
 </div>
 
-<!-- =========== -->
-<!-- ALERTAS -->
-<!-- =========== -->
+{# ===== Paginación ===== #}
+{% if total_paginas and total_paginas > 1 %}
+<div class="pagination-container" style="margin-bottom:1.75rem;">
+    <div class="pagination">
+        {% if pagina > 1 %}
+        <a href="{{ url_for('admin.accesos', page=pagina-1) }}" class="btn secondary">
+            <i class="fa-solid fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        {% for p in range(1, total_paginas + 1) %}
+        <a href="{{ url_for('admin.accesos', page=p) }}"
+           class="btn {% if p != pagina %}secondary{% endif %}">{{ p }}</a>
+        {% endfor %}
+        {% if pagina < total_paginas %}
+        <a href="{{ url_for('admin.accesos', page=pagina+1) }}" class="btn secondary">
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
-
+{# ===== Grid inferior ===== #}
 <div class="dashboard-grid">
 
     <div class="card">
-
-        <h2>
-            Supervisión operativa
-        </h2>
-
+        <h2>Supervisión operativa</h2>
         <div class="alert info">
-
-            Todos los accesos registrados quedan almacenados automáticamente para auditoría administrativa y monitoreo de seguridad.
-
+            <i class="fa-solid fa-circle-info"></i>
+            Todos los accesos quedan almacenados automáticamente para auditoría administrativa y monitoreo de seguridad.
         </div>
-
         <div class="alert warning">
-
+            <i class="fa-solid fa-triangle-exclamation"></i>
             Revisar accesos repetidos o múltiples validaciones del mismo código QR.
-
         </div>
-
         <div class="alert danger-alert">
-
+            <i class="fa-solid fa-shield-halved"></i>
             Los accesos rechazados deben validarse inmediatamente desde el módulo de incidencias.
-
         </div>
-
     </div>
 
     <div class="card">
-
-        <h2>
-            Estado del sistema
-        </h2>
-
+        <h2>Estado del sistema</h2>
         <div class="system-status">
 
             <div class="status-item">
-
-                <div>
-                    <strong class="status-label">
-                        Sistema QR
-                    </strong>
-
-                    <p class="small">
-                        Validación de accesos QR
-                    </p>
+                <div class="status-left">
+                    <div class="status-icon"><i class="fa-solid fa-qrcode"></i></div>
+                    <div>
+                        <strong class="status-label">Sistema QR</strong>
+                        <p class="small">Validación de accesos QR</p>
+                    </div>
                 </div>
-
-                <span class="badge success">
-                    Operativo
-                </span>
-
+                <span class="badge success">Operativo</span>
             </div>
 
             <div class="status-item">
-
-                <div>
-                    <strong class="status-label">
-                        Base de datos
-                    </strong>
-
-                    <p class="small">
-                        MongoDB conectada correctamente
-                    </p>
+                <div class="status-left">
+                    <div class="status-icon"><i class="fa-solid fa-database"></i></div>
+                    <div>
+                        <strong class="status-label">Base de datos</strong>
+                        <p class="small">MongoDB conectada correctamente</p>
+                    </div>
                 </div>
-
-                <span class="badge success">
-                    Conectada
-                </span>
-
+                <span class="badge success">Conectada</span>
             </div>
 
             <div class="status-item">
-
-            <div>
-                <strong class="status-label">
-                    Monitoreo
-                </strong>
-
-                <p class="small">
-                    Supervisión activa del sistema
-                </p>
+                <div class="status-left">
+                    <div class="status-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+                    <div>
+                        <strong class="status-label">Monitoreo</strong>
+                        <p class="small">Supervisión activa del sistema</p>
+                    </div>
+                </div>
+                <span class="badge dark">Activo</span>
             </div>
 
-            <span class="badge dark">
-                Activo
-            </span>
-
         </div>
-
-        </div>
-
     </div>
 
 </div>
+
+<div class="toast" id="toast" hidden><i class="fa-solid fa-check"></i> <span id="toastTexto"></span></div>
+
+<script>
+(function () {
+    function normalizar(t){
+        return (t || '').toString().toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    /* Color de avatar según el nombre del guardia */
+    function colorAvatares(){
+        var paletas = [
+            ['#2563eb','#60a5fa'], ['#7c3aed','#a78bfa'], ['#0891b2','#22d3ee'],
+            ['#059669','#34d399'], ['#d97706','#fbbf24'], ['#db2777','#f472b6']
+        ];
+        document.querySelectorAll('.user-avatar').forEach(function(av){
+            var n = av.getAttribute('data-nombre') || '';
+            var h = 0;
+            for(var i=0;i<n.length;i++){ h = (h*31 + n.charCodeAt(i)) >>> 0; }
+            var c = paletas[h % paletas.length];
+            av.style.background = 'linear-gradient(135deg,'+c[0]+','+c[1]+')';
+        });
+    }
+
+    /* Buscador + contador + sin resultados */
+    function iniciarBuscador(){
+        var input    = document.getElementById('buscarAcceso');
+        var filas    = Array.prototype.slice.call(document.querySelectorAll('.fila-acceso'));
+        var contador = document.getElementById('contadorAccesos');
+        var vacio    = document.getElementById('sinResultados');
+        function pintar(v){
+            if(contador){ contador.textContent = v + ' de ' + filas.length + ' registro' + (filas.length===1?'':'s'); }
+        }
+        function filtrar(){
+            var q = normalizar(input ? input.value.trim() : '');
+            var visibles = 0;
+            filas.forEach(function(fila){
+                var ok = normalizar(fila.getAttribute('data-buscar')).indexOf(q) !== -1;
+                fila.style.display = ok ? '' : 'none';
+                if(ok) visibles++;
+            });
+            if(vacio) vacio.hidden = visibles !== 0;
+            pintar(visibles);
+        }
+        pintar(filas.length);
+        if(input) input.addEventListener('input', filtrar);
+    }
+
+    /* Toast + copiar ID */
+    var toastTimer;
+    function mostrarToast(txt){
+        var t = document.getElementById('toast'), s = document.getElementById('toastTexto');
+        if(!t) return;
+        s.textContent = txt; t.hidden = false; t.classList.add('visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function(){ t.classList.remove('visible'); setTimeout(function(){ t.hidden = true; }, 250); }, 1800);
+    }
+    function iniciarCopiar(){
+        document.querySelectorAll('.id-copy').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                var id = btn.getAttribute('data-id') || '';
+                if(navigator.clipboard){ navigator.clipboard.writeText(id); }
+                mostrarToast('ID copiado');
+            });
+        });
+    }
+
+    function init(){ colorAvatares(); iniciarBuscador(); iniciarCopiar(); }
+    if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); }
+    else { init(); }
+})();
+</script>
 
 {% endblock %}

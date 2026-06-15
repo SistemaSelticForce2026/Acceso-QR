@@ -2,217 +2,372 @@
 
 {% block extra_css %}
 <link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/admin_guardias.css') }}">
+      href="{{ url_for('static', filename='css/paginas/admin_guardias.css') }}">
 {% endblock %}
 
 {% block content %}
 
-<h1>Gestión de Guardias</h1>
+<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
+    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+</a>
 
-<p class="small">
-    Administración de personal de vigilancia, accesos y monitoreo operativo del fraccionamiento.
-</p>
+{# ===== Encabezado ===== #}
+<div class="guardias-page-head">
+    <div class="head-badge">
+        <i class="fa-solid fa-shield-halved"></i>
+    </div>
+    <div>
+        <h1>Gestión de Guardias</h1>
+        <p class="small">
+            Administración de personal de vigilancia, accesos y monitoreo operativo del fraccionamiento.
+        </p>
+    </div>
+</div>
 
+{# ===== Estadísticas ===== #}
+{% set activos = guardias | selectattr("estado", "equalto", "activo") | list | length %}
 <div class="stats">
 
     <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-users-gear"></i></div>
         <h3>Total guardias</h3>
         <p>{{ guardias|length }}</p>
     </div>
 
     <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-user-shield"></i></div>
         <h3>Guardias activos</h3>
-        <p>
-            {{ guardias | selectattr("estado", "equalto", "activo") | list | length }}
-        </p>
+        <p>{{ activos }}</p>
     </div>
 
     <div class="stat-card">
+        <div class="stat-icon cyan"><i class="fa-solid fa-clock"></i></div>
         <h3>En turno</h3>
-        <p>
-            {{ guardias | selectattr("estado", "equalto", "activo") | list | length }}
-        </p>
+        <p>{{ activos }}</p>
     </div>
 
 </div>
 
+{# ===== Tabla de personal ===== #}
 <div class="card">
 
     <div class="guardias-header">
 
         <div>
             <h2>Personal de vigilancia</h2>
-
             <p class="small">
                 Control y administración de usuarios con acceso al módulo de caseta.
             </p>
         </div>
 
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="buscarGuardia"
+                   placeholder="Buscar por nombre o correo…"
+                   autocomplete="off">
+        </div>
+
         <div class="guardias-actions">
-
             <a href="{{ url_for('admin.registrar_guardia') }}" class="btn">
-                Registrar guardia
+                <i class="fa-solid fa-user-plus"></i> Registrar guardia
             </a>
-
             <a href="{{ url_for('admin.exportar_guardias_pdf') }}" class="btn secondary">
-                Exportar listado
+                <i class="fa-solid fa-file-arrow-down"></i> Exportar listado
             </a>
-
         </div>
 
     </div>
 
-    <table>
+    {% if guardias and guardias|length > 0 %}
+    <div class="tabla-meta">
+        <span id="contadorGuardias" class="resultado-conteo"></span>
+    </div>
+    <table class="guardias-table">
+        <thead>
+            <tr>
+                <th>Guardia</th>
+                <th>Contacto</th>
+                <th>Estado</th>
+                <th>Actividad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaGuardias">
+            {% for guardia in guardias %}
+            <tr class="fila-guardia"
+                data-buscar="{{ (guardia.nombre ~ ' ' ~ guardia.correo) | lower }}">
 
-        <tr>
-            <th>Guardia</th>
-            <th>Contacto</th>
-            <th>Estado</th>
-            <th>Actividad</th>
-            <th>Acciones</th>
-        </tr>
+                {# --- Guardia --- #}
+                <td class="guardia-cell">
+                    <div class="guardia-info">
+                        <div class="guardia-avatar {% if guardia.estado != 'activo' %}inactivo{% endif %}"
+                             data-nombre="{{ guardia.nombre }}">
+                            {{ guardia.nombre[:2] | upper if guardia.nombre else 'GU' }}
+                            {% if guardia.estado == 'activo' %}<span class="avatar-dot"></span>{% endif %}
+                        </div>
+                        <div class="guardia-meta">
+                            <strong>{{ guardia.nombre }}</strong>
+                            <span class="guardia-id" title="ID completo: {{ guardia._id }}">
+                                <i class="fa-solid fa-id-badge"></i>
+                                <span class="id-text">#{{ (guardia._id | string)[:8] }}</span>
+                                <button type="button" class="id-copy"
+                                        data-id="{{ guardia._id }}" aria-label="Copiar ID">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                </td>
 
-        {% for guardia in guardias %}
-
-        <tr>
-
-            <td class="guardia-info">
-
-                <strong>{{ guardia.nombre }}</strong>
-
-                <span class="small">
-                    ID:
-                    {{ guardia._id }}
-                </span>
-            </td>
-
-            <td class="contacto-info">
-                {{ guardia.correo }}<br>
-
-                {% if guardia.telefono %}
-                    <span class="small">
-                        {{ guardia.telefono }}
-                    </span>
-                {% endif %}
-            </td>
-
-            <td>
-
-                {% if guardia.estado == "activo" %}
-
-                    <span class="badge success">
-                        Activo
-                    </span>
-
-                {% else %}
-
-                    <span class="badge danger">
-                        Inactivo
-                    </span>
-
-                {% endif %}
-
-            </td>
-
-            <td class="actividad-text">
-
-                <span class="small">
-                    Accesos autorizados, validaciones QR y monitoreo de visitantes.
-                </span>
-
-            </td>
-
-            <td>
-
-                <div class="acciones-guardia">
-
-                    <a href="{{ url_for('admin.ver_guardia', id=guardia._id) }}"
-                    class="btn small-btn">
-
-                        Ver perfil
-
-                    </a>
-
-                    <a href="{{ url_for('admin.editar_guardia', id=guardia._id) }}"
-                    class="btn secondary small-btn">
-
-                        Editar
-
-                    </a>
-
-                    {% if guardia.estado == "activo" %}
-
-                        <a href="{{ url_for('admin.desactivar_guardia', id=guardia._id) }}"
-                        class="btn danger-btn small-btn"
-                        onclick="return confirm('¿Deseas desactivar este guardia?')">
-
-                            Desactivar
-
-                        </a>
-
-                    {% else %}
-
-                        <a href="{{ url_for('admin.activar_guardia', id=guardia._id) }}"
-                        class="btn success-btn small-btn"
-                        onclick="return confirm('¿Deseas activar este guardia?')">
-
-                            Activar
-
-                        </a>
-
+                {# --- Contacto --- #}
+                <td class="contacto-info">
+                    <div class="contacto-row">
+                        <i class="fa-solid fa-envelope"></i>{{ guardia.correo }}
+                    </div>
+                    {% if guardia.telefono %}
+                    <div class="contacto-row muted">
+                        <i class="fa-solid fa-phone"></i>{{ guardia.telefono }}
+                    </div>
                     {% endif %}
+                </td>
 
-                </div>
+                {# --- Estado --- #}
+                <td>
+                    {% if guardia.estado == "activo" %}
+                    <span class="estado-badge activo">
+                        <span class="dot"></span> Activo
+                    </span>
+                    {% else %}
+                    <span class="estado-badge inactivo">
+                        <span class="dot"></span> Inactivo
+                    </span>
+                    {% endif %}
+                </td>
 
-            </td>
+                {# --- Actividad --- #}
+                <td class="actividad-text">
+                    <span class="small">
+                        Accesos autorizados, validaciones QR y monitoreo de visitantes.
+                    </span>
+                </td>
+
+                {# --- Acciones --- #}
+                <td>
+                    <div class="acciones-guardia">
+                        <a href="{{ url_for('admin.ver_guardia', id=guardia._id) }}"
+                           class="btn">
+                            <i class="fa-solid fa-eye"></i> Ver perfil
+                        </a>
+                        <a href="{{ url_for('admin.editar_guardia', id=guardia._id) }}"
+                           class="btn ghost-btn">
+                            <i class="fa-solid fa-pen"></i> Editar
+                        </a>
+                        {% if guardia.estado == "activo" %}
+                        <a href="{{ url_for('admin.desactivar_guardia', id=guardia._id) }}"
+                           class="btn danger-btn"
+                           data-confirm="¿Deseas desactivar a {{ guardia.nombre }}? Perderá el acceso al módulo de caseta."
+                           data-tipo="danger">
+                            <i class="fa-solid fa-ban"></i> Desactivar
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('admin.activar_guardia', id=guardia._id) }}"
+                           class="btn success-btn"
+                           data-confirm="¿Deseas activar a {{ guardia.nombre }}? Recuperará el acceso al módulo de caseta."
+                           data-tipo="success">
+                            <i class="fa-solid fa-circle-check"></i> Activar
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
 
             </tr>
-
             {% endfor %}
-
+        </tbody>
     </table>
 
-</div>
+    <div class="guardias-empty sin-resultados" id="sinResultados" hidden>
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <h3>Sin coincidencias</h3>
+        <p>Ningún guardia coincide con tu búsqueda. Revisa el texto e inténtalo de nuevo.</p>
+    </div>
 
-<div class="pagination-container" style="display:flex; justify-content:center; margin-top:20px;">
-    {% if total_paginas > 1 %}
-        <div class="pagination" style="display:flex; gap:10px; flex-wrap:wrap;">
-            {% if pagina > 1 %}
-                <a href="{{ url_for('admin.guardias', page=pagina-1) }}" class="btn secondary" style="padding:10px 15px;">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </a>
-            {% endif %}
-            {% for p in range(1, total_paginas + 1) %}
-                <a href="{{ url_for('admin.guardias', page=p) }}" class="btn {% if p != pagina %}secondary{% endif %}" style="padding:10px 15px;">
-                    {{ p }}
-                </a>
-            {% endfor %}
-            {% if pagina < total_paginas %}
-                <a href="{{ url_for('admin.guardias', page=pagina+1) }}" class="btn secondary" style="padding:10px 15px;">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </a>
-            {% endif %}
-        </div>
+    {% else %}
+    <div class="guardias-empty">
+        <i class="fa-solid fa-user-shield"></i>
+        <h3>Aún no hay guardias registrados</h3>
+        <p>Registra al primer integrante del personal de vigilancia para comenzar.</p>
+        <a href="{{ url_for('admin.registrar_guardia') }}" class="btn">
+            <i class="fa-solid fa-user-plus"></i> Registrar guardia
+        </a>
+    </div>
     {% endif %}
+
 </div>
 
-<div class="card">
+{# ===== Paginación ===== #}
+{% if total_paginas and total_paginas > 1 %}
+<div class="pagination-container">
+    <div class="pagination">
+        {% if pagina > 1 %}
+        <a href="{{ url_for('admin.guardias', page=pagina-1) }}" class="btn secondary">
+            <i class="fa-solid fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        {% for p in range(1, total_paginas + 1) %}
+        <a href="{{ url_for('admin.guardias', page=p) }}"
+           class="btn {% if p != pagina %}secondary{% endif %}">
+            {{ p }}
+        </a>
+        {% endfor %}
+        {% if pagina < total_paginas %}
+        <a href="{{ url_for('admin.guardias', page=pagina+1) }}" class="btn secondary">
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
+{# ===== Control operativo ===== #}
+<div class="card monitor-card">
     <h2>Control operativo</h2>
 
     <div class="alert info">
+        <i class="fa-solid fa-circle-info"></i>
         Los guardias pueden validar códigos QR, registrar entradas y salidas, y generar incidencias.
     </div>
 
     <div class="alert warning">
+        <i class="fa-solid fa-triangle-exclamation"></i>
         Se recomienda cambiar periódicamente las contraseñas del personal de vigilancia.
     </div>
 
     <div class="alert danger-alert">
+        <i class="fa-solid fa-shield-halved"></i>
         Cualquier acceso sospechoso debe registrarse inmediatamente en la bitácora de incidencias.
     </div>
-
 </div>
+
+<div class="modal-overlay" id="modalConfirm" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+        <div class="modal-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3 id="modalTitulo">Confirmar acción</h3>
+        <p id="modalMensaje">¿Estás seguro?</p>
+        <div class="modal-acciones">
+            <button type="button" class="btn ghost-btn" id="modalCancelar">Cancelar</button>
+            <a href="#" class="btn" id="modalConfirmar">Sí, continuar</a>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast" hidden><i class="fa-solid fa-check"></i> <span id="toastTexto"></span></div>
+
+<script>
+(function () {
+    function normalizar(t){
+        return (t || '').toString().toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    /* ---- Color de avatar según el nombre ---- */
+    function colorAvatares(){
+        var paletas = [
+            ['#2563eb','#60a5fa'], ['#7c3aed','#a78bfa'], ['#0891b2','#22d3ee'],
+            ['#059669','#34d399'], ['#d97706','#fbbf24'], ['#db2777','#f472b6'],
+            ['#dc2626','#f87171']
+        ];
+        document.querySelectorAll('.guardia-avatar:not(.inactivo)').forEach(function(av){
+            var n = av.getAttribute('data-nombre') || '';
+            var h = 0;
+            for(var i=0;i<n.length;i++){ h = (h*31 + n.charCodeAt(i)) >>> 0; }
+            var c = paletas[h % paletas.length];
+            av.style.background = 'linear-gradient(135deg,'+c[0]+','+c[1]+')';
+        });
+    }
+
+    /* ---- Buscador (ignora acentos) + contador + sin resultados ---- */
+    function iniciarBuscador(){
+        var input    = document.getElementById('buscarGuardia');
+        var filas    = Array.prototype.slice.call(document.querySelectorAll('.fila-guardia'));
+        var contador = document.getElementById('contadorGuardias');
+        var vacio    = document.getElementById('sinResultados');
+        function pintarConteo(v){
+            if(contador){ contador.textContent = v + ' de ' + filas.length + ' guardia' + (filas.length===1?'':'s'); }
+        }
+        function filtrar(){
+            var q = normalizar(input ? input.value.trim() : '');
+            var visibles = 0;
+            filas.forEach(function(fila){
+                var ok = normalizar(fila.getAttribute('data-buscar')).indexOf(q) !== -1;
+                fila.style.display = ok ? '' : 'none';
+                if(ok) visibles++;
+            });
+            if(vacio) vacio.hidden = visibles !== 0;
+            pintarConteo(visibles);
+        }
+        pintarConteo(filas.length);
+        if(input) input.addEventListener('input', filtrar);
+    }
+
+    /* ---- Toast ---- */
+    var toastTimer;
+    function mostrarToast(txt){
+        var t = document.getElementById('toast');
+        var s = document.getElementById('toastTexto');
+        if(!t) return;
+        s.textContent = txt;
+        t.hidden = false;
+        t.classList.add('visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function(){
+            t.classList.remove('visible');
+            setTimeout(function(){ t.hidden = true; }, 250);
+        }, 1800);
+    }
+
+    /* ---- Copiar ID ---- */
+    function iniciarCopiar(){
+        document.querySelectorAll('.id-copy').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                var id = btn.getAttribute('data-id') || '';
+                if(navigator.clipboard){ navigator.clipboard.writeText(id); }
+                mostrarToast('ID copiado');
+            });
+        });
+    }
+
+    /* ---- Modal de confirmación ---- */
+    function iniciarModal(){
+        var overlay  = document.getElementById('modalConfirm');
+        var aceptar  = document.getElementById('modalConfirmar');
+        var cancelar = document.getElementById('modalCancelar');
+        var mensaje  = document.getElementById('modalMensaje');
+        if(!overlay) return;
+        function abrir(el){
+            mensaje.textContent = el.getAttribute('data-confirm');
+            aceptar.setAttribute('href', el.getAttribute('href'));
+            overlay.setAttribute('data-tipo', el.getAttribute('data-tipo') || 'danger');
+            overlay.hidden = false;
+            requestAnimationFrame(function(){ overlay.classList.add('visible'); });
+        }
+        function cerrar(){
+            overlay.classList.remove('visible');
+            setTimeout(function(){ overlay.hidden = true; }, 200);
+        }
+        document.querySelectorAll('[data-confirm]').forEach(function(el){
+            el.addEventListener('click', function(e){ e.preventDefault(); abrir(el); });
+        });
+        cancelar.addEventListener('click', cerrar);
+        overlay.addEventListener('click', function(e){ if(e.target === overlay) cerrar(); });
+        document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !overlay.hidden) cerrar(); });
+    }
+
+    function init(){ colorAvatares(); iniciarBuscador(); iniciarCopiar(); iniciarModal(); }
+    if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', init);
+    } else { init(); }
+})();
+</script>
 
 {% endblock %}
