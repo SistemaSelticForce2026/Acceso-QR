@@ -490,7 +490,7 @@
                   {{ residente }}
                 </p>
                 <div class="rank-bar">
-                  <div class="rank-fill" style="width:{{ ((total / max_visitas) * 100) | round | int }}%"></div>
+                  <div class="rank-fill" style="width: {{ ((total / max_visitas) * 100) | round | int }}%;"></div>
                 </div>
                 <p class="rank-desc">Residente activo</p>
               </div>
@@ -730,31 +730,76 @@
     </div>
 
     <!-- Paginación -->
-    {% if total_paginas_tabla > 1 %}
-    <div class="pagination">
-      {% if pagina_tabla > 1 %}
-        <a href="?{{ periodo_qs }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla - 1 }}"
-           class="page-btn" aria-label="Página anterior">
-          <i class="fa-solid fa-chevron-left"></i>
-        </a>
-      {% endif %}
+    {% if total_registros_tabla and total_registros_tabla > 0 %}
+    {% set base_qs = periodo_qs ~ '&busqueda=' ~ (busqueda or '') ~ '&fecha_inicio_tabla=' ~ (fecha_inicio_tabla or '') ~ '&fecha_fin_tabla=' ~ (fecha_fin_tabla or '') ~ '&per_page=' ~ por_pagina_tabla %}
+    {% set desde = (pagina_tabla - 1) * por_pagina_tabla + 1 %}
+    {% set hasta = [pagina_tabla * por_pagina_tabla, total_registros_tabla] | min %}
+    {% set ventana = 1 %}
+    {% set p_ini = [pagina_tabla - ventana, 1] | max %}
+    {% set p_fin = [pagina_tabla + ventana, total_paginas_tabla] | min %}
 
-      {% for p in range(1, total_paginas_tabla + 1) %}
-        <a href="?{{ periodo_qs }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ p }}"
-           class="page-btn {% if p == pagina_tabla %}active{% endif %}"
-           aria-label="Página {{ p }}" {% if p == pagina_tabla %}aria-current="page"{% endif %}>
-          {{ p }}
-        </a>
-      {% endfor %}
+    <div class="pgx">
+      <div class="pgx-left">
+        <span>Mostrar</span>
+        <select class="pgx-select" data-base="?{{ base_qs }}" aria-label="Registros por página">
+          {% for n in per_page_opciones %}
+            <option value="{{ n }}" {% if n == por_pagina_tabla %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+        </select>
+        <span>por página</span>
+      </div>
 
-      {% if pagina_tabla < total_paginas_tabla %}
-        <a href="?{{ periodo_qs }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla + 1 }}"
-           class="page-btn" aria-label="Página siguiente">
-          <i class="fa-solid fa-chevron-right"></i>
-        </a>
-      {% endif %}
+      <div class="pgx-info">
+        Mostrando <strong>{{ "{:,}".format(desde) }}–{{ "{:,}".format(hasta) }}</strong>
+        de <strong>{{ "{:,}".format(total_registros_tabla) }}</strong>
+      </div>
+
+      <div class="pgx-right">
+        <nav class="pagination" aria-label="Paginación de la tabla">
+          {% if pagina_tabla > 1 %}
+            <a href="?{{ base_qs }}&page=1" class="page-btn page-edge" aria-label="Primera página"><i class="fa-solid fa-angles-left"></i></a>
+            <a href="?{{ base_qs }}&page={{ pagina_tabla - 1 }}" class="page-btn" aria-label="Página anterior"><i class="fa-solid fa-angle-left"></i></a>
+          {% else %}
+            <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-left"></i></span>
+            <span class="page-btn disabled"><i class="fa-solid fa-angle-left"></i></span>
+          {% endif %}
+
+          {% if p_ini > 1 %}
+            <a href="?{{ base_qs }}&page=1" class="page-btn">1</a>
+            {% if p_ini > 2 %}<span class="page-ellipsis">…</span>{% endif %}
+          {% endif %}
+
+          {% for p in range(p_ini, p_fin + 1) %}
+            <a href="?{{ base_qs }}&page={{ p }}"
+              class="page-btn {% if p == pagina_tabla %}active{% endif %}"
+              {% if p == pagina_tabla %}aria-current="page"{% endif %}>{{ p }}</a>
+          {% endfor %}
+
+          {% if p_fin < total_paginas_tabla %}
+            {% if p_fin < total_paginas_tabla - 1 %}<span class="page-ellipsis">…</span>{% endif %}
+            <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn">{{ total_paginas_tabla }}</a>
+          {% endif %}
+
+          {% if pagina_tabla < total_paginas_tabla %}
+            <a href="?{{ base_qs }}&page={{ pagina_tabla + 1 }}" class="page-btn" aria-label="Página siguiente"><i class="fa-solid fa-angle-right"></i></a>
+            <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn page-edge" aria-label="Última página"><i class="fa-solid fa-angles-right"></i></a>
+          {% else %}
+            <span class="page-btn disabled"><i class="fa-solid fa-angle-right"></i></span>
+            <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-right"></i></span>
+          {% endif %}
+        </nav>
+
+        {% if total_paginas_tabla > 1 %}
+        <div class="pgx-jump">
+          <span>Ir a</span>
+          <input type="number" min="1" max="{{ total_paginas_tabla }}"
+                class="pgx-jump-input" data-base="?{{ base_qs }}"
+                placeholder="{{ pagina_tabla }}/{{ total_paginas_tabla }}" aria-label="Ir a la página">
+        </div>
+        {% endif %}
+      </div>
     </div>
-    {% endif %}
+  {% endif %}
 
   </div>
 
@@ -1051,6 +1096,34 @@ document.getElementById('searchTable').addEventListener('input', function () {
     fila.style.display = (!filtro || visitante.includes(filtro) || residente.includes(filtro) || placa.includes(filtro)) ? '' : 'none';
   });
 });
+
+// Selector de registros por página
+document.querySelectorAll('.pgx-select').forEach(sel => {
+  sel.addEventListener('change', e => {
+    const url = new URL(window.location.href); 
+    url.searchParams.set('per_page', e.target.value);
+    url.searchParams.set('page', '1');
+    sessionStorage.setItem('adKeep', '1');
+    window.location.href = url.pathname + url.search;
+  });
+});
+
+// Salto directo a página
+document.querySelectorAll('.pgx-jump-input').forEach(inp => {
+  const ir = () => {
+    let v = parseInt(inp.value, 10);
+    const max = parseInt(inp.max, 10) || 1;
+    if (!v || v < 1) return;
+    v = Math.min(v, max);
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', v);
+    sessionStorage.setItem('adKeep', '1');
+    window.location.href = url.pathname + url.search;
+  };
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') ir(); });
+  inp.addEventListener('change', ir);
+});
+
 </script>
 
 <script>
