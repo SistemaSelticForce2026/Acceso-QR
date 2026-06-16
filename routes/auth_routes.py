@@ -331,7 +331,7 @@ def login():
 
         elif usuario["rol"] == "guardia":
 
-            return redirect(url_for("guard.dashboard"))
+            return redirect(url_for("guard.scan_entrada"))
 
         else:
 
@@ -433,11 +433,6 @@ def verify_token():
     # =====================================
 
     if token_ingresado == token_guardado:
-
-        flash(
-            "Código validado correctamente. Ahora puedes crear tu nueva contraseña.",
-            "success",
-        )
 
         return redirect(url_for("auth.reset_password"))
 
