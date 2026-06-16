@@ -1108,22 +1108,45 @@ document.querySelectorAll('.pgx-select').forEach(sel => {
   });
 });
 
-// Salto directo a página
+// Salto directo a página (con aviso si no existe)
 document.querySelectorAll('.pgx-jump-input').forEach(inp => {
+  const cont = inp.closest('.pgx-jump');
+
+  // Mensaje de aviso (se crea solo)
+  const msg = document.createElement('span');
+  msg.className = 'pgx-jump-error';
+  cont.appendChild(msg);
+
+  let timer;
+  const aviso = (texto) => {
+    msg.textContent = texto;
+    msg.classList.add('show');
+    inp.classList.add('error');
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      msg.classList.remove('show');
+      inp.classList.remove('error');
+    }, 2500);
+  };
+
   const ir = () => {
-    let v = parseInt(inp.value, 10);
+    const raw = (inp.value || '').trim();
+    const v = parseInt(raw, 10);
     const max = parseInt(inp.max, 10) || 1;
-    if (!v || v < 1) return;
-    v = Math.min(v, max);
+
+    if (!raw || isNaN(v))   { aviso('Ingresa un número de página'); return; }
+    if (v < 1 || v > max)   { aviso('Esta página no existe (1 - ' + max + ')'); return; }
+
     const url = new URL(window.location.href);
     url.searchParams.set('page', v);
     sessionStorage.setItem('adKeep', '1');
     window.location.href = url.pathname + url.search;
   };
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') ir(); });
-  inp.addEventListener('change', ir);
-});
 
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ir(); } });
+  // al escribir, limpia el aviso anterior
+  inp.addEventListener('input', () => { msg.classList.remove('show'); inp.classList.remove('error'); });
+});
 </script>
 
 <script>
@@ -1144,8 +1167,7 @@ document.querySelectorAll('.pgx-jump-input').forEach(inp => {
     document.querySelectorAll('#periodForm, .hist-filter').forEach(f => f.addEventListener('submit', marcar));
     document.querySelectorAll('.pf-input').forEach(i => i.addEventListener('change', marcar));
     document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', marcar));
-    document.querySelectorAll('.pagination a, .btn-clear').forEach(a => a.addEventListener('click', marcar));
-
+    document.querySelectorAll('.pagination a, .btn-clear, .module-item').forEach(a => a.addEventListener('click', marcar));
     // 3) Guardar la posición justo antes de recargar
     window.addEventListener('beforeunload', () => {
       sessionStorage.setItem('adScroll', window.scrollY);
