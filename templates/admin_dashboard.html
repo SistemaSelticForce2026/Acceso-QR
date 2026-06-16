@@ -671,8 +671,10 @@
                   <span class="h-label">Salida:</span>
                   {% if visita.hora_salida %}
                     {{ visita.hora_salida }}
-                  {% else %}
+                  {% elif visita.estado == 'dentro' %}
                     <span class="h-curso">En curso</span>
+                  {% else %}
+                    —
                   {% endif %}
                 </p>
               </div>
