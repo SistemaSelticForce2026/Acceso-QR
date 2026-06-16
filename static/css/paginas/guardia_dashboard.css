@@ -515,6 +515,111 @@
     .grd-page-btn { min-width: 38px; height: 38px; }
 }
 
+/* ---- Pagination --------------------- */
+.grd-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 18px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #e7eaef;
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04), 0 8px 24px -18px rgba(20, 30, 60, 0.30);
+}
+
+.grd-pager-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #77767d;
+    white-space: nowrap;
+}
+.grd-pager-info i { color: #2e5bff; }
+.grd-pager-info strong { color: #14192a; font-weight: 800; }
+
+.grd-pager-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.grd-page-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #5a6278;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid #e7eaef;
+    transition: all .16s ease;
+}
+.grd-page-btn:hover:not(.active):not(.disabled) {
+    color: #2e5bff;
+    border-color: #bcccf9;
+    background: #f6f8ff;
+    transform: translateY(-1px);
+}
+.grd-page-btn.active {
+    background: linear-gradient(135deg, #5b82ff, #2e5bff);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 8px 18px -5px rgba(46, 91, 255, 0.55), 0 0 0 3px rgba(46, 91, 255, 0.12);
+    transform: translateY(-1px) scale(1.04);
+}
+.grd-page-btn[aria-label] { border-radius: 50%; color: #8a93a6; font-size: 13px; }
+.grd-page-btn.disabled { opacity: .35; cursor: not-allowed; pointer-events: none; }
+
+.grd-page-dots {
+    min-width: 22px;
+    text-align: center;
+    align-self: center;
+    color: #b4bcce;
+    font-weight: 800;
+    letter-spacing: 1px;
+    user-select: none;
+}
+
+/* Salto directo */
+.grd-page-jump {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.grd-jump-label { font-size: 12.5px; font-weight: 700; color: #5a6278; white-space: nowrap; }
+.grd-jump-input {
+    width: 62px; height: 36px; padding: 0 8px;
+    border: 1px solid #dde2ec; border-radius: 9px; background: #fbfcfe;
+    font-size: 13px; font-weight: 700; color: #14192a; text-align: center;
+    font-family: inherit; outline: none; -moz-appearance: textfield;
+}
+.grd-jump-input::-webkit-outer-spin-button,
+.grd-jump-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.grd-jump-input:focus { border-color: #2e5bff; box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.12); background: #fff; }
+.grd-jump-btn {
+    height: 36px; padding: 0 16px; border: none; border-radius: 9px;
+    background: #14192a; color: #fff; font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: background .15s;
+}
+.grd-jump-btn:hover { background: #2e5bff; }
+
+@media (max-width: 760px) {
+    .grd-pager { flex-direction: column; align-items: stretch; }
+    .grd-pager-info, .grd-pager-controls, .grd-page-jump { justify-content: center; }
+}
+
 /* ---- Toggle segment (scanner page) ------------------------- */
 .grd-scan-toggle {
     padding: 6px;

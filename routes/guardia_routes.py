@@ -106,7 +106,7 @@ def dashboard():
 
     pagina = int(request.args.get("page", 1))
 
-    por_pagina = 5
+    por_pagina = 20
 
     busqueda = request.args.get("busqueda", "").strip()
 
@@ -114,7 +114,19 @@ def dashboard():
 
     fecha_fin = request.args.get("fecha_fin", "").strip()
 
-    filtro = {}
+    # =============================================
+    # VISTA OPERATIVA POR DEFECTO
+    # =============================================
+
+    ver_historial = request.args.get("historial")
+
+    if not ver_historial:
+
+        filtro = {"created_at": {"$gte": datetime.now() - timedelta(days=7)}}
+
+    else:
+
+        filtro = {}
 
     if fecha_inicio:
         filtro["fecha_visita"] = {"$gte": fecha_inicio}
@@ -124,7 +136,10 @@ def dashboard():
         filtro["fecha_visita"]["$lte"] = fecha_fin
 
     if busqueda:
-        filtro["nombre_visitante"] = {"$regex": busqueda, "$options": "i"}
+        filtro["nombre_visitante"] = {
+            "$regex": busqueda,
+            "$options": "i",
+        }
 
     total_visitas = mongo.db.visits.count_documents(filtro)
 
@@ -142,14 +157,6 @@ def dashboard():
     salidas = mongo.db.visits.count_documents({"estado": "salida_registrada"})
     incidencias = mongo.db.incidencias.count_documents({})
 
-    print("\n===== PAGINA 1 =====")
-
-    for v in visitas:
-
-        print(v.get("nombre_visitante"), v.get("created_at"))
-
-    print("===================\n")
-
     return render_template(
         "guardia_dashboard.html",
         visitas=visitas,
@@ -162,6 +169,7 @@ def dashboard():
         fecha_inicio=fecha_inicio,
         fecha_fin=fecha_fin,
         busqueda=busqueda,
+        ver_historial=bool(ver_historial),
     )
 
 

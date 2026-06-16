@@ -62,7 +62,38 @@
 
     <div class="grd-visits-header">
         <h2 class="grd-visits-title">Visitas registradas</h2>
-        <p class="grd-visits-sub">Historial de visitantes autorizados por los residentes.</p>
+
+        {% if not ver_historial %}
+            <p class="grd-visits-sub">
+                Mostrando visitas de los últimos 7 días.
+            </p>
+        {% else %}
+            <p class="grd-visits-sub">
+                Mostrando historial completo de visitas.
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-actions">
+
+        {% if not ver_historial %}
+
+        <a href="{{ url_for('guard.dashboard', historial=1) }}"
+        class="grd-filter-btn secondary">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            Ver historial completo
+        </a>
+
+        {% else %}
+
+        <a href="{{ url_for('guard.dashboard') }}"
+        class="grd-filter-btn secondary">
+            <i class="fa-solid fa-calendar-week"></i>
+            Ver solo últimos 7 días
+        </a>
+
+        {% endif %}
+
     </div>
 
     <!-- Filtros -->
@@ -302,43 +333,101 @@
 
     <!-- Paginación -->
     {% if total_paginas > 1 %}
-    {% set ventana = 2 %}
+    {% set ventana = 1 %}
     {% set ini = [pagina - ventana, 1] | max %}
     {% set fin = [pagina + ventana, total_paginas] | min %}
-    <div class="grd-pagination">
+    <div class="grd-pager">
 
-        {% if pagina > 1 %}
-            <a href="{{ url_for('guard.dashboard', page=pagina-1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-               class="grd-page-btn" aria-label="Anterior">
-                <i class="fa-solid fa-chevron-left"></i>
-            </a>
-        {% endif %}
+        <!-- Info (izquierda) -->
+        <div class="grd-pager-info">
+            <i class="fa-regular fa-file-lines"></i>
+            Página <strong>{{ "{:,}".format(pagina) }}</strong> de <strong>{{ "{:,}".format(total_paginas) }}</strong>
+        </div>
 
-        {% if ini > 1 %}
-            <a href="{{ url_for('guard.dashboard', page=1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-               class="grd-page-btn">1</a>
-            {% if ini > 2 %}<span class="grd-page-dots">…</span>{% endif %}
-        {% endif %}
+        <!-- Controles (centro) -->
+        <div class="grd-pager-controls">
 
-        {% for p in range(ini, fin + 1) %}
-            <a href="{{ url_for('guard.dashboard', page=p, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-               class="grd-page-btn {% if p == pagina %}active{% endif %}">{{ p }}</a>
-        {% endfor %}
+            {% if pagina > 1 %}
+                <a href="{{ url_for(
+                    'guard.dashboard',
+                    page=pagina-1,
+                    historial=1 if ver_historial else None,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    busqueda=busqueda
+                ) }}"
+                    class="grd-page-btn" aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></a>
+            {% else %}
+                <span class="grd-page-btn disabled"><i class="fa-solid fa-chevron-left"></i></span>
+            {% endif %}
 
-        {% if fin < total_paginas %}
-            {% if fin < total_paginas - 1 %}<span class="grd-page-dots">…</span>{% endif %}
-            <a href="{{ url_for('guard.dashboard', page=total_paginas, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-               class="grd-page-btn">{{ total_paginas }}</a>
-        {% endif %}
+            {% if ini > 1 %}
+                <a href="{{ url_for(
+                'guard.dashboard',
+                page=1,
+                historial=1 if ver_historial else None,
+                fecha_inicio=fecha_inicio,
+                fecha_fin=fecha_fin,
+                busqueda=busqueda
+            ) }}"
+                class="grd-page-btn">1</a>
+                {% if ini > 2 %}<span class="grd-page-dots">…</span>{% endif %}
+            {% endif %}
 
-        {% if pagina < total_paginas %}
-            <a href="{{ url_for('guard.dashboard', page=pagina+1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-               class="grd-page-btn" aria-label="Siguiente">
-                <i class="fa-solid fa-chevron-right"></i>
-            </a>
-        {% endif %}
+            {% for p in range(ini, fin + 1) %}
+                <a href="{{ url_for(
+                    'guard.dashboard',
+                    page=p,
+                    historial=1 if ver_historial else None,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    busqueda=busqueda
+                ) }}"
+                    class="grd-page-btn {% if p == pagina %}active{% endif %}">{{ p }}</a>
+            {% endfor %}
 
-        <span class="grd-page-info">Página {{ pagina }} de {{ total_paginas }}</span>
+            {% if fin < total_paginas %}
+                {% if fin < total_paginas - 1 %}<span class="grd-page-dots">…</span>{% endif %}
+                <a href="{{ url_for(
+                    'guard.dashboard',
+                    page=total_paginas,
+                    historial=1 if ver_historial else None,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    busqueda=busqueda
+                ) }}"
+                    class="grd-page-btn">{{ total_paginas }}</a>
+            {% endif %}
+
+            {% if pagina < total_paginas %}
+                <a href="{{ url_for(
+                    'guard.dashboard',
+                    page=pagina+1,
+                    historial=1 if ver_historial else None,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    busqueda=busqueda
+                ) }}"
+                    class="grd-page-btn" aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></a>
+            {% else %}
+                <span class="grd-page-btn disabled"><i class="fa-solid fa-chevron-right"></i></span>
+            {% endif %}
+
+        </div>
+
+        <!-- Salto directo (derecha) -->
+        <form method="GET" action="{{ url_for('guard.dashboard') }}" class="grd-page-jump"
+              onsubmit="var i=this.page; if(+i.value>{{ total_paginas }})i.value={{ total_paginas }}; if(+i.value<1||!i.value)i.value=1;">
+            <input type="hidden" name="fecha_inicio" value="{{ fecha_inicio }}">
+            <input type="hidden" name="fecha_fin" value="{{ fecha_fin }}">
+            <input type="hidden" name="busqueda" value="{{ busqueda }}">
+            <input type="hidden" name="historial" value="{% if ver_historial %}1{% endif %}">
+            <span class="grd-jump-label">Ir a</span>
+            <input type="number" name="page" min="1" max="{{ total_paginas }}"
+                   value="{{ pagina }}" class="grd-jump-input" aria-label="Ir a página">
+            <button type="submit" class="grd-jump-btn">Ir</button>
+        </form>
+
     </div>
     {% endif %}
 
