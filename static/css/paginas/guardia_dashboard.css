@@ -444,15 +444,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    padding: 10px 0;
-    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+    margin-top: 12px;
 }
 
 .grd-page-btn {
     min-width: 42px;
     height: 42px;
-    padding: 0 12px;
+    padding: 0 13px;
     border-radius: 12px;
     display: inline-flex;
     align-items: center;
@@ -463,18 +464,55 @@
     text-decoration: none;
     background: #fff;
     border: 1px solid #e7eaef;
-    transition: border-color 0.15s, color 0.15s;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04);
+    transition: transform .15s, box-shadow .15s, border-color .15s, color .15s, background .15s;
 }
 
 .grd-page-btn:hover:not(.active) {
-    border-color: #2e5bff;
+    border-color: #c9d4f5;
     color: #2e5bff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px -8px rgba(46, 91, 255, 0.45);
 }
 
 .grd-page-btn.active {
-    background: #14192a;
-    color: white;
-    border-color: #14192a;
+    background: linear-gradient(135deg, #4f7bff, #2e5bff);
+    color: #fff;
+    border-color: #2e5bff;
+    box-shadow: 0 8px 18px -6px rgba(46, 91, 255, 0.55);
+    transform: translateY(-1px);
+}
+
+/* Flechas anterior / siguiente, un poco más sutiles */
+.grd-page-btn[aria-label] { color: #8a93a6; }
+.grd-page-btn[aria-label]:hover { color: #2e5bff; border-color: #c9d4f5; }
+
+/* Puntos suspensivos … */
+.grd-page-dots {
+    min-width: 26px;
+    text-align: center;
+    color: #aab2c4;
+    font-weight: 800;
+    letter-spacing: 2px;
+    user-select: none;
+}
+
+/* Contador "Página X de Y" */
+.grd-page-info {
+    margin-left: 10px;
+    padding: 9px 15px;
+    background: #f3f5f9;
+    border: 1px solid #e7eaf1;
+    border-radius: 999px;
+    color: #5a6278;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+    .grd-page-info { width: 100%; text-align: center; margin: 10px 0 0; }
+    .grd-page-btn { min-width: 38px; height: 38px; }
 }
 
 /* ---- Toggle segment (scanner page) ------------------------- */

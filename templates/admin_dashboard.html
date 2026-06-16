@@ -2,6 +2,31 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
+<style>
+  /* ══ FILTRO PERÍODO (Día / Semana / Mes) ══ */
+  .period-filter{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    background:#fff; border:1px solid #e2e8f0; border-radius:16px;
+    padding:12px 16px; margin-bottom:22px;
+  }
+  .pf-tabs{ display:inline-flex; background:#f1f5f9; border-radius:12px; padding:4px; }
+  .pf-tab{
+    border:0; background:transparent; cursor:pointer;
+    padding:8px 16px; border-radius:9px; font-weight:600; font-size:.9rem;
+    color:#64748b; display:inline-flex; align-items:center; gap:7px; transition:.18s;
+  }
+  .pf-tab:hover{ color:#0f172a; }
+  .pf-tab.active{ background:#2563eb; color:#fff; box-shadow:0 2px 8px rgba(37,99,235,.3); }
+  .pf-input{
+    border:1px solid #cbd5e1; border-radius:10px; padding:9px 12px;
+    font-size:.92rem; color:#0f172a; font-family:inherit; outline:none;
+  }
+  .pf-input:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+  .pf-rango{
+    margin-left:auto; color:#475569; font-weight:600; font-size:.9rem;
+    display:inline-flex; align-items:center; gap:7px;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -147,21 +172,33 @@
 
   </div>
 
-  <!-- ══ FILTRO PERÍODO ══ -->
-  <div class="period-filter">
-    <button class="pf-btn {% if filtro == 'hoy' %}active{% endif %}"
-            onclick="window.location='?filtro=hoy'">
-      <i class="fa-solid fa-calendar-day"></i> Hoy
-    </button>
-    <button class="pf-btn {% if filtro == 'semana' %}active{% endif %}"
-            onclick="window.location='?filtro=semana'">
-      <i class="fa-solid fa-calendar-week"></i> Semana
-    </button>
-    <button class="pf-btn {% if filtro == 'mes' %}active{% endif %}"
-            onclick="window.location='?filtro=mes'">
-      <i class="fa-solid fa-calendar"></i> Mes
-    </button>
-  </div>
+  <!-- ══ FILTRO PERÍODO (Día / Semana / Mes con calendarios) ══ -->
+  <form method="GET" id="periodForm" class="period-filter">
+    <input type="hidden" name="modo" id="modoInput" value="{{ modo }}">
+
+    <div class="pf-tabs">
+      <button type="button" class="pf-tab {% if modo == 'dia' %}active{% endif %}" data-modo="dia">
+        <i class="fa-solid fa-calendar-day"></i> Día
+      </button>
+      <button type="button" class="pf-tab {% if modo == 'semana' %}active{% endif %}" data-modo="semana">
+        <i class="fa-solid fa-calendar-week"></i> Semana
+      </button>
+      <button type="button" class="pf-tab {% if modo == 'mes' %}active{% endif %}" data-modo="mes">
+        <i class="fa-solid fa-calendar"></i> Mes
+      </button>
+    </div>
+
+    <div class="pf-pickers">
+      <input type="date"  name="dia"    class="pf-input" {% if modo != 'dia' %}hidden{% endif %}
+             value="{{ dia_sel }}" onchange="document.getElementById('periodForm').submit()">
+      <input type="week"  name="semana" class="pf-input" {% if modo != 'semana' %}hidden{% endif %}
+             value="{{ semana_sel }}" onchange="document.getElementById('periodForm').submit()">
+      <input type="month" name="mes"    class="pf-input" {% if modo != 'mes' %}hidden{% endif %}
+             value="{{ mes_sel }}" onchange="document.getElementById('periodForm').submit()">
+    </div>
+
+    <span class="pf-rango"><i class="fa-solid fa-calendar-check"></i> {{ rango_label }}</span>
+  </form>
 
   <!-- ══ GRÁFICAS FILA 1 ══ -->
   <div class="charts-row">
@@ -519,7 +556,10 @@
 
     <!-- Filtro fechas -->
     <form method="GET" class="hist-filter">
-      <input type="hidden" name="filtro" value="{{ filtro }}">
+      <input type="hidden" name="modo" value="{{ modo }}">
+      <input type="hidden" name="dia" value="{{ dia_sel }}">
+      <input type="hidden" name="semana" value="{{ semana_sel }}">
+      <input type="hidden" name="mes" value="{{ mes_sel }}">
       <div class="hf-field">
         <label>Fecha inicio</label>
         <input type="date" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla or '' }}">
@@ -533,7 +573,7 @@
           <i class="fa-solid fa-magnifying-glass"></i> Filtrar
         </button>
         {% if fecha_inicio_tabla or fecha_fin_tabla %}
-        <a href="?filtro={{ filtro }}" class="btn-clear">
+        <a href="?{{ periodo_qs }}" class="btn-clear">
           <i class="fa-solid fa-rotate-left"></i> Limpiar
         </a>
         {% endif %}
@@ -693,14 +733,14 @@
     {% if total_paginas_tabla > 1 %}
     <div class="pagination">
       {% if pagina_tabla > 1 %}
-        <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla - 1 }}"
+        <a href="?{{ periodo_qs }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla - 1 }}"
            class="page-btn" aria-label="Página anterior">
           <i class="fa-solid fa-chevron-left"></i>
         </a>
       {% endif %}
 
       {% for p in range(1, total_paginas_tabla + 1) %}
-        <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ p }}"
+        <a href="?{{ periodo_qs }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ p }}"
            class="page-btn {% if p == pagina_tabla %}active{% endif %}"
            aria-label="Página {{ p }}" {% if p == pagina_tabla %}aria-current="page"{% endif %}>
           {{ p }}
@@ -708,7 +748,7 @@
       {% endfor %}
 
       {% if pagina_tabla < total_paginas_tabla %}
-        <a href="?filtro={{ filtro }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla + 1 }}"
+        <a href="?{{ periodo_qs }}&busqueda={{ busqueda }}&fecha_inicio_tabla={{ fecha_inicio_tabla }}&fecha_fin_tabla={{ fecha_fin_tabla }}&page={{ pagina_tabla + 1 }}"
            class="page-btn" aria-label="Página siguiente">
           <i class="fa-solid fa-chevron-right"></i>
         </a>
@@ -735,6 +775,14 @@
 
 <!-- ══ SCRIPTS ══ -->
 <script>
+  // Pestañas del filtro de período (Día / Semana / Mes)
+  document.querySelectorAll('.pf-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.getElementById('modoInput').value = tab.dataset.modo;
+      document.getElementById('periodForm').submit();
+    });
+  });
+
   // Fecha en vivo (se actualiza sola)
   function actualizarFecha() {
     const el = document.getElementById('fechaActual');
@@ -1003,6 +1051,33 @@ document.getElementById('searchTable').addEventListener('input', function () {
     fila.style.display = (!filtro || visitante.includes(filtro) || residente.includes(filtro) || placa.includes(filtro)) ? '' : 'none';
   });
 });
+</script>
+
+<script>
+  // Mantener la posición del scroll al filtrar / paginar / cambiar período
+  (function () {
+    // No dejes que el navegador maneje el scroll por su cuenta
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+    // 1) Restaurar SOLO si venimos de una consulta dentro del dashboard
+    if (sessionStorage.getItem('adKeep') === '1') {
+      const y = sessionStorage.getItem('adScroll');
+      if (y !== null) window.scrollTo(0, parseInt(y, 10));
+    }
+    sessionStorage.removeItem('adKeep');
+
+    // 2) Marcar la intención cuando se filtra, pagina o cambia el período
+    const marcar = () => sessionStorage.setItem('adKeep', '1');
+    document.querySelectorAll('#periodForm, .hist-filter').forEach(f => f.addEventListener('submit', marcar));
+    document.querySelectorAll('.pf-input').forEach(i => i.addEventListener('change', marcar));
+    document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', marcar));
+    document.querySelectorAll('.pagination a, .btn-clear').forEach(a => a.addEventListener('click', marcar));
+
+    // 3) Guardar la posición justo antes de recargar
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.setItem('adScroll', window.scrollY);
+    });
+  })();
 </script>
 
 {% endblock %}

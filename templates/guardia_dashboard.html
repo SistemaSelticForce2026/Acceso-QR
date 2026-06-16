@@ -302,29 +302,43 @@
 
     <!-- Paginación -->
     {% if total_paginas > 1 %}
+    {% set ventana = 2 %}
+    {% set ini = [pagina - ventana, 1] | max %}
+    {% set fin = [pagina + ventana, total_paginas] | min %}
     <div class="grd-pagination">
 
         {% if pagina > 1 %}
             <a href="{{ url_for('guard.dashboard', page=pagina-1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-               class="grd-page-btn">
+               class="grd-page-btn" aria-label="Anterior">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
         {% endif %}
 
-        {% for p in range(1, total_paginas + 1) %}
+        {% if ini > 1 %}
+            <a href="{{ url_for('guard.dashboard', page=1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+               class="grd-page-btn">1</a>
+            {% if ini > 2 %}<span class="grd-page-dots">…</span>{% endif %}
+        {% endif %}
+
+        {% for p in range(ini, fin + 1) %}
             <a href="{{ url_for('guard.dashboard', page=p, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-               class="grd-page-btn {% if p == pagina %}active{% endif %}">
-                {{ p }}
-            </a>
+               class="grd-page-btn {% if p == pagina %}active{% endif %}">{{ p }}</a>
         {% endfor %}
+
+        {% if fin < total_paginas %}
+            {% if fin < total_paginas - 1 %}<span class="grd-page-dots">…</span>{% endif %}
+            <a href="{{ url_for('guard.dashboard', page=total_paginas, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
+               class="grd-page-btn">{{ total_paginas }}</a>
+        {% endif %}
 
         {% if pagina < total_paginas %}
             <a href="{{ url_for('guard.dashboard', page=pagina+1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
-               class="grd-page-btn">
+               class="grd-page-btn" aria-label="Siguiente">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
         {% endif %}
 
+        <span class="grd-page-info">Página {{ pagina }} de {{ total_paginas }}</span>
     </div>
     {% endif %}
 
