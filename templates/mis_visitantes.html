@@ -97,7 +97,13 @@
         {%- set badge_label = 'Pendiente' -%}
     {%- endif -%}
 
-    <div class="res-visit-card">
+    <div class="res-visit-card"
+         data-modalidad="{{ visita.modalidad_visita }}"
+         data-estado="{{ visita.estado }}"
+         data-qr="{{ visita.qr_estado }}"
+         data-fecha="{{ visita.fecha_visita }}"
+         data-hora="{{ visita.hora_inicio }}">
+
         <div class="res-visit-body">
 
             {# ── Foto o iniciales ─── #}
@@ -214,10 +220,12 @@
                         </a>
                         {% endif %}
 
+                        {% if visita.estado != 'dentro' %}
                         <button class="res-btn-delete res-iconact" onclick="eliminarVisita('{{ visita._id }}')"
                                 title="Eliminar visita" aria-label="Eliminar visita">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                         </button>
+                        {% endif %}
 
                     </div>
 
@@ -691,6 +699,41 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
 
 });
 
+</script>
+
+<script>
+/* ─── Marcar visitas no presentadas (fecha/hora vencida sin escanear) ─── */
+(function () {
+    const ahora = new Date();
+
+    document.querySelectorAll('.res-visit-card').forEach(card => {
+        const modalidad = card.dataset.modalidad;
+        const estado    = card.dataset.estado;
+        const qr        = card.dataset.qr;
+        const fecha     = card.dataset.fecha;            // YYYY-MM-DD
+        const hora      = card.dataset.hora || '23:59';  // HH:MM
+
+        // Solo temporales que nunca entraron ni se finalizaron/cancelaron
+        if (modalidad === 'recurrente') return;
+        if (['dentro', 'salida_registrada'].includes(estado)) return;
+        if (['cancelado', 'vencido'].includes(qr)) return;
+        if (!fecha) return;
+
+        const [y, m, d]  = fecha.split('-').map(Number);
+        const [hh, mm]   = hora.split(':').map(Number);
+        const programada = new Date(y, m - 1, d, hh || 0, mm || 0);
+
+        // Si ya pasó la fecha/hora programada y el visitante nunca ingresó
+        if (ahora > programada) {
+            const estadoBadge = card.querySelector('.res-visit-namerow .res-badge');
+            if (estadoBadge) {
+                estadoBadge.className = 'res-badge badge-danger';
+                estadoBadge.innerHTML = '<span class="res-badge-dot"></span> No se presentó';
+            }
+            card.style.opacity = '0.75';
+        }
+    });
+})();
 </script>
 
 {% endblock %}

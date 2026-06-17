@@ -120,26 +120,26 @@ def dashboard():
 
     ver_historial = request.args.get("historial")
 
-    if not ver_historial:
+    filtro = {}
 
-        filtro = {"created_at": {"$gte": datetime.now() - timedelta(days=7)}}
-
-    else:
-
-        filtro = {}
-
+    # Rango de fechas explícito (si el usuario eligió fechas)
     if fecha_inicio:
-        filtro["fecha_visita"] = {"$gte": fecha_inicio}
-
+        filtro.setdefault("fecha_visita", {})["$gte"] = fecha_inicio
     if fecha_fin:
-        filtro.setdefault("fecha_visita", {})
-        filtro["fecha_visita"]["$lte"] = fecha_fin
+        filtro.setdefault("fecha_visita", {})["$lte"] = fecha_fin
+
+    # Vista por defecto: SOLO últimos 7 días por FECHA DE VISITA,
+    # salvo que se pida el historial completo o ya haya un rango elegido.
+    if not ver_historial and not fecha_inicio and not fecha_fin:
+        hace_7_str = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        hace_7_dt = datetime.now() - timedelta(days=7)
+        filtro["$or"] = [
+            {"fecha_visita": {"$type": "string", "$gte": hace_7_str}},
+            {"fecha_visita": {"$type": "date",   "$gte": hace_7_dt}},
+        ]
 
     if busqueda:
-        filtro["nombre_visitante"] = {
-            "$regex": busqueda,
-            "$options": "i",
-        }
+        filtro["nombre_visitante"] = {"$regex": busqueda, "$options": "i"}
 
     total_visitas = mongo.db.visits.count_documents(filtro)
 
@@ -147,10 +147,11 @@ def dashboard():
 
     visitas = list(
         mongo.db.visits.find(filtro)
-        .sort("created_at", -1)
+        .sort([("fecha_visita", 1), ("created_at", 1)])
         .skip((pagina - 1) * por_pagina)
         .limit(por_pagina)
     )
+
 
     activas = mongo.db.visits.count_documents({"estado": "activo"})
     dentro = mongo.db.visits.count_documents({"estado": "dentro"})
