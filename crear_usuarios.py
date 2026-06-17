@@ -98,7 +98,19 @@ with app.app_context():
 
     else:
 
-        print("NO EXISTE UN ADMIN CON ESE CORREO\n")
+        mongo.db.users.insert_one(
+            {
+                "nombre": "Administrador",
+                "correo": nuevo_correo_admin,
+                "password": generate_password_hash(nueva_password_admin),
+                "rol": "admin",
+                "estado": "activo",
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+            }
+        )
+
+        print("ADMINISTRADOR CREADO")
 
     # =================================================
     # =================================================
@@ -176,7 +188,19 @@ with app.app_context():
 
     else:
 
-        print("NO EXISTE UN GUARDIA CON ESE CORREO\n")
+        mongo.db.users.insert_one(
+            {
+                "nombre": "Guardia Principal",
+                "correo": nuevo_correo_guardia,
+                "password": generate_password_hash(nueva_password_guardia),
+                "rol": "guardia",
+                "estado": "activo",
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+            }
+        )
+
+        print("GUARDIA CREADO")
 
     # =================================================
     # MENSAJES FINALES

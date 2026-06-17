@@ -5,14 +5,15 @@ Por qué: el seed las guardó todas con created_at = ahora, así que el
 dashboard procesaba las 20000 en cada carga. Tras esto, el filtro "hoy"
 solo toca las de las últimas 24h y carga rápido.
 
-Solo afecta datos de prueba (qr_path con dummy-qr.com). NO toca visitas reales.
+Solo afecta datos de prueba (es_prueba = True; con respaldo para el seed
+viejo que usaba qr_path dummy-qr.com). NO toca visitas reales.
 
-    python scripts\repartir_fechas_visitas.py
+    python scripts\\repartir_fechas_visitas.py
 """
 
 from pymongo import MongoClient
 
-MONGO_URI = "mongodb+srv://al222411673_db_user:AccessQR2026@accesoqr.mzgfuac.mongodb.net/accesoqr?retryWrites=true&w=majority&appName=accesoqr"
+MONGO_URI = "mongodb+srv://software_db_user:M22TlbYUEJCo7lXh@accesoqr.zopq4ja.mongodb.net/?appName=accesoqr"
 
 client = MongoClient(MONGO_URI)
 db = client["accesoqr"]
@@ -27,14 +28,19 @@ except Exception as e:
 DIAS = 180
 MINUTOS = DIAS * 24 * 60
 
-# Solo datos de prueba
-filtro = {"qr_path": {"$regex": "dummy-qr.com"}}
+# Solo datos de prueba (marcador nuevo + respaldo del seed viejo)
+filtro = {
+    "$or": [
+        {"es_prueba": True},
+        {"qr_path": {"$regex": "dummy-qr.com"}},
+    ]
+}
 
 total = db.visits.count_documents(filtro)
 print(f"Visitas de prueba a repartir: {total}")
 print(f"Rango: últimos {DIAS} días\n")
 
-# Un solo comando: created_at = ahora - (aleatorio * 180 días), por documento
+# created_at = ahora - (aleatorio * 180 días), por documento
 resultado = db.visits.update_many(
     filtro,
     [
@@ -44,9 +50,7 @@ resultado = db.visits.update_many(
                     "$dateSubtract": {
                         "startDate": "$$NOW",
                         "unit": "minute",
-                        "amount": {
-                            "$toInt": {"$multiply": [{"$rand": {}}, MINUTOS]}
-                        },
+                        "amount": {"$toInt": {"$multiply": [{"$rand": {}}, MINUTOS]}},
                     }
                 }
             }

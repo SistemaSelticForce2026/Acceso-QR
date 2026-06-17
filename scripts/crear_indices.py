@@ -9,7 +9,7 @@ lo deja como está y sigue, sin tronar.
 from pymongo import MongoClient
 from pymongo.errors import OperationFailure
 
-MONGO_URI = "mongodb+srv://al222411673_db_user:AccessQR2026@accesoqr.mzgfuac.mongodb.net/accesoqr?retryWrites=true&w=majority&appName=accesoqr"
+MONGO_URI = "mongodb+srv://software_db_user:M22TlbYUEJCo7lXh@accesoqr.zopq4ja.mongodb.net/?appName=accesoqr"
 
 client = MongoClient(MONGO_URI)
 db = client["accesoqr"]
@@ -40,7 +40,7 @@ idx(db.users, "estado")
 
 # visits
 idx(db.visits, "residente_id")
-idx(db.visits, "qr_token")          # sin unique: ya existe uno creado por la app
+idx(db.visits, "qr_token")  # sin unique: ya existe uno creado por la app
 idx(db.visits, "estado")
 idx(db.visits, [("created_at", -1)])
 idx(db.visits, "fecha_visita")
