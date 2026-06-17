@@ -55,7 +55,6 @@ def hora_ampm(valor):
 # ===============================
 def crear_indices():
     """Crea los índices una sola vez al arrancar.
-    create_index es idempotente: si ya existe, no hace nada."""
 
     # --- Índices de rendimiento (siempre seguros) ---
     mongo.db.users.create_index("rol")
@@ -71,6 +70,30 @@ def crear_indices():
     mongo.db.access_logs.create_index("fecha_hora")
     mongo.db.incidencias.create_index("fecha_hora")
     mongo.db.reportes.create_index("fecha")
+    create_index es idempotente cuando las opciones coinciden, pero lanza
+    OperationFailure si ya existe un índice con el mismo nombre y opciones
+    distintas (p. ej. 'qr_token' ya creado como ÚNICO en Atlas). En ese caso
+    el índice equivalente ya existe, así que ignoramos el conflicto y dejamos
+    arrancar la app en vez de abortar."""
+
+    def _idx(coll, *args, **kwargs):
+        try:
+            coll.create_index(*args, **kwargs)
+        except Exception as e:
+            print(
+                f"AVISO: índice {args} en '{coll.name}' ya existe o no se pudo crear: {e}"
+            )
+
+    # --- Índices de rendimiento ---
+    _idx(mongo.db.users, "rol")
+    _idx(mongo.db.visits, "qr_token", unique=True)
+    _idx(mongo.db.visits, "residente_id")
+    _idx(mongo.db.visits, "estado")
+    _idx(mongo.db.visits, "created_at")
+    _idx(mongo.db.visits, "fecha_visita")
+    _idx(mongo.db.access_logs, "fecha_hora")
+    _idx(mongo.db.incidencias, "fecha_hora")
+    _idx(mongo.db.reportes, "fecha")
 
     # --- Índice único de correo (puede fallar si ya hay correos duplicados) ---
     try:
