@@ -82,18 +82,18 @@
                         <div class="flash-toast flash-{{ category }}" role="alert">
                             <div class="flash-icon">
                                 {% if category == 'success' %}
-                                    <i class="fa-solid fa-circle-check"></i>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
                                 {% elif category == 'danger' %}
-                                    <i class="fa-solid fa-circle-xmark"></i>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
                                 {% elif category == 'warning' %}
-                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
                                 {% else %}
-                                    <i class="fa-solid fa-circle-info"></i>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
                                 {% endif %}
                             </div>
                             <span class="flash-text">{{ message }}</span>
                             <button class="flash-close" onclick="dismissToast(this.parentElement)" aria-label="Cerrar">
-                                <i class="fa-solid fa-xmark"></i>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                             </button>
                             <div class="flash-progress"></div>
                         </div>

@@ -129,6 +129,20 @@
     opacity: 1;
 }
 
+/* Íconos SVG de línea */
+
+.flash-icon svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+}
+
+.flash-close svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+
 /* Barra de progreso */
 
 .flash-progress {

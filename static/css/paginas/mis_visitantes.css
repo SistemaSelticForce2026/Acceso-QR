@@ -1,0 +1,544 @@
+/* =========================================================
+   MIS VISITANTES — restyle (lenguaje visual de referencia)
+   Se carga DESPUÉS de residente_dashboard.css y SOLO en esta
+   página, por lo que no afecta al dashboard ni al modal QR.
+   Solo estilos: el HTML, el JS y la ruta Flask no cambian.
+========================================================= */
+
+.res-visits-section {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    padding-bottom: 40px;
+}
+
+/* ---------- header ---------- */
+.res-page-header {
+    align-items: flex-end;
+    margin-bottom: 22px;
+}
+
+.res-page-heading {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    color: #11162a;
+    margin: 0 0 8px;
+}
+
+.res-page-sub {
+    font-size: 15px;
+    color: #7b8194;
+}
+
+/* ---------- new visit button ---------- */
+.res-btn-new {
+    gap: 9px;
+    padding: 13px 22px;
+    border-radius: 14px;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    background: linear-gradient(120deg, #3b5bff, #2a47e0);
+    box-shadow: 0 14px 30px -14px rgba(46, 91, 255, 0.70);
+}
+
+.res-btn-new:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 20px 38px -16px rgba(46, 91, 255, 0.80);
+}
+
+.res-btn-new svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+}
+
+/* ---------- filter bar ---------- */
+.res-filter-card {
+    border: 1px solid #e6e8ee;
+    border-radius: 20px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04),
+                0 14px 36px -28px rgba(20, 30, 60, 0.40);
+}
+
+.res-filter-row {
+    gap: 14px;
+}
+
+.res-filter-field {
+    gap: 8px;
+}
+
+.res-filter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8a93a6;
+}
+
+.res-filter-input {
+    height: auto;
+    padding: 12px 13px;
+    border: 1px solid #dde2ec;
+    border-radius: 12px;
+    background: #fbfcfe;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 14px;
+    color: #2f3340;
+}
+
+.res-filter-input:focus {
+    border-color: #2e5bff;
+    box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.14);
+    background: #fff;
+}
+
+.res-filter-input::placeholder {
+    color: #9aa3b5;
+}
+
+.res-filter-btn {
+    height: auto;
+    padding: 13px 20px;
+    border-radius: 12px;
+    background: #14192a;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    gap: 8px;
+}
+
+.res-filter-btn:hover {
+    background: #1d2438;
+    transform: translateY(-1px);
+}
+
+.res-filter-btn svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+}
+
+.res-filter-clear {
+    height: auto;
+    padding: 13px 18px;
+    border: 1px solid #dde2ec;
+    border-radius: 12px;
+    background: #fff;
+    color: #5a6478;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    gap: 8px;
+}
+
+.res-filter-clear:hover {
+    border-color: #c3cad8;
+    background: #f6f8fc;
+    color: #2a3142;
+}
+
+.res-filter-clear svg {
+    width: 15px;
+    height: 15px;
+    color: #97a1b4;
+    flex: none;
+}
+
+/* ---------- count ---------- */
+.res-count-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #7b8194;
+    margin: 0 0 18px;
+}
+
+/* ---------- visit card (pase tipo ticket) ---------- */
+.res-visit-card {
+    border: 1px solid #e6e8ee;
+    border-radius: 22px;
+    padding: 22px 26px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04),
+                0 14px 36px -28px rgba(20, 30, 60, 0.42);
+}
+
+.res-visit-card:hover {
+    border-color: #d2d9e6;
+    transform: translateY(-2px);
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.05),
+                0 22px 46px -26px rgba(20, 30, 60, 0.50);
+}
+
+.res-visit-body {
+    align-items: center;
+    gap: 24px;
+}
+
+/* avatar */
+.res-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    font-size: 18px;
+}
+
+.res-avatar-photo {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+}
+
+/* info */
+.res-visit-info {
+    align-self: center;
+}
+
+.res-visit-name {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #161b2b;
+    margin: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.res-visit-meta {
+    gap: 10px 26px;
+    margin-top: 12px;
+}
+
+.res-visit-meta-item {
+    gap: 8px;
+    font-size: 14.5px;
+    color: #46506a;
+}
+
+.res-visit-meta-item svg {
+    width: 15px;
+    height: 15px;
+    color: #aab2c2;
+    flex: none;
+}
+
+.res-meta-phone {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: #2f3850;
+}
+
+.res-meta-phone svg { color: #aab2c2; }
+
+/* fila de nombre + chip + estado (en línea) */
+.res-visit-namerow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.res-visit-name {
+    margin: 0;
+}
+
+.res-accesschip {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #4a5468;
+    background: #eef1f6;
+    border: 1px solid #e2e7f0;
+    white-space: nowrap;
+}
+
+/* motivo */
+.res-visit-motive {
+    font-size: 14px;
+    color: #7b8194;
+    margin: 8px 0 0;
+}
+
+/* segunda meta (vehículo) */
+.res-visit-meta-veh {
+    margin-top: 10px;
+}
+
+/* badges */
+.res-badge {
+    padding: 5px 11px;
+    font-size: 11.5px;
+}
+
+.badge-violet {
+    background: #f0eafa;
+    color: #6b3fb0;
+}
+
+.badge-violet .res-badge-dot {
+    background: #6b3fb0;
+}
+
+/* ---------- right zone: QR + acciones (lado a lado) ---------- */
+.res-visit-right {
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
+    width: auto;
+}
+
+/* QR + "Ver pase" */
+.res-visit-qrwrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+}
+
+.res-qr-thumb {
+    width: 104px;
+    height: 104px;
+    padding: 6px;
+    border: 1px solid #e6e8ee;
+    border-radius: 14px;
+    margin: 0;
+}
+
+.res-qr-thumb:hover {
+    transform: scale(1.04);
+    box-shadow: 0 8px 22px rgba(46, 91, 255, 0.15);
+}
+
+.res-qr-thumb.qr-cancelado {
+    filter: grayscale(1);
+    opacity: 0.35;
+}
+
+.res-verpase {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #5a6478;
+    transition: color 0.15s;
+}
+
+.res-verpase svg { color: #97a0b1; flex: none; }
+.res-verpase:hover { color: #2647d6; }
+.res-verpase:hover svg { color: #2e5bff; }
+
+/* columna de acciones */
+.res-visit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 156px;
+    flex: none;
+}
+
+.res-btn-cancel {
+    width: 100%;
+    justify-content: center;
+    border: 1px solid #f0c5c0;
+    background: #fff;
+    color: #c0392b;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    gap: 8px;
+}
+
+.res-btn-cancel:hover {
+    background: #fdf2f1;
+    border-color: #e3a59d;
+}
+
+.res-btn-cancel svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+}
+
+/* fila de botones-ícono (editar / eliminar) */
+.res-action-icons {
+    display: flex;
+    gap: 8px;
+}
+
+.res-iconact {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    height: 42px;
+    padding: 0;
+    gap: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+}
+
+.res-iconact svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+}
+
+.res-btn-edit.res-iconact {
+    background: #fff;
+    color: #5a6478;
+    border: 1px solid #e3e8f0;
+}
+
+.res-btn-edit.res-iconact:hover {
+    color: #2647d6;
+    background: #eaeefe;
+    border-color: #aebdf5;
+}
+
+.res-btn-delete.res-iconact {
+    background: #fff;
+    color: #c0392b;
+    border: 1px solid #f0c5c0;
+    box-shadow: none;
+}
+
+.res-btn-delete.res-iconact:hover {
+    color: #fff;
+    background: linear-gradient(120deg, #e8533f, #cf3b2a);
+    border-color: transparent;
+    box-shadow: 0 12px 24px -14px rgba(207, 59, 42, 0.70);
+}
+
+/* ---------- add visitor (dashed) ---------- */
+.res-add-dashed {
+    height: auto;
+    min-height: 64px;
+    padding: 18px 22px;
+    border: 1.5px dashed #d3d9e4;
+    border-radius: 18px;
+    background: #fbfcfe;
+    color: #5a6478;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    gap: 10px;
+}
+
+.res-add-dashed:hover {
+    background: #eaeefe;
+    border-color: #2e5bff;
+    border-style: dashed;
+    color: #2647d6;
+}
+
+.res-add-dashed svg {
+    width: 18px;
+    height: 18px;
+    color: #2e5bff;
+    flex: none;
+}
+
+.res-add-dashed:hover svg {
+    color: #2647d6;
+}
+
+/* ---------- empty state ---------- */
+.res-empty {
+    border-radius: 20px;
+    padding: 54px 30px;
+}
+
+.res-empty-icon {
+    width: 66px;
+    height: 66px;
+    border-radius: 20px;
+    background: #eaeefe;
+    color: #2e5bff;
+}
+
+.res-empty-icon svg {
+    width: 30px;
+    height: 30px;
+}
+
+.res-empty-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #14192a;
+}
+
+.res-empty-sub {
+    font-size: 14px;
+    color: #7b8194;
+}
+
+/* ---------- pagination ---------- */
+.res-page-btn {
+    min-width: 42px;
+    height: 42px;
+    border: 1px solid #e6e8ee;
+    border-radius: 12px;
+    color: #46506a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.res-page-btn:hover {
+    background: #f6f8fc;
+    border-color: #c9d1de;
+}
+
+.res-page-btn.active {
+    background: #14192a;
+    color: #fff;
+    border-color: #14192a;
+}
+
+.res-page-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 680px) {
+    .res-page-heading { font-size: 26px; }
+
+    .res-visit-body { flex-wrap: wrap; }
+
+    .res-visit-info { flex: 1 1 100%; }
+
+    .res-visit-right {
+        width: 100%;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .res-visit-actions {
+        flex: 1;
+        width: auto;
+        min-width: 180px;
+    }
+}

@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/residente_dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/mis_visitantes.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -17,7 +18,7 @@
             <p class="res-page-sub">Gestiona los accesos de tus visitantes registrados</p>
         </div>
         <a href="{{ url_for('resident.create_visit') }}" class="res-btn-new">
-            <i class="fa-solid fa-plus"></i>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
             Nueva visita
         </a>
     </div>
@@ -54,12 +55,12 @@
                 </div>
 
                 <button type="submit" class="res-filter-btn">
-                    <i class="fa-solid fa-filter"></i>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                     Filtrar
                 </button>
 
                 <a href="{{ url_for('resident.visitors') }}" class="res-filter-clear">
-                    <i class="fa-solid fa-rotate-left"></i>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     Limpiar
                 </a>
 
@@ -89,7 +90,7 @@
         {%- set badge_cls = 'badge-blue' -%}
         {%- set badge_label = 'Vigente' -%}
     {%- elif visita.estado == 'salida_registrada' -%}
-        {%- set badge_cls = 'badge-neutral' -%}
+        {%- set badge_cls = 'badge-violet' -%}
         {%- set badge_label = 'Finalizada' -%}
     {%- else -%}
         {%- set badge_cls = 'badge-warning' -%}
@@ -115,91 +116,112 @@
             {# ── Info central ─── #}
             <div class="res-visit-info">
 
-                <p class="res-visit-name">{{ visita.nombre_visitante }}</p>
+                <div class="res-visit-namerow">
+                    <p class="res-visit-name">{{ visita.nombre_visitante }}</p>
+                    {% if visita.modalidad_visita == "recurrente" %}
+                    <span class="res-accesschip">Recurrente</span>
+                    {% else %}
+                    <span class="res-accesschip">Temporal</span>
+                    {% endif %}
+                    <span class="res-badge {{ badge_cls }}"><span class="res-badge-dot"></span>{{ badge_label }}</span>
+                </div>
+
+                {% if visita.motivo %}
+                <p class="res-visit-motive">{{ visita.motivo }}</p>
+                {% endif %}
 
                 <div class="res-visit-meta">
 
-                    <span class="res-visit-meta-item">
-                        <i class="fa-solid fa-phone"></i>
+                    <span class="res-visit-meta-item res-meta-phone">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.7 2.34a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.74-1.27a2 2 0 0 1 2.11-.45c.74.34 1.53.57 2.34.7A2 2 0 0 1 22 16.92z"/></svg>
                         {{ visita.telefono }}
                     </span>
 
                     {% if visita.fecha_visita %}
                     <span class="res-visit-meta-item">
-                        <i class="fa-regular fa-calendar"></i>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                         {{ visita.fecha_visita[8:10] }}/{{ visita.fecha_visita[5:7] }}/{{ visita.fecha_visita[0:4] }}
                     </span>
                     {% endif %}
 
                     {% if visita.hora_inicio %}
                     <span class="res-visit-meta-item">
-                        <i class="fa-regular fa-clock"></i>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         {{ visita.hora_inicio | hora_ampm }}
                     </span>
                     {% endif %}
 
                     <span class="res-visit-meta-item">
-                        <i class="fa-solid fa-house"></i>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
                         {{ visita.condominio|title }} · Casa {{ visita.residencia_destino }}
                     </span>
 
-                    {% if visita.vehiculo %}
+                </div>
+
+                {% if visita.vehiculo %}
+                <div class="res-visit-meta res-visit-meta-veh">
                     <span class="res-visit-meta-item">
-                        <i class="fa-solid fa-car"></i>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
                         {{ visita.vehiculo.placa }}
                         · {{ visita.vehiculo.marca|title }}
                         {% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo|title }}{% endif %}
                         · {{ visita.vehiculo.color|title }}
                     </span>
-                    {% endif %}
-
                 </div>
-
-                <div class="res-visit-badges">
-                    {% if visita.modalidad_visita == "recurrente" %}
-                    <span class="res-badge badge-blue">Recurrente</span>
-                    {% else %}
-                    <span class="res-badge badge-neutral">Temporal</span>
-                    {% endif %}
-                    <span class="res-badge {{ badge_cls }}">{{ badge_label }}</span>
-                </div>
+                {% endif %}
 
             </div>
 
             {# ── Derecha: QR + acciones ─── #}
             <div class="res-visit-right">
 
-                <img
-                    src="{{ visita.qr_path }}"
-                    class="res-qr-thumb {% if visita.qr_estado == 'cancelado' %}qr-cancelado{% else %}qr-clickable{% endif %}"
-                    data-qr-path="{{ visita.qr_path }}"
-                    data-qr-token="{{ visita.qr_token }}"
-                    data-visitante="{{ visita.nombre_visitante }}"
-                    alt="QR">
+                <div class="res-visit-qrwrap">
+                    <img
+                        src="{{ visita.qr_path }}"
+                        class="res-qr-thumb {% if visita.qr_estado == 'cancelado' %}qr-cancelado{% else %}qr-clickable{% endif %}"
+                        data-qr-path="{{ visita.qr_path }}"
+                        data-qr-token="{{ visita.qr_token }}"
+                        data-visitante="{{ visita.nombre_visitante }}"
+                        alt="QR">
+                    {% if visita.qr_estado != 'cancelado' %}
+                    <button type="button" class="res-verpase qr-clickable"
+                            data-qr-path="{{ visita.qr_path }}"
+                            data-qr-token="{{ visita.qr_token }}"
+                            data-visitante="{{ visita.nombre_visitante }}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Ver pase
+                    </button>
+                    {% endif %}
+                </div>
 
-                {% if visita.qr_estado not in ['cancelado', 'vencido']
-                    and visita.estado not in ['salida_registrada', 'dentro'] %}
-                <button class="res-btn-cancel btn-cancelar-qr" data-token="{{ visita.qr_token }}">
-                    <i class="fa-solid fa-ban"></i>
-                    Cancelar QR
-                </button>
-                {% endif %}
+                <div class="res-visit-actions">
 
-                {% if visita.estado not in ['dentro', 'salida_registrada']
-                    and visita.qr_estado not in ['cancelado', 'vencido'] %}
+                    {% if visita.qr_estado not in ['cancelado', 'vencido']
+                        and visita.estado not in ['salida_registrada', 'dentro'] %}
+                    <button class="res-btn-cancel btn-cancelar-qr" data-token="{{ visita.qr_token }}">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+                        Cancelar QR
+                    </button>
+                    {% endif %}
 
-                <a href="{{ url_for('resident.editar_visita', visita_id=visita._id) }}"
-                class="res-btn-edit">
-                    <i class="fa-solid fa-pen"></i>
-                    Editar
-                </a>
+                    <div class="res-action-icons">
 
-                {% endif %}
+                        {% if visita.estado not in ['dentro', 'salida_registrada']
+                            and visita.qr_estado not in ['cancelado', 'vencido'] %}
+                        <a href="{{ url_for('resident.editar_visita', visita_id=visita._id) }}"
+                           class="res-btn-edit res-iconact" title="Editar visita" aria-label="Editar visita">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                        </a>
+                        {% endif %}
 
-                <button class="res-btn-delete" onclick="eliminarVisita('{{ visita._id }}')">
-                    <i class="fa-solid fa-trash"></i>
-                    Eliminar
-                </button>
+                        <button class="res-btn-delete res-iconact" onclick="eliminarVisita('{{ visita._id }}')"
+                                title="Eliminar visita" aria-label="Eliminar visita">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        </button>
+
+                    </div>
+
+                </div>
 
             </div>
 
@@ -212,12 +234,12 @@
 
     <div class="res-empty">
         <div class="res-empty-icon">
-            <i class="fa-solid fa-users"></i>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <p class="res-empty-title">No hay visitas registradas</p>
         <p class="res-empty-sub">Crea tu primera visita para generar un código QR de acceso.</p>
         <a href="{{ url_for('resident.create_visit') }}" class="res-btn-new" style="margin:0 auto;">
-            <i class="fa-solid fa-plus"></i>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
             Nueva visita
         </a>
     </div>
@@ -227,7 +249,7 @@
     {# ── Botón dashed agregar ───────────────────────────────────────── #}
     {% if visitas %}
     <a href="{{ url_for('resident.create_visit') }}" class="res-add-dashed">
-        <i class="fa-solid fa-plus"></i>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
         Agregar visitante
     </a>
     {% endif %}
@@ -239,7 +261,7 @@
         {% if pagina > 1 %}
         <a href="{{ url_for('resident.visitors', page=pagina-1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
            class="res-page-btn">
-            <i class="fa-solid fa-chevron-left" style="font-size:11px;"></i>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
         </a>
         {% endif %}
 
@@ -253,7 +275,7 @@
         {% if pagina < total_paginas %}
         <a href="{{ url_for('resident.visitors', page=pagina+1, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, busqueda=busqueda) }}"
            class="res-page-btn">
-            <i class="fa-solid fa-chevron-right" style="font-size:11px;"></i>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
         </a>
         {% endif %}
 
