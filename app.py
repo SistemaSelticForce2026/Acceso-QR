@@ -59,7 +59,11 @@ def crear_indices():
 
     # --- Índices de rendimiento (siempre seguros) ---
     mongo.db.users.create_index("rol")
-    mongo.db.visits.create_index("qr_token")
+    try:
+        mongo.db.visits.create_index("qr_token", unique=True)
+    except Exception:
+        pass
+
     mongo.db.visits.create_index("residente_id")
     mongo.db.visits.create_index("estado")
     mongo.db.visits.create_index("created_at")
