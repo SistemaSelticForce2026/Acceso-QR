@@ -116,6 +116,34 @@
 
 }
 
+.dark-mode input[type="date"],
+.dark-mode input[type="time"],
+.dark-mode input[type="month"],
+.dark-mode input[type="datetime-local"]{
+
+    color-scheme:dark;
+
+}
+
+.dark-mode input::-webkit-datetime-edit,
+.dark-mode input::-webkit-datetime-edit-fields-wrapper,
+.dark-mode input::-webkit-datetime-edit-text,
+.dark-mode input::-webkit-datetime-edit-day-field,
+.dark-mode input::-webkit-datetime-edit-month-field,
+.dark-mode input::-webkit-datetime-edit-year-field,
+.dark-mode input::-webkit-datetime-edit-hour-field,
+.dark-mode input::-webkit-datetime-edit-minute-field,
+.dark-mode input::-webkit-datetime-edit-second-field,
+.dark-mode input::-webkit-datetime-edit-ampm-field{
+
+    color:#f8fafc;
+
+    -webkit-text-fill-color:#f8fafc;
+
+    opacity:1;
+
+}
+
 .dark-mode input:hover,
 .dark-mode select:hover,
 .dark-mode textarea:hover{

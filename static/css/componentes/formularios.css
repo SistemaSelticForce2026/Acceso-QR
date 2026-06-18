@@ -62,6 +62,34 @@ textarea{
 
 }
 
+input[type="date"],
+input[type="time"],
+input[type="month"],
+input[type="datetime-local"]{
+
+    color-scheme:light;
+
+}
+
+input::-webkit-datetime-edit,
+input::-webkit-datetime-edit-fields-wrapper,
+input::-webkit-datetime-edit-text,
+input::-webkit-datetime-edit-day-field,
+input::-webkit-datetime-edit-month-field,
+input::-webkit-datetime-edit-year-field,
+input::-webkit-datetime-edit-hour-field,
+input::-webkit-datetime-edit-minute-field,
+input::-webkit-datetime-edit-second-field,
+input::-webkit-datetime-edit-ampm-field{
+
+    color:#0f172a;
+
+    -webkit-text-fill-color:#0f172a;
+
+    opacity:1;
+
+}
+
 /* ========================================= */
 /* PLACEHOLDER */
 /* ========================================= */

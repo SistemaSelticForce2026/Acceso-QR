@@ -1,9 +1,4 @@
-/* =========================================================
-   MIS VISITANTES — restyle (lenguaje visual de referencia)
-   Se carga DESPUÉS de residente_dashboard.css y SOLO en esta
-   página, por lo que no afecta al dashboard ni al modal QR.
-   Solo estilos: el HTML, el JS y la ruta Flask no cambian.
-========================================================= */
+/* MIS VISITANTES — restyle (lenguaje visual de referencia) */
 
 .res-visits-section {
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
@@ -69,6 +64,16 @@
 
 .res-filter-field {
     gap: 8px;
+}
+
+.res-filter-field--grow {
+    flex: 2;
+    min-width: 180px;
+}
+
+.res-filter-btns {
+    display: flex;
+    gap: 10px;
 }
 
 .res-filter-label {
@@ -417,18 +422,15 @@
     border-color: #aebdf5;
 }
 
-.res-btn-delete.res-iconact {
-    background: #fff;
-    color: #c0392b;
-    border: 1px solid #f0c5c0;
+/* estado deshabilitado (Cancelar / Editar bloqueados) */
+.res-btn-cancel:disabled,
+.res-btn-cancel.is-disabled,
+.res-btn-edit.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
     box-shadow: none;
-}
-
-.res-btn-delete.res-iconact:hover {
-    color: #fff;
-    background: linear-gradient(120deg, #e8533f, #cf3b2a);
-    border-color: transparent;
-    box-shadow: 0 12px 24px -14px rgba(207, 59, 42, 0.70);
+    transform: none;
 }
 
 /* ---------- add visitor (dashed) ---------- */
@@ -526,19 +528,50 @@
 @media (max-width: 680px) {
     .res-page-heading { font-size: 26px; }
 
-    .res-visit-body { flex-wrap: wrap; }
+    /* filtro: campos apilados y botones a todo el ancho (50/50, centrados) */
+    .res-filter-field,
+    .res-filter-field--grow {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
 
-    .res-visit-info { flex: 1 1 100%; }
+    .res-filter-btns { width: 100%; }
+
+    .res-filter-btns .res-filter-btn,
+    .res-filter-btns .res-filter-clear {
+        flex: 1;
+        justify-content: center;
+    }
+
+    /* card: stack vertical — avatar+info arriba, QR centrado, acciones full-width */
+    .res-visit-body {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .res-visit-info { flex: 1; min-width: 0; }
+
+    /* motivo + meta a ras del borde izquierdo (bajo el avatar):
+       el avatar (56px) solo acompaña al nombre; el resto se alinea al borde
+       desplazándose el ancho del avatar + gap (56 + 14 = 70px). */
+    .res-visit-motive,
+    .res-visit-info .res-visit-meta {
+        margin-left: -70px;
+    }
 
     .res-visit-right {
+        flex: 1 1 100%;
         width: 100%;
-        align-items: flex-start;
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        margin-top: 4px;
+        padding-top: 18px;
+        border-top: 1px solid #eef0f4;
     }
 
-    .res-visit-actions {
-        flex: 1;
-        width: auto;
-        min-width: 180px;
-    }
+    .res-visit-qrwrap { align-items: center; }
+
+    .res-visit-actions { width: 100%; }
 }

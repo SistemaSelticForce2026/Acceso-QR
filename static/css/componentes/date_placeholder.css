@@ -1,0 +1,34 @@
+.date-ph {
+    display: none;
+}
+
+@media (max-width: 680px) {
+    .date-ph {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        color: #9aa3b5;       
+        white-space: nowrap;
+        overflow: hidden;
+        pointer-events: none;     
+        z-index: 1;
+    }
+
+    .date-ph.is-hidden {
+        display: none;
+    }
+
+    /* Mientras mostramos nuestro placeholder, ocultar el texto nativo del
+       control (en los navegadores que sí lo pintan) para no duplicarlo.
+       La clase .date-ph-empty la pone/quita date_placeholder.js. */
+    input.date-ph-empty::-webkit-datetime-edit,
+    input.date-ph-empty::-webkit-datetime-edit-fields-wrapper,
+    input.date-ph-empty::-webkit-datetime-edit-text,
+    input.date-ph-empty::-webkit-datetime-edit-day-field,
+    input.date-ph-empty::-webkit-datetime-edit-month-field,
+    input.date-ph-empty::-webkit-datetime-edit-year-field {
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+    }
+}

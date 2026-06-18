@@ -328,7 +328,7 @@
     right: 0;
     z-index: 30;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -364,10 +364,10 @@
 .res-tab.active::before {
     content: '';
     position: absolute;
-    top: 6px;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
+    top: 0;
+    width: 42px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
     background: #2e5bff;
 }
 

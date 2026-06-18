@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/alertas.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estructura/layout_guardia.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/date_placeholder.css') }}">
     {% block extra_css %}{% endblock %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -149,6 +150,8 @@
             grdAvatar.style.backgroundColor = COLORS[h];
         }
     </script>
+
+    <script src="{{ url_for('static', filename='js/date_placeholder.js') }}"></script>
 
     {% block extra_js %}{% endblock %}
 

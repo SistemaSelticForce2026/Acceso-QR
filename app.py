@@ -56,20 +56,6 @@ def hora_ampm(valor):
 def crear_indices():
     """Crea los índices una sola vez al arrancar.
 
-    # --- Índices de rendimiento (siempre seguros) ---
-    mongo.db.users.create_index("rol")
-    try:
-        mongo.db.visits.create_index("qr_token", unique=True)
-    except Exception:
-        pass
-
-    mongo.db.visits.create_index("residente_id")
-    mongo.db.visits.create_index("estado")
-    mongo.db.visits.create_index("created_at")
-    mongo.db.visits.create_index("fecha_visita")
-    mongo.db.access_logs.create_index("fecha_hora")
-    mongo.db.incidencias.create_index("fecha_hora")
-    mongo.db.reportes.create_index("fecha")
     create_index es idempotente cuando las opciones coinciden, pero lanza
     OperationFailure si ya existe un índice con el mismo nombre y opciones
     distintas (p. ej. 'qr_token' ya creado como ÚNICO en Atlas). En ese caso

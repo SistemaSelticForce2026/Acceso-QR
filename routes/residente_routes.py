@@ -158,41 +158,30 @@ def visitors():
 @role_required("residente")
 def cancelar_qr(token):
 
+    visita = mongo.db.visits.find_one(
+        {"qr_token": token, "residente_id": session["user_id"]}
+    )
+
+    if not visita:
+        return jsonify({"success": False, "message": "Visita no encontrada"}), 404
+
+    # No permitir cancelar pases ya utilizados, finalizados o no vigentes
+    if visita.get("estado") in [
+        "pendiente_autorizacion",
+        "dentro",
+        "salida_registrada",
+    ] or visita.get("qr_estado") in ["cancelado", "vencido"]:
+        return (
+            jsonify({"success": False, "message": "Este QR ya no puede cancelarse."}),
+            409,
+        )
+
     mongo.db.visits.update_one(
-        {"qr_token": token, "residente_id": session["user_id"]},
+        {"_id": visita["_id"]},
         {"$set": {"qr_estado": "cancelado", "estado": "cancelado"}},
     )
     socketio.emit("actualizar_dashboard", to="rol:admin")
     return {"success": True}
-
-
-# =====================================================
-# ELIMINAR VISITA
-# =====================================================
-
-
-@resident_bp.route("/eliminar-visita/<id>", methods=["DELETE"])
-@login_required
-@role_required("residente")
-def eliminar_visita(id):
-
-    try:
-
-        resultado = mongo.db.visits.delete_one(
-            {"_id": ObjectId(id), "residente_id": session["user_id"]}
-        )
-
-        if resultado.deleted_count == 0:
-            return jsonify({"success": False, "message": "Visita no encontrada"}), 404
-
-        socketio.emit("actualizar_dashboard", to="rol:admin")
-        return jsonify({"success": True})
-
-    except Exception as e:
-
-        print("ERROR ELIMINAR:", e)
-
-        return jsonify({"success": False, "message": str(e)}), 500
 
 
 # =====================================================
@@ -216,7 +205,12 @@ def editar_visita(visita_id):
     # BLOQUEAR VISITAS UTILIZADAS
     # ==========================
 
-    if visita.get("estado") in ["dentro", "salida_registrada", "cancelado"]:
+    if visita.get("estado") in [
+        "pendiente_autorizacion",
+        "dentro",
+        "salida_registrada",
+        "cancelado",
+    ] or visita.get("qr_estado") in ["cancelado", "vencido"]:
 
         flash("Esta visita ya no puede modificarse.", "warning")
 
