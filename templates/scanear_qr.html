@@ -16,7 +16,6 @@
     <!-- =========== -->
 
     <div class="grd-page-header">
-        <p class="grd-eyebrow">Verificar acceso</p>
         <h1 class="grd-page-title">{% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}</h1>
         <p class="grd-page-sub">
             {% if modo == 'salida' %}Escanea el QR para confirmar la salida del visitante.
@@ -79,7 +78,6 @@
                             <span class="sc-corner tr"></span>
                             <span class="sc-corner bl"></span>
                             <span class="sc-corner br"></span>
-                            <span class="sc-scan-line"></span>
                         </div>
                     </div>
                 </div>
@@ -323,6 +321,11 @@
 
             </div>
 
+            <span class="access-alert-time">
+                <i class="fa-solid fa-clock"></i>
+                <span id="alertTimeNow"></span>
+            </span>
+
         </div>
 
 
@@ -356,109 +359,131 @@
             <!-- VISITANTE   -->
             <!-- =========== -->
 
-            <div class="card access-card">
+            <div class="card access-card grd-profile">
 
-                <div class="card-title">
-                    <i class="fa-solid fa-id-card"></i>
-                    <h3>Perfil validado</h3>
+                <div class="grd-profile-head">
+                    <span class="grd-profile-tag">
+                        <i class="fa-solid fa-id-card"></i>
+                        Perfil validado
+                    </span>
+                    <span class="grd-profile-badge">
+                        <span class="grd-badge-dot"></span>
+                        {% if resultado.visita.modalidad_visita == "recurrente" %}Recurrente{% else %}Temporal{% endif %}
+                    </span>
                 </div>
 
-                <div class="visitor-profile">
+                <!-- IDENTIDAD -->
+                <div class="grd-identity">
 
                     {% if resultado.visita and resultado.visita.get('foto_visitante') %}
                     <img
                         src="{{ resultado.visita.foto_visitante['url'] }}"
                         alt="Foto visitante"
-                        class="visitor-photo"
+                        class="grd-identity-photo"
                         id="visitorPhoto"
                     >
+                    {% else %}
+                    <div class="grd-identity-avatar">
+                        {{ (resultado.visita.nombre_visitante.split(' ') | map('first') | list)[:2] | join('') | upper }}
+                    </div>
                     {% endif %}
 
-                    <div class="visitor-info">
+                    <div class="grd-identity-txt">
                         <h2>{{ resultado.visita.nombre_visitante }}</h2>
-                        <span class="badge">
-                            {% if resultado.visita.modalidad_visita == "recurrente" %}
-                                Visita recurrente
-                            {% else %}
-                                Visita temporal
+                        <p>
+                            Visitante autorizado ·
+                            {% if resultado.visita.modalidad_visita == "recurrente" %}recurrente{% else %}temporal{% if resultado.visita.fecha_visita %} hasta {{ resultado.visita.fecha_visita }}{% endif %}{% endif %}
+                        </p>
+                        <div class="grd-chips">
+                            <span class="grd-chip">
+                                <i class="fa-solid fa-building"></i>
+                                {{ resultado.visita.condominio }} · Casa {{ resultado.visita.residencia_destino }}
+                            </span>
+                            {% if resultado.visita.vehiculo %}
+                            <span class="grd-chip">
+                                <i class="fa-solid fa-car"></i>
+                                {{ resultado.visita.vehiculo.marca }} {{ resultado.visita.vehiculo.modelo }}
+                            </span>
                             {% endif %}
-                        </span>
+                        </div>
                     </div>
+
+                    {% if resultado.visita.foto_placa %}
+                    <div class="grd-plate-wrap">
+                        <img
+                            src="{{ resultado.visita.foto_placa['url'] }}"
+                            alt="Foto placa"
+                            class="grd-plate-photo zoomable-placa"
+                        >
+                    </div>
+                    {% endif %}
 
                 </div>
 
                 <!-- CONTACTO -->
-                <div class="resident-contact-panel">
+                <div class="grd-prows">
 
-                    <div class="resident-contact-item">
-                        <div class="resident-contact-icon resident">
-                            <i class="fa-solid fa-user-shield"></i>
-                        </div>
-                        <div class="resident-contact-content">
-                            <span>Residente responsable</span>
-                            <strong>{{ resultado.visita.residente_nombre }}</strong>
-                        </div>
+                    <div class="grd-prow">
+                        <span class="grd-prow-ico tone-blue"><i class="fa-solid fa-user-shield"></i></span>
+                        <span class="grd-prow-label">Residente responsable</span>
+                        <span class="grd-prow-val">{{ resultado.visita.residente_nombre }}</span>
                     </div>
 
                     {% if resultado.visita.get("telefono_residente") %}
-                    <div class="resident-contact-item">
-                        <div class="resident-contact-icon phone">
-                            <i class="fa-solid fa-mobile-screen"></i>
-                        </div>
-                        <div>
-                            <span>Número del residente</span>
-                            <strong>{{ resultado.visita.telefono_residente }}</strong>
-                        </div>
+                    <div class="grd-prow">
+                        <span class="grd-prow-ico tone-green"><i class="fa-solid fa-mobile-screen"></i></span>
+                        <span class="grd-prow-label">Número del residente</span>
+                        <a class="grd-prow-val" href="tel:{{ resultado.visita.telefono_residente }}">{{ resultado.visita.telefono_residente }}</a>
                     </div>
                     {% endif %}
 
-                    <div class="resident-contact-item">
-                        <div class="resident-contact-icon visitor">
-                            <i class="fa-solid fa-phone"></i>
-                        </div>
-                        <div>
-                            <span>Número del visitante</span>
-                            <strong>{{ resultado.visita.telefono }}</strong>
-                        </div>
+                    <div class="grd-prow">
+                        <span class="grd-prow-ico tone-amber"><i class="fa-solid fa-phone"></i></span>
+                        <span class="grd-prow-label">Número del visitante</span>
+                        <a class="grd-prow-val" href="tel:{{ resultado.visita.telefono }}">{{ resultado.visita.telefono }}</a>
                     </div>
 
                 </div>
 
-                <div class="info-list">
-
-                    <div class="info-item">
+                <!-- META -->
+                <div class="grd-meta">
+                    <div class="grd-meta-cell">
                         <span>Modalidad</span>
                         <strong>
                             {% if resultado.visita.modalidad_visita == "recurrente" %}
-                                Recurrente
-                                {% if resultado.visita.get("dias_autorizados") %}
-                                    · {{ resultado.visita.dias_autorizados | join(', ') | capitalize }}
-                                {% endif %}
-                                {% if h_ini and h_fin %}
-                                    · {{ h_ini | hora_ampm }} a {{ h_fin | hora_ampm }}
-                                {% endif %}
+                                Recurrente{% if resultado.visita.get("dias_autorizados") %} · {{ resultado.visita.dias_autorizados | join(', ') | capitalize }}{% endif %}{% if h_ini and h_fin %} · {{ h_ini | hora_ampm }} a {{ h_fin | hora_ampm }}{% endif %}
                             {% else %}
                                 Temporal — {{ resultado.visita.fecha_visita }}
                             {% endif %}
                         </strong>
                     </div>
-
-                    <div class="info-item">
+                    <div class="grd-meta-cell">
                         <span>Motivo</span>
                         <strong>{{ resultado.visita.motivo }}</strong>
                     </div>
+                </div>
 
-                    <div class="info-item">
-                        <span>Condominio</span>
-                        <strong>{{ resultado.visita.condominio }}</strong>
-                    </div>
+                <!-- ACCIONES (inline en el perfil) -->
+                {% if modo != 'salida' and resultado.estado == 'permitido' %}
+                <div class="grd-scan-actions">
 
-                    <div class="info-item">
-                        <span>Residencia</span>
-                        <strong>{{ resultado.visita.residencia_destino }}</strong>
-                    </div>
+                    <button type="button" class="grd-btn-reject" id="openRejectModal">
+                        <i class="fa-solid fa-ban"></i>
+                        Rechazar
+                    </button>
+
+                    <form method="POST"
+                          action="{{ url_for('guard.confirm_access') }}"
+                          class="grd-authorize-form">
+                        <input type="hidden" name="qr_token" value="{{ resultado.visita.qr_token }}">
+                        <button type="submit" class="grd-btn-authorize">
+                            <i class="fa-solid fa-circle-check"></i>
+                            Autorizar acceso
+                        </button>
+                    </form>
 
                 </div>
+                {% endif %}
 
             </div>
 
@@ -606,88 +631,6 @@
 
 
         <!-- ===================================================== -->
-        <!-- CONTROL DE ACCESO                                      -->
-        <!-- ===================================================== -->
-
-        {% if modo != 'salida' %}
-        <div class="card modern-access-card">
-
-            <div class="modern-access-header">
-                <div class="modern-access-icon">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <div>
-                    <h3>Control de acceso</h3>
-                    <p>Validación operativa del visitante y autorización de ingreso residencial.</p>
-                </div>
-            </div>
-
-            {% if resultado.estado == "permitido" %}
-
-            <div class="access-status-panel">
-                <div class="status-chip success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    QR validado correctamente
-                </div>
-                <div class="status-description">
-                    Verifique visualmente la identidad del visitante y los datos registrados antes de abrir el acceso.
-                </div>
-            </div>
-
-            <div class="access-summary-grid">
-
-                <div class="summary-card">
-                    <span>Visitante</span>
-                    <strong>{{ resultado.visita.nombre_visitante }}</strong>
-                </div>
-
-                <div class="summary-card">
-                    <span>Residencia</span>
-                    <strong>{{ resultado.visita.condominio }} · Casa {{ resultado.visita.residencia_destino }}</strong>
-                </div>
-
-                <div class="summary-card">
-                    <span>Tipo de acceso</span>
-                    <strong>
-                        {% if resultado.visita.modalidad_visita == "recurrente" %}Recurrente{% else %}Temporal{% endif %}
-                    </strong>
-                </div>
-
-                <div class="summary-card">
-                    <span>Estado</span>
-                    <strong class="status-green">Pendiente de autorización</strong>
-                </div>
-
-            </div>
-
-            <div class="grd-scan-actions">
-
-                <button type="button" class="grd-btn-reject" id="openRejectModal">
-                    <i class="fa-solid fa-ban"></i>
-                    Rechazar
-                </button>
-
-                <form method="POST"
-                      action="{{ url_for('guard.confirm_access') }}"
-                      class="grd-authorize-form">
-                    <input type="hidden" name="qr_token" value="{{ resultado.visita.qr_token }}">
-                    <button type="submit" class="grd-btn-authorize">
-                        <i class="fa-solid fa-circle-check"></i>
-                        Autorizar acceso
-                    </button>
-                </form>
-
-            </div>
-
-            {% endif %}
-
-        </div>
-        {% endif %}
-
-        </div>
-
-
-        <!-- ===================================================== -->
         <!-- MODAL: MOTIVO DE RECHAZO                               -->
         <!-- ===================================================== -->
 
@@ -806,6 +749,16 @@
     <span class="close-photo" id="closePhoto">&times;</span>
     <img src="" class="photo-modal-content" id="photoZoom" alt="Zoom foto">
 </div>
+
+<!-- Hora de validación en el banner -->
+<script>
+(function () {
+    var t = document.getElementById("alertTimeNow");
+    if (t) {
+        t.textContent = new Date().toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit" });
+    }
+})();
+</script>
 
 
 <!-- ===================================================== -->

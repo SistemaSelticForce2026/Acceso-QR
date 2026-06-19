@@ -51,7 +51,6 @@
         <aside class="grd-sidebar">
 
             <div class="grd-sidebar-top">
-                <span class="grd-sidebar-eyebrow">Navegación</span>
                 <div class="grd-sidebar-items">
                     <a href="{{ url_for('guard.scan_entrada') }}"
                        class="grd-sidebar-item {% if request.endpoint in ('guard.scan_entrada', 'guard.scan_salida') %}active{% endif %}">
