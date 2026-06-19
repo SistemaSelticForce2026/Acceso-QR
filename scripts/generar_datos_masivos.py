@@ -1,27 +1,23 @@
 """
 generar_datos_masivos.py
-Genera datos de PRUEBA para AccesoQR, con fotos (visitante + placa + QR) en Cloudinary.
-Archivo único: ya incluye lo que antes estaba en generar_datos_masivos_fotos.py.
+Genera datos de PRUEBA para AccesoQR, repartidos en los 3 FRACCIONAMIENTOS
+(cada uno con su propia colección de residentes y de visitas), con fotos
+(visitante + placa + QR) en Cloudinary.
 
 CÓMO USAR (3 pasos):
   1. Ten tu .env con CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET.
   2. pip install pymongo faker werkzeug tqdm pillow qrcode cloudinary python-dotenv
   3. python scripts\\generar_datos_masivos.py
 
-LO ÚNICO QUE SUELES TOCAR está abajo en "PANEL DE CONTROL":
-  - PRUEBA_RAPIDA = True  -> genera poquitos datos para verificar que todo jala.
-  - PRUEBA_RAPIDA = False -> los números reales (5000 residentes, 20000 visitas...).
-  - MODO_FOTOS = "pool"   -> recomendado (sube ~300 imágenes y las reparte).
-
-Scripts hermanos:
-  - repartir_fechas_visitas.py -> reparte las fechas en 180 días.
-  - eliminar_datos_masivos.py  -> borra SOLO lo de prueba (Mongo + Cloudinary).
+Dónde caen los datos:
+  - Residentes -> residentes_foresta_dream_lagons / _cedro_zinacantepec / _villas_del_bosque_ii
+  - Visitas    -> visitas_foresta_dream_lagons / _cedro_zinacantepec / _villas_del_bosque_ii
+  - Admin y guardias -> users (NO se parten)
+  - access_logs e incidencias -> sin cambios
 
 Cómo se marca lo de prueba:
   - En Mongo: cada residente/visita lleva es_prueba = True.
-  - En Cloudinary: las fotos se suben a TUS MISMAS carpetas (accesoqr/visitantes,
-    accesoqr/placas, accesoqr/código QR) pero su public_id empieza con "seed_".
-    Ese prefijo permite borrarlas sin tocar tus fotos reales (no se crea otra carpeta).
+  - En Cloudinary: public_id empieza con "seed_".
 """
 
 import io
@@ -45,9 +41,6 @@ from werkzeug.security import generate_password_hash
 # CONFIG
 # ==========================================
 
-# OJO: estas credenciales quedaron expuestas en texto. Cuando termines de
-# probar, conviene rotar la contraseña de Mongo y mover esto a variables
-# de entorno (.env), no dejarlo hardcodeado.
 MONGO_URI = "mongodb+srv://software_db_user:M22TlbYUEJCo7lXh@accesoqr.zopq4ja.mongodb.net/?appName=accesoqr"
 
 load_dotenv()
@@ -84,14 +77,34 @@ def now_utc():
 PASSWORD_HASH = generate_password_hash("123456")
 
 # ==========================================
-# PANEL DE CONTROL  (lo que normalmente tocas)
+# FRACCIONAMIENTOS  (deben coincidir con utils/fraccionamientos.py)
+# Se guardan en MINÚSCULAS, igual que el registro de la app.
 # ==========================================
 
-# True  = pocos datos, para comprobar en segundos que todo funciona.
-# False = los números reales de abajo.
+FRACCIONAMIENTOS = [
+    "foresta dream lagons",
+    "cedro zinacantepec",
+    "villas del bosque ii",
+]
+
+RES_COL = {
+    "foresta dream lagons": "residentes_foresta_dream_lagons",
+    "cedro zinacantepec": "residentes_cedro_zinacantepec",
+    "villas del bosque ii": "residentes_villas_del_bosque_ii",
+}
+
+VIS_COL = {
+    "foresta dream lagons": "visitas_foresta_dream_lagons",
+    "cedro zinacantepec": "visitas_cedro_zinacantepec",
+    "villas del bosque ii": "visitas_villas_del_bosque_ii",
+}
+
+# ==========================================
+# PANEL DE CONTROL
+# ==========================================
+
 PRUEBA_RAPIDA = False
 
-# Cantidades reales
 TOTAL_RESIDENTES = 5000
 TOTAL_GUARDIAS = 20
 TOTAL_VISITAS = 20000
@@ -100,11 +113,10 @@ TOTAL_INCIDENCIAS = 4000
 
 BATCH = 5000
 
-# Si activas la prueba rápida, se ignoran los números de arriba.
 if PRUEBA_RAPIDA:
-    TOTAL_RESIDENTES = 50
+    TOTAL_RESIDENTES = 60
     TOTAL_GUARDIAS = 5
-    TOTAL_VISITAS = 200
+    TOTAL_VISITAS = 240
     TOTAL_ACCESS_LOGS = 300
     TOTAL_INCIDENCIAS = 40
     BATCH = 500
@@ -114,43 +126,30 @@ if PRUEBA_RAPIDA:
 # CONFIG DE FOTOS
 # ==========================================
 
-# --- Presupuesto Cloudinary (plan gratis) -------------------------------
-# 1 crédito = 1,000 transformaciones = 1 GB storage = 1 GB ancho de banda.
-# SUBIR cada imagen cuenta como 1 transformación.
-# Bajar desde una URL remota (randomuser) NO gasta ancho de banda.
-# Tienes 25 créditos. Este seed debe gastar fracciones de crédito.
 PLAN_CREDITOS = 25
-TOPE_CREDITOS_SUBIDA = PLAN_CREDITOS * 0.5  # no gastar más del 50% subiendo
+TOPE_CREDITOS_SUBIDA = PLAN_CREDITOS * 0.5
 
-# "pool"  -> sube un set chico y lo reparte (RECOMENDADO; gasta ~0.2 créditos).
-# "unico" -> 1 imagen por visita (~40k subidas = ~40 créditos = NO cabe en gratis).
 MODO_FOTOS = "pool"
 
-POOL_VISITANTES = 20 if PRUEBA_RAPIDA else 100  # retratos (randomuser ~200 únicos)
-POOL_PLACAS = 20 if PRUEBA_RAPIDA else 100  # placas (generadas, únicas)
-POOL_QR = 20 if PRUEBA_RAPIDA else 100  # QRs (generados, únicos)
-HILOS_SUBIDA = 8  # subidas en paralelo (no lo subas mucho por rate limit)
+POOL_VISITANTES = 20 if PRUEBA_RAPIDA else 100
+POOL_PLACAS = 20 if PRUEBA_RAPIDA else 100
+POOL_QR = 20 if PRUEBA_RAPIDA else 100
+HILOS_SUBIDA = 8
 
-# Tamaño de entrega para el panel: en lugar de la imagen completa, sirve un
-# thumbnail (w_150, formato y calidad automáticos). Pesa ~5-15 KB y se cachea,
-# así casi no gastas ancho de banda al listar miles de visitas.
 THUMB_WIDTH = 150
 
-# Carpetas: las MISMAS que ya usa tu app (no se crea otra carpeta).
 CARPETA_BASE = "accesoqr"
 CARPETA_VISITANTES = f"{CARPETA_BASE}/visitantes"
 CARPETA_PLACAS = f"{CARPETA_BASE}/placas"
 CARPETA_QR = f"{CARPETA_BASE}/qr"
 
-# Prefijo en el public_id para distinguir lo de prueba de lo real DENTRO de las
-# mismas carpetas. El borrado solo elimina lo que empieza con esto.
 PREFIJO_PRUEBA = "seed_"
 
 # ==========================================
 # CATÁLOGOS
 # ==========================================
 
-PRIVADAS = ["Cedros", "Robles", "Sauces", "Encinos"]
+PRIVADAS = ["cedros", "robles", "sauces", "encinos"]
 MARCAS = ["Toyota", "Nissan", "Honda", "Mazda", "Volkswagen"]
 MODELOS = ["Versa", "Yaris", "Civic", "Mazda3", "Jetta"]
 COLORES = ["Blanco", "Negro", "Gris", "Rojo"]
@@ -185,7 +184,6 @@ def _cargar_fuente(size):
 
 
 def generar_imagen_placa(texto, w=640, h=320):
-    """Genera una imagen tipo placa MX (en memoria) con el texto dado."""
     img = Image.new("RGB", (w, h), "#FFFFFF")
     d = ImageDraw.Draw(img)
     d.rectangle([6, 6, w - 7, h - 7], outline="#1B1B1B", width=8)
@@ -213,9 +211,6 @@ def generar_imagen_placa(texto, w=640, h=320):
 
 
 def _ref_cloudinary(res):
-    """Lo que se guarda en Mongo. Ajusta las llaves a como lo lee tu app
-    (por ej. si tu template usa foto_visitante.url o .secure_url).
-    thumb_url es una versión chica para listados (ahorra ancho de banda)."""
     thumb_url = cloudinary.CloudinaryImage(res["public_id"]).build_url(
         width=THUMB_WIDTH, crop="fill", fetch_format="auto", quality="auto", secure=True
     )
@@ -231,9 +226,8 @@ def _ref_cloudinary(res):
 
 
 def estimar_creditos(n_subidas, kb_prom=40):
-    """Estimación rápida de créditos: subir = 1 transformación c/u + storage."""
     transf = n_subidas / 1000.0
-    storage = (n_subidas * kb_prom) / (1024 * 1024)  # GB
+    storage = (n_subidas * kb_prom) / (1024 * 1024)
     return transf, storage
 
 
@@ -351,25 +345,39 @@ else:
     print(f"Guardias ya existen ({len(guardias_ref)}), no se recrean")
 
 # ==========================================
-# RESIDENTES
+# RESIDENTES  (repartidos en los 3 fraccionamientos)
 # ==========================================
 
 residentes_ref = []
-buf_docs, buf_meta = [], []
+res_buffers = {col: [] for col in RES_COL.values()}
+res_metas = {col: [] for col in RES_COL.values()}
+
+
+def flush_residentes(col):
+    if res_buffers[col]:
+        r = db[col].insert_many(res_buffers[col], ordered=False)
+        for _id, m in zip(r.inserted_ids, res_metas[col]):
+            m["_id"] = _id
+            residentes_ref.append(m)
+        res_buffers[col] = []
+        res_metas[col] = []
+
 
 for i in tqdm(range(TOTAL_RESIDENTES), desc="Residentes"):
     nombre = fake.name()
+    frac = random.choice(FRACCIONAMIENTOS)  # minúsculas
+    col = RES_COL[frac]
     privada = random.choice(PRIVADAS)
     casa = str(random.randint(1, 5000))
     tel = fake.msisdn()[:10]
 
-    buf_docs.append(
+    res_buffers[col].append(
         {
             "nombre": nombre,
             "correo": f"residente{i}_{fake.user_name()}_{uuid.uuid4().hex[:6]}@accesoqr.com",
             "password": PASSWORD_HASH,
             "rol": "residente",
-            "fraccionamiento": "cedros prueba",
+            "fraccionamiento": frac,
             "privada": privada,
             "numero_casa": casa,
             "telefono": tel,
@@ -381,42 +389,34 @@ for i in tqdm(range(TOTAL_RESIDENTES), desc="Residentes"):
             "es_prueba": True,
         }
     )
-    buf_meta.append(
+    res_metas[col].append(
         {
             "nombre": nombre,
             "telefono": tel,
             "numero_casa": casa,
             "privada": privada,
-            "fraccionamiento": "cedros prueba",
+            "fraccionamiento": frac,
         }
     )
 
-    if len(buf_docs) == BATCH:
-        r = db.users.insert_many(buf_docs, ordered=False)
-        for _id, m in zip(r.inserted_ids, buf_meta):
-            m["_id"] = _id
-            residentes_ref.append(m)
-        buf_docs, buf_meta = [], []
+    if len(res_buffers[col]) >= BATCH:
+        flush_residentes(col)
 
-if buf_docs:
-    r = db.users.insert_many(buf_docs, ordered=False)
-    for _id, m in zip(r.inserted_ids, buf_meta):
-        m["_id"] = _id
-        residentes_ref.append(m)
+for col in RES_COL.values():
+    flush_residentes(col)
 
 print(f"Residentes creados: {len(residentes_ref)}")
 
 # ==========================================
-# POOL DE FOTOS (si MODO_FOTOS == "pool")
+# POOL DE FOTOS
 # ==========================================
 
 pool_visitantes, pool_placas, pool_qr = [], [], []
 
-# --- Chequeo de presupuesto antes de subir nada ---
 if MODO_FOTOS == "pool":
     n_subidas = POOL_VISITANTES + POOL_PLACAS + POOL_QR
 elif MODO_FOTOS == "unico":
-    n_subidas = TOTAL_VISITAS * 3  # visitante + placa + qr por visita
+    n_subidas = TOTAL_VISITAS * 3
 else:
     n_subidas = 0
 
@@ -457,7 +457,6 @@ elif MODO_FOTOS == "unico":
 
 
 def obtener_assets(i, placa_texto, qr_data):
-    """Devuelve (foto_visitante, foto_placa, qr_ref) según el modo elegido."""
     if MODO_FOTOS == "pool":
         return (
             random.choice(pool_visitantes),
@@ -475,14 +474,29 @@ def obtener_assets(i, placa_texto, qr_data):
 
 
 # ==========================================
-# VISITS
+# VISITS  (cada una en la colección de su fraccionamiento)
 # ==========================================
 
 visitas_ref = []
-buf_docs, buf_meta = [], []
+vis_buffers = {col: [] for col in VIS_COL.values()}
+vis_metas = {col: [] for col in VIS_COL.values()}
+
+
+def flush_visitas(col):
+    if vis_buffers[col]:
+        r = db[col].insert_many(vis_buffers[col], ordered=False)
+        for _id, m in zip(r.inserted_ids, vis_metas[col]):
+            m["_id"] = _id
+            visitas_ref.append(m)
+        vis_buffers[col] = []
+        vis_metas[col] = []
+
 
 for i in tqdm(range(TOTAL_VISITAS), desc="Visitas"):
     residente = random.choice(residentes_ref)
+    frac = residente["fraccionamiento"]
+    col = VIS_COL[frac]
+
     nombre_vis = fake.name()
     placa_texto = fake.bothify("???-###").upper()
     qr_token = str(uuid.uuid4())
@@ -490,7 +504,7 @@ for i in tqdm(range(TOTAL_VISITAS), desc="Visitas"):
         i, placa_texto, f"https://accesoqr.com/v/{qr_token}"
     )
 
-    buf_docs.append(
+    vis_buffers[col].append(
         {
             "residente_id": str(residente["_id"]),
             "residente_nombre": residente["nombre"],
@@ -502,7 +516,7 @@ for i in tqdm(range(TOTAL_VISITAS), desc="Visitas"):
             "telefono": fake.msisdn()[:10],
             "modalidad_visita": random.choice(["temporal", "recurrente"]),
             "motivo": random.choice(MOTIVOS),
-            "fraccionamiento": residente["fraccionamiento"],
+            "fraccionamiento": frac,
             "condominio": residente["privada"],
             "residencia_destino": residente["numero_casa"],
             "fecha_visita": fake.date_between(
@@ -524,8 +538,6 @@ for i in tqdm(range(TOTAL_VISITAS), desc="Visitas"):
                 "color": random.choice(COLORES),
             },
             "qr_token": qr_token,
-            # QR real en Cloudinary. qr_path = URL (como tu app); guardamos
-            # también qr_public_id para poder borrarlo después.
             "qr_path": (qr_ref or {}).get("url"),
             "qr_public_id": (qr_ref or {}).get("public_id"),
             "qr_estado": random.choice(["activo", "vencido", "cancelado"]),
@@ -534,27 +546,20 @@ for i in tqdm(range(TOTAL_VISITAS), desc="Visitas"):
             "es_prueba": True,
         }
     )
-    buf_meta.append(
+    vis_metas[col].append(
         {"nombre_visitante": nombre_vis, "residencia_destino": residente["numero_casa"]}
     )
 
-    if len(buf_docs) == BATCH:
-        r = db.visits.insert_many(buf_docs, ordered=False)
-        for _id, m in zip(r.inserted_ids, buf_meta):
-            m["_id"] = _id
-            visitas_ref.append(m)
-        buf_docs, buf_meta = [], []
+    if len(vis_buffers[col]) >= BATCH:
+        flush_visitas(col)
 
-if buf_docs:
-    r = db.visits.insert_many(buf_docs, ordered=False)
-    for _id, m in zip(r.inserted_ids, buf_meta):
-        m["_id"] = _id
-        visitas_ref.append(m)
+for col in VIS_COL.values():
+    flush_visitas(col)
 
 print(f"Visitas creadas: {len(visitas_ref)}")
 
 # ==========================================
-# ACCESS LOGS
+# ACCESS LOGS  (sin cambios)
 # ==========================================
 
 buf = []
@@ -580,7 +585,7 @@ if buf:
 print("Access logs creados")
 
 # ==========================================
-# INCIDENCIAS
+# INCIDENCIAS  (sin cambios)
 # ==========================================
 
 buf = []
@@ -608,26 +613,30 @@ if buf:
 print("Incidencias creadas")
 
 # ==========================================
-# ÍNDICES
+# ÍNDICES  (sobre las colecciones nuevas)
 # ==========================================
 
 print("Creando índices...")
+
 db.users.create_index("rol")
 db.users.create_index("correo", unique=True)
 db.users.create_index("estado")
 
-db.visits.create_index("residente_id")
+for col in RES_COL.values():
+    db[col].create_index("correo", unique=True)
+    db[col].create_index("estado")
+    db[col].create_index([("fraccionamiento", 1), ("privada", 1), ("numero_casa", 1)])
 
-try:
-    db.visits.drop_index("qr_token_1")
-except Exception:
-    pass
-
-db.visits.create_index("qr_token", unique=True)
-
-db.visits.create_index("estado")
-db.visits.create_index([("created_at", -1)])
-db.visits.create_index("fecha_visita")
+for col in VIS_COL.values():
+    try:
+        db[col].drop_index("qr_token_1")
+    except Exception:
+        pass
+    db[col].create_index("qr_token", unique=True)
+    db[col].create_index("residente_id")
+    db[col].create_index("estado")
+    db[col].create_index([("created_at", -1)])
+    db[col].create_index("fecha_visita")
 
 db.access_logs.create_index("visita_id")
 db.access_logs.create_index("guardia_id")
@@ -638,4 +647,11 @@ db.incidencias.create_index("visita_id")
 db.incidencias.create_index([("fecha_hora", -1)])
 print("Índices listos")
 
-print("\n¡LISTO! Datos de prueba generados correctamente.")
+# Resumen por fraccionamiento
+print("\nResumen por fraccionamiento:")
+for frac in FRACCIONAMIENTOS:
+    nr = db[RES_COL[frac]].count_documents({})
+    nv = db[VIS_COL[frac]].count_documents({})
+    print(f"  {frac:22s} -> residentes: {nr:5d} | visitas: {nv:6d}")
+
+print("\n¡LISTO! Datos de prueba generados y repartidos en los 3 fraccionamientos.")

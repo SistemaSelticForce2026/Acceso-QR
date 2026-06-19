@@ -146,15 +146,19 @@ def validar_acceso_qr(visita):
 
 
 def actualizar_qr_vencido_si_aplica(visita_id, visita):
-    """Marca QR recurrente como vencido si pasó el mes de vigencia."""
+    """Marca QR recurrente como vencido si pasó el mes de vigencia.
+    Escribe en la colección de visitas del fraccionamiento de la visita."""
     if visita.get("modalidad_visita") != "recurrente":
         return
     vigencia_hasta = visita.get("vigencia_hasta")
     if vigencia_hasta and isinstance(vigencia_hasta, datetime):
         if datetime.now() > vigencia_hasta:
             from extensions import mongo
+            from utils.fraccionamientos import coleccion_visitas
 
-            mongo.db.visits.update_one(
-                {"_id": visita_id},
-                {"$set": {"qr_estado": "vencido"}},
-            )
+            col = coleccion_visitas(mongo.db, visita.get("fraccionamiento"))
+            if col is not None:
+                col.update_one(
+                    {"_id": visita_id},
+                    {"$set": {"qr_estado": "vencido"}},
+                )

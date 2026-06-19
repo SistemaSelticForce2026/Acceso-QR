@@ -15,9 +15,33 @@ from extensions import mongo, socketio
 from utils.auth import login_required, role_required
 from utils.visita_validacion import validar_acceso_qr, actualizar_qr_vencido_si_aplica
 
+# >>> NUEVO: helpers de colecciones por fraccionamiento
+from utils.fraccionamientos import (
+    buscar_visita_por_token,
+    coleccion_visitas,
+    find_visitas,
+    contar_visitas,
+)
+
 import ast
 
 guard_bp = Blueprint("guard", __name__, url_prefix="/guard")
+
+
+# =====================================================
+# HELPER: colección de visitas según el fraccionamiento de la visita
+# =====================================================
+
+
+def _col_visita(visita):
+    """Devuelve la colección de visitas donde vive esta visita."""
+    return coleccion_visitas(mongo.db, visita.get("fraccionamiento"))
+
+
+def _buscar_visita(token):
+    """Busca la visita por token en las 3 colecciones (o None)."""
+    visita, _ = buscar_visita_por_token(mongo.db, token)
+    return visita
 
 
 def _render_scan(modo, resultado=None, bloquear_camara=False):
@@ -88,7 +112,7 @@ def _registrar_salida(visita, session):
             "fecha_salida": ahora,
         }
 
-    mongo.db.visits.update_one({"_id": visita["_id"]}, {"$set": update_salida})
+    _col_visita(visita).update_one({"_id": visita["_id"]}, {"$set": update_salida})
     visita.update(update_salida)
     socketio.emit("actualizar_dashboard", to="rol:admin")
     socketio.emit("actualizar_dashboard", to=f"user:{visita['residente_id']}")
@@ -135,27 +159,27 @@ def dashboard():
         hace_7_dt = datetime.now() - timedelta(days=7)
         filtro["$or"] = [
             {"fecha_visita": {"$type": "string", "$gte": hace_7_str}},
-            {"fecha_visita": {"$type": "date",   "$gte": hace_7_dt}},
+            {"fecha_visita": {"$type": "date", "$gte": hace_7_dt}},
         ]
 
     if busqueda:
         filtro["nombre_visitante"] = {"$regex": busqueda, "$options": "i"}
 
-    total_visitas = mongo.db.visits.count_documents(filtro)
+    total_visitas = contar_visitas(mongo.db, filtro)
 
     total_paginas = (total_visitas + por_pagina - 1) // por_pagina
 
-    visitas = list(
-        mongo.db.visits.find(filtro)
-        .sort([("fecha_visita", 1), ("created_at", 1)])
-        .skip((pagina - 1) * por_pagina)
-        .limit(por_pagina)
+    visitas = find_visitas(
+        mongo.db,
+        filtro,
+        sort=[("fecha_visita", 1), ("created_at", 1)],
+        skip=(pagina - 1) * por_pagina,
+        limit=por_pagina,
     )
 
-
-    activas = mongo.db.visits.count_documents({"estado": "activo"})
-    dentro = mongo.db.visits.count_documents({"estado": "dentro"})
-    salidas = mongo.db.visits.count_documents({"estado": "salida_registrada"})
+    activas = contar_visitas(mongo.db, {"estado": "activo"})
+    dentro = contar_visitas(mongo.db, {"estado": "dentro"})
+    salidas = contar_visitas(mongo.db, {"estado": "salida_registrada"})
     incidencias = mongo.db.incidencias.count_documents({})
 
     return render_template(
@@ -190,7 +214,7 @@ def scan_entrada():
 
     if request.method == "POST":
         token = request.form["qr_token"].strip()
-        visita = mongo.db.visits.find_one({"qr_token": token})
+        visita = _buscar_visita(token)
 
         # =====================================
         # NORMALIZAR FOTOS CLOUDINARY
@@ -246,7 +270,7 @@ def scan_entrada():
 
         else:
             actualizar_qr_vencido_si_aplica(visita["_id"], visita)
-            visita = mongo.db.visits.find_one({"qr_token": token})
+            visita = _buscar_visita(token)
 
             # =====================================
             # NORMALIZAR FOTOS CLOUDINARY
@@ -307,7 +331,7 @@ def scan_entrada():
                         "observaciones": "Entrada autorizada por QR",
                     }
                 )
-                mongo.db.visits.update_one(
+                _col_visita(visita).update_one(
                     {"_id": visita["_id"]}, {"$set": update_entrada}
                 )
                 socketio.emit("actualizar_dashboard", to="rol:admin")
@@ -339,7 +363,7 @@ def scan_salida():
 
         token = request.form["qr_token"].strip()
 
-        visita = mongo.db.visits.find_one({"qr_token": token})
+        visita = _buscar_visita(token)
 
         # =====================================
         # NORMALIZAR FOTOS CLOUDINARY
@@ -406,7 +430,7 @@ def incidencia_manual():
     tipo_incidencia = request.form["tipo_incidencia"]
     detalle = request.form.get("detalle", "").strip()
 
-    visita = mongo.db.visits.find_one({"qr_token": token}) if token else None
+    visita = _buscar_visita(token) if token else None
 
     descripciones = {
         "placa_no_coincide": "La placa del vehículo no coincide con la registrada.",
@@ -446,11 +470,11 @@ def incidencia_manual():
 def confirm_access():
 
     token = request.form["qr_token"]
-    visita = mongo.db.visits.find_one({"qr_token": token})
+    visita = _buscar_visita(token)
 
     if visita:
 
-        mongo.db.visits.update_one(
+        _col_visita(visita).update_one(
             {"_id": visita["_id"]},
             {
                 "$set": {

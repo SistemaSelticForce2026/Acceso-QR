@@ -11,12 +11,48 @@ from utils.qr_generator import generate_qr
 from utils.uploads import guardar_imagen
 from utils.visita_validacion import vigencia_recurrente_meses
 
+# >>> NUEVO: helpers de colecciones por fraccionamiento
+from utils.fraccionamientos import coleccion_visitas, coleccion_residentes
+
 from flask import jsonify
 from bson import ObjectId
 
 import cloudinary.uploader
 
 resident_bp = Blueprint("resident", __name__, url_prefix="/resident")
+
+
+# =====================================================
+# HELPERS DE COLECCIÓN (según el fraccionamiento del residente logueado)
+# =====================================================
+
+
+def _frac_actual():
+    """Fraccionamiento del residente logueado (se guarda en sesión al hacer login)."""
+    return session.get("fraccionamiento")
+
+
+def _mis_visitas():
+    """Colección de visitas del fraccionamiento del residente logueado."""
+    col = coleccion_visitas(mongo.db, _frac_actual())
+    if col is None:
+        # Si esto truena es porque el login no guardó session["fraccionamiento"].
+        raise RuntimeError(
+            "No hay fraccionamiento en la sesión. "
+            "Asegúrate de guardar session['fraccionamiento'] al hacer login."
+        )
+    return col
+
+
+def _mi_residente_col():
+    """Colección de residentes del fraccionamiento del residente logueado."""
+    col = coleccion_residentes(mongo.db, _frac_actual())
+    if col is None:
+        raise RuntimeError(
+            "No hay fraccionamiento en la sesión. "
+            "Asegúrate de guardar session['fraccionamiento'] al hacer login."
+        )
+    return col
 
 
 # =====================================================
@@ -30,32 +66,31 @@ resident_bp = Blueprint("resident", __name__, url_prefix="/resident")
 def dashboard():
 
     residente_id = session["user_id"]
+    visitas_col = _mis_visitas()
 
     # =============================================
     # 5 VISITAS MÁS RECIENTES
     # =============================================
 
     visitas_recientes = list(
-        mongo.db.visits.find({"residente_id": residente_id})
-        .sort("created_at", -1)
-        .limit(5)
+        visitas_col.find({"residente_id": residente_id}).sort("created_at", -1).limit(5)
     )
 
     # =============================================
     # ESTADISTICAS
     # =============================================
 
-    total_visitas = mongo.db.visits.count_documents({"residente_id": residente_id})
+    total_visitas = visitas_col.count_documents({"residente_id": residente_id})
 
-    visitas_dentro = mongo.db.visits.count_documents(
+    visitas_dentro = visitas_col.count_documents(
         {"residente_id": residente_id, "estado": "dentro"}
     )
 
-    visitas_finalizadas = mongo.db.visits.count_documents(
+    visitas_finalizadas = visitas_col.count_documents(
         {"residente_id": residente_id, "estado": "salida_registrada"}
     )
 
-    visitas_pendientes = mongo.db.visits.count_documents(
+    visitas_pendientes = visitas_col.count_documents(
         {
             "residente_id": residente_id,
             "estado": {"$in": ["activo", "pendiente_autorizacion"]},
@@ -81,6 +116,8 @@ def dashboard():
 @login_required
 @role_required("residente")
 def visitors():
+
+    visitas_col = _mis_visitas()
 
     # =============================================
     # AUTO ABRIR QR
@@ -124,12 +161,12 @@ def visitors():
     # CONSULTA
     # =============================================
 
-    total_visitas = mongo.db.visits.count_documents(filtro)
+    total_visitas = visitas_col.count_documents(filtro)
 
     total_paginas = max(1, (total_visitas + por_pagina - 1) // por_pagina)
 
     visitas = list(
-        mongo.db.visits.find(filtro)
+        visitas_col.find(filtro)
         .sort("created_at", -1)
         .skip((pagina - 1) * por_pagina)
         .limit(por_pagina)
@@ -158,7 +195,9 @@ def visitors():
 @role_required("residente")
 def cancelar_qr(token):
 
-    visita = mongo.db.visits.find_one(
+    visitas_col = _mis_visitas()
+
+    visita = visitas_col.find_one(
         {"qr_token": token, "residente_id": session["user_id"]}
     )
 
@@ -176,7 +215,7 @@ def cancelar_qr(token):
             409,
         )
 
-    mongo.db.visits.update_one(
+    visitas_col.update_one(
         {"_id": visita["_id"]},
         {"$set": {"qr_estado": "cancelado", "estado": "cancelado"}},
     )
@@ -194,7 +233,9 @@ def cancelar_qr(token):
 @role_required("residente")
 def editar_visita(visita_id):
 
-    visita = mongo.db.visits.find_one(
+    visitas_col = _mis_visitas()
+
+    visita = visitas_col.find_one(
         {"_id": ObjectId(visita_id), "residente_id": session["user_id"]}
     )
 
@@ -241,7 +282,7 @@ def editar_visita(visita_id):
             except (TypeError, ValueError):
                 vigencia_hasta = visita.get("vigencia_hasta")
 
-            mongo.db.visits.update_one(
+            visitas_col.update_one(
                 {"_id": ObjectId(visita_id)},
                 {
                     "$set": {
@@ -262,7 +303,7 @@ def editar_visita(visita_id):
 
         else:
 
-            mongo.db.visits.update_one(
+            visitas_col.update_one(
                 {"_id": ObjectId(visita_id)},
                 {
                     "$set": {
@@ -297,10 +338,10 @@ def editar_visita(visita_id):
 def create_visit():
 
     # =============================================
-    # OBTENER RESIDENTE
+    # OBTENER RESIDENTE (de la colección de su fraccionamiento)
     # =============================================
 
-    residente = mongo.db.users.find_one({"_id": ObjectId(session["user_id"])})
+    residente = _mi_residente_col().find_one({"_id": ObjectId(session["user_id"])})
 
     # =============================================
     # POST
@@ -455,10 +496,10 @@ def create_visit():
         }
 
         # =============================================
-        # GUARDAR EN MONGO
+        # GUARDAR EN MONGO (colección de visitas del fraccionamiento)
         # =============================================
 
-        mongo.db.visits.insert_one(visita)
+        _mis_visitas().insert_one(visita)
 
         # =============================================
         # SOCKET NUEVA VISITA

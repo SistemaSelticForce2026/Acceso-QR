@@ -10,10 +10,25 @@ from flask import (
     url_for,
     flash,
     send_file,
+    jsonify,
 )
 
 from extensions import mongo, socketio
 from utils.auth import login_required, role_required
+
+# >>> NUEVO: helpers de colecciones por fraccionamiento
+from utils.fraccionamientos import (
+    agg_visitas,
+    find_visitas,
+    contar_visitas,
+    find_residentes,
+    contar_residentes,
+    coleccion_residentes,
+    buscar_residente_por_id,
+    es_fraccionamiento_valido,
+    VISITAS_COLECCIONES,
+    FRACCIONAMIENTOS,
+)
 
 from bson.objectid import ObjectId
 
@@ -43,8 +58,12 @@ from reportlab.platypus import (
 from reportlab.platypus.flowables import HRFlowable
 
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas as _canvas
+
+
+from flask import jsonify
 
 # =========================================================
 # BLUEPRINT
@@ -53,8 +72,286 @@ from reportlab.lib.pagesizes import letter
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
+@admin_bp.route("/configuracion/ultima-actualizacion/<fraccionamiento>")
+@login_required
+@role_required("admin")
+def ultima_actualizacion(fraccionamiento):
+
+    config = mongo.db.configuraciones.find_one({"fraccionamiento": fraccionamiento})
+
+    return jsonify(
+        {
+            "hora": (
+                config.get("actualizado_str", "Sin cambios")
+                if config
+                else "Sin cambios"
+            )
+        }
+    )
+
+
 # =========================================================
-# HELPER: METADATA PDF (reutilizable en todos los reportes)
+# =========================================================
+# SISTEMA DE DISEÑO DE REPORTES PDF  (profesional, reutilizable)
+# =========================================================
+# =========================================================
+
+# ---------- PALETA DE MARCA ----------
+BRAND_DARK = colors.HexColor("#0F172A")  # navy / encabezado
+BRAND_ACCENT = colors.HexColor("#2563EB")  # azul de acento
+BRAND_GRID = colors.HexColor("#E2E8F0")  # líneas suaves
+TEXT_DARK = colors.HexColor("#1E293B")  # texto principal
+TEXT_MUTED = colors.HexColor("#64748B")  # texto secundario
+ROW_ALT = colors.HexColor("#F8FAFC")  # fila alterna
+OK_GREEN = colors.HexColor("#16A34A")
+WARN_RED = colors.HexColor("#DC2626")
+AMBER = colors.HexColor("#D97706")
+CYAN = colors.HexColor("#0891B2")
+
+# ---------- COLOR POR ESTADO (para los badges) ----------
+ESTADO_COLORES = {
+    "activo": OK_GREEN,
+    "permitido": OK_GREEN,
+    "autorizado": OK_GREEN,
+    "resuelta": OK_GREEN,
+    "resuelto": OK_GREEN,
+    "dentro": BRAND_ACCENT,
+    "salida_registrada": CYAN,
+    "finalizada": CYAN,
+    "inactivo": TEXT_MUTED,
+    "bloqueado": TEXT_MUTED,
+    "cerrada": TEXT_MUTED,
+    "cancelado": WARN_RED,
+    "rechazado": WARN_RED,
+    "vencido": AMBER,
+    "pendiente": AMBER,
+    "pendiente_autorizacion": AMBER,
+    "abierta": AMBER,
+}
+
+# ---------- ESTILOS DE CELDA ----------
+_CELDA = ParagraphStyle(
+    "celda",
+    fontName="Helvetica",
+    fontSize=8,
+    leading=10,
+    textColor=TEXT_DARK,
+    wordWrap="CJK",
+)
+_CELDA_NUM = ParagraphStyle(
+    "celdanum", parent=_CELDA, alignment=1, textColor=TEXT_MUTED
+)
+_CELDA_FUERTE = ParagraphStyle(
+    "celdaf", parent=_CELDA, fontName="Helvetica-Bold", textColor=BRAND_DARK
+)
+
+
+def _c(valor, estilo=_CELDA):
+    """Celda de texto segura (None -> '')."""
+    return Paragraph("" if valor is None else str(valor), estilo)
+
+
+def _badge(texto, fondo, color_texto=colors.white):
+    """Pequeña 'píldora' de color."""
+    est = ParagraphStyle(
+        "badge",
+        fontName="Helvetica-Bold",
+        fontSize=7,
+        textColor=color_texto,
+        alignment=1,
+        backColor=fondo,
+        borderPadding=(2, 6, 2, 6),
+        borderRadius=6,
+        leading=10,
+    )
+    return Paragraph((texto or "—").upper(), est)
+
+
+def _badge_estado(estado_raw, etiqueta=None):
+    """Badge coloreado según el estado."""
+    color = ESTADO_COLORES.get((estado_raw or "").lower(), TEXT_MUTED)
+    return _badge(etiqueta or estado_raw or "—", color)
+
+
+def _kpi_card(valor, etiqueta, color=BRAND_ACCENT):
+    """Tarjeta KPI con barra de color a la izquierda."""
+    ev = ParagraphStyle(
+        "kv",
+        fontName="Helvetica-Bold",
+        fontSize=20,
+        textColor=BRAND_DARK,
+        alignment=0,
+        leading=22,
+    )
+    el = ParagraphStyle(
+        "kl",
+        fontName="Helvetica-Bold",
+        fontSize=7.5,
+        textColor=TEXT_MUTED,
+        alignment=0,
+        leading=11,
+        spaceBefore=3,
+    )
+    inner = Table([[_c(valor, ev)], [_c(etiqueta.upper(), el)]])
+    inner.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), colors.white),
+                ("BOX", (0, 0), (-1, -1), 0.8, BRAND_GRID),
+                ("LINEBEFORE", (0, 0), (0, -1), 3.5, color),
+                ("TOPPADDING", (0, 0), (-1, 0), 11),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 0),
+                ("TOPPADDING", (0, 1), (-1, 1), 0),
+                ("BOTTOMPADDING", (0, 1), (-1, 1), 11),
+                ("LEFTPADDING", (0, 0), (-1, -1), 13),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 13),
+                ("ROUNDEDCORNERS", [7, 7, 7, 7]),
+            ]
+        )
+    )
+    return inner
+
+
+def _fila_kpis(cards, ancho_total):
+    """Fila de tarjetas KPI repartidas en el ancho indicado."""
+    n = len(cards)
+    gap = 12
+    cw = (ancho_total - gap * (n - 1)) / n
+    row, widths = [], []
+    for i, card in enumerate(cards):
+        row.append(card)
+        widths.append(cw)
+        if i < n - 1:
+            row.append("")
+            widths.append(gap)
+    t = Table([row], colWidths=widths)
+    t.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
+    return t
+
+
+def _tabla_datos(data, col_widths, aligns=None):
+    """Tabla con encabezado oscuro, filas alternas y separadores suaves."""
+    t = Table(data, repeatRows=1, colWidths=col_widths)
+    estilo = [
+        ("BACKGROUND", (0, 0), (-1, 0), BRAND_DARK),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 8.5),
+        ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+        ("TOPPADDING", (0, 0), (-1, 0), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 9),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, ROW_ALT]),
+        ("LINEBELOW", (0, 1), (-1, -1), 0.4, BRAND_GRID),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0, 1), (-1, -1), "LEFT"),
+        ("TOPPADDING", (0, 1), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 7),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ("ROUNDEDCORNERS", [6, 6, 0, 0]),
+    ]
+    if aligns:
+        for col, al in enumerate(aligns):
+            estilo.append(("ALIGN", (col, 1), (col, -1), al))
+    t.setStyle(TableStyle(estilo))
+    return t
+
+
+def _make_canvas_class(titulo, subtitulo, pagesize):
+    """Canvas que dibuja encabezado de marca y pie con 'Página X de Y'."""
+
+    class _ReporteCanvas(_canvas.Canvas):
+        def __init__(self, *a, **k):
+            super().__init__(*a, **k)
+            self._guardadas = []
+
+        def showPage(self):
+            self._guardadas.append(dict(self.__dict__))
+            self._startPage()
+
+        def save(self):
+            total = len(self._guardadas)
+            for i, st in enumerate(self._guardadas, start=1):
+                self.__dict__.update(st)
+                self._header()
+                self._footer(i, total)
+                super().showPage()
+            super().save()
+
+        def _header(self):
+            w, h = pagesize
+            bh = 62
+            self.setFillColor(BRAND_DARK)
+            self.rect(0, h - bh, w, bh, fill=1, stroke=0)
+            self.setFillColor(BRAND_ACCENT)
+            self.rect(0, h - bh - 4, w, 4, fill=1, stroke=0)
+            self.setFillColor(colors.white)
+            self.setFont("Helvetica-Bold", 17)
+            self.drawString(40, h - 33, titulo)
+            if subtitulo:
+                self.setFillColor(colors.HexColor("#CBD5E1"))
+                self.setFont("Helvetica", 9)
+                self.drawString(40, h - 49, subtitulo)
+            self.setFillColor(colors.white)
+            self.setFont("Helvetica-Bold", 13)
+            self.drawRightString(w - 40, h - 30, "AccessQR")
+            self.setFillColor(colors.HexColor("#94A3B8"))
+            self.setFont("Helvetica", 8)
+            self.drawRightString(w - 40, h - 44, "Sistema Residencial")
+
+        def _footer(self, pagina, total):
+            w, h = pagesize
+            self.setStrokeColor(BRAND_GRID)
+            self.setLineWidth(0.7)
+            self.line(40, 40, w - 40, 40)
+            self.setFillColor(TEXT_MUTED)
+            self.setFont("Helvetica", 8)
+            self.drawString(40, 28, "AccessQR \u00b7 Sistema Residencial")
+            self.drawCentredString(
+                w / 2,
+                28,
+                datetime.now().strftime("Generado el %d/%m/%Y %I:%M %p"),
+            )
+            self.drawRightString(w - 40, 28, f"P\u00e1gina {pagina} de {total}")
+
+    return _ReporteCanvas
+
+
+def _construir_reporte_pdf(buffer, titulo, subtitulo, contenido, asunto=None):
+    """Arma el PDF horizontal con encabezado/pie de marca en todas las páginas."""
+    pagesize = landscape(letter)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=pagesize,
+        leftMargin=40,
+        rightMargin=40,
+        topMargin=94,
+        bottomMargin=54,
+        title=f"Acceso QR | {titulo}",
+        author="AccessQR",
+        subject=asunto or titulo,
+        creator="AccessQR | Sistema Residencial",
+    )
+    doc.build(contenido, canvasmaker=_make_canvas_class(titulo, subtitulo, pagesize))
+
+
+def _ancho_util():
+    """Ancho disponible entre márgenes en hoja horizontal."""
+    return landscape(letter)[0] - 80
+
+
+# =========================================================
+# HELPER: METADATA PDF  (se conserva por compatibilidad)
 # =========================================================
 
 
@@ -84,6 +381,14 @@ def _registrar_historial_reporte(nombre, tipo, formato):
             "estado": "Generado",
         }
     )
+
+
+def _distinct_visitas(campo, filtro):
+    """distinct() de un campo sobre las 3 colecciones de visitas."""
+    valores = set()
+    for nombre in VISITAS_COLECCIONES.values():
+        valores.update(mongo.db[nombre].distinct(campo, filtro))
+    return list(valores)
 
 
 # =========================================================
@@ -166,14 +471,12 @@ def dashboard():
 
     # -----------------------------------------------------
     # 2) RANGO EFECTIVO (sincronización)
-    #    Si el usuario puso fechas en la tabla, esas mandan; si no, = período.
     # -----------------------------------------------------
     override = bool(fecha_inicio_tabla or fecha_fin_tabla)
 
     inicio_str = fecha_inicio_tabla or periodo_inicio_str
     fin_str = fecha_fin_tabla or periodo_fin_str
 
-    # que inicio <= fin
     if inicio_str > fin_str:
         inicio_str, fin_str = fin_str, inicio_str
 
@@ -216,20 +519,20 @@ def dashboard():
             {"descripcion": rx},
         ]
 
-    visits = mongo.db.visits
     logs = mongo.db.access_logs
     incs = mongo.db.incidencias
 
     # -----------------------------------------------------
-    # KPIs de visitas
+    # KPIs de visitas  (agg_visitas une las 3 colecciones)
     # -----------------------------------------------------
     estado_counts = {
         row["_id"]: row["n"]
-        for row in visits.aggregate(
+        for row in agg_visitas(
+            mongo.db,
             [
                 {"$match": match_visitas},
                 {"$group": {"_id": "$estado", "n": {"$sum": 1}}},
-            ]
+            ],
         )
     }
     total_visitas = sum(estado_counts.values())
@@ -238,7 +541,7 @@ def dashboard():
     salidas = estado_counts.get("salida_registrada", 0)
     pendientes_autorizacion = estado_counts.get("pendiente_autorizacion", 0)
 
-    total_residentes = mongo.db.users.count_documents({"rol": "residente"})
+    total_residentes = contar_residentes(mongo.db, {"rol": "residente"})
     total_guardias = mongo.db.users.count_documents({"rol": "guardia"})
     total_incidencias = incs.count_documents(match_incidencias)
     rechazados = logs.count_documents({**match_accesos, "resultado": "rechazado"})
@@ -247,7 +550,8 @@ def dashboard():
     # TIPOS DE VISITA
     # -----------------------------------------------------
     tipo_labels, tipo_data = [], []
-    for row in visits.aggregate(
+    for row in agg_visitas(
+        mongo.db,
         [
             {"$match": match_visitas},
             {
@@ -257,7 +561,7 @@ def dashboard():
                 }
             },
             {"$sort": {"n": -1}},
-        ]
+        ],
     ):
         tipo_labels.append(row["_id"] or "General")
         tipo_data.append(row["n"])
@@ -267,11 +571,12 @@ def dashboard():
     # -----------------------------------------------------
     dias_raw = {
         row["_id"]: row["n"]
-        for row in visits.aggregate(
+        for row in agg_visitas(
+            mongo.db,
             [
                 {"$match": match_visitas},
                 {"$group": {"_id": "$fecha_visita", "n": {"$sum": 1}}},
-            ]
+            ],
         )
         if row["_id"]
     }
@@ -288,13 +593,14 @@ def dashboard():
     # -----------------------------------------------------
     residentes_rank = [
         (row["_id"] or "Sin residente", row["n"])
-        for row in visits.aggregate(
+        for row in agg_visitas(
+            mongo.db,
             [
                 {"$match": match_visitas},
                 {"$group": {"_id": "$residente_nombre", "n": {"$sum": 1}}},
                 {"$sort": {"n": -1}},
                 {"$limit": 10},
-            ]
+            ],
         )
     ]
     top_residentes = residentes_rank[:5]
@@ -304,7 +610,8 @@ def dashboard():
     # PRIVADAS
     # -----------------------------------------------------
     privadas_labels, privadas_data = [], []
-    for row in visits.aggregate(
+    for row in agg_visitas(
+        mongo.db,
         [
             {"$match": match_visitas},
             {
@@ -314,7 +621,7 @@ def dashboard():
                 }
             },
             {"$sort": {"n": -1}},
-        ]
+        ],
     ):
         privadas_labels.append(row["_id"] or "General")
         privadas_data.append(row["n"])
@@ -361,12 +668,13 @@ def dashboard():
         .sort("fecha_hora", -1)
         .limit(10)
     )
-    visitas_dentro = list(
-        visits.find({**match_visitas, "estado": "dentro"})
-        .sort("fecha_visita", -1)
-        .limit(50)
+    visitas_dentro = find_visitas(
+        mongo.db,
+        {**match_visitas, "estado": "dentro"},
+        sort=[("fecha_visita", -1)],
+        limit=50,
     )
-    vehiculos = visits.distinct("vehiculo.placa", match_visitas)
+    vehiculos = _distinct_visitas("vehiculo.placa", match_visitas)
 
     # -----------------------------------------------------
     # TABLA (mismo rango que todo lo demás)
@@ -377,15 +685,16 @@ def dashboard():
     if por_pagina_tabla not in PER_PAGE_OPCIONES:
         por_pagina_tabla = 10
 
-    total_visitas_tabla = visits.count_documents(match_visitas)
+    total_visitas_tabla = contar_visitas(mongo.db, match_visitas)
     total_paginas_tabla = max(
         1, (total_visitas_tabla + por_pagina_tabla - 1) // por_pagina_tabla
     )
-    visitas_tabla_paginada = list(
-        visits.find(match_visitas)
-        .sort([("fecha_visita", -1), ("created_at", -1)])
-        .skip((pagina_tabla - 1) * por_pagina_tabla)
-        .limit(por_pagina_tabla)
+    visitas_tabla_paginada = find_visitas(
+        mongo.db,
+        match_visitas,
+        sort=[("fecha_visita", -1), ("created_at", -1)],
+        skip=(pagina_tabla - 1) * por_pagina_tabla,
+        limit=por_pagina_tabla,
     )
 
     # -----------------------------------------------------
@@ -467,20 +776,44 @@ def residentes():
 
     pagina = int(request.args.get("page", 1))
     por_pagina = 10
-    total = mongo.db.users.count_documents({"rol": "residente"})
+
+    # Fraccionamiento seleccionado (viene como "Foresta Dream Lagons", etc.)
+    frac_sel = request.args.get("fraccionamiento", "").strip()
+
+    filtro = {"rol": "residente"}
+    if frac_sel:
+        filtro["fraccionamiento"] = frac_sel.lower()  # se guarda en minúsculas
+
+    total = contar_residentes(mongo.db, filtro)
     total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
 
-    usuarios = list(
-        mongo.db.users.find({"rol": "residente"})
-        .skip((pagina - 1) * por_pagina)
-        .limit(por_pagina)
+    usuarios = find_residentes(
+        mongo.db,
+        filtro,
+        sort=[("nombre", 1)],
+        skip=(pagina - 1) * por_pagina,
+        limit=por_pagina,
     )
+
+    # Conteo por fraccionamiento (para los chips de filtro)
+    conteos = {
+        f: contar_residentes(
+            mongo.db, {"rol": "residente", "fraccionamiento": f.lower()}
+        )
+        for f in FRACCIONAMIENTOS
+    }
+    total_global = sum(conteos.values())
 
     return render_template(
         "admin_residentes.html",
         usuarios=usuarios,
         pagina=pagina,
         total_paginas=total_paginas,
+        fraccionamientos=FRACCIONAMIENTOS,
+        frac_sel=frac_sel,
+        conteos=conteos,
+        total=total,
+        total_global=total_global,
     )
 
 
@@ -496,41 +829,38 @@ def registrar_residente():
 
     if request.method == "POST":
 
-        # =================================================
-        # OBTENER DATOS Y NORMALIZAR
-        # =================================================
-
         nombre = request.form["nombre"].strip()
-
         correo = request.form["correo"].strip().lower()
-
         telefono = request.form["telefono"].strip()
-
         fraccionamiento = request.form["fraccionamiento"].strip().lower()
-
         privada = request.form["privada"].strip().lower()
-
         numero_casa = request.form["numero_casa"].strip().lower()
 
         # =================================================
-        # VALIDAR CORREO DUPLICADO
+        # VALIDAR FRACCIONAMIENTO
         # =================================================
 
-        correo_existente = mongo.db.users.find_one({"correo": correo})
+        if not es_fraccionamiento_valido(fraccionamiento):
+            flash("Selecciona un fraccionamiento válido.", "danger")
+            return redirect(url_for("admin.registrar_residente"))
 
-        if correo_existente:
+        residentes_col = coleccion_residentes(mongo.db, fraccionamiento)
 
+        # =================================================
+        # VALIDAR CORREO DUPLICADO (en users + 3 colecciones)
+        # =================================================
+
+        from utils.fraccionamientos import correo_ya_existe
+
+        if correo_ya_existe(mongo.db, correo):
             flash("El correo electrónico ya se encuentra registrado.", "danger")
-
             return redirect(url_for("admin.registrar_residente"))
 
         # =================================================
-        # VALIDAR CASA DUPLICADA
-        # NO PERMITIR MISMA CASA EN
-        # MISMO FRACCIONAMIENTO Y PRIVADA
+        # VALIDAR CASA DUPLICADA (dentro del fraccionamiento)
         # =================================================
 
-        casa_existente = mongo.db.users.find_one(
+        casa_existente = residentes_col.find_one(
             {
                 "rol": "residente",
                 "fraccionamiento": fraccionamiento,
@@ -539,20 +869,12 @@ def registrar_residente():
             }
         )
 
-        # =================================================
-        # SI YA EXISTE LA CASA
-        # =================================================
-
         if casa_existente:
-
-            print("DUPLICADO DETECTADO")
-
             flash(
                 f"La casa {numero_casa.upper()} ya está registrada en "
                 f"{privada.title()} - {fraccionamiento.title()}",
                 "danger",
             )
-
             return redirect(url_for("admin.registrar_residente"))
 
         # =================================================
@@ -575,29 +897,14 @@ def registrar_residente():
             "bloqueado_hasta": None,
         }
 
-        # =================================================
-        # INSERTAR USUARIO
-        # =================================================
-
-        print("NO EXISTE DUPLICADO")
-
-        mongo.db.users.insert_one(nuevo)
+        residentes_col.insert_one(nuevo)
 
         socketio.emit("actualizar_residentes", to="rol:admin")
-
         socketio.emit("actualizar_dashboard", to="rol:admin")
-
-        # =================================================
-        # MENSAJE
-        # =================================================
 
         flash("Residente registrado correctamente.", "success")
 
         return redirect(url_for("admin.residentes"))
-
-    # =====================================================
-    # FORMULARIO
-    # =====================================================
 
     return render_template("registrar_residente.html")
 
@@ -612,7 +919,7 @@ def registrar_residente():
 @role_required("admin")
 def ver_residente(id):
 
-    usuario = mongo.db.users.find_one({"_id": ObjectId(id)})
+    usuario, _ = buscar_residente_por_id(mongo.db, id)
 
     return render_template("ver_residente.html", usuario=usuario)
 
@@ -627,11 +934,14 @@ def ver_residente(id):
 @role_required("admin")
 def editar_residente(id):
 
-    usuario = mongo.db.users.find_one({"_id": ObjectId(id)})
+    usuario, col = buscar_residente_por_id(mongo.db, id)
 
     if request.method == "POST":
 
-        mongo.db.users.update_one(
+        # NOTA: si cambias el fraccionamiento aquí, el residente se queda en su
+        # colección original. Para moverlo de colección habría que borrarlo e
+        # insertarlo en la nueva; por ahora se actualiza en su lugar.
+        col.update_one(
             {"_id": ObjectId(id)},
             {
                 "$set": {
@@ -646,7 +956,6 @@ def editar_residente(id):
         )
 
         socketio.emit("actualizar_residentes", to="rol:admin")
-
         socketio.emit("actualizar_dashboard", to="rol:admin")
 
         flash("Residente actualizado correctamente")
@@ -666,10 +975,11 @@ def editar_residente(id):
 @role_required("admin")
 def bloquear_residente(id):
 
-    mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
+    _, col = buscar_residente_por_id(mongo.db, id)
+    if col is not None:
+        col.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
 
     socketio.emit("actualizar_residentes", to="rol:admin")
-
     socketio.emit("actualizar_dashboard", to="rol:admin")
 
     flash("Residente bloqueado correctamente")
@@ -687,10 +997,11 @@ def bloquear_residente(id):
 @role_required("admin")
 def eliminar_residente(id):
 
-    mongo.db.users.delete_one({"_id": ObjectId(id)})
+    _, col = buscar_residente_por_id(mongo.db, id)
+    if col is not None:
+        col.delete_one({"_id": ObjectId(id)})
 
     socketio.emit("actualizar_residentes", to="rol:admin")
-
     socketio.emit("actualizar_dashboard", to="rol:admin")
 
     flash("Residente eliminado correctamente.", "success")
@@ -708,7 +1019,9 @@ def eliminar_residente(id):
 @role_required("admin")
 def desbloquear_residente(id):
 
-    mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
+    _, col = buscar_residente_por_id(mongo.db, id)
+    if col is not None:
+        col.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
 
     socketio.emit("actualizar_residentes", to="rol:admin")
 
@@ -718,7 +1031,7 @@ def desbloquear_residente(id):
 
 
 # =========================================
-# EXPORTAR RESIDENTES PDF
+# EXPORTAR RESIDENTES PDF  (rediseñado)
 # =========================================
 
 
@@ -727,102 +1040,115 @@ def desbloquear_residente(id):
 @role_required("admin")
 def exportar_residentes_pdf():
 
-    from reportlab.lib.pagesizes import landscape
-    from reportlab.lib.styles import ParagraphStyle
+    frac_sel = request.args.get("fraccionamiento", "").strip()
 
-    usuarios = list(mongo.db.users.find({"rol": "residente"}))
+    filtro = {"rol": "residente"}
+    if frac_sel:
+        filtro["fraccionamiento"] = frac_sel.lower()
 
-    buffer = BytesIO()
+    usuarios = list(find_residentes(mongo.db, filtro, sort=[("nombre", 1)]))
+    total = contar_residentes(mongo.db, filtro)
 
-    pdf = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(letter),
-        rightMargin=20,
-        leftMargin=20,
-        topMargin=25,
-        bottomMargin=25,
+    activos = sum(1 for u in usuarios if (u.get("estado") or "").lower() == "activo")
+    inactivos = len(usuarios) - activos
+
+    titulo = (
+        f"Reporte de Residentes \u2014 {frac_sel.title()}"
+        if frac_sel
+        else "Reporte General de Residentes"
     )
+    subtitulo = frac_sel.title() if frac_sel else "Todos los fraccionamientos"
 
-    elementos = []
-
-    styles = getSampleStyleSheet()
-
-    estilo_normal = ParagraphStyle(
-        "normal",
-        fontSize=8,
-        leading=10,
-    )
-
-    titulo = Paragraph(
-        "<font size=22><b>Reporte de Residentes</b></font>",
-        styles["Title"],
-    )
-
-    elementos.append(titulo)
-
-    elementos.append(Spacer(1, 15))
-
-    data = [
-        [
-            "Nombre",
-            "Correo",
-            "Teléfono",
-            "Privada",
-            "Casa",
-            "Estado",
-        ]
+    ancho = _ancho_util()
+    elementos = [
+        _fila_kpis(
+            [
+                _kpi_card(total, "Total residentes", BRAND_ACCENT),
+                _kpi_card(activos, "Activos", OK_GREEN),
+                _kpi_card(inactivos, "Inactivos", TEXT_MUTED),
+                _kpi_card(len(usuarios), "En este reporte", BRAND_DARK),
+            ],
+            ancho,
+        ),
+        Spacer(1, 16),
     ]
 
-    for usuario in usuarios:
-
-        data.append(
-            [
-                Paragraph(usuario.get("nombre", ""), estilo_normal),
-                Paragraph(usuario.get("correo", ""), estilo_normal),
-                Paragraph(usuario.get("telefono", ""), estilo_normal),
-                Paragraph(usuario.get("privada", ""), estilo_normal),
-                Paragraph(usuario.get("numero_casa", ""), estilo_normal),
-                Paragraph(usuario.get("estado", ""), estilo_normal),
-            ]
+    if frac_sel:
+        data = [["#", "Nombre", "Correo", "Tel\u00e9fono", "Privada", "Casa", "Estado"]]
+        for i, u in enumerate(usuarios, start=1):
+            data.append(
+                [
+                    _c(i, _CELDA_NUM),
+                    _c(u.get("nombre", ""), _CELDA_FUERTE),
+                    _c(u.get("correo", "")),
+                    _c(u.get("telefono", "")),
+                    _c(str(u.get("privada", "")).title()),
+                    _c(u.get("numero_casa", ""), _CELDA_NUM),
+                    _badge_estado(u.get("estado", "")),
+                ]
+            )
+        tabla = _tabla_datos(
+            data,
+            [30, 150, 235, 95, 90, 50, 75],
+            aligns=["CENTER", "LEFT", "LEFT", "CENTER", "LEFT", "CENTER", "CENTER"],
         )
-
-    tabla = Table(
-        data,
-        repeatRows=1,
-        colWidths=[170, 250, 120, 100, 70, 90],
-    )
-
-    tabla.setStyle(
-        TableStyle(
+    else:
+        data = [
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("GRID", (0, 0), (-1, -1), 0.7, colors.HexColor("#cbd5e1")),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.white, colors.HexColor("#f8fafc")],
-                ),
+                "#",
+                "Nombre",
+                "Correo",
+                "Tel\u00e9fono",
+                "Fraccionamiento",
+                "Privada",
+                "Casa",
+                "Estado",
             ]
+        ]
+        for i, u in enumerate(usuarios, start=1):
+            data.append(
+                [
+                    _c(i, _CELDA_NUM),
+                    _c(u.get("nombre", ""), _CELDA_FUERTE),
+                    _c(u.get("correo", "")),
+                    _c(u.get("telefono", "")),
+                    _c(str(u.get("fraccionamiento", "")).title()),
+                    _c(str(u.get("privada", "")).title()),
+                    _c(u.get("numero_casa", ""), _CELDA_NUM),
+                    _badge_estado(u.get("estado", "")),
+                ]
+            )
+        tabla = _tabla_datos(
+            data,
+            [28, 125, 180, 90, 115, 80, 50, 72],
+            aligns=[
+                "CENTER",
+                "LEFT",
+                "LEFT",
+                "CENTER",
+                "LEFT",
+                "LEFT",
+                "CENTER",
+                "CENTER",
+            ],
         )
-    )
 
     elementos.append(tabla)
 
-    metadata = _pdf_metadata("Reporte de Residentes", "Reporte de Residentes")
-
-    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
-
+    buffer = BytesIO()
+    _construir_reporte_pdf(
+        buffer, titulo, subtitulo, elementos, "Reporte de Residentes"
+    )
     buffer.seek(0)
 
+    nombre_reporte = (
+        f"Reporte_Residentes_{frac_sel.replace(' ', '_')}"
+        if frac_sel
+        else "Reporte_Residentes_Todos"
+    )
+
     _registrar_historial_reporte(
-        f"Reporte_Residentes_{datetime.now().strftime('%d%m%Y')}.pdf",
+        f"{nombre_reporte}_{datetime.now().strftime('%d%m%Y')}.pdf",
         "Residentes",
         "PDF",
     )
@@ -830,13 +1156,13 @@ def exportar_residentes_pdf():
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"Acceso_QR_Reporte_Residentes_{datetime.now().strftime('%d%m%Y')}.pdf",
+        download_name=f"Acceso_QR_{nombre_reporte}_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
 
 
 # =========================================================
-# GESTIÓN DE GUARDIAS
+# GESTIÓN DE GUARDIAS  (se quedan en `users`)
 # =========================================================
 
 
@@ -871,44 +1197,19 @@ def registrar_guardia():
 
     if request.method == "POST":
 
-        # =========================================
-        # DATOS FORMULARIO
-        # =========================================
-
         nombre = request.form["nombre"].strip()
-
         correo = request.form["correo"].strip()
-
         telefono = request.form["telefono"].strip()
-
         turno = request.form["turno"].strip()
-
         estado = request.form["estado"].strip()
 
-        # =========================================
-        # CONTRASEÑA POR DEFECTO
-        # =========================================
-
         password_default = "Guardia123*"
-
-        # =========================================
-        # VALIDAR CORREO DUPLICADO
-        # =========================================
 
         existe = mongo.db.users.find_one({"correo": correo})
 
         if existe:
-
-            flash(
-                "Ese correo ya se encuentra registrado.",
-                "danger",
-            )
-
+            flash("Ese correo ya se encuentra registrado.", "danger")
             return redirect(url_for("admin.registrar_guardia"))
-
-        # =========================================
-        # CREAR GUARDIA
-        # =========================================
 
         nuevo = {
             "nombre": nombre,
@@ -924,19 +1225,10 @@ def registrar_guardia():
             "bloqueado_hasta": None,
         }
 
-        # =========================================
-        # INSERTAR
-        # =========================================
-
         mongo.db.users.insert_one(nuevo)
 
         socketio.emit("actualizar_guardias", to="rol:admin")
-
         socketio.emit("actualizar_dashboard", to="rol:admin")
-
-        # =========================================
-        # MENSAJE
-        # =========================================
 
         flash(
             f"Guardia registrado correctamente. "
@@ -982,7 +1274,6 @@ def editar_guardia(id):
         )
 
         socketio.emit("actualizar_guardias", to="rol:admin")
-
         socketio.emit("actualizar_dashboard", to="rol:admin")
 
         flash("Guardia actualizado correctamente")
@@ -1000,7 +1291,6 @@ def desactivar_guardia(id):
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
 
     socketio.emit("actualizar_guardias", to="rol:admin")
-
     socketio.emit("actualizar_dashboard", to="rol:admin")
 
     flash("Guardia desactivado correctamente")
@@ -1016,7 +1306,6 @@ def activar_guardia(id):
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
 
     socketio.emit("actualizar_guardias", to="rol:admin")
-
     socketio.emit("actualizar_dashboard", to="rol:admin")
 
     flash("Guardia activado correctamente")
@@ -1024,110 +1313,62 @@ def activar_guardia(id):
     return redirect(url_for("admin.guardias"))
 
 
-# =========================================
-# EXPORTAR GUARDIAS PDF
-# =========================================
 @admin_bp.route("/guardias/pdf")
 @login_required
 @role_required("admin")
 def exportar_guardias_pdf():
 
-    from reportlab.lib.pagesizes import landscape
-    from reportlab.lib.styles import ParagraphStyle
-
     guardias = list(mongo.db.users.find({"rol": "guardia"}))
 
-    buffer = BytesIO()
+    activos = sum(1 for g in guardias if (g.get("estado") or "").lower() == "activo")
+    inactivos = len(guardias) - activos
 
-    pdf = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(letter),
-        rightMargin=20,
-        leftMargin=20,
-        topMargin=25,
-        bottomMargin=25,
-    )
-
-    elementos = []
-
-    styles = getSampleStyleSheet()
-
-    estilo_normal = ParagraphStyle(
-        "normal",
-        fontSize=8,
-        leading=10,
-    )
-
-    titulo = Paragraph(
-        "<font size=22><b>Reporte de Guardias</b></font>",
-        styles["Title"],
-    )
-
-    elementos.append(titulo)
-
-    elementos.append(Spacer(1, 20))
-
-    data = [
-        [
-            "Nombre",
-            "Correo",
-            "Teléfono",
-            "Turno",
-            "Estado",
-        ]
+    ancho = _ancho_util()
+    elementos = [
+        _fila_kpis(
+            [
+                _kpi_card(len(guardias), "Total guardias", BRAND_ACCENT),
+                _kpi_card(activos, "Activos", OK_GREEN),
+                _kpi_card(inactivos, "Inactivos", TEXT_MUTED),
+            ],
+            ancho,
+        ),
+        Spacer(1, 16),
     ]
 
-    for guardia in guardias:
-
+    data = [["#", "Nombre", "Correo", "Tel\u00e9fono", "Turno", "Estado"]]
+    for i, g in enumerate(guardias, start=1):
         data.append(
             [
-                Paragraph(guardia.get("nombre", ""), estilo_normal),
-                Paragraph(guardia.get("correo", ""), estilo_normal),
-                Paragraph(guardia.get("telefono", ""), estilo_normal),
-                Paragraph(guardia.get("turno", ""), estilo_normal),
-                Paragraph(guardia.get("estado", ""), estilo_normal),
+                _c(i, _CELDA_NUM),
+                _c(g.get("nombre", ""), _CELDA_FUERTE),
+                _c(g.get("correo", "")),
+                _c(g.get("telefono", "")),
+                _c(str(g.get("turno", "")).title()),
+                _badge_estado(g.get("estado", "")),
             ]
         )
 
-    tabla = Table(
-        data,
-        repeatRows=1,
-        colWidths=[180, 250, 130, 100, 100],
-    )
-
-    tabla.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("GRID", (0, 0), (-1, -1), 0.7, colors.HexColor("#cbd5e1")),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.white, colors.HexColor("#f8fafc")],
-                ),
-            ]
+    elementos.append(
+        _tabla_datos(
+            data,
+            [35, 170, 235, 120, 90, 95],
+            aligns=["CENTER", "LEFT", "LEFT", "CENTER", "CENTER", "CENTER"],
         )
     )
 
-    elementos.append(tabla)
-
-    metadata = _pdf_metadata("Reporte de Guardias", "Reporte de Guardias")
-
-    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
-
+    buffer = BytesIO()
+    _construir_reporte_pdf(
+        buffer,
+        "Reporte de Guardias",
+        "Personal de seguridad registrado",
+        elementos,
+        "Reporte de Guardias",
+    )
     buffer.seek(0)
 
     _registrar_historial_reporte(
-        f"Reporte_Guardias_{datetime.now().strftime('%d%m%Y')}.pdf",
-        "Guardias",
-        "PDF",
+        f"Reporte_Guardias_{datetime.now().strftime('%d%m%Y')}.pdf", "Guardias", "PDF"
     )
 
     return send_file(
@@ -1139,7 +1380,7 @@ def exportar_guardias_pdf():
 
 
 # =========================================================
-# HISTORIAL DE ACCESOS
+# HISTORIAL DE ACCESOS  (access_logs)
 # =========================================================
 
 
@@ -1168,114 +1409,65 @@ def accesos():
     )
 
 
-# =========================================================
-# EXPORTAR ACCESOS PDF
-# =========================================================
 @admin_bp.route("/accesos/pdf")
 @login_required
 @role_required("admin")
 def exportar_accesos_pdf():
 
-    from reportlab.lib.pagesizes import landscape
-    from reportlab.lib.styles import ParagraphStyle
-
     accesos = list(mongo.db.access_logs.find().sort("fecha_hora", -1))
 
-    buffer = BytesIO()
-
-    pdf = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(letter),
-        rightMargin=20,
-        leftMargin=20,
-        topMargin=25,
-        bottomMargin=25,
+    rechazados = sum(
+        1 for a in accesos if (a.get("resultado") or "").lower() == "rechazado"
     )
+    permitidos = len(accesos) - rechazados
 
-    elementos = []
-
-    styles = getSampleStyleSheet()
-
-    estilo_normal = ParagraphStyle(
-        "normal",
-        fontSize=8,
-        leading=10,
-    )
-
-    titulo = Paragraph(
-        "<font size=22><b>Reporte de Accesos</b></font>",
-        styles["Title"],
-    )
-
-    elementos.append(titulo)
-
-    elementos.append(Spacer(1, 15))
-
-    data = [
-        [
-            "Guardia",
-            "Acción",
-            "Resultado",
-            "Fecha",
-        ]
+    ancho = _ancho_util()
+    elementos = [
+        _fila_kpis(
+            [
+                _kpi_card(len(accesos), "Total de accesos", BRAND_ACCENT),
+                _kpi_card(permitidos, "Permitidos", OK_GREEN),
+                _kpi_card(rechazados, "Rechazados", WARN_RED),
+            ],
+            ancho,
+        ),
+        Spacer(1, 16),
     ]
 
-    for acceso in accesos:
-
-        fecha = acceso.get("fecha_hora")
-
-        if fecha:
-            fecha = fecha.strftime("%d/%m/%Y %I:%M %p")
-
+    data = [["#", "Guardia", "Acci\u00f3n", "Resultado", "Fecha"]]
+    for i, a in enumerate(accesos, start=1):
+        fecha = a.get("fecha_hora")
+        fecha = fecha.strftime("%d/%m/%Y %I:%M %p") if fecha else ""
         data.append(
             [
-                Paragraph(acceso.get("guardia_nombre", ""), estilo_normal),
-                Paragraph(acceso.get("accion", ""), estilo_normal),
-                Paragraph(acceso.get("resultado", ""), estilo_normal),
-                Paragraph(str(fecha), estilo_normal),
+                _c(i, _CELDA_NUM),
+                _c(a.get("guardia_nombre", ""), _CELDA_FUERTE),
+                _c(a.get("accion", "")),
+                _badge_estado(a.get("resultado", "")),
+                _c(fecha),
             ]
         )
 
-    tabla = Table(
-        data,
-        repeatRows=1,
-        colWidths=[180, 220, 220, 140],
-    )
-
-    tabla.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                ("GRID", (0, 0), (-1, -1), 0.7, colors.HexColor("#cbd5e1")),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.white, colors.HexColor("#f8fafc")],
-                ),
-            ]
+    elementos.append(
+        _tabla_datos(
+            data,
+            [35, 180, 200, 145, 165],
+            aligns=["CENTER", "LEFT", "LEFT", "CENTER", "CENTER"],
         )
     )
 
-    elementos.append(tabla)
-
-    metadata = _pdf_metadata("Reporte de Accesos", "Reporte de Accesos")
-
-    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
-
+    buffer = BytesIO()
+    _construir_reporte_pdf(
+        buffer,
+        "Reporte de Accesos",
+        "Registro de entradas y validaciones de QR",
+        elementos,
+        "Reporte de Accesos",
+    )
     buffer.seek(0)
 
     _registrar_historial_reporte(
-        f"Reporte_Accesos_{datetime.now().strftime('%d%m%Y')}.pdf",
-        "Accesos",
-        "PDF",
+        f"Reporte_Accesos_{datetime.now().strftime('%d%m%Y')}.pdf", "Accesos", "PDF"
     )
 
     return send_file(
@@ -1286,9 +1478,6 @@ def exportar_accesos_pdf():
     )
 
 
-# =========================================================
-# EXPORTAR ACCESOS EXCEL
-# =========================================================
 @admin_bp.route("/accesos/excel")
 @login_required
 @role_required("admin")
@@ -1299,14 +1488,10 @@ def exportar_accesos_excel():
     accesos = list(mongo.db.access_logs.find().sort("fecha_hora", -1))
 
     data = []
-
     for acceso in accesos:
-
         fecha = acceso.get("fecha_hora")
-
         if fecha:
             fecha = fecha.strftime("%d/%m/%Y %I:%M %p")
-
         data.append(
             {
                 "Guardia": acceso.get("guardia_nombre", ""),
@@ -1317,80 +1502,43 @@ def exportar_accesos_excel():
         )
 
     df = pd.DataFrame(data)
-
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-
         df.to_excel(writer, sheet_name="Accesos", index=False)
-
         worksheet = writer.sheets["Accesos"]
-
         header_fill = PatternFill(
-            start_color="0F172A",
-            end_color="0F172A",
-            fill_type="solid",
+            start_color="0F172A", end_color="0F172A", fill_type="solid"
         )
-
-        header_font = Font(
-            color="FFFFFF",
-            bold=True,
-            size=11,
-        )
-
+        header_font = Font(color="FFFFFF", bold=True, size=11)
         thin = Side(border_style="thin", color="CBD5E1")
-
-        border = Border(
-            left=thin,
-            right=thin,
-            top=thin,
-            bottom=thin,
-        )
-
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
         for cell in worksheet[1]:
-
             cell.fill = header_fill
             cell.font = header_font
-
             cell.alignment = Alignment(
-                horizontal="center",
-                vertical="center",
-                wrap_text=True,
+                horizontal="center", vertical="center", wrap_text=True
             )
-
             cell.border = border
-
         for row in worksheet.iter_rows(min_row=2):
-
             for cell in row:
-
                 cell.alignment = Alignment(
-                    horizontal="center",
-                    vertical="center",
-                    wrap_text=True,
+                    horizontal="center", vertical="center", wrap_text=True
                 )
-
                 cell.border = border
-
         worksheet.column_dimensions["A"].width = 28
         worksheet.column_dimensions["B"].width = 35
         worksheet.column_dimensions["C"].width = 40
         worksheet.column_dimensions["D"].width = 25
-
         for row in worksheet.iter_rows(min_row=2):
-
             worksheet.row_dimensions[row[0].row].height = 35
-
         worksheet.freeze_panes = "A2"
-
         worksheet.auto_filter.ref = worksheet.dimensions
 
     output.seek(0)
 
     _registrar_historial_reporte(
-        f"Reporte_Accesos_{datetime.now().strftime('%d%m%Y')}.xlsx",
-        "Accesos",
-        "Excel",
+        f"Reporte_Accesos_{datetime.now().strftime('%d%m%Y')}.xlsx", "Accesos", "Excel"
     )
 
     return send_file(
@@ -1431,221 +1579,63 @@ def incidencias():
     )
 
 
-# =========================================================
-# EXPORTAR INCIDENCIAS PDF
-# =========================================================
 @admin_bp.route("/incidencias/pdf")
 @login_required
 @role_required("admin")
 def exportar_incidencias_pdf():
 
-    from reportlab.platypus import PageBreak
-    from reportlab.lib.pagesizes import landscape
-    from reportlab.platypus import Paragraph
-    from reportlab.lib.styles import ParagraphStyle
-
     incidencias = list(mongo.db.incidencias.find().sort("fecha_hora", -1))
 
-    buffer = BytesIO()
-
-    # =========================================
-    # PDF HORIZONTAL
-    # =========================================
-
-    pdf = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(letter),
-        rightMargin=20,
-        leftMargin=20,
-        topMargin=25,
-        bottomMargin=25,
+    _resueltos = {"resuelta", "resuelto", "cerrada", "cerrado"}
+    resueltas = sum(
+        1 for x in incidencias if (x.get("estado") or "").lower() in _resueltos
     )
+    abiertas = len(incidencias) - resueltas
 
-    elementos = []
-
-    styles = getSampleStyleSheet()
-
-    # =========================================
-    # ESTILOS
-    # =========================================
-
-    estilo_normal = ParagraphStyle(
-        "normal",
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor("#111827"),
-    )
-
-    estilo_header = ParagraphStyle(
-        "header",
-        fontSize=22,
-        alignment=1,
-        textColor=colors.HexColor("#111827"),
-        spaceAfter=20,
-    )
-
-    # =========================================
-    # TITULO
-    # =========================================
-
-    titulo = Paragraph(
-        "<b>Reporte de Incidencias</b>",
-        estilo_header,
-    )
-
-    elementos.append(titulo)
-
-    # =========================================
-    # SUBTITULO
-    # =========================================
-
-    subtitulo = Paragraph(
-        f"""
-        <font size=10 color='#475569'>
-        Sistema AccessQR<br/>
-        Fecha de generación:
-        {datetime.now().strftime('%d/%m/%Y %I:%M %p')}
-        </font>
-        """,
-        styles["BodyText"],
-    )
-
-    elementos.append(subtitulo)
-
-    elementos.append(Spacer(1, 20))
-
-    # =========================================
-    # TABLA
-    # =========================================
-
-    data = [
-        [
-            "Tipo",
-            "Guardia",
-            "Descripción",
-            "Estado",
-            "Fecha",
-        ]
+    ancho = _ancho_util()
+    elementos = [
+        _fila_kpis(
+            [
+                _kpi_card(len(incidencias), "Total incidencias", BRAND_ACCENT),
+                _kpi_card(abiertas, "Abiertas / pendientes", AMBER),
+                _kpi_card(resueltas, "Resueltas", OK_GREEN),
+            ],
+            ancho,
+        ),
+        Spacer(1, 16),
     ]
 
-    for incidencia in incidencias:
-
-        fecha = incidencia.get("fecha_hora")
-
-        if fecha:
-            fecha = fecha.strftime("%d/%m/%Y %I:%M %p")
-
-        else:
-            fecha = ""
-
-        descripcion = incidencia.get("descripcion", "Sin descripción")
-
+    data = [["#", "Tipo", "Guardia", "Descripci\u00f3n", "Estado", "Fecha"]]
+    for i, inc in enumerate(incidencias, start=1):
+        fecha = inc.get("fecha_hora")
+        fecha = fecha.strftime("%d/%m/%Y %I:%M %p") if fecha else ""
         data.append(
             [
-                Paragraph(
-                    incidencia.get("tipo_incidencia", ""),
-                    estilo_normal,
-                ),
-                Paragraph(
-                    incidencia.get("guardia_nombre", ""),
-                    estilo_normal,
-                ),
-                Paragraph(
-                    descripcion,
-                    estilo_normal,
-                ),
-                Paragraph(
-                    incidencia.get("estado", ""),
-                    estilo_normal,
-                ),
-                Paragraph(
-                    fecha,
-                    estilo_normal,
-                ),
+                _c(i, _CELDA_NUM),
+                _c(str(inc.get("tipo_incidencia", "")).title(), _CELDA_FUERTE),
+                _c(inc.get("guardia_nombre", "")),
+                _c(inc.get("descripcion", "Sin descripci\u00f3n")),
+                _badge_estado(inc.get("estado", "")),
+                _c(fecha),
             ]
         )
 
-    # =========================================
-    # ANCHOS DE COLUMNAS
-    # =========================================
-
-    tabla = Table(
-        data,
-        repeatRows=1,
-        colWidths=[
-            90,
-            100,
-            320,
-            70,
-            110,
-        ],
-    )
-
-    # =========================================
-    # ESTILO TABLA
-    # =========================================
-
-    tabla.setStyle(
-        TableStyle(
-            [
-                # HEADER
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                # BODY
-                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("TEXTCOLOR", (0, 1), (-1, -1), colors.HexColor("#111827")),
-                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 1), (-1, -1), 8),
-                # GRID
-                ("GRID", (0, 0), (-1, -1), 0.7, colors.HexColor("#cbd5e1")),
-                # ALIGN
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                # PADDING
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-                # FILAS ALTERNADAS
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.white, colors.HexColor("#f8fafc")],
-                ),
-            ]
+    elementos.append(
+        _tabla_datos(
+            data,
+            [28, 95, 105, 300, 85, 110],
+            aligns=["CENTER", "LEFT", "LEFT", "LEFT", "CENTER", "CENTER"],
         )
     )
 
-    elementos.append(tabla)
-
-    elementos.append(Spacer(1, 20))
-
-    # =========================================
-    # FOOTER
-    # =========================================
-
-    footer = Paragraph(
-        """
-        <font size=8 color='#64748b'>
-        Documento generado automáticamente por AccessQR.
-        </font>
-        """,
-        styles["BodyText"],
+    buffer = BytesIO()
+    _construir_reporte_pdf(
+        buffer,
+        "Reporte de Incidencias",
+        "Eventos reportados por el personal",
+        elementos,
+        "Reporte de Incidencias",
     )
-
-    elementos.append(footer)
-
-    # =========================================
-    # CREAR PDF
-    # =========================================
-
-    metadata = _pdf_metadata("Reporte de Incidencias", "Reporte de Incidencias")
-
-    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
-
     buffer.seek(0)
 
     _registrar_historial_reporte(
@@ -1662,30 +1652,20 @@ def exportar_incidencias_pdf():
     )
 
 
-# =========================================================
-# EXPORTAR INCIDENCIAS EXCEL
-# =========================================================
-
-
 @admin_bp.route("/incidencias/excel")
 @login_required
 @role_required("admin")
 def exportar_incidencias_excel():
 
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-    from openpyxl.utils import get_column_letter
 
     incidencias = list(mongo.db.incidencias.find().sort("fecha_hora", -1))
 
     data = []
-
     for incidencia in incidencias:
-
         fecha = incidencia.get("fecha_hora")
-
         if fecha:
             fecha = fecha.strftime("%d/%m/%Y %I:%M %p")
-
         data.append(
             {
                 "Tipo Incidencia": incidencia.get("tipo_incidencia", ""),
@@ -1697,93 +1677,35 @@ def exportar_incidencias_excel():
         )
 
     df = pd.DataFrame(data)
-
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-
         df.to_excel(writer, sheet_name="Incidencias", index=False)
-
-        workbook = writer.book
         worksheet = writer.sheets["Incidencias"]
-
-        # =========================================
-        # ESTILOS
-        # =========================================
-
         header_fill = PatternFill(
             start_color="0F172A", end_color="0F172A", fill_type="solid"
         )
-
         header_font = Font(color="FFFFFF", bold=True, size=11)
-
         thin = Side(border_style="thin", color="CBD5E1")
-
         border = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-        # =========================================
-        # HEADER
-        # =========================================
-
         for cell in worksheet[1]:
-
             cell.fill = header_fill
             cell.font = header_font
-
             cell.alignment = Alignment(
                 horizontal="center", vertical="center", wrap_text=True
             )
-
             cell.border = border
-
-        # =========================================
-        # BODY
-        # =========================================
-
         for row in worksheet.iter_rows(min_row=2):
-
             for cell in row:
-
                 cell.alignment = Alignment(
                     vertical="top", horizontal="center", wrap_text=True
                 )
-
                 cell.border = border
-
-        # =========================================
-        # ANCHO COLUMNAS
-        # =========================================
-
-        column_widths = {
-            "A": 25,
-            "B": 25,
-            "C": 70,
-            "D": 20,
-            "E": 25,
-        }
-
-        for col, width in column_widths.items():
-
+        for col, width in {"A": 25, "B": 25, "C": 70, "D": 20, "E": 25}.items():
             worksheet.column_dimensions[col].width = width
-
-        # =========================================
-        # ALTURA FILAS
-        # =========================================
-
         for row in worksheet.iter_rows(min_row=2):
-
             worksheet.row_dimensions[row[0].row].height = 45
-
-        # =========================================
-        # FILTROS
-        # =========================================
-
         worksheet.auto_filter.ref = worksheet.dimensions
-
-        # =========================================
-        # CONGELAR HEADER
-        # =========================================
-
         worksheet.freeze_panes = "A2"
 
     output.seek(0)
@@ -1816,7 +1738,7 @@ def reportes():
 
 
 # =========================================================
-# EXPORTAR VISITAS PDF
+# EXPORTAR VISITAS PDF  (une las 3 colecciones)
 # =========================================================
 
 
@@ -1825,117 +1747,70 @@ def reportes():
 @role_required("admin")
 def exportar_visitas_pdf():
 
-    from reportlab.lib.pagesizes import landscape
-    from reportlab.lib.styles import ParagraphStyle
+    visitas = list(find_visitas(mongo.db, {}, sort=[("created_at", -1)]))
 
-    visitas = list(mongo.db.visits.find().sort("created_at", -1))
+    estado_map = {
+        "activo": "Activo",
+        "dentro": "Dentro",
+        "salida_registrada": "Finalizada",
+        "cancelado": "Cancelado",
+        "vencido": "Vencido",
+    }
 
-    buffer = BytesIO()
+    def _cuenta(*estados):
+        return sum(1 for v in visitas if (v.get("estado") or "") in estados)
 
-    pdf = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(letter),
-        rightMargin=20,
-        leftMargin=20,
-        topMargin=25,
-        bottomMargin=25,
-    )
-
-    elementos = []
-
-    styles = getSampleStyleSheet()
-
-    estilo_normal = ParagraphStyle(
-        "normal",
-        fontSize=8,
-        leading=10,
-    )
-
-    titulo = Paragraph(
-        "<font size=22><b>Reporte de Visitas</b></font>",
-        styles["Title"],
-    )
-
-    elementos.append(titulo)
-
-    elementos.append(Spacer(1, 15))
-
-    data = [
-        [
-            "Visitante",
-            "Residente",
-            "Placas",
-            "Estado",
-        ]
+    ancho = _ancho_util()
+    elementos = [
+        _fila_kpis(
+            [
+                _kpi_card(len(visitas), "Total visitas", BRAND_ACCENT),
+                _kpi_card(_cuenta("dentro"), "Dentro", BRAND_ACCENT),
+                _kpi_card(_cuenta("activo"), "Activas", OK_GREEN),
+                _kpi_card(_cuenta("salida_registrada"), "Finalizadas", CYAN),
+            ],
+            ancho,
+        ),
+        Spacer(1, 16),
     ]
 
-    for visita in visitas:
-
+    data = [["#", "Visitante", "Residente", "Placas", "Estado"]]
+    for i, v in enumerate(visitas, start=1):
         placa = ""
-
-        vehiculo = visita.get("vehiculo", {})
-
+        vehiculo = v.get("vehiculo", {})
         if isinstance(vehiculo, dict):
             placa = vehiculo.get("placa", "")
-
-        estado = visita.get("estado", "")
-
-        estado_map = {
-            "activo": "Activo",
-            "dentro": "Dentro",
-            "salida_registrada": "Finalizada",
-            "cancelado": "Cancelado",
-            "vencido": "Vencido",
-        }
-
+        estado = v.get("estado", "")
         data.append(
             [
-                Paragraph(visita.get("nombre_visitante", ""), estilo_normal),
-                Paragraph(visita.get("residente_nombre", ""), estilo_normal),
-                Paragraph(placa, estilo_normal),
-                Paragraph(estado_map.get(estado, estado), estilo_normal),
+                _c(i, _CELDA_NUM),
+                _c(v.get("nombre_visitante", ""), _CELDA_FUERTE),
+                _c(v.get("residente_nombre", "")),
+                _c(str(placa).upper(), _CELDA_NUM),
+                _badge_estado(estado, estado_map.get(estado, estado)),
             ]
         )
 
-    tabla = Table(
-        data,
-        repeatRows=1,
-        colWidths=[260, 260, 120, 120],
-    )
-
-    tabla.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("GRID", (0, 0), (-1, -1), 0.7, colors.HexColor("#cbd5e1")),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.white, colors.HexColor("#f8fafc")],
-                ),
-            ]
+    elementos.append(
+        _tabla_datos(
+            data,
+            [35, 230, 230, 110, 110],
+            aligns=["CENTER", "LEFT", "LEFT", "CENTER", "CENTER"],
         )
     )
 
-    elementos.append(tabla)
-
-    metadata = _pdf_metadata("Reporte de Visitas", "Reporte de Visitas")
-
-    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
-
+    buffer = BytesIO()
+    _construir_reporte_pdf(
+        buffer,
+        "Reporte de Visitas",
+        "Consolidado de los fraccionamientos",
+        elementos,
+        "Reporte de Visitas",
+    )
     buffer.seek(0)
 
     _registrar_historial_reporte(
-        f"Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.pdf",
-        "Visitas",
-        "PDF",
+        f"Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.pdf", "Visitas", "PDF"
     )
 
     return send_file(
@@ -1946,11 +1821,6 @@ def exportar_visitas_pdf():
     )
 
 
-# =========================================================
-# EXPORTAR VISITAS EXCEL
-# =========================================================
-
-
 @admin_bp.route("/visitas/excel")
 @login_required
 @role_required("admin")
@@ -1958,29 +1828,23 @@ def exportar_visitas_excel():
 
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-    visitas = list(mongo.db.visits.find().sort("created_at", -1))
+    visitas = find_visitas(mongo.db, {}, sort=[("created_at", -1)])
+
+    estado_map = {
+        "activo": "Activo",
+        "dentro": "Dentro",
+        "salida_registrada": "Finalizada",
+        "cancelado": "Cancelado",
+        "vencido": "Vencido",
+    }
 
     data = []
-
     for visita in visitas:
-
         placa = ""
-
         vehiculo = visita.get("vehiculo", {})
-
         if isinstance(vehiculo, dict):
             placa = vehiculo.get("placa", "")
-
         estado = visita.get("estado", "")
-
-        estado_map = {
-            "activo": "Activo",
-            "dentro": "Dentro",
-            "salida_registrada": "Finalizada",
-            "cancelado": "Cancelado",
-            "vencido": "Vencido",
-        }
-
         data.append(
             {
                 "Visitante": visita.get("nombre_visitante", ""),
@@ -1991,98 +1855,43 @@ def exportar_visitas_excel():
         )
 
     df = pd.DataFrame(data)
-
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-
         df.to_excel(writer, sheet_name="Visitas", index=False)
-
-        workbook = writer.book
         worksheet = writer.sheets["Visitas"]
-
-        # =========================================
-        # ESTILOS
-        # =========================================
-
         header_fill = PatternFill(
             start_color="0F172A", end_color="0F172A", fill_type="solid"
         )
-
-        header_font = Font(
-            color="FFFFFF",
-            bold=True,
-            size=11,
-        )
-
+        header_font = Font(color="FFFFFF", bold=True, size=11)
         thin = Side(border_style="thin", color="CBD5E1")
-
         border = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-        # =========================================
-        # HEADER
-        # =========================================
-
         for cell in worksheet[1]:
-
             cell.fill = header_fill
             cell.font = header_font
-
             cell.alignment = Alignment(
                 horizontal="center", vertical="center", wrap_text=True
             )
-
             cell.border = border
-
-        # =========================================
-        # BODY
-        # =========================================
-
         for row in worksheet.iter_rows(min_row=2):
-
             for cell in row:
-
                 cell.alignment = Alignment(
                     horizontal="center", vertical="center", wrap_text=True
                 )
-
                 cell.border = border
-
-        # =========================================
-        # ANCHO COLUMNAS
-        # =========================================
-
         worksheet.column_dimensions["A"].width = 35
         worksheet.column_dimensions["B"].width = 35
         worksheet.column_dimensions["C"].width = 20
         worksheet.column_dimensions["D"].width = 20
-
-        # =========================================
-        # ALTURA FILAS
-        # =========================================
-
         for row in worksheet.iter_rows(min_row=2):
-
             worksheet.row_dimensions[row[0].row].height = 35
-
-        # =========================================
-        # CONGELAR HEADER
-        # =========================================
-
         worksheet.freeze_panes = "A2"
-
-        # =========================================
-        # FILTROS
-        # =========================================
-
         worksheet.auto_filter.ref = worksheet.dimensions
 
     output.seek(0)
 
     _registrar_historial_reporte(
-        f"Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.xlsx",
-        "Visitas",
-        "Excel",
+        f"Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.xlsx", "Visitas", "Excel"
     )
 
     return send_file(
@@ -2093,11 +1902,6 @@ def exportar_visitas_excel():
     )
 
 
-# =========================================================
-# EXPORTAR RESIDENTES EXCEL
-# =========================================================
-
-
 @admin_bp.route("/residentes/excel")
 @login_required
 @role_required("admin")
@@ -2105,12 +1909,10 @@ def exportar_residentes_excel():
 
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-    residentes = list(mongo.db.users.find({"rol": "residente"}))
+    residentes = find_residentes(mongo.db, {"rol": "residente"})
 
     data = []
-
     for residente in residentes:
-
         data.append(
             {
                 "Nombre": residente.get("nombre", ""),
@@ -2123,102 +1925,39 @@ def exportar_residentes_excel():
         )
 
     df = pd.DataFrame(data)
-
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-
         df.to_excel(writer, sheet_name="Residentes", index=False)
-
         worksheet = writer.sheets["Residentes"]
-
-        # =========================================
-        # ESTILOS
-        # =========================================
-
         header_fill = PatternFill(
-            start_color="0F172A",
-            end_color="0F172A",
-            fill_type="solid",
+            start_color="0F172A", end_color="0F172A", fill_type="solid"
         )
-
-        header_font = Font(
-            color="FFFFFF",
-            bold=True,
-            size=11,
-        )
-
+        header_font = Font(color="FFFFFF", bold=True, size=11)
         thin = Side(border_style="thin", color="CBD5E1")
-
-        border = Border(
-            left=thin,
-            right=thin,
-            top=thin,
-            bottom=thin,
-        )
-
-        # =========================================
-        # HEADER
-        # =========================================
-
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
         for cell in worksheet[1]:
-
             cell.fill = header_fill
             cell.font = header_font
-
             cell.alignment = Alignment(
-                horizontal="center",
-                vertical="center",
-                wrap_text=True,
+                horizontal="center", vertical="center", wrap_text=True
             )
-
             cell.border = border
-
-        # =========================================
-        # BODY
-        # =========================================
-
         for row in worksheet.iter_rows(min_row=2):
-
             for cell in row:
-
                 cell.alignment = Alignment(
-                    horizontal="center",
-                    vertical="center",
-                    wrap_text=True,
+                    horizontal="center", vertical="center", wrap_text=True
                 )
-
                 cell.border = border
-
-        # =========================================
-        # ANCHO COLUMNAS
-        # =========================================
-
         worksheet.column_dimensions["A"].width = 35
         worksheet.column_dimensions["B"].width = 35
         worksheet.column_dimensions["C"].width = 22
         worksheet.column_dimensions["D"].width = 22
         worksheet.column_dimensions["E"].width = 15
         worksheet.column_dimensions["F"].width = 18
-
-        # =========================================
-        # ALTURA FILAS
-        # =========================================
-
         for row in worksheet.iter_rows(min_row=2):
-
             worksheet.row_dimensions[row[0].row].height = 35
-
-        # =========================================
-        # CONGELAR HEADER
-        # =========================================
-
         worksheet.freeze_panes = "A2"
-
-        # =========================================
-        # FILTROS
-        # =========================================
-
         worksheet.auto_filter.ref = worksheet.dimensions
 
     output.seek(0)
@@ -2237,11 +1976,6 @@ def exportar_residentes_excel():
     )
 
 
-# =========================================================
-# EXPORTAR GUARDIAS EXCEL
-# =========================================================
-
-
 @admin_bp.route("/guardias/excel")
 @login_required
 @role_required("admin")
@@ -2252,9 +1986,7 @@ def exportar_guardias_excel():
     guardias = list(mongo.db.users.find({"rol": "guardia"}))
 
     data = []
-
     for guardia in guardias:
-
         data.append(
             {
                 "Nombre": guardia.get("nombre", ""),
@@ -2266,101 +1998,38 @@ def exportar_guardias_excel():
         )
 
     df = pd.DataFrame(data)
-
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-
         df.to_excel(writer, sheet_name="Guardias", index=False)
-
         worksheet = writer.sheets["Guardias"]
-
-        # =========================================
-        # ESTILOS
-        # =========================================
-
         header_fill = PatternFill(
-            start_color="0F172A",
-            end_color="0F172A",
-            fill_type="solid",
+            start_color="0F172A", end_color="0F172A", fill_type="solid"
         )
-
-        header_font = Font(
-            color="FFFFFF",
-            bold=True,
-            size=11,
-        )
-
+        header_font = Font(color="FFFFFF", bold=True, size=11)
         thin = Side(border_style="thin", color="CBD5E1")
-
-        border = Border(
-            left=thin,
-            right=thin,
-            top=thin,
-            bottom=thin,
-        )
-
-        # =========================================
-        # HEADER
-        # =========================================
-
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
         for cell in worksheet[1]:
-
             cell.fill = header_fill
             cell.font = header_font
-
             cell.alignment = Alignment(
-                horizontal="center",
-                vertical="center",
-                wrap_text=True,
+                horizontal="center", vertical="center", wrap_text=True
             )
-
             cell.border = border
-
-        # =========================================
-        # BODY
-        # =========================================
-
         for row in worksheet.iter_rows(min_row=2):
-
             for cell in row:
-
                 cell.alignment = Alignment(
-                    horizontal="center",
-                    vertical="center",
-                    wrap_text=True,
+                    horizontal="center", vertical="center", wrap_text=True
                 )
-
                 cell.border = border
-
-        # =========================================
-        # ANCHO COLUMNAS
-        # =========================================
-
         worksheet.column_dimensions["A"].width = 35
         worksheet.column_dimensions["B"].width = 35
         worksheet.column_dimensions["C"].width = 22
         worksheet.column_dimensions["D"].width = 18
         worksheet.column_dimensions["E"].width = 18
-
-        # =========================================
-        # ALTURA FILAS
-        # =========================================
-
         for row in worksheet.iter_rows(min_row=2):
-
             worksheet.row_dimensions[row[0].row].height = 35
-
-        # =========================================
-        # CONGELAR HEADER
-        # =========================================
-
         worksheet.freeze_panes = "A2"
-
-        # =========================================
-        # FILTROS
-        # =========================================
-
         worksheet.auto_filter.ref = worksheet.dimensions
 
     output.seek(0)
@@ -2380,7 +2049,7 @@ def exportar_guardias_excel():
 
 
 # =========================================================
-# EXPORTAR SISTEMA PDF
+# EXPORTAR SISTEMA PDF / EXCEL
 # =========================================================
 
 
@@ -2389,149 +2058,54 @@ def exportar_guardias_excel():
 @role_required("admin")
 def exportar_sistema_pdf():
 
-    total_residentes = mongo.db.users.count_documents({"rol": "residente"})
-
+    total_residentes = contar_residentes(mongo.db, {"rol": "residente"})
     total_guardias = mongo.db.users.count_documents({"rol": "guardia"})
-
-    total_visitas = mongo.db.visits.count_documents({})
-
+    total_visitas = contar_visitas(mongo.db)
     total_accesos = mongo.db.access_logs.count_documents({})
-
     total_incidencias = mongo.db.incidencias.count_documents({})
 
-    buffer = BytesIO()
+    ancho = _ancho_util()
 
-    from reportlab.lib.pagesizes import landscape
-
-    pdf = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(letter),
-        rightMargin=30,
-        leftMargin=30,
-        topMargin=30,
-        bottomMargin=30,
-    )
-
-    elementos = []
-
-    styles = getSampleStyleSheet()
-
-    # =====================================================
-    # TITULO
-    # =====================================================
-
-    titulo = Paragraph(
-        "<font size=24><b>Reporte General del Sistema</b></font>",
-        styles["Title"],
-    )
-
-    elementos.append(titulo)
-
-    elementos.append(Spacer(1, 20))
-
-    # =====================================================
-    # SUBTITULO
-    # =====================================================
-
-    subtitulo = Paragraph(
-        f"""
-        <font size=11 color='#475569'>
-        Sistema AccessQR<br/>
-        Fecha de generación:
-        {datetime.now().strftime('%d/%m/%Y %I:%M %p')}
-        </font>
-        """,
-        styles["BodyText"],
-    )
-
-    elementos.append(subtitulo)
-
-    elementos.append(Spacer(1, 25))
-
-    # =====================================================
-    # TABLA
-    # =====================================================
-
-    data = [
-        ["Módulo", "Total"],
-        ["Residentes", total_residentes],
-        ["Guardias", total_guardias],
-        ["Visitas", total_visitas],
-        ["Accesos", total_accesos],
-        ["Incidencias", total_incidencias],
+    # --- Tarjetas KPI "hero" (una por módulo) ---
+    elementos = [
+        _fila_kpis(
+            [
+                _kpi_card(total_residentes, "Residentes", BRAND_ACCENT),
+                _kpi_card(total_guardias, "Guardias", OK_GREEN),
+                _kpi_card(total_visitas, "Visitas", CYAN),
+                _kpi_card(total_accesos, "Accesos", AMBER),
+                _kpi_card(total_incidencias, "Incidencias", WARN_RED),
+            ],
+            ancho,
+        ),
+        Spacer(1, 22),
     ]
 
-    tabla = Table(
-        data,
-        repeatRows=1,
-        colWidths=[250, 150],
+    # --- Tabla resumen (formal) ---
+    data = [
+        ["M\u00f3dulo", "Total de registros"],
+        [_c("Residentes", _CELDA_FUERTE), _c(total_residentes, _CELDA_NUM)],
+        [_c("Guardias", _CELDA_FUERTE), _c(total_guardias, _CELDA_NUM)],
+        [_c("Visitas", _CELDA_FUERTE), _c(total_visitas, _CELDA_NUM)],
+        [_c("Accesos", _CELDA_FUERTE), _c(total_accesos, _CELDA_NUM)],
+        [_c("Incidencias", _CELDA_FUERTE), _c(total_incidencias, _CELDA_NUM)],
+    ]
+    elementos.append(
+        _tabla_datos(data, [ancho * 0.62, ancho * 0.38], aligns=["LEFT", "CENTER"])
     )
 
-    tabla.setStyle(
-        TableStyle(
-            [
-                # HEADER
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 12),
-                # BODY
-                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 1), (-1, -1), 11),
-                # GRID
-                ("GRID", (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
-                # ALIGN
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                # PADDING
-                ("TOPPADDING", (0, 0), (-1, -1), 12),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-                # FILAS
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.white, colors.HexColor("#f8fafc")],
-                ),
-            ]
-        )
+    buffer = BytesIO()
+    _construir_reporte_pdf(
+        buffer,
+        "Reporte General del Sistema",
+        "Resumen consolidado de todos los m\u00f3dulos",
+        elementos,
+        "Reporte General del Sistema",
     )
-
-    elementos.append(tabla)
-
-    elementos.append(Spacer(1, 30))
-
-    # =====================================================
-    # FOOTER
-    # =====================================================
-
-    footer = Paragraph(
-        """
-        <font size=9 color='#64748b'>
-        Documento generado automáticamente por AccessQR.
-        </font>
-        """,
-        styles["BodyText"],
-    )
-
-    elementos.append(footer)
-
-    # =====================================================
-    # CREAR PDF
-    # =====================================================
-
-    metadata = _pdf_metadata(
-        "Reporte General del Sistema", "Reporte General del Sistema"
-    )
-
-    pdf.build(elementos, onFirstPage=metadata, onLaterPages=metadata)
-
     buffer.seek(0)
 
     _registrar_historial_reporte(
-        f"Reporte_General_{datetime.now().strftime('%d%m%Y')}.pdf",
-        "General",
-        "PDF",
+        f"Reporte_General_{datetime.now().strftime('%d%m%Y')}.pdf", "General", "PDF"
     )
 
     return send_file(
@@ -2540,11 +2114,6 @@ def exportar_sistema_pdf():
         download_name=f"Acceso_QR_Reporte_General_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
-
-
-# =========================================================
-# EXPORTAR SISTEMA EXCEL
-# =========================================================
 
 
 @admin_bp.route("/sistema/excel")
@@ -2557,99 +2126,53 @@ def exportar_sistema_excel():
     data = [
         {
             "Módulo": "Residentes",
-            "Total": mongo.db.users.count_documents({"rol": "residente"}),
+            "Total": contar_residentes(mongo.db, {"rol": "residente"}),
         },
         {
             "Módulo": "Guardias",
             "Total": mongo.db.users.count_documents({"rol": "guardia"}),
         },
-        {
-            "Módulo": "Visitas",
-            "Total": mongo.db.visits.count_documents({}),
-        },
-        {
-            "Módulo": "Accesos",
-            "Total": mongo.db.access_logs.count_documents({}),
-        },
-        {
-            "Módulo": "Incidencias",
-            "Total": mongo.db.incidencias.count_documents({}),
-        },
+        {"Módulo": "Visitas", "Total": contar_visitas(mongo.db)},
+        {"Módulo": "Accesos", "Total": mongo.db.access_logs.count_documents({})},
+        {"Módulo": "Incidencias", "Total": mongo.db.incidencias.count_documents({})},
     ]
 
     df = pd.DataFrame(data)
-
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-
         df.to_excel(writer, sheet_name="Sistema", index=False)
-
         worksheet = writer.sheets["Sistema"]
-
         header_fill = PatternFill(
-            start_color="0F172A",
-            end_color="0F172A",
-            fill_type="solid",
+            start_color="0F172A", end_color="0F172A", fill_type="solid"
         )
-
-        header_font = Font(
-            color="FFFFFF",
-            bold=True,
-            size=11,
-        )
-
+        header_font = Font(color="FFFFFF", bold=True, size=11)
         thin = Side(border_style="thin", color="CBD5E1")
-
-        border = Border(
-            left=thin,
-            right=thin,
-            top=thin,
-            bottom=thin,
-        )
-
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
         for cell in worksheet[1]:
-
             cell.fill = header_fill
             cell.font = header_font
-
             cell.alignment = Alignment(
-                horizontal="center",
-                vertical="center",
-                wrap_text=True,
+                horizontal="center", vertical="center", wrap_text=True
             )
-
             cell.border = border
-
         for row in worksheet.iter_rows(min_row=2):
-
             for cell in row:
-
                 cell.alignment = Alignment(
-                    horizontal="center",
-                    vertical="center",
-                    wrap_text=True,
+                    horizontal="center", vertical="center", wrap_text=True
                 )
-
                 cell.border = border
-
         worksheet.column_dimensions["A"].width = 35
         worksheet.column_dimensions["B"].width = 20
-
         for row in worksheet.iter_rows(min_row=2):
-
             worksheet.row_dimensions[row[0].row].height = 30
-
         worksheet.freeze_panes = "A2"
-
         worksheet.auto_filter.ref = worksheet.dimensions
 
     output.seek(0)
 
     _registrar_historial_reporte(
-        f"Reporte_General_{datetime.now().strftime('%d%m%Y')}.xlsx",
-        "General",
-        "Excel",
+        f"Reporte_General_{datetime.now().strftime('%d%m%Y')}.xlsx", "General", "Excel"
     )
 
     return send_file(
@@ -2661,7 +2184,7 @@ def exportar_sistema_excel():
 
 
 # =========================================================
-# HISTORIAL DE REPORTES
+# HISTORIAL DE REPORTES  /  CONFIGURACIÓN
 # =========================================================
 
 
@@ -2695,13 +2218,239 @@ def historial_reportes():
 
 
 # =========================================================
-# CONFIGURACIÓN
+# CONFIGURACIÓN POR FRACCIONAMIENTO  (+ creación dinámica)
 # =========================================================
 
 
-@admin_bp.route("/configuracion")
+def _slug_fraccionamiento(nombre):
+    """'Villas del Bosque II' -> 'villas_del_bosque_ii' (sin acentos)."""
+    import re, unicodedata
+
+    s = unicodedata.normalize("NFKD", nombre or "").encode("ascii", "ignore").decode()
+    s = re.sub(r"[^a-z0-9]+", "_", s.lower().strip()).strip("_")
+    return s
+
+
+def _fraccionamientos_disponibles():
+    """Los definidos en código + los creados en la colección 'fraccionamientos'."""
+    nombres = list(FRACCIONAMIENTOS)
+    for d in mongo.db.fraccionamientos.find():
+        nom = (d.get("nombre") or "").strip()
+        if nom and nom not in nombres:
+            nombres.append(nom)
+    return sorted(nombres, key=lambda x: x.lower())
+
+
+def _contar_residentes_frac(nombre):
+    """Cuenta residentes en residentes_<slug> directamente."""
+    col = f"residentes_{_slug_fraccionamiento(nombre)}"
+    if col in mongo.db.list_collection_names():
+        return mongo.db[col].count_documents({"rol": "residente"})
+    return 0
+
+
+def _config_fraccionamiento(frac):
+    """Configuración del fraccionamiento (clave = slug), con valores por defecto."""
+    slug = _slug_fraccionamiento(frac)
+    base = {
+        "fraccionamiento": slug,
+        "nombre": frac,
+        "direccion": "",
+        "telefono": "",
+        "correo": "",
+        "privadas": 1,
+        "duracion_qr": "3 horas",
+        "multiples_accesos": "No",
+        "validacion_vehiculo": "Obligatoria",
+        "foto_visitante": "Sí",
+        "registro_incidencias": "Habilitado",
+        "control_sesiones": True,
+        "bitacora": True,
+        "respaldos": True,
+        "camaras": False,
+        "lectura_placas": False,
+        "notificaciones": True,
+        "actualizado": None,
+    }
+    doc = mongo.db.config_fraccionamientos.find_one({"fraccionamiento": slug}) or {}
+    for k, v in doc.items():
+        if k != "_id":
+            base[k] = v
+    act = base.get("actualizado")
+    base["actualizado_str"] = (
+        act.strftime("%d/%m/%Y %I:%M %p") if isinstance(act, datetime) else ""
+    )
+    return base
+
+
+@admin_bp.route("/fraccionamientos/crear", methods=["POST"])
+@login_required
+@role_required("admin")
+def crear_fraccionamiento():
+
+    nombre = request.form.get("nombre", "").strip()
+    if len(nombre) < 3:
+        flash("Escribe un nombre válido (mínimo 3 caracteres).", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    slug = _slug_fraccionamiento(nombre)
+    if not slug:
+        flash("El nombre no genera un identificador válido.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    slugs_existentes = {
+        _slug_fraccionamiento(f) for f in _fraccionamientos_disponibles()
+    }
+    if slug in slugs_existentes:
+        flash(f"El fraccionamiento «{nombre}» ya existe.", "danger")
+        return redirect(url_for("admin.configuracion", fraccionamiento=nombre))
+
+    # Crear las colecciones físicas (residentes_<slug> y visitas_<slug>)
+    existentes = set(mongo.db.list_collection_names())
+    for prefijo in ("residentes", "visitas"):
+        col = f"{prefijo}_{slug}"
+        if col not in existentes:
+            mongo.db.create_collection(col)
+
+    # Registrar el fraccionamiento y su configuración por defecto
+    mongo.db.fraccionamientos.insert_one(
+        {"nombre": nombre, "slug": slug, "created_at": datetime.now()}
+    )
+    mongo.db.config_fraccionamientos.update_one(
+        {"fraccionamiento": slug},
+        {
+            "$setOnInsert": {
+                "fraccionamiento": slug,
+                "nombre": nombre,
+                "privadas": 1,
+                "actualizado": None,
+            }
+        },
+        upsert=True,
+    )
+
+    socketio.emit("actualizar_dashboard", to="rol:admin")
+    flash(f"Fraccionamiento «{nombre}» creado correctamente.", "success")
+    return redirect(url_for("admin.configuracion", fraccionamiento=nombre))
+
+
+# =========================================================
+# ELIMINAR FRACCIONAMIENTO
+# =========================================================
+
+
+@admin_bp.route("/eliminar_fraccionamiento", methods=["POST"])
+@login_required
+@role_required("admin")
+def eliminar_fraccionamiento():
+
+    nombre = request.form.get("fraccionamiento", "").strip()
+
+    if not nombre:
+        flash("Fraccionamiento inválido.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    # ==========================================
+    # NO PERMITIR BORRAR EL ÚLTIMO
+    # ==========================================
+    disponibles = _fraccionamientos_disponibles()
+
+    if len(disponibles) <= 1:
+        flash("No puedes eliminar el único fraccionamiento del sistema.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    slug = _slug_fraccionamiento(nombre)
+
+    try:
+
+        # borrar colección residentes_<slug>
+        mongo.db.drop_collection(f"residentes_{slug}")
+
+        # borrar colección visitas_<slug>
+        mongo.db.drop_collection(f"visitas_{slug}")
+
+        # borrar configuración
+        mongo.db.config_fraccionamientos.delete_one({"fraccionamiento": slug})
+
+        # borrar registro del catálogo
+        mongo.db.fraccionamientos.delete_one({"slug": slug})
+
+        socketio.emit("actualizar_dashboard", to="rol:admin")
+
+        flash(f"Fraccionamiento '{nombre}' eliminado correctamente.", "success")
+
+    except Exception as e:
+        flash(f"Error al eliminar fraccionamiento: {str(e)}", "danger")
+
+    return redirect(url_for("admin.configuracion"))
+
+
+@admin_bp.route("/configuracion", methods=["GET", "POST"])
 @login_required
 @role_required("admin")
 def configuracion():
 
-    return render_template("admin_configuracion.html")
+    disponibles = _fraccionamientos_disponibles()
+
+    frac_sel = request.args.get("fraccionamiento", "").strip()
+    if request.method == "POST":
+        frac_sel = request.form.get("fraccionamiento", frac_sel).strip()
+    if frac_sel not in disponibles:
+        frac_sel = disponibles[0] if disponibles else ""
+
+    slug = _slug_fraccionamiento(frac_sel)
+
+    # ---------- GUARDAR ----------
+    if request.method == "POST":
+        seccion = request.form.get("seccion", "")
+        datos = {}
+
+        if seccion == "general":
+            try:
+                privadas = int(request.form.get("privadas", 1) or 1)
+            except ValueError:
+                privadas = 1
+            datos = {
+                "nombre": request.form.get("nombre", "").strip() or frac_sel,
+                "direccion": request.form.get("direccion", "").strip(),
+                "telefono": request.form.get("telefono", "").strip(),
+                "correo": request.form.get("correo", "").strip().lower(),
+                "privadas": max(1, min(99, privadas)),
+            }
+        elif seccion == "accesos":
+            for c in (
+                "duracion_qr",
+                "multiples_accesos",
+                "validacion_vehiculo",
+                "foto_visitante",
+                "registro_incidencias",
+            ):
+                datos[c] = request.form.get(c, "")
+        elif seccion == "seguridad":
+            for c in ("control_sesiones", "bitacora", "respaldos"):
+                datos[c] = request.form.get(c) == "on"
+        elif seccion == "avanzadas":
+            for c in ("camaras", "lectura_placas", "notificaciones"):
+                datos[c] = request.form.get(c) == "on"
+
+        if datos:
+            datos["fraccionamiento"] = slug
+            datos["actualizado"] = datetime.now()
+            mongo.db.config_fraccionamientos.update_one(
+                {"fraccionamiento": slug}, {"$set": datos}, upsert=True
+            )
+            flash(f"Configuración de {frac_sel} guardada correctamente.", "success")
+
+        return redirect(url_for("admin.configuracion", fraccionamiento=frac_sel))
+
+    # ---------- MOSTRAR ----------
+    config = _config_fraccionamiento(frac_sel)
+    conteos = {f: _contar_residentes_frac(f) for f in disponibles}
+
+    return render_template(
+        "admin_configuracion.html",
+        fraccionamientos=disponibles,
+        frac_sel=frac_sel,
+        config=config,
+        conteos=conteos,
+    )

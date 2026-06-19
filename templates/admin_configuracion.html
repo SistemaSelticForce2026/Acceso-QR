@@ -31,9 +31,56 @@
     <div>
         <h1>Configuración del Fraccionamiento</h1>
         <p class="small">
-            Administración de parámetros generales, seguridad y funcionamiento del sistema residencial.
+            Parámetros generales, accesos, seguridad y funcionamiento — configurables
+            de forma independiente para cada fraccionamiento.
         </p>
     </div>
+</div>
+
+{# ===== Selector de fraccionamiento (chips) ===== #}
+<div class="frac-selector" role="tablist" aria-label="Fraccionamientos">
+    {% for f in fraccionamientos %}
+    <div class="frac-chip-wrapper">
+
+        <a href="{{ url_for('admin.configuracion', fraccionamiento=f) }}"
+        class="frac-chip {{ 'active' if f == frac_sel }}"
+        role="tab">
+
+            <i class="fa-solid fa-location-dot"></i>
+            <span>{{ f }}</span>
+            <b>{{ conteos.get(f, 0) }}</b>
+
+        </a>
+
+        <form method="POST"
+            action="{{ url_for('admin.eliminar_fraccionamiento') }}"
+            onsubmit="return confirm('¿Eliminar el fraccionamiento {{ f }}? Esta acción borrará residentes, visitas y configuración.');">
+
+        <input type="hidden"
+            name="fraccionamiento"
+            value="{{ f }}">
+
+        <button type="submit"
+                class="btn-delete-frac"
+                title="Eliminar fraccionamiento">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+
+    </form>
+
+    </div>
+    {% endfor %}
+
+    <button type="button" class="frac-add" onclick="abrirModalFrac()">
+        <i class="fa-solid fa-plus"></i> Nuevo fraccionamiento
+    </button>
+</div>
+
+{# Aviso del fraccionamiento que se está editando #}
+<div class="frac-context">
+    <i class="fa-solid fa-circle-info"></i>
+    Editando la configuración de <strong>{{ frac_sel }}</strong>.
+    Los cambios solo aplican a este fraccionamiento.
 </div>
 
 {# ===== Estadísticas ===== #}
@@ -48,18 +95,18 @@
     </div>
 
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-building-shield"></i></div>
+        <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
         <div>
-            <h3>Casetas activas</h3>
-            <p>1</p>
+            <h3>Residentes</h3>
+            <p>{{ conteos.get(frac_sel, 0) }}</p>
         </div>
     </div>
 
     <div class="stat-card">
-        <div class="stat-icon cyan"><i class="fa-solid fa-qrcode"></i></div>
+        <div class="stat-icon cyan"><i class="fa-solid fa-house-chimney"></i></div>
         <div>
-            <h3>Accesos QR</h3>
-            <p>Habilitados</p>
+            <h3>Privadas</h3>
+            <p>{{ config.privadas }}</p>
         </div>
     </div>
 
@@ -67,7 +114,7 @@
         <div class="stat-icon orange"><i class="fa-solid fa-arrows-rotate"></i></div>
         <div>
             <h3>Última actualización</h3>
-            <p>Hoy</p>
+            <p id="ultima-actualizacion">{{ config.actualizado_str or 'Sin cambios' }}</p>
         </div>
     </div>
 
@@ -80,28 +127,34 @@
     <div class="card">
         <h2>Información general</h2>
 
-        <form class="config-form" method="POST" action="{{ url_for('admin.configuracion') }}">
+        <form class="config-form" method="POST"
+              action="{{ url_for('admin.configuracion') }}">
+            <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+            <input type="hidden" name="seccion" value="general">
+
             <label>Nombre del fraccionamiento</label>
-            <input type="text" name="nombre" value="Residencial Access QR"
+            <input type="text" name="nombre" value="{{ config.nombre }}"
                    maxlength="80" required>
 
             <label>Dirección</label>
-            <input type="text" name="direccion" value="Av. Principal #120"
-                   maxlength="120" required>
+            <input type="text" name="direccion" value="{{ config.direccion }}"
+                   placeholder="Av. Principal #120" maxlength="120" required>
 
             <label>Teléfono administrativo</label>
-            <input type="tel" name="telefono" value="7221234567"
+            <input type="tel" name="telefono" value="{{ config.telefono }}"
                    pattern="[0-9]{10}" maxlength="10" inputmode="numeric"
+                   placeholder="7221234567"
                    title="Ingresa 10 dígitos, solo números" required>
             <small class="field-hint">10 dígitos, sin espacios ni guiones.</small>
 
             <label>Correo administrativo</label>
-            <input type="email" name="correo" value="admin@accessqr.com"
-                   autocomplete="email" required>
+            <input type="email" name="correo" value="{{ config.correo }}"
+                   placeholder="admin@accessqr.com" autocomplete="email" required>
             <small class="field-hint">Se usará para notificaciones del sistema.</small>
 
             <label>Número de privadas</label>
-            <input type="number" name="privadas" value="6" min="1" max="99" required>
+            <input type="number" name="privadas" value="{{ config.privadas }}"
+                   min="1" max="99" required>
 
             <button type="submit">
                 <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
@@ -113,38 +166,44 @@
     <div class="card">
         <h2>Configuración de accesos</h2>
 
-        <form class="config-form" method="POST" action="{{ url_for('admin.configuracion') }}">
+        <form class="config-form" method="POST"
+              action="{{ url_for('admin.configuracion') }}">
+            <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+            <input type="hidden" name="seccion" value="accesos">
+
             <label>Duración máxima del QR</label>
             <select name="duracion_qr">
-                <option>1 hora</option>
-                <option selected>3 horas</option>
-                <option>6 horas</option>
-                <option>12 horas</option>
-                <option>24 horas</option>
+                {% for op in ['1 hora','3 horas','6 horas','12 horas','24 horas'] %}
+                <option {{ 'selected' if config.duracion_qr == op }}>{{ op }}</option>
+                {% endfor %}
             </select>
 
             <label>Permitir múltiples accesos</label>
             <select name="multiples_accesos">
-                <option>Sí</option>
-                <option selected>No</option>
+                {% for op in ['Sí','No'] %}
+                <option {{ 'selected' if config.multiples_accesos == op }}>{{ op }}</option>
+                {% endfor %}
             </select>
 
             <label>Validación de vehículo</label>
             <select name="validacion_vehiculo">
-                <option selected>Obligatoria</option>
-                <option>Opcional</option>
+                {% for op in ['Obligatoria','Opcional'] %}
+                <option {{ 'selected' if config.validacion_vehiculo == op }}>{{ op }}</option>
+                {% endfor %}
             </select>
 
             <label>Fotografía obligatoria del visitante</label>
             <select name="foto_visitante">
-                <option selected>Sí</option>
-                <option>No</option>
+                {% for op in ['Sí','No'] %}
+                <option {{ 'selected' if config.foto_visitante == op }}>{{ op }}</option>
+                {% endfor %}
             </select>
 
             <label>Registro automático de incidencias</label>
             <select name="registro_incidencias">
-                <option selected>Habilitado</option>
-                <option>Deshabilitado</option>
+                {% for op in ['Habilitado','Deshabilitado'] %}
+                <option {{ 'selected' if config.registro_incidencias == op }}>{{ op }}</option>
+                {% endfor %}
             </select>
 
             <button type="submit">
@@ -161,95 +220,129 @@
     {# --- Seguridad --- #}
     <div class="card">
         <h2>Seguridad del sistema</h2>
-        <div class="module-list">
 
-            <div class="module-item">
-                <div class="module-left">
-                    <div class="module-icon"><i class="fa-solid fa-user-lock"></i></div>
-                    <div>
-                        <strong>Control de sesiones</strong>
-                        <span>Administración de accesos de administradores y guardias.</span>
+        <form class="config-form" method="POST"
+              action="{{ url_for('admin.configuracion') }}">
+            <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+            <input type="hidden" name="seccion" value="seguridad">
+
+            <div class="module-list">
+
+                <div class="module-item">
+                    <div class="module-left">
+                        <div class="module-icon"><i class="fa-solid fa-user-lock"></i></div>
+                        <div>
+                            <strong>Control de sesiones</strong>
+                            <span>Administración de accesos de administradores y guardias.</span>
+                        </div>
                     </div>
+                    <label class="switch">
+                        <input type="checkbox" name="control_sesiones"
+                               {{ 'checked' if config.control_sesiones }}>
+                        <span class="slider"></span>
+                    </label>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" checked><span class="slider"></span>
-                </label>
+
+                <div class="module-item">
+                    <div class="module-left">
+                        <div class="module-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                        <div>
+                            <strong>Bitácora de actividad</strong>
+                            <span>Registro de cambios y operaciones críticas del sistema.</span>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="bitacora"
+                               {{ 'checked' if config.bitacora }}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="module-item">
+                    <div class="module-left">
+                        <div class="module-icon green"><i class="fa-solid fa-database"></i></div>
+                        <div>
+                            <strong>Respaldos automáticos</strong>
+                            <span>Generación de copias de seguridad de la base de datos.</span>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="respaldos"
+                               {{ 'checked' if config.respaldos }}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
             </div>
 
-            <div class="module-item">
-                <div class="module-left">
-                    <div class="module-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-                    <div>
-                        <strong>Bitácora de actividad</strong>
-                        <span>Registro de cambios y operaciones críticas del sistema.</span>
-                    </div>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" checked><span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="module-item">
-                <div class="module-left">
-                    <div class="module-icon green"><i class="fa-solid fa-database"></i></div>
-                    <div>
-                        <strong>Respaldos automáticos</strong>
-                        <span>Generación de copias de seguridad de la base de datos.</span>
-                    </div>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" checked><span class="slider"></span>
-                </label>
-            </div>
-
-        </div>
+            <button type="submit">
+                <i class="fa-solid fa-shield-halved"></i> Guardar seguridad
+            </button>
+        </form>
     </div>
 
     {# --- Avanzadas --- #}
     <div class="card">
         <h2>Configuraciones avanzadas</h2>
-        <div class="module-list">
 
-            <div class="module-item">
-                <div class="module-left">
-                    <div class="module-icon slate"><i class="fa-solid fa-video"></i></div>
-                    <div>
-                        <strong>Integración con cámaras</strong>
-                        <span>Asociación de cámaras IP para monitoreo de accesos.</span>
+        <form class="config-form" method="POST"
+              action="{{ url_for('admin.configuracion') }}">
+            <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+            <input type="hidden" name="seccion" value="avanzadas">
+
+            <div class="module-list">
+
+                <div class="module-item">
+                    <div class="module-left">
+                        <div class="module-icon slate"><i class="fa-solid fa-video"></i></div>
+                        <div>
+                            <strong>Integración con cámaras</strong>
+                            <span>Asociación de cámaras IP para monitoreo de accesos.</span>
+                        </div>
                     </div>
+                    <label class="switch">
+                        <input type="checkbox" name="camaras"
+                               {{ 'checked' if config.camaras }}>
+                        <span class="slider"></span>
+                    </label>
                 </div>
-                <label class="switch">
-                    <input type="checkbox"><span class="slider"></span>
-                </label>
+
+                <div class="module-item">
+                    <div class="module-left">
+                        <div class="module-icon amber"><i class="fa-solid fa-car"></i></div>
+                        <div>
+                            <strong>Lectura automática de placas</strong>
+                            <span>Configuración de reconocimiento vehicular.</span>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="lectura_placas"
+                               {{ 'checked' if config.lectura_placas }}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="module-item">
+                    <div class="module-left">
+                        <div class="module-icon"><i class="fa-solid fa-bell"></i></div>
+                        <div>
+                            <strong>Notificaciones en tiempo real</strong>
+                            <span>Alertas automáticas para residentes y administración.</span>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="notificaciones"
+                               {{ 'checked' if config.notificaciones }}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
             </div>
 
-            <div class="module-item">
-                <div class="module-left">
-                    <div class="module-icon amber"><i class="fa-solid fa-car"></i></div>
-                    <div>
-                        <strong>Lectura automática de placas</strong>
-                        <span>Configuración de reconocimiento vehicular.</span>
-                    </div>
-                </div>
-                <label class="switch">
-                    <input type="checkbox"><span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="module-item">
-                <div class="module-left">
-                    <div class="module-icon"><i class="fa-solid fa-bell"></i></div>
-                    <div>
-                        <strong>Notificaciones en tiempo real</strong>
-                        <span>Alertas automáticas para residentes y administración.</span>
-                    </div>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" checked><span class="slider"></span>
-                </label>
-            </div>
-
-        </div>
+            <button type="submit">
+                <i class="fa-solid fa-rotate"></i> Guardar avanzadas
+            </button>
+        </form>
     </div>
 
 </div>
@@ -260,7 +353,8 @@
 
     <div class="alert info">
         <i class="fa-solid fa-circle-info"></i>
-        El sistema de control de acceso se encuentra funcionando correctamente.
+        El sistema de control de acceso de <strong>{{ frac_sel }}</strong> se encuentra
+        funcionando correctamente.
     </div>
 
     <div class="alert warning">
@@ -274,28 +368,108 @@
     </div>
 </div>
 
+{# ===== Modal: crear fraccionamiento ===== #}
+<div class="frac-modal" id="fracModal" aria-hidden="true">
+    <div class="frac-modal__backdrop" onclick="cerrarModalFrac()"></div>
+    <div class="frac-modal__card" role="dialog" aria-modal="true"
+         aria-labelledby="fracModalTitle">
+        <div class="frac-modal__head">
+            <div class="frac-modal__icon"><i class="fa-solid fa-location-dot"></i></div>
+            <div>
+                <h3 id="fracModalTitle">Nuevo fraccionamiento</h3>
+                <p>Se crearán automáticamente sus tablas de residentes y visitas.</p>
+            </div>
+            <button type="button" class="frac-modal__close" onclick="cerrarModalFrac()"
+                    aria-label="Cerrar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.crear_fraccionamiento') }}"
+              class="frac-modal__form" id="fracForm">
+            <label for="fracNombre">Nombre del fraccionamiento</label>
+            <input type="text" id="fracNombre" name="nombre" required
+                   minlength="3" maxlength="60" autocomplete="off"
+                   placeholder="Ej. Real del Sol II" oninput="previewSlug(this.value)">
+            <small class="field-hint">
+                Se guardará como:
+                <code id="slugPreview">residentes_&lt;nombre&gt;</code> y
+                <code id="slugPreview2">visitas_&lt;nombre&gt;</code>
+            </small>
+
+            <div class="frac-modal__actions">
+                <button type="button" class="btn-ghost" onclick="cerrarModalFrac()">
+                    Cancelar
+                </button>
+                <button type="submit">
+                    <i class="fa-solid fa-circle-plus"></i> Crear fraccionamiento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalFrac(){
+    var m = document.getElementById('fracModal');
+    m.classList.add('open'); m.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function(){ document.getElementById('fracNombre').focus(); }, 60);
+}
+function cerrarModalFrac(){
+    var m = document.getElementById('fracModal');
+    m.classList.remove('open'); m.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+}
+function previewSlug(v){
+    var s = (v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+              .toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+    s = s || '<nombre>';
+    document.getElementById('slugPreview').textContent  = 'residentes_' + s;
+    document.getElementById('slugPreview2').textContent = 'visitas_' + s;
+}
+document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') cerrarModalFrac();
+});
+</script>
+
 <script>
 (function () {
-    var sucio = false;
-
     document.querySelectorAll('.config-form').forEach(function(form){
         var btn = form.querySelector('button[type="submit"]');
         if(btn) btn.disabled = true;                 // arranca desactivado
+        var sucio = false;
         function marcarSucio(){
             sucio = true;
             if(btn) btn.disabled = false;            // se activa al editar
         }
         form.querySelectorAll('input, select, textarea').forEach(function(campo){
+            if(campo.type === 'hidden') return;
             campo.addEventListener('input', marcarSucio);
             campo.addEventListener('change', marcarSucio);
         });
         form.addEventListener('submit', function(){ sucio = false; });
     });
-
-    window.addEventListener('beforeunload', function(e){
-        if(sucio){ e.preventDefault(); e.returnValue = ''; }
-    });
 })();
 </script>
+
+
+<script>
+async function refrescarActualizacion() {
+    try {
+        const res = await fetch("/admin/configuracion/ultima-actualizacion");
+        const data = await res.json();
+
+        const el = document.getElementById("ultima-actualizacion");
+        if (el && data.hora) {
+            el.textContent = data.hora;
+        }
+    } catch (e) {}
+}
+
+setInterval(refrescarActualizacion, 5000);
+refrescarActualizacion();
+</script>
+
 
 {% endblock %}

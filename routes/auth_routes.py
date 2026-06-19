@@ -17,6 +17,14 @@ from datetime import datetime, timedelta
 
 from extensions import mongo, socketio
 
+from utils.fraccionamientos import (
+    es_fraccionamiento_valido,
+    coleccion_residentes,
+    correo_ya_existe,
+    buscar_login,
+    obtener_fraccionamientos,
+)
+
 # ==================
 # BLUEPRINT AUTH
 # ==================
@@ -81,13 +89,28 @@ def register():
 
             return redirect(url_for("auth.register"))
 
+        # =========================================
+        # VALIDAR FRACCIONAMIENTO PERMITIDO
+        # =========================================
+
+        if not es_fraccionamiento_valido(mongo.db, fraccionamiento):
+
+            flash("Selecciona un fraccionamiento válido.", "danger")
+
+            return redirect(url_for("auth.register"))
+
+        # =========================================
+        # COLECCIÓN DESTINO (según fraccionamiento)
+        # =========================================
+
+        residentes_col = coleccion_residentes(mongo.db, fraccionamiento)
+
         # ===============================
         # VALIDAR CORREO DUPLICADO
+        # (en users + las 3 colecciones)
         # ==============================
 
-        correo_existente = mongo.db.users.find_one({"correo": correo})
-
-        if correo_existente:
+        if correo_ya_existe(mongo.db, correo):
 
             flash(
                 "Este correo electrónico ya está registrado. ¿Olvidaste tu contraseña?",
@@ -98,9 +121,10 @@ def register():
 
         # =============================
         # VALIDAR CASA DUPLICADA
+        # (dentro de SU fraccionamiento)
         # =============================
 
-        casa_existente = mongo.db.users.find_one(
+        casa_existente = residentes_col.find_one(
             {
                 "rol": "residente",
                 "fraccionamiento": fraccionamiento,
@@ -146,7 +170,7 @@ def register():
         # INSERTAR USUARIO
         # ====================
 
-        mongo.db.users.insert_one(usuario)
+        residentes_col.insert_one(usuario)
 
         # ====================
         # MENSAJE
@@ -156,7 +180,9 @@ def register():
 
         return redirect(url_for("auth.login"))
 
-    return render_template("registro.html")
+    return render_template(
+        "registro.html", fraccionamientos=obtener_fraccionamientos(mongo.db)
+    )
 
 
 # ============
@@ -182,7 +208,7 @@ def login():
         # BUSCAR USUARIO
         # =================
 
-        usuario = mongo.db.users.find_one({"correo": correo})
+        usuario, col = buscar_login(mongo.db, correo)
 
         # ===================
         # USUARIO NO EXISTE
@@ -249,7 +275,7 @@ def login():
                     "warning",
                 )
 
-            mongo.db.users.update_one({"_id": usuario["_id"]}, {"$set": update_data})
+            col.update_one({"_id": usuario["_id"]}, {"$set": update_data})
 
             return redirect(url_for("auth.login"))
 
@@ -278,11 +304,13 @@ def login():
 
         session["correo"] = usuario["correo"]
 
+        session["fraccionamiento"] = usuario.get("fraccionamiento")
+
         # =====================
         # RESETEAR INTENTOS
         # =====================
 
-        mongo.db.users.update_one(
+        col.update_one(
             {"_id": usuario["_id"]},
             {
                 "$set": {
@@ -348,25 +376,13 @@ def login():
 @auth_bp.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
 
-    # =====================================
-    # ENTRAR A LA VISTA
-    # =====================================
-
     if request.method == "GET":
 
         return render_template("recuperar_contrasena.html")
 
-    # =====================================
-    # OBTENER CORREO
-    # =====================================
-
     correo = request.form["correo"].strip()
 
-    usuario = mongo.db.users.find_one({"correo": correo})
-
-    # =====================================
-    # USUARIO NO EXISTE
-    # =====================================
+    usuario, col = buscar_login(mongo.db, correo)
 
     if not usuario:
 
@@ -374,44 +390,24 @@ def forgot_password():
 
         return redirect(url_for("auth.forgot_password"))
 
-    # =====================================
-    # GENERAR TOKEN
-    # =====================================
-
     import random
 
     token = str(random.randint(100000, 999999))
 
     expiracion = datetime.now() + timedelta(minutes=5)
 
-    # =====================================
-    # GUARDAR SESSION
-    # =====================================
-
     session["recovery_token"] = token
 
     session["correo_recuperacion"] = correo
 
-    # =====================================
-    # GUARDAR TOKEN EN MONGO
-    # =====================================
-
-    mongo.db.users.update_one(
+    col.update_one(
         {"_id": usuario["_id"]},
         {"$set": {"token_recuperacion": token, "token_expira": expiracion}},
     )
 
-    # =====================================
-    # MENSAJE
-    # =====================================
-
     flash(
         "Código temporal generado. Ingrésalo a continuación para continuar.", "success"
     )
-
-    # =====================================
-    # MOSTRAR TOKEN
-    # =====================================
 
     return render_template("recuperar_contrasena.html", token_generado=token)
 
@@ -428,17 +424,9 @@ def verify_token():
 
     token_guardado = session.get("recovery_token")
 
-    # =====================================
-    # TOKEN CORRECTO
-    # =====================================
-
     if token_ingresado == token_guardado:
 
         return redirect(url_for("auth.reset_password"))
-
-    # =====================================
-    # TOKEN INCORRECTO
-    # =====================================
 
     flash(
         "El código ingresado no es válido. Solicita uno nuevo e intenta de nuevo.",
@@ -456,10 +444,6 @@ def verify_token():
 @auth_bp.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
 
-    # =====================================
-    # VALIDAR SESIÓN RECUPERACIÓN
-    # =====================================
-
     correo = session.get("correo_recuperacion")
 
     if not correo:
@@ -470,25 +454,13 @@ def reset_password():
 
         return redirect(url_for("auth.forgot_password"))
 
-    # =====================================
-    # MOSTRAR VISTA
-    # =====================================
-
     if request.method == "GET":
 
         return render_template("nueva_contrasena.html")
 
-    # =====================================
-    # OBTENER CONTRASEÑAS
-    # =====================================
-
     password = request.form["password"]
 
     confirm_password = request.form["confirm_password"]
-
-    # =====================================
-    # VALIDAR CONTRASEÑAS
-    # =====================================
 
     if password != confirm_password:
 
@@ -499,12 +471,17 @@ def reset_password():
 
         return redirect(url_for("auth.reset_password"))
 
-    # =====================================
-    # ACTUALIZAR CONTRASEÑA
-    # =====================================
+    # Actualizar en la colección correcta
+    usuario, col = buscar_login(mongo.db, correo)
 
-    mongo.db.users.update_one(
-        {"correo": correo},
+    if not usuario:
+
+        flash("La cuenta ya no existe. Regístrate de nuevo.", "danger")
+
+        return redirect(url_for("auth.register"))
+
+    col.update_one(
+        {"_id": usuario["_id"]},
         {
             "$set": {
                 "password": generate_password_hash(password),
@@ -514,17 +491,9 @@ def reset_password():
         },
     )
 
-    # =====================================
-    # LIMPIAR SESIÓN
-    # =====================================
-
     session.pop("recovery_token", None)
 
     session.pop("correo_recuperacion", None)
-
-    # =====================================
-    # MENSAJE
-    # =====================================
 
     flash(
         "¡Contraseña actualizada con éxito! Ya puedes iniciar sesión con tu nueva contraseña.",
@@ -542,10 +511,6 @@ def reset_password():
 @auth_bp.route("/logout")
 def logout():
 
-    # ===========================
-    # FINALIZAR TURNOS GUARDIAS
-    # ============================
-
     if session.get("rol") == "guardia":
 
         mongo.db.turnos.update_many(
@@ -561,10 +526,6 @@ def logout():
             },
         )
 
-    # ===============
-    # LOGS
-    # ===============
-
     mongo.db.logs.insert_one(
         {
             "usuario": session.get("nombre"),
@@ -573,10 +534,6 @@ def logout():
             "fecha": datetime.now(),
         }
     )
-
-    # ======================
-    # LIMPIAR SESIÓN
-    # ======================
 
     session.clear()
 
