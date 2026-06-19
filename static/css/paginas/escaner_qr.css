@@ -64,19 +64,12 @@
     border-radius: 4px;
 }
 
-.sc-corner { position: absolute; width: 28px; height: 28px; }
+.sc-corner { position: absolute; width: 42px; height: 42px; }
 
-.sc-corner.tl { top: 0; left: 0;    border-top: 3px solid #2e5bff; border-left: 3px solid #2e5bff;   border-radius: 6px 0 0 0; }
-.sc-corner.tr { top: 0; right: 0;   border-top: 3px solid #2e5bff; border-right: 3px solid #2e5bff;  border-radius: 0 6px 0 0; }
-.sc-corner.bl { bottom: 0; left: 0; border-bottom: 3px solid #2e5bff; border-left: 3px solid #2e5bff;  border-radius: 0 0 0 6px; }
-.sc-corner.br { bottom: 0; right: 0;border-bottom: 3px solid #2e5bff; border-right: 3px solid #2e5bff; border-radius: 0 0 6px 0; }
-
-.sc-scan-line { display: none; }
-
-@keyframes grd-scan {
-    0%, 100% { top: 0; }
-    50%       { top: calc(100% - 2px); }
-}
+.sc-corner.tl { top: 0; left: 0;    border-top: 3px solid #2e5bff; border-left: 3px solid #2e5bff;   border-radius: 10px 0 0 0; }
+.sc-corner.tr { top: 0; right: 0;   border-top: 3px solid #2e5bff; border-right: 3px solid #2e5bff;  border-radius: 0 10px 0 0; }
+.sc-corner.bl { bottom: 0; left: 0; border-bottom: 3px solid #2e5bff; border-left: 3px solid #2e5bff;  border-radius: 0 0 0 10px; }
+.sc-corner.br { bottom: 0; right: 0;border-bottom: 3px solid #2e5bff; border-right: 3px solid #2e5bff; border-radius: 0 0 10px 0; }
 
 /* =========================================================
    INDICADOR CÁMARA
@@ -503,135 +496,6 @@
 }
 
 /* =========================================================
-   CONTROL DE ACCESO
-========================================================= */
-
-.modern-access-card {
-    position: relative;
-    overflow: hidden;
-    margin-top: 0;
-    padding: 32px;
-    border-radius: 26px;
-    background: white;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-}
-
-.modern-access-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 6px;
-    background: linear-gradient(90deg, #2563eb, #38bdf8);
-}
-
-.modern-access-header {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-    margin-bottom: 28px;
-}
-
-.modern-access-icon {
-    width: 72px; height: 72px;
-    border-radius: 22px;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #2563eb, #60a5fa);
-    color: white;
-    font-size: 1.7rem;
-    box-shadow: 0 18px 40px rgba(37, 99, 235, 0.25);
-}
-
-/* =========================================================
-   STATUS CHIP — FIX: no pegado, con padding propio
-========================================================= */
-
-.access-status-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 24px;
-}
-
-.status-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-size: 13.5px;
-    font-weight: 700;
-    width: fit-content;
-}
-
-.status-chip.success {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #86efac;
-}
-
-.status-description {
-    font-size: 13px;
-    color: #64748b;
-    line-height: 1.55;
-    padding: 0 2px;
-}
-
-/* =========================================================
-   SUMMARY GRID — FIX: font más pequeño, capitalize
-========================================================= */
-
-.access-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-    margin: 24px 0;
-}
-
-.summary-card {
-    min-height: 110px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 18px 16px;
-    border-radius: 16px;
-    background: white;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
-    transition: 0.25s;
-}
-
-.summary-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.10);
-}
-
-.summary-card span {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #8a93a6;
-}
-
-.summary-card strong {
-    display: block;
-    margin-top: 6px;
-    font-size: 1.05rem;        /* antes 2rem — causaba desbordamiento */
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.3;
-    text-transform: capitalize;
-}
-
-.summary-card:last-child {
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    border: none;
-}
-
-.summary-card .status-green { color: #16a34a; }
-
-/* =========================================================
    BANNER SALIDA
 ========================================================= */
 
@@ -714,7 +578,6 @@
 @media (max-width: 1400px) {
     .access-grid            { grid-template-columns: 1fr; gap: 28px; }
     .vehicle-grid           { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .access-summary-grid    { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* =========================================================
@@ -724,10 +587,8 @@
 @media (max-width: 992px) {
     .access-card            { padding: 26px; }
     .visitor-profile        { flex-direction: column; text-align: center; }
-    .modern-access-header   { flex-direction: column; align-items: center; text-align: center; }
     .info-list              { grid-template-columns: repeat(2, 1fr); }
     .vehicle-grid           { grid-template-columns: repeat(2, 1fr); }
-    .access-summary-grid    { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* =========================================================
@@ -742,7 +603,6 @@
     .visitor-no-photo       { width: 120px; height: 120px; }
     .info-list              { grid-template-columns: 1fr; }
     .vehicle-grid           { grid-template-columns: 1fr; }
-    .access-summary-grid    { grid-template-columns: 1fr; }
     .manual-token-actions   { flex-direction: column; }
     .manual-token-actions input,
     .manual-token-actions button { width: 100%; }
@@ -757,8 +617,6 @@
     .access-card            { padding: 18px; }
     .visitor-photo,
     .visitor-no-photo       { width: 100px; height: 100px; }
-    .modern-access-icon     { width: 56px; height: 56px; font-size: 1.2rem; }
-    .summary-card strong    { font-size: 0.95rem; }
 }
 
 /* =========================================================
@@ -1001,4 +859,209 @@
 .grd-deny-detail.blue i  { color: #2e5bff; }
 
 .grd-deny-detail.red   { background: rgba(220, 38, 38, 0.07); border: 1px solid rgba(220, 38, 38, 0.20); color: #7f1d1d; }
+
+
+/* =========================================================
+   REDISEÑO REFERENCIA — RESULTADO DEL ESCANEO
+   (banner + perfil unificado + meta + acciones inline)
+   Se basa en el diseño de referencia (ScannerA / .aqa-*).
+========================================================= */
+
+/* ---------------------------------------------------------
+   BANNER (scoped a .result-container para no afectar otras
+   páginas que usan .access-alert globalmente)
+--------------------------------------------------------- */
+.result-container .access-alert {
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    margin-bottom: 0;
+    box-shadow: 0 14px 34px -18px rgba(16, 110, 70, 0.55);
+}
+.result-container .access-alert.success {
+    background: linear-gradient(135deg, oklch(0.62 0.15 155), oklch(0.54 0.14 158));
+}
+.result-container .access-alert.warning {
+    background: linear-gradient(135deg, oklch(0.72 0.15 70), oklch(0.63 0.15 58));
+    box-shadow: 0 14px 34px -18px rgba(180, 120, 10, 0.5);
+}
+.result-container .access-alert.danger {
+    background: linear-gradient(135deg, oklch(0.58 0.18 25), oklch(0.5 0.17 22));
+    box-shadow: 0 14px 34px -18px rgba(180, 40, 30, 0.55);
+}
+
+.result-container .alert-icon {
+    width: 44px; height: 44px;
+    border-radius: 13px;
+    flex: none;
+    display: grid; place-items: center;
+    background: rgba(255, 255, 255, 0.20);
+    color: #fff;
+    font-size: 22px;
+}
+.result-container .alert-content { flex: 1; min-width: 0; }
+.result-container .alert-content h2 {
+    font-size: 18px; font-weight: 800; letter-spacing: -0.01em;
+    margin: 0 0 3px;
+}
+.result-container .alert-content > p {
+    font-size: 13.5px; color: rgba(255, 255, 255, 0.9);
+    margin: 0; line-height: 1.45;
+}
+
+.access-alert-time {
+    flex: none; align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 7px;
+    font: 700 13px/1 "JetBrains Mono", ui-monospace, monospace;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    padding: 9px 13px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+@media (max-width: 560px) { .access-alert-time { display: none; } }
+
+/* ---------------------------------------------------------
+   LAYOUT — una sola columna (como la referencia)
+--------------------------------------------------------- */
+.result-container .access-grid { grid-template-columns: 1fr; gap: 16px; }
+
+/* tarjetas con el lenguaje visual de la referencia */
+.result-container .access-card,
+.result-container .vehicle-card {
+    border-radius: 22px;
+    padding: 24px;
+    border: 1px solid #e9edf3;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04), 0 18px 44px -28px rgba(20, 30, 60, 0.5);
+}
+.result-container .access-card:hover {
+    transform: none;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04), 0 18px 44px -28px rgba(20, 30, 60, 0.5);
+}
+.result-container .card::before {
+    display: none;
+}
+.result-container .vehicle-card { background: #fff; }
+
+/* card-title como "tag" de la referencia */
+.result-container .card-title { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; }
+.result-container .card-title i { color: #2e5bff; font-size: 16px; }
+.result-container .card-title h3 { font-size: 15px; font-weight: 800; color: #161b2b; margin: 0; }
+
+/* ---------------------------------------------------------
+   PERFIL — header (tag + badge)
+--------------------------------------------------------- */
+.grd-profile-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 20px;
+}
+.grd-profile-tag {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 15px; font-weight: 800; color: #161b2b;
+}
+.grd-profile-tag i { color: #2e5bff; font-size: 16px; }
+.grd-profile-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 700; white-space: nowrap;
+    padding: 5px 11px 5px 9px; border-radius: 999px;
+    color: oklch(0.5 0.16 262); background: oklch(0.95 0.04 262);
+}
+.grd-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+/* ---------------------------------------------------------
+   PERFIL — fila de identidad (foto/avatar + datos + placa)
+--------------------------------------------------------- */
+.grd-identity {
+    display: flex; align-items: center; gap: 20px;
+    padding-bottom: 22px; border-bottom: 1px solid #eef1f6;
+}
+.grd-identity-photo {
+    width: 88px; height: 88px; border-radius: 22px;
+    object-fit: cover; flex: none; cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 12px 30px -12px rgba(46, 91, 255, 0.45);
+    transition: transform .25s;
+}
+.grd-identity-photo:hover { transform: scale(1.04); }
+.grd-identity-avatar {
+    width: 88px; height: 88px; border-radius: 22px; flex: none;
+    display: grid; place-items: center;
+    font-size: 30px; font-weight: 800; color: #fff;
+    background: linear-gradient(145deg, #5b7cff, #2e5bff);
+}
+.grd-identity-txt { flex: 1; min-width: 0; }
+.grd-identity-txt h2 {
+    margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; color: #14192a;
+}
+.grd-identity-txt > p {
+    margin: 4px 0 0; font-size: 13.5px; color: #6b7488; text-transform: capitalize;
+}
+
+.grd-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.grd-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 600; color: #5a6276;
+    background: #f3f5f9; border: 1px solid #e7eaf1;
+    padding: 5px 11px; border-radius: 9px; white-space: nowrap;
+}
+.grd-chip i { color: #95a0b4; font-size: 12px; }
+
+/* foto real de la placa (misma fila del avatar, ampliable) */
+.grd-plate-wrap { flex: none; margin-left: auto; }
+.grd-plate-photo {
+    height: 64px; width: auto; max-width: 190px;
+    border-radius: 10px; object-fit: cover; cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 6px 16px -6px rgba(20, 30, 60, 0.4);
+    transition: transform .25s;
+}
+.grd-plate-photo:hover { transform: scale(1.04); }
+
+/* ---------------------------------------------------------
+   PERFIL — filas de contacto (icono + label + valor)
+--------------------------------------------------------- */
+.grd-prows { display: flex; flex-direction: column; padding: 8px 0; }
+.grd-prow {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 0; border-bottom: 1px solid #f1f3f8;
+}
+.grd-prow:last-child { border-bottom: none; }
+.grd-prow-ico { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex: none; font-size: 16px; }
+.grd-prow-ico.tone-blue  { color: #2563eb; background: #dbeafe; }
+.grd-prow-ico.tone-green { color: #16a34a; background: #dcfce7; }
+.grd-prow-ico.tone-amber { color: #d97706; background: #fef3c7; }
+.grd-prow-label { font-size: 14px; color: #6b7488; flex: 1; min-width: 0; }
+.grd-prow-val { font-size: 15px; font-weight: 700; color: #1c2333; text-decoration: none; text-align: right; }
+a.grd-prow-val:hover { color: #2e5bff; }
+
+/* ---------------------------------------------------------
+   PERFIL — meta grid (Modalidad / Motivo)
+--------------------------------------------------------- */
+.grd-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.grd-meta-cell { background: #f6f8fb; border: 1px solid #eceff4; border-radius: 14px; padding: 14px 16px; }
+.grd-meta-cell span {
+    display: block; font: 700 10.5px/1 "JetBrains Mono", monospace;
+    letter-spacing: 0.1em; text-transform: uppercase; color: #97a1b4; margin-bottom: 7px;
+}
+.grd-meta-cell strong { font-size: 14.5px; font-weight: 700; color: #1c2333; }
+
+/* acciones inline dentro del perfil */
+.grd-profile .grd-scan-actions { margin-top: 22px; }
+
+/* ---------------------------------------------------------
+   MONITOREO — restyle del status badge dentro del nuevo look
+--------------------------------------------------------- */
+.result-container .status-panel { margin-bottom: 18px; }
+
+/* ---------------------------------------------------------
+   RESPONSIVE — perfil
+--------------------------------------------------------- */
+@media (max-width: 560px) {
+    .grd-identity { flex-direction: column; align-items: flex-start; gap: 14px; }
+    .grd-plate-wrap { margin-left: 0; }
+    .grd-prow { flex-wrap: wrap; }
+    .grd-prow-val { width: 100%; padding-left: 52px; text-align: left; }
+    .grd-meta { grid-template-columns: 1fr; }
+}
 .grd-deny-detail.red i   { color: #dc2626; }
