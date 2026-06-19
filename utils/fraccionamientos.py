@@ -17,10 +17,16 @@ import unicodedata
 # ------------------------------------------------------------------
 
 FRACCIONAMIENTOS = [
-    "Foresta Dream Lagons",
-    "Cedro Zinacantepec",
-    "Villas del Bosque II",
+    "foresta dream lagons",
+    "cedro zinacantepec",
+    "villas del bosque ii",
 ]
+
+FRACCIONAMIENTOS_LABELS = {
+    "foresta dream lagons": "Foresta Dream Lagons",
+    "cedro zinacantepec": "Cedro Zinacantepec",
+    "villas del bosque ii": "Villas del Bosque II",
+}
 
 # Compatibilidad con código existente
 RESIDENTES_COLECCIONES = {
