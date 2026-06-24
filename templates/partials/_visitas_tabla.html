@@ -1,0 +1,164 @@
+{# ============================================================
+   PARCIAL: tabla de visitas + paginación
+   Lo incluye admin_dashboard.html  y  lo devuelve el endpoint
+   admin.buscar_visitas_tabla (AJAX). Mismo HTML => nunca se
+   desincronizan el diseño ni las columnas.
+   ============================================================ #}
+
+<div class="tbl-wrap">
+  <table class="ad-table">
+    <thead>
+      <tr>
+        <th>Visitante</th><th>Residente</th><th>Fraccionamiento</th><th>Destino</th>
+        <th>Modalidad</th><th>Fecha</th><th>Horario</th><th>Estado</th><th>Vehículo</th><th>Foto placa</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for visita in visitas_tabla %}
+      <tr>
+        <td>
+          <div class="vis-cell">
+            {% if visita.foto_visitante %}
+              <img src="{{ visita.foto_visitante.url }}" class="vis-img zoomable-image"
+                   alt="Foto de {{ visita.nombre_visitante }}"
+                   width="46" height="46" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+            {% else %}
+              <div class="vis-av"><i class="fa-solid fa-user"></i></div>
+            {% endif %}
+            <div>
+              <p class="vis-name">{{ visita.nombre_visitante }}</p>
+              <p class="vis-phone">{{ visita.telefono or '—' }}</p>
+            </div>
+          </div>
+        </td>
+        <td class="td-residente">{{ visita.residente_nombre or '—' }}</td>
+        <td>
+          {% if visita.fraccionamiento %}<span class="badge b-info">{{ visita.fraccionamiento | title }}</span>{% else %}<span class="td-muted">—</span>{% endif %}
+        </td>
+        <td>
+          {% if visita.condominio %}<p class="td-strong">{{ visita.condominio | title }}</p>{% endif %}
+          <p class="td-muted">Casa {{ visita.residencia_destino or '—' }}</p>
+        </td>
+        <td>
+          {% if visita.modalidad_visita == "recurrente" %}
+            <span class="badge b-rec">Recurrente</span>
+            {% if visita.dia_semana %}<p class="td-muted">{{ visita.dia_semana | capitalize }}</p>{% endif %}
+          {% elif visita.modalidad_visita == "temporal" %}
+            <span class="badge b-temp">Temporal</span>
+          {% else %}
+            <span class="td-muted">{{ visita.tipo_visita or "—" }}</span>
+          {% endif %}
+        </td>
+        <td class="td-fecha">
+          {% if visita.fecha_visita %}{% set partes = visita.fecha_visita.split('-') %}{{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }}{% else %}—{% endif %}
+        </td>
+        <td>
+          <div class="horario">
+            <p><span class="h-label">E</span> {{ visita.hora_inicio or '—' }}</p>
+            <p><span class="h-label">S</span>
+              {% if visita.hora_salida %}{{ visita.hora_salida }}
+              {% elif visita.estado == 'dentro' %}<span class="h-curso">en curso</span>
+              {% else %}—{% endif %}
+            </p>
+          </div>
+        </td>
+        <td>
+          {% if visita.estado == "activo" %}<span class="badge b-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>
+          {% elif visita.estado == "dentro" %}<span class="badge b-in"><i class="fa-solid fa-check"></i> Dentro</span>
+          {% elif visita.estado == "salida_registrada" %}<span class="badge b-done"><i class="fa-solid fa-flag-checkered"></i> Finalizada</span>
+          {% else %}<span class="badge b-danger">{{ visita.estado }}</span>{% endif %}
+        </td>
+        <td>
+          {% if visita.vehiculo %}
+            <span class="veh-plate">{{ visita.vehiculo.placa }}</span>
+            <p class="td-muted">{{ visita.vehiculo.marca | title }}{% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo }}{% endif %} · {{ visita.vehiculo.color | title }}</p>
+          {% else %}
+            <span class="td-muted">Sin vehículo</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if visita.foto_placa %}
+            <img src="{{ visita.foto_placa.url }}" class="placa-thumb zoomable-image"
+                 alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
+                 width="118" height="66" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+          {% else %}
+            <span class="td-muted">Sin foto</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+
+      {% if not visitas_tabla %}
+      <tr>
+        <td colspan="10" class="tbl-empty">
+          <i class="fa-solid fa-inbox"></i>
+          {% if busqueda %}<p>No se encontraron visitas que coincidan con «{{ busqueda }}».</p>
+          {% else %}<p>No hay visitas registradas para el período seleccionado.</p>{% endif %}
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+{% if total_registros_tabla and total_registros_tabla > 0 %}
+{% set base_qs = periodo_qs ~ '&fraccionamiento=' ~ (frac_sel or '') ~ '&busqueda=' ~ (busqueda or '') ~ '&fecha_inicio_tabla=' ~ (fecha_inicio_tabla or '') ~ '&fecha_fin_tabla=' ~ (fecha_fin_tabla or '') ~ '&per_page=' ~ por_pagina_tabla %}
+{% set desde = (pagina_tabla - 1) * por_pagina_tabla + 1 %}
+{% set hasta = [pagina_tabla * por_pagina_tabla, total_registros_tabla] | min %}
+{% set ventana = 1 %}
+{% set p_ini = [pagina_tabla - ventana, 1] | max %}
+{% set p_fin = [pagina_tabla + ventana, total_paginas_tabla] | min %}
+
+<div class="pgx">
+  <div class="pgx-left">
+    <span>Mostrar</span>
+    <select class="pgx-select" data-base="?{{ base_qs }}" aria-label="Registros por página">
+      {% for n in per_page_opciones %}<option value="{{ n }}" {% if n == por_pagina_tabla %}selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+    <span>por página</span>
+  </div>
+
+  <div class="pgx-info">Mostrando <strong>{{ "{:,}".format(desde) }}–{{ "{:,}".format(hasta) }}</strong> de <strong>{{ "{:,}".format(total_registros_tabla) }}</strong></div>
+
+  <div class="pgx-right">
+    <nav class="pagination" aria-label="Paginación de la tabla">
+      {% if pagina_tabla > 1 %}
+        <a href="?{{ base_qs }}&page=1" class="page-btn page-edge" aria-label="Primera página"><i class="fa-solid fa-angles-left"></i></a>
+        <a href="?{{ base_qs }}&page={{ pagina_tabla - 1 }}" class="page-btn" aria-label="Página anterior"><i class="fa-solid fa-angle-left"></i></a>
+      {% else %}
+        <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-left"></i></span>
+        <span class="page-btn disabled"><i class="fa-solid fa-angle-left"></i></span>
+      {% endif %}
+
+      {% if p_ini > 1 %}
+        <a href="?{{ base_qs }}&page=1" class="page-btn">1</a>
+        {% if p_ini > 2 %}<span class="page-ellipsis">…</span>{% endif %}
+      {% endif %}
+
+      {% for p in range(p_ini, p_fin + 1) %}
+        <a href="?{{ base_qs }}&page={{ p }}" class="page-btn {% if p == pagina_tabla %}active{% endif %}" {% if p == pagina_tabla %}aria-current="page"{% endif %}>{{ p }}</a>
+      {% endfor %}
+
+      {% if p_fin < total_paginas_tabla %}
+        {% if p_fin < total_paginas_tabla - 1 %}<span class="page-ellipsis">…</span>{% endif %}
+        <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn">{{ total_paginas_tabla }}</a>
+      {% endif %}
+
+      {% if pagina_tabla < total_paginas_tabla %}
+        <a href="?{{ base_qs }}&page={{ pagina_tabla + 1 }}" class="page-btn" aria-label="Página siguiente"><i class="fa-solid fa-angle-right"></i></a>
+        <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn page-edge" aria-label="Última página"><i class="fa-solid fa-angles-right"></i></a>
+      {% else %}
+        <span class="page-btn disabled"><i class="fa-solid fa-angle-right"></i></span>
+        <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-right"></i></span>
+      {% endif %}
+    </nav>
+
+    {% if total_paginas_tabla > 1 %}
+    <div class="pgx-jump">
+      <span>Ir a</span>
+      <input type="number" min="1" max="{{ total_paginas_tabla }}" class="pgx-jump-input" data-base="?{{ base_qs }}" placeholder="{{ pagina_tabla }}/{{ total_paginas_tabla }}" aria-label="Ir a la página">
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

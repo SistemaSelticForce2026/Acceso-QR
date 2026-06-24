@@ -1,1059 +1,794 @@
-{% extends 'layout.html' %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centro de Operaciones · Control de Acceso Residencial</title>
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 <style>
-  /* ══ FILTRO PERÍODO (Día / Semana / Mes) ══ */
-  .period-filter{
-    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-    background:#fff; border:1px solid #e2e8f0; border-radius:16px;
-    padding:12px 16px; margin-bottom:22px;
-  }
-  .pf-tabs{ display:inline-flex; background:#f1f5f9; border-radius:12px; padding:4px; }
-  .pf-tab{
-    border:0; background:transparent; cursor:pointer;
-    padding:8px 16px; border-radius:9px; font-weight:600; font-size:.9rem;
-    color:#64748b; display:inline-flex; align-items:center; gap:7px; transition:.18s;
-  }
-  .pf-tab:hover{ color:#0f172a; }
-  .pf-tab.active{ background:#2563eb; color:#fff; box-shadow:0 2px 8px rgba(37,99,235,.3); }
-  .pf-input{
-    border:1px solid #cbd5e1; border-radius:10px; padding:9px 12px;
-    font-size:.92rem; color:#0f172a; font-family:inherit; outline:none;
-  }
-  .pf-input:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
-  .pf-rango{
-    margin-left:auto; color:#475569; font-weight:600; font-size:.9rem;
-    display:inline-flex; align-items:center; gap:7px;
-  }
+/* ============================================================
+   CENTRO DE OPERACIONES — Control de Acceso Residencial
+   Shell tipo NOC (sidebar + topbar) + datos reales (Jinja).
+   1 azul de marca (#2563eb, igual que tus PDFs) + semánticos.
+   Firma: datos en monoespaciada (placas, QR, horarios, KPIs).
+   ============================================================ */
+:root{
+  --bg:#eef0f4; --panel:#fff; --panel-2:#f7f8fb;
+  --ink-900:#0c1322; --ink-700:#243049; --ink-600:#475569;
+  --ink-500:#5b6678; --ink-400:#8a93a6; --ink-300:#aab2c2;
+  --line:#e4e7ef; --line-soft:#eef0f5;
 
-  /* ══ FILTRO POR FRACCIONAMIENTO (chips tipo "Gestión de residentes") ══ */
-  .frac-filter{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; }
-  .frac-chip{
-    display:inline-flex; align-items:center; gap:8px;
-    background:#fff; border:1px solid #e2e8f0; border-radius:999px;
-    padding:9px 16px; font-weight:600; font-size:.9rem; color:#475569;
-    text-decoration:none; transition:.15s;
-  }
-  .frac-chip:hover{ border-color:#cbd5e1; color:#0f172a; }
-  .frac-chip.active{
-    background:#2563eb; border-color:#2563eb; color:#fff;
-    box-shadow:0 2px 8px rgba(37,99,235,.3);
-  }
-  .frac-count{
-    background:#f1f5f9; color:#475569; border-radius:999px;
-    padding:1px 9px; font-size:.8rem; font-weight:700; line-height:1.6;
-  }
-  .frac-chip.active .frac-count{ background:rgba(255,255,255,.25); color:#fff; }
+  --pri-50:#eff4ff; --pri-100:#dbe6ff; --pri-200:#c2d3fb;
+  --pri-500:#3b6ef5; --pri-600:#2563eb; --pri-700:#1d4ed8;
 
-/* =======================================
-   FILTRO PROFESIONAL FRACCIONAMIENTO
-======================================= */
+  --ok:#16a34a; --ok-bg:#e8f6ee; --ok-bd:#c2e6cf;
+  --warn:#c2820a; --warn-bg:#fcf3df; --warn-bd:#f0dca6;
+  --bad:#d6342c; --bad-bg:#fdeceb; --bad-bd:#f5c8c5;
+  --info:#0e7490; --info-bg:#e3f4f7; --info-bd:#bce4ec;
+  --vio:#7c3aed; --vio-bg:#f1ecfd;
 
-.dashboard-filter-card{
-    background:#fff;
-    border:1px solid #e2e8f0;
-    border-radius:20px;
+  --rail-bg:#0d1424; --rail-bg-2:#111a2e; --rail-ink:#9aa6bf;
+  --rail-ink-2:#5e6b88; --rail-line:#1c2740;
 
-    padding:22px 24px;
-
-    margin-bottom:24px;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:20px;
-
-    box-shadow:0 4px 14px rgba(15,23,42,.04);
+  --rad:12px; --rad-sm:9px; --rad-lg:16px;
+  --sh-1:0 1px 2px rgba(16,24,40,.05);
+  --sh-2:0 2px 8px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --sh-3:0 12px 30px rgba(13,20,40,.12);
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --rail-w:248px; --top-h:60px;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink-700);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',monospace;font-feature-settings:"zero"}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+::selection{background:var(--pri-100)}
 
-.df-left{
-    display:flex;
-    align-items:center;
-    gap:16px;
+/* ════════ SHELL ════════ */
+.app{display:flex;min-height:100vh}
+
+/* Sidebar */
+.rail{width:var(--rail-w);flex:0 0 var(--rail-w);background:linear-gradient(185deg,var(--rail-bg),var(--rail-bg-2));color:var(--rail-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid #060b16;z-index:30}
+.brand{display:flex;align-items:center;gap:11px;padding:0 20px;height:var(--top-h);border-bottom:1px solid var(--rail-line);flex-shrink:0}
+.brand-mark{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));display:grid;place-items:center;color:#fff;font-size:15px;box-shadow:0 4px 12px rgba(37,99,235,.45),inset 0 1px 0 rgba(255,255,255,.25)}
+.brand-txt b{color:#fff;font-size:14.5px;font-weight:700;letter-spacing:-.2px;display:block;line-height:1.15}
+.brand-txt span{font-size:10.5px;color:var(--rail-ink-2);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.rail-scroll{flex:1;overflow-y:auto;padding:14px 12px 20px}
+.rail-scroll::-webkit-scrollbar{width:6px}
+.rail-scroll::-webkit-scrollbar-thumb{background:#1d2942;border-radius:9px}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rail-ink-2);padding:14px 12px 7px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:var(--rad-sm);font-size:13.5px;font-weight:500;color:var(--rail-ink);margin-bottom:1px;position:relative;transition:.16s var(--ease)}
+.nav-item i:first-child{width:18px;text-align:center;font-size:14px;color:var(--rail-ink-2);transition:.16s}
+.nav-item:hover{background:#172339;color:#dfe5f2}
+.nav-item:hover i:first-child{color:var(--pri-500)}
+.nav-item.active{background:linear-gradient(90deg,rgba(37,99,235,.18),rgba(37,99,235,.04));color:#fff;font-weight:600}
+.nav-item.active i:first-child{color:var(--pri-500)}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:22px;border-radius:0 3px 3px 0;background:var(--pri-500)}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;font-family:'JetBrains Mono',monospace}
+.nav-badge.b-live{background:rgba(22,163,74,.16);color:#4ade80}
+.nav-badge.b-alert{background:rgba(214,52,44,.18);color:#fb7185}
+.rail-foot{padding:12px;border-top:1px solid var(--rail-line);flex-shrink:0}
+.rail-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--rad-sm);transition:.16s;cursor:pointer}
+.rail-user:hover{background:#172339}
+.ru-av{width:34px;height:34px;border-radius:8px;flex-shrink:0;background:linear-gradient(145deg,#334155,#1e293b);color:#cbd5e1;display:grid;place-items:center;font-weight:700;font-size:13px;border:1px solid #2a3650}
+.ru-meta b{color:#e7ecf6;font-size:12.5px;font-weight:600;display:block;line-height:1.2}
+.ru-meta span{font-size:10.5px;color:var(--rail-ink-2)}
+.rail-user .fa-ellipsis-vertical{margin-left:auto;color:var(--rail-ink-2);font-size:12px}
+
+/* Main + topbar */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:var(--top-h);position:sticky;top:0;z-index:25;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px}
+.burger{display:none;background:none;border:none;color:var(--ink-500);font-size:17px}
+.crumb{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-400);font-weight:500}
+.crumb b{color:var(--ink-900);font-weight:700}
+.crumb i{font-size:8px;color:var(--ink-300)}
+.t-search{margin-left:8px;flex:1;max-width:380px;position:relative}
+.t-search input{width:100%;height:38px;border:1px solid var(--line);border-radius:var(--rad-sm);background:var(--panel-2);padding:0 12px 0 36px;font-size:13px;color:var(--ink-700);font-family:inherit;outline:none;transition:.16s}
+.t-search input::placeholder{color:var(--ink-400)}
+.t-search input:focus{background:#fff;border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+.t-search>i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-400);font-size:12px}
+.t-search kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-400);background:#fff;border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+.top-clock{display:flex;flex-direction:column;align-items:flex-end;margin-right:6px;line-height:1.15}
+.top-clock b{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-900);font-weight:600;letter-spacing:-.3px}
+.top-clock span{font-size:10px;color:var(--ink-400);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.icon-btn{width:38px;height:38px;border-radius:var(--rad-sm);border:1px solid var(--line);background:#fff;color:var(--ink-500);display:grid;place-items:center;font-size:14px;position:relative;transition:.16s}
+.icon-btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+.icon-btn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--bad);border:1.5px solid #fff}
+.top-prof{display:flex;align-items:center;gap:9px;padding:5px 10px 5px 6px;border:1px solid var(--line);border-radius:999px;background:#fff;margin-left:4px;transition:.16s}
+.top-prof:hover{border-color:var(--pri-200);box-shadow:var(--sh-1)}
+.tp-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+.top-prof b{font-size:12.5px;color:var(--ink-900);font-weight:600}
+.top-prof i{font-size:10px;color:var(--ink-400)}
+
+.content{padding:24px 26px 40px;max-width:1640px;width:100%;margin:0 auto}
+footer.app-foot{padding:18px 26px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-400);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:auto}
+footer.app-foot b{color:var(--ink-600)}
+
+/* ════════ PÁGINA ════════ */
+.ad-page{display:flex;flex-direction:column;gap:16px}
+
+/* Encabezado */
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.ph-l h1{font-size:21px;font-weight:800;color:var(--ink-900);letter-spacing:-.5px;line-height:1.15}
+.ph-l p{font-size:13px;color:var(--ink-500);margin-top:5px;max-width:640px;line-height:1.6}
+.ph-r{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.status-strip{display:inline-flex;align-items:center;gap:9px;background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--ok);padding:7px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);position:relative;flex-shrink:0}
+.live-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--ok);animation:ring 1.8s infinite}
+@keyframes ring{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.btn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border-radius:var(--rad-sm);font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink-700);transition:.16s var(--ease);box-shadow:var(--sh-1)}
+.btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+.btn i{font-size:12px}
+.btn .fa-arrows-rotate{transition:transform .5s var(--ease)}
+.btn:hover .fa-arrows-rotate{transform:rotate(180deg)}
+.btn-pri{background:var(--pri-600);border-color:var(--pri-600);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.btn-pri:hover{background:var(--pri-700);border-color:var(--pri-700);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.4)}
+
+/* Filtro fraccionamiento */
+.dashboard-filter-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:20px;box-shadow:var(--sh-1)}
+.df-left{display:flex;align-items:center;gap:14px}
+.df-icon{width:46px;height:46px;border-radius:11px;background:var(--pri-50);color:var(--pri-600);display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.df-left h3{margin:0;font-size:14px;font-weight:700;color:var(--ink-900)}
+.df-left p{margin:2px 0 0;color:var(--ink-500);font-size:12.5px}
+.df-left p strong{color:var(--ink-900)}
+.dashboard-select{min-width:300px;border:1px solid var(--line);border-radius:var(--rad-sm);padding:11px 38px 11px 14px;background:#fff;font-size:13px;font-weight:600;color:var(--ink-900);outline:none;font-family:inherit;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%238a93a6' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;transition:.16s}
+.dashboard-select:focus{border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+
+/* KPIs */
+.ad-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.ad-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:16px 17px;box-shadow:var(--sh-1);position:relative;overflow:hidden;transition:.18s var(--ease)}
+.ad-stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pri-500)}
+.ad-stat:nth-child(2)::before{background:var(--warn)}
+.ad-stat:nth-child(3)::before{background:var(--ok)}
+.ad-stat:nth-child(4)::before{background:var(--vio)}
+.ad-stat:nth-child(5)::before{background:var(--pri-500)}
+.ad-stat:nth-child(6)::before{background:var(--ok)}
+.ad-stat:nth-child(7)::before{background:var(--bad)}
+.ad-stat:nth-child(8)::before{background:var(--bad)}
+.ad-stat:nth-child(9)::before{background:var(--vio)}
+.ad-stat:hover{box-shadow:var(--sh-2);border-color:#d4d9e6;transform:translateY(-2px)}
+.ast-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ast-label{font-size:11px;font-weight:700;color:var(--ink-500);text-transform:uppercase;letter-spacing:.05em;margin:0}
+.ast-ico{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.ico-blue{background:var(--pri-50);color:var(--pri-600)}
+.ico-green{background:var(--ok-bg);color:var(--ok)}
+.ico-amber{background:var(--warn-bg);color:var(--warn)}
+.ico-purple{background:var(--vio-bg);color:var(--vio)}
+.ico-red{background:var(--bad-bg);color:var(--bad)}
+.ast-num{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--ink-900);line-height:1;letter-spacing:-1.5px;margin:0}
+.ast-sub{font-size:11.5px;color:var(--ink-400);font-weight:500;margin:7px 0 0}
+
+/* Filtro período */
+.period-filter{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:11px 14px}
+.pf-tabs{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--rad-sm);padding:3px}
+.pf-tab{border:0;background:transparent;cursor:pointer;padding:8px 16px;border-radius:7px;font-weight:600;font-size:12.5px;color:var(--ink-500);display:inline-flex;align-items:center;gap:7px;transition:.15s;font-family:inherit}
+.pf-tab i{font-size:11px}
+.pf-tab:hover{color:var(--ink-900)}
+.pf-tab.active{background:#fff;color:var(--pri-600);box-shadow:var(--sh-1)}
+.pf-pickers{display:inline-flex;gap:8px}
+.pf-input{border:1px solid var(--line);border-radius:var(--rad-sm);padding:9px 12px;font-size:13px;color:var(--ink-900);font-family:'JetBrains Mono',monospace;outline:none;background:#fff;transition:.16s}
+.pf-input:focus{border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+.pf-rango{margin-left:auto;color:var(--ink-500);font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;gap:8px}
+.pf-rango i{color:var(--pri-500)}
+
+/* Cards / charts */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.ad-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:18px;box-shadow:var(--sh-1)}
+.chart-card{display:flex;flex-direction:column;padding:0;overflow:hidden}
+.chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line-soft)}
+.chart-head h2{font-size:14px;font-weight:700;color:var(--ink-900);margin:0;display:flex;align-items:center;gap:9px;letter-spacing:-.2px}
+.chart-head h2 i{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600)}
+.chart-sub{font-size:11.5px;color:var(--ink-400);margin:5px 0 0}
+.mini-kpis{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.mini-kpis span{background:var(--panel-2);border:1px solid var(--line);padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;color:var(--ink-600)}
+.chart-body{position:relative;height:280px;padding:18px}
+.chart-body canvas{width:100%!important;height:100%!important}
+.chart-foot{display:flex;border-top:1px solid var(--line-soft)}
+.cf-cell{flex:1;padding:13px 16px;text-align:center;border-right:1px solid var(--line-soft)}
+.cf-cell:last-child{border-right:none}
+.cf-cell b{display:block;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--ink-900);letter-spacing:-.5px}
+.cf-cell span{font-size:10.5px;color:var(--ink-400);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.live-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-bd);padding:4px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.live-dot-sm{width:6px;height:6px;border-radius:50%;background:var(--ok);position:relative}
+.live-dot-sm::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--ok);animation:ring 1.8s infinite}
+.section-title{font-size:14px;font-weight:700;color:var(--ink-900);margin:0 0 4px;display:flex;align-items:center;gap:9px;letter-spacing:-.2px}
+.section-title i{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600)}
+
+/* Estado sistema */
+.sys-list{display:flex;flex-direction:column;margin-top:14px}
+.sys-item{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
+.sys-item:last-child{border-bottom:none;padding-bottom:0}
+.sys-info{flex:1;min-width:0;display:flex;align-items:center;gap:13px}
+.sys-ic{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.sys-tx{flex:1;min-width:0}
+.sys-name{font-size:13px;font-weight:600;color:var(--ink-900);margin:0}
+.sys-desc{font-size:11.5px;color:var(--ink-400);margin:2px 0 0}
+.sys-bar{height:5px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:8px;max-width:220px}
+.sys-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--pri-600),#6d8bff)}
+
+/* Actividad */
+.activity-list{display:flex;flex-direction:column;margin-top:14px}
+.activity-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.activity-item:last-child{border-bottom:none;padding-bottom:0}
+.activity-ico{width:34px;height:34px;border-radius:9px;background:var(--pri-50);color:var(--pri-600);display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.activity-name{font-size:13px;font-weight:600;color:var(--ink-900);margin:0}
+.activity-sub{font-size:11.5px;color:var(--ink-400);margin:2px 0 0}
+.empty-state{text-align:center;padding:40px 16px;color:var(--ink-400);font-size:13px}
+.empty-state i{font-size:26px;display:block;margin-bottom:10px;opacity:.45}
+
+/* Alertas */
+.alert-list{display:flex;flex-direction:column;gap:9px;margin:14px 0 0}
+.alert-item{display:flex;gap:11px;align-items:flex-start;padding:12px 13px;border-radius:var(--rad-sm);border:1px solid;font-size:12.5px;font-weight:500;line-height:1.5}
+.alert-item i{margin-top:1px;flex-shrink:0;font-size:13px}
+.alert-item p{margin:0}
+.a-warning{background:var(--warn-bg);border-color:var(--warn-bd);color:#8a5d04}.a-warning i{color:var(--warn)}
+.a-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:#a8261f}.a-danger i{color:var(--bad)}
+.a-info{background:var(--info-bg);border-color:var(--info-bd);color:#0a5a72}.a-info i{color:var(--info)}
+
+/* Monitor */
+.monitor-panel{background:linear-gradient(160deg,#101a30,#0c1322);border-radius:var(--rad);padding:16px;margin-top:14px;position:relative;overflow:hidden}
+.monitor-panel::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 90% 0%,rgba(37,99,235,.22),transparent 55%);pointer-events:none}
+.monitor-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;position:relative}
+.monitor-head h3{font-size:12.5px;font-weight:700;color:#fff;margin:0;display:flex;align-items:center;gap:8px}
+.monitor-head h3 i{color:#6d8bff}
+.monitor-head .live-tag{background:rgba(22,163,74,.18);border-color:rgba(22,163,74,.3);color:#4ade80}
+.monitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;position:relative}
+.monitor-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:var(--rad-sm);padding:13px}
+.monitor-num{display:block;font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1}
+.monitor-box:first-child .monitor-num{color:#6d8bff}
+.monitor-box small{font-size:10.5px;color:#7e8aa8;font-weight:600;margin-top:5px;display:block}
+
+/* Rankings */
+.rank-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.rank-sub{font-size:11.5px;color:var(--ink-400);margin:3px 0 0}
+.rank-list{display:flex;flex-direction:column;margin-top:10px}
+.rank-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.rank-item:last-child{border-bottom:none;padding-bottom:0}
+.rank-left{display:flex;align-items:center;gap:12px;min-width:0}
+.rank-av{width:36px;height:36px;border-radius:9px;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex-shrink:0}
+.veh-ico{width:36px;height:36px;border-radius:9px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-500);display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.rank-name{font-size:13px;font-weight:600;color:var(--ink-900);margin:0 0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.rank-bar{height:4px;background:var(--line);border-radius:999px;overflow:hidden;max-width:160px;margin-bottom:5px}
+.rank-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--pri-600),#7a96ff)}
+.rank-desc{font-size:11px;color:var(--ink-400);margin:0}
+.rank-count{text-align:right;flex-shrink:0}
+.rank-num{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--ink-900);display:block;line-height:1}
+.rank-count small{font-size:10.5px;color:var(--ink-400);font-weight:600}
+.rank-pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
+.rank-pager .rp-info{font-size:12px;font-weight:700;color:var(--ink-500);min-width:48px;text-align:center;font-family:'JetBrains Mono',monospace}
+.rp-btn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:var(--rad-sm);background:#fff;color:var(--ink-600);cursor:pointer;transition:.15s;font-size:12px}
+.rp-btn:hover:not(:disabled){border-color:var(--pri-500);color:var(--pri-600)}
+.rp-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Historial header + filtro fechas */
+.hist-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.hist-filter{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--rad-sm);padding:13px 16px;margin-bottom:14px}
+.hf-field{display:flex;flex-direction:column;gap:5px}
+.hf-field label{font-size:10px;font-weight:700;color:var(--ink-500);text-transform:uppercase;letter-spacing:.05em}
+.hf-field input[type=date]{height:38px;padding:0 12px;border:1px solid var(--line);border-radius:var(--rad-sm);background:#fff;font-size:12.5px;color:var(--ink-900);outline:none;font-family:'JetBrains Mono',monospace;transition:.16s}
+.hf-field input[type=date]:focus{border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+.hf-actions{display:flex;gap:7px}
+.btn-filter{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px;background:var(--pri-600);color:#fff;border:none;border-radius:var(--rad-sm);font-size:12.5px;font-weight:600;cursor:pointer;transition:.16s;box-shadow:0 2px 8px rgba(37,99,235,.3);font-family:inherit}
+.btn-filter:hover{background:var(--pri-700);box-shadow:0 4px 14px rgba(37,99,235,.4)}
+.btn-clear{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;background:#fff;color:var(--ink-500);border:1px solid var(--line);border-radius:var(--rad-sm);font-size:12.5px;font-weight:600;text-decoration:none;transition:.16s}
+.btn-clear:hover{border-color:var(--ink-300);color:var(--ink-700)}
+
+/* Toolbar tabla */
+.tbl-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.tbl-search-form{flex:1;min-width:0;max-width:360px}
+.tbl-search{position:relative;display:flex;align-items:center}
+.tbl-search>i{position:absolute;left:13px;color:var(--ink-400);font-size:12px}
+.tbl-search input{width:100%;height:40px;border:1px solid var(--line);border-radius:var(--rad-sm);background:var(--panel-2);padding:0 38px 0 36px;font-size:12.5px;color:var(--ink-900);outline:none;font-family:inherit;transition:.16s}
+.tbl-search input:focus{background:#fff;border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+.tbl-search-clear{position:absolute;right:11px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--line);color:var(--ink-500);text-decoration:none;font-size:11px;transition:.15s}
+.tbl-search-clear:hover{background:var(--ink-300);color:#fff}
+.tbl-exports{margin-left:auto;display:flex;gap:7px}
+.btn-export{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:var(--rad-sm);font-size:12px;font-weight:600;text-decoration:none;border:1px solid;transition:.15s}
+.btn-export:hover{transform:translateY(-1px);box-shadow:var(--sh-2)}
+.btn-pdf{background:var(--bad-bg);border-color:var(--bad-bd);color:#b02720}
+.btn-excel{background:var(--ok-bg);border-color:var(--ok-bd);color:#0f7a3a}
+
+/* Tabla */
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--rad);max-height:580px}
+.tbl-wrap::-webkit-scrollbar{width:8px;height:8px}
+.tbl-wrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.tbl-wrap::-webkit-scrollbar-thumb:hover{background:var(--ink-300)}
+.ad-table{width:100%;min-width:1180px;border-collapse:collapse;font-size:13px}
+.ad-table thead th{position:sticky;top:0;z-index:3;background:var(--panel-2);text-align:left;padding:12px 16px;font-size:10.5px;font-weight:700;color:var(--ink-400);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line)}
+.ad-table td{padding:11px 16px;border-bottom:1px solid var(--line-soft);vertical-align:middle;color:var(--ink-700)}
+.ad-table tbody tr{transition:background .12s}
+.ad-table tbody tr:hover{background:var(--pri-50)}
+.ad-table tbody tr:last-child td{border-bottom:none}
+.vis-cell{display:flex;align-items:center;gap:11px}
+.vis-img{width:46px;height:46px;object-fit:cover;object-position:center top;border-radius:9px;border:1px solid var(--line);flex-shrink:0;transition:.16s;cursor:zoom-in}
+.vis-img:hover{transform:scale(1.08);box-shadow:var(--sh-2);border-color:var(--pri-200)}
+.vis-av{width:46px;height:46px;border-radius:9px;background:var(--panel-2);color:var(--ink-300);display:grid;place-items:center;font-size:15px;border:1px solid var(--line);flex-shrink:0}
+.vis-name{font-size:13px;font-weight:600;color:var(--ink-900);margin:0}
+.vis-phone{font-size:11px;color:var(--ink-400);font-family:'JetBrains Mono',monospace;margin:2px 0 0}
+.td-residente{min-width:130px}
+.td-strong{font-size:13px;font-weight:600;color:var(--ink-900);margin:0}
+.td-muted{font-size:11.5px;color:var(--ink-400);margin:2px 0 0}
+.td-fecha{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--ink-600);white-space:nowrap}
+.horario{display:flex;flex-direction:column;gap:3px;font-family:'JetBrains Mono',monospace;font-size:11.5px;min-width:120px}
+.horario p{margin:0}
+.h-label{color:var(--ink-300);font-weight:500;margin-right:4px}
+.h-curso{color:var(--warn);font-weight:700}
+.veh-plate{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;background:#0c1322;color:#fff;padding:3px 9px;border-radius:6px;letter-spacing:.06em;margin:0 0 4px;white-space:nowrap;border:1px solid #1c2740;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.placa-thumb{width:118px;height:66px;object-fit:cover;border-radius:7px;border:1px solid var(--line);cursor:zoom-in;transition:.16s}
+.placa-thumb:hover{transform:scale(1.06);box-shadow:var(--sh-2);border-color:var(--pri-200)}
+.tbl-empty{text-align:center;padding:48px 16px!important;color:var(--ink-400)}
+.tbl-empty i{font-size:26px;display:block;margin-bottom:10px;opacity:.45}
+.tbl-empty p{margin:0;font-size:13px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:.01em}
+.b-success{background:var(--ok-bg);color:var(--ok)}
+.b-info{background:var(--pri-50);color:var(--pri-700)}
+.b-warning{background:var(--warn-bg);color:var(--warn)}
+.b-danger{background:var(--bad-bg);color:var(--bad)}
+.b-pending{background:var(--warn-bg);color:var(--warn)}
+.b-in{background:var(--ok-bg);color:var(--ok)}
+.b-done{background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line)}
+.b-rec{background:var(--ok-bg);color:var(--ok)}
+.b-temp{background:var(--info-bg);color:var(--info)}
+
+/* Paginación */
+.pgx{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.pgx-left{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-500);font-weight:500}
+.pgx-select{height:34px;border:1px solid var(--line);border-radius:var(--rad-sm);background:#fff;color:var(--ink-700);font-size:12px;font-weight:700;padding:0 10px;cursor:pointer;font-family:inherit;outline:none}
+.pgx-select:focus{border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+.pgx-info{font-size:12px;color:var(--ink-500)}
+.pgx-info strong{color:var(--ink-900);font-weight:700;font-family:'JetBrains Mono',monospace}
+.pgx-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pagination{display:flex;align-items:center;gap:4px;margin:0;flex-wrap:wrap}
+.page-btn{min-width:34px;height:34px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--rad-sm);border:1px solid var(--line);background:#fff;color:var(--ink-600);font-size:12.5px;font-weight:600;font-family:'JetBrains Mono',monospace;text-decoration:none;transition:.15s}
+.page-btn:hover{border-color:var(--pri-500);color:var(--pri-600)}
+.page-btn.active{background:var(--pri-600);color:#fff;border-color:var(--pri-600);pointer-events:none}
+.page-btn.disabled{opacity:.4;pointer-events:none;background:var(--panel-2)}
+.page-btn.page-edge{color:var(--ink-400)}
+.page-ellipsis{min-width:20px;text-align:center;color:var(--ink-300);font-weight:700;user-select:none}
+.pgx-jump{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-500);border-left:1px solid var(--line);padding-left:12px}
+.pgx-jump-input{width:90px;height:34px;text-align:center;border:1px solid var(--line);border-radius:var(--rad-sm);background:#fff;font-size:12px;font-weight:700;color:var(--ink-900);font-family:'JetBrains Mono',monospace;outline:none;-moz-appearance:textfield;appearance:textfield}
+.pgx-jump-input::-webkit-outer-spin-button,.pgx-jump-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pgx-jump-input:focus{border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+.pgx-jump-input.error{border-color:var(--bad);box-shadow:0 0 0 3px rgba(214,52,44,.15);color:var(--bad)}
+
+/* Flash */
+.flash{display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:var(--rad-sm);border:1px solid;font-size:13px;font-weight:600}
+.flash i{flex-shrink:0}
+.flash-success{background:var(--ok-bg);border-color:var(--ok-bd);color:#0f7a3a}
+.flash-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:#a8261f}
+.flash-info{background:var(--pri-50);border-color:var(--pri-200);color:var(--pri-700)}
+
+/* Modal / toast / loader */
+.img-modal{display:none;position:fixed;inset:0;background:rgba(9,14,26,.92);backdrop-filter:blur(8px);z-index:9999;justify-content:center;align-items:center;padding:24px}
+.img-modal.open{display:flex;animation:fadeIn .18s var(--ease)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-img{max-width:min(96vw,1100px);max-height:90vh;object-fit:contain;border-radius:var(--rad-lg);box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.modal-close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:20px;width:44px;height:44px;border-radius:50%;cursor:pointer;display:grid;place-items:center;transition:.16s}
+.modal-close:hover{background:rgba(255,255,255,.2);transform:rotate(90deg)}
+.update-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);display:flex;align-items:center;gap:12px;background:#0c1322;color:#fff;padding:11px 13px 11px 18px;border-radius:999px;box-shadow:var(--sh-3);font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;z-index:9998;transition:.25s var(--ease)}
+.update-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.update-toast .ut-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex-shrink:0;position:relative}
+.update-toast .ut-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--ok);animation:ring 1.8s infinite}
+.update-toast button{border:none;background:var(--pri-600);color:#fff;padding:7px 15px;border-radius:999px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:.16s}
+.update-toast button:hover{background:var(--pri-700)}
+#topLoader{position:fixed;top:0;left:0;height:3px;width:0;z-index:99999;background:linear-gradient(90deg,var(--pri-600),#38bdf8);box-shadow:0 0 10px rgba(37,99,235,.55);border-radius:0 3px 3px 0;opacity:0;transition:width .25s ease,opacity .3s ease;pointer-events:none}
+#topLoader.active{opacity:1}
+.btn-filter.is-loading,.btn-clear.is-loading{opacity:.7;pointer-events:none}
+.btn-filter.is-loading i{animation:spinFilter .7s linear infinite}
+@keyframes spinFilter{to{transform:rotate(360deg)}}
+#tablaVisitasWrap{transition:opacity .15s ease}
+#tablaVisitasWrap.tbl-loading{opacity:.55;pointer-events:none}
+
+/* Responsive */
+@media(max-width:1280px){.ad-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1100px){.charts-row,.two-col{grid-template-columns:1fr}}
+@media(max-width:980px){
+  .rail{position:fixed;left:0;transform:translateX(-100%);transition:transform .25s var(--ease);box-shadow:var(--sh-3)}
+  .rail.open{transform:translateX(0)}
+  .burger{display:inline-grid;place-items:center}
+  .t-search{max-width:none}
 }
-
-.df-icon{
-    width:54px;
-    height:54px;
-
-    border-radius:14px;
-
-    background:#eff6ff;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    color:#2563eb;
-
-    font-size:1.3rem;
+@media(max-width:860px){.ad-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .content{padding:18px 14px 32px}
+  .t-search,.top-clock{display:none}
+  .dashboard-filter-card{flex-direction:column;align-items:stretch}.dashboard-select{min-width:0;width:100%}
+  .tbl-toolbar{flex-direction:column;align-items:stretch}.tbl-search-form{max-width:none}.tbl-exports{margin-left:0}
+  .pf-rango{margin-left:0;width:100%}
+  .chart-foot{flex-wrap:wrap}.cf-cell{flex:1 1 50%}
 }
-
-.df-left h3{
-    margin:0;
-    font-size:1rem;
-    font-weight:700;
-    color:#0f172a;
+@media(max-width:580px){
+  .ad-stats{grid-template-columns:1fr 1fr}.ast-num{font-size:24px}
+  .hist-filter{flex-direction:column}.hf-field,.hf-actions{width:100%}.btn-filter,.btn-clear{flex:1;justify-content:center}.btn-export{flex:1;justify-content:center}
+  .pgx{flex-direction:column;align-items:stretch}.pgx-right{justify-content:center}.page-edge{display:none}.pgx-jump{border-left:none;padding-left:0}
 }
-
-.df-left p{
-    margin-top:4px;
-    color:#64748b;
-    font-size:.92rem;
-}
-
-.dashboard-select{
-    min-width:320px;
-
-    border:1px solid #cbd5e1;
-    border-radius:12px;
-
-    padding:12px 14px;
-
-    background:#fff;
-
-    font-size:.95rem;
-    font-weight:600;
-
-    color:#0f172a;
-
-    outline:none;
-}
-
-.dashboard-select:focus{
-    border-color:#2563eb;
-
-    box-shadow:
-      0 0 0 4px rgba(37,99,235,.15);
-}
-
-/* =======================================
-   BUSCADOR DE LA TABLA (server-side)
-======================================= */
-.tbl-search-form{ flex:1; min-width:0; }
-.tbl-search{ position:relative; }
-.tbl-search input{ padding-right:38px; }
-.tbl-search-clear{
-  position:absolute; right:12px; top:50%; transform:translateY(-50%);
-  width:22px; height:22px; border-radius:50%;
-  display:inline-flex; align-items:center; justify-content:center;
-  background:#f1f5f9; color:#64748b; text-decoration:none;
-  font-size:.75rem; transition:.15s;
-}
-.tbl-search-clear:hover{ background:#e2e8f0; color:#0f172a; }
-
-/* =======================================
-   BARRA DE CARGA SUPERIOR (feedback rápido)
-======================================= */
-#topLoader{
-  position:fixed; top:0; left:0; height:3px; width:0; z-index:99999;
-  background:linear-gradient(90deg,#2563eb,#38bdf8);
-  box-shadow:0 0 10px rgba(37,99,235,.55);
-  border-radius:0 3px 3px 0;
-  opacity:0; transition:width .25s ease, opacity .3s ease;
-  pointer-events:none;
-}
-#topLoader.active{ opacity:1; }
-
-/* Botón Filtrar con estado "cargando" */
-.btn-filter.is-loading,
-.btn-clear.is-loading{ opacity:.7; pointer-events:none; }
-.btn-filter.is-loading i{ animation:spinFilter .7s linear infinite; }
-@keyframes spinFilter{ to{ transform:rotate(360deg); } }
-
-/* =======================================
-   TABLA EN VIVO (AJAX): atenúa suave mientras carga
-======================================= */
-#tablaVisitasWrap{ transition:opacity .15s ease; }
-#tablaVisitasWrap.tbl-loading{ opacity:.55; pointer-events:none; }
-
+@media(prefers-reduced-motion:reduce){*,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
-{% endblock %}
-
-{% block content %}
+</head>
+<body>
 
 <div id="topLoader"></div>
 
-<div class="ad-page">
+<div class="app">
 
-  <!-- ══ HEADER ══ -->
-  <div class="ad-header">
-    <div class="ad-header-left">
-      <h1>Panel administrativo</h1>
-      <p class="ad-subtitle">
-        Monitoreo en tiempo real de accesos, residentes, vigilancia e incidencias
-        del fraccionamiento mediante validación QR segura.
-      </p>
-      <div class="live-pill">
-        <span class="live-dot"></span>
-        Sistema en línea · Actualización en tiempo real
-        <span class="live-update">Última actualización: <strong id="fechaActual"></strong></span>
+  <!-- ════════ SIDEBAR ════════ -->
+  <aside class="rail" id="rail">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="brand-txt"><b>AccessQR</b><span>Control de acceso</span></div>
+    </div>
+    <div class="rail-scroll">
+      <div class="nav-group">
+        <div class="nav-label">Operación</div>
+        <a class="nav-item active" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Panel general</a>
+        <a class="nav-item" href="{{ url_for('admin.accesos') }}"><i class="fa-solid fa-right-to-bracket"></i> Historial de accesos {% if dentro and dentro > 0 %}<span class="nav-badge b-live">{{ dentro }}</span>{% endif %}</a>
+        <a class="nav-item" href="#"><i class="fa-solid fa-qrcode"></i> Validación QR</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Administración</div>
+        <a class="nav-item" href="{{ url_for('admin.residentes') }}"><i class="fa-solid fa-users"></i> Residentes</a>
+        <a class="nav-item" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-user-shield"></i> Guardias</a>
+        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-city"></i> Fraccionamientos</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Seguridad</div>
+        <a class="nav-item" href="{{ url_for('admin.incidencias') }}"><i class="fa-solid fa-triangle-exclamation"></i> Incidencias {% if total_incidencias and total_incidencias > 0 %}<span class="nav-badge b-alert">{{ total_incidencias }}</span>{% endif %}</a>
+        <a class="nav-item" href="{{ url_for('admin.reportes') }}"><i class="fa-solid fa-file-export"></i> Reportes</a>
+        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-gear"></i> Configuración</a>
+        <a class="nav-item" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
       </div>
     </div>
-    <div class="ad-header-right">
-      <button class="btn-refresh" onclick="window.location.reload();">
-        <i class="fa-solid fa-arrows-rotate"></i> Actualizar
-      </button>
-    </div>
-  </div>
-
-  <!-- ══ HERO ══ -->
-  <div class="ad-hero">
-    <div class="hero-circle"></div>
-    <div class="hero-text">
-      <span class="hero-tag">🟢 Sistema Seguro</span>
-      <h2>
-        {% set total = (total_visitas or 0) %}
-        {% set efectivas = (salidas or 0) + (dentro or 0) %}
-        {% if total > 0 %}
-          {{ ((efectivas / total) * 100) | round | int }}% Operatividad
-        {% else %}
-          Sin registros aún
-        {% endif %}
-      </h2>
-      <p>Monitoreo activo de accesos, residentes y seguridad.</p>
-    </div>
-    <div class="hero-metrics">
-      <div class="hero-metric">
-        <strong>{{ dentro or 0 }}</strong>
-        <span>Dentro</span>
-      </div>
-      <div class="hero-metric">
-        <strong>{{ rechazados or 0 }}</strong>
-        <span>Bloqueados</span>
-      </div>
-      <div class="hero-metric">
-        <strong>{{ total_incidencias or 0 }}</strong>
-        <span>Incidencias</span>
+    <div class="rail-foot">
+      <div class="rail-user">
+        <div class="ru-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
+        <div class="ru-meta"><b>{{ session.nombre if session and session.nombre else 'Administrador' }}</b><span>Administrador</span></div>
+        <i class="fa-solid fa-ellipsis-vertical"></i>
       </div>
     </div>
-  </div>
+  </aside>
 
-  <!-- ═══════════════════════════════════════ -->
-  <!-- FILTRO PROFESIONAL DE FRACCIONAMIENTO -->
-  <!-- ═══════════════════════════════════════ -->
-  <div class="dashboard-filter-card">
+  <!-- ════════ PRINCIPAL ════════ -->
+  <div class="main">
 
-    <div class="df-left">
-      <div class="df-icon">
-        <i class="fa-solid fa-city"></i>
+    <header class="topbar">
+      <button class="burger" id="burger"><i class="fa-solid fa-bars"></i></button>
+      <div class="crumb"><span>Operación</span><i class="fa-solid fa-chevron-right"></i><b>Panel general</b></div>
+      <div class="t-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Buscar residente, placa o folio QR…" id="topSearch">
+        <kbd>⌘K</kbd>
       </div>
-
-      <div>
-        <h3>Fraccionamiento</h3>
-
-        <p>
-          {% if frac_sel %}
-            Mostrando información de
-            <strong>{{ frac_sel|title }}</strong>
-          {% else %}
-            Mostrando información consolidada de todos los fraccionamientos
-          {% endif %}
-        </p>
-      </div>
-    </div>
-
-    <div class="df-right">
-
-      <form method="GET" id="fraccionamientoForm">
-
-        <input type="hidden" name="modo" value="{{ modo }}">
-        <input type="hidden" name="dia" value="{{ dia_sel }}">
-        <input type="hidden" name="semana" value="{{ semana_sel }}">
-        <input type="hidden" name="mes" value="{{ mes_sel }}">
-
-        <select
-          name="fraccionamiento"
-          class="dashboard-select"
-          onchange="this.form.submit()"
-        >
-          <option value="">
-            Todos los fraccionamientos
-          </option>
-
-          {% for f in fraccionamientos %}
-          <option
-            value="{{ f }}"
-            {% if frac_sel == f|lower %}selected{% endif %}
-          >
-            {{ f|title }}
-          </option>
-          {% endfor %}
-        </select>
-
-      </form>
-
-    </div>
-
-  </div>
-
-  <!-- ══ STATS GRID ══ -->
-  <div class="ad-stats">
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Total visitas</p>
-        <div class="ast-ico ico-blue"><i class="fa-solid fa-users"></i></div>
-      </div>
-      <p class="ast-num">{{ total_visitas or 0 }}</p>
-      <p class="ast-sub">Registros generales</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Visitas pendientes</p>
-        <div class="ast-ico ico-amber"><i class="fa-solid fa-user-clock"></i></div>
-      </div>
-      <p class="ast-num">{{ activas or 0 }}</p>
-      <p class="ast-sub">Aún no han ingresado</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Personas dentro</p>
-        <div class="ast-ico ico-green"><i class="fa-solid fa-building-shield"></i></div>
-      </div>
-      <p class="ast-num">{{ dentro or 0 }}</p>
-      <p class="ast-sub">Dentro del residencial</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Salidas registradas</p>
-        <div class="ast-ico ico-purple"><i class="fa-solid fa-door-open"></i></div>
-      </div>
-      <p class="ast-num">{{ salidas or 0 }}</p>
-      <p class="ast-sub">Visitas finalizadas</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Residentes</p>
-        <div class="ast-ico ico-blue"><i class="fa-solid fa-house"></i></div>
-      </div>
-      <p class="ast-num">{{ total_residentes or 0 }}</p>
-      <p class="ast-sub">Usuarios registrados</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Guardias</p>
-        <div class="ast-ico ico-green"><i class="fa-solid fa-shield-halved"></i></div>
-      </div>
-      <p class="ast-num">{{ total_guardias or 0 }}</p>
-      <p class="ast-sub">Personal activo</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Incidencias</p>
-        <div class="ast-ico ico-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      </div>
-      <p class="ast-num">{{ total_incidencias or 0 }}</p>
-      <p class="ast-sub">Eventos registrados</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">QR rechazados</p>
-        <div class="ast-ico ico-red"><i class="fa-solid fa-ban"></i></div>
-      </div>
-      <p class="ast-num">{{ rechazados or 0 }}</p>
-      <p class="ast-sub">Accesos inválidos</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Promedio diario</p>
-        <div class="ast-ico ico-purple"><i class="fa-solid fa-chart-line"></i></div>
-      </div>
-      <p class="ast-num">{{ promedio or 0 }}</p>
-      <p class="ast-sub">Visitas por día</p>
-    </div>
-
-  </div>
-
-  <!-- ══ FILTRO PERÍODO (Día / Semana / Mes con calendarios) ══ -->
-  <form method="GET" id="periodForm" class="period-filter">
-    <input type="hidden" name="modo" id="modoInput" value="{{ modo }}">
-    <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
-
-    <div class="pf-tabs">
-      <button type="button" class="pf-tab {% if modo == 'dia' %}active{% endif %}" data-modo="dia">
-        <i class="fa-solid fa-calendar-day"></i> Día
-      </button>
-      <button type="button" class="pf-tab {% if modo == 'semana' %}active{% endif %}" data-modo="semana">
-        <i class="fa-solid fa-calendar-week"></i> Semana
-      </button>
-      <button type="button" class="pf-tab {% if modo == 'mes' %}active{% endif %}" data-modo="mes">
-        <i class="fa-solid fa-calendar"></i> Mes
-      </button>
-    </div>
-
-    <div class="pf-pickers">
-      <input type="date"  name="dia"    class="pf-input" {% if modo != 'dia' %}hidden{% endif %}
-             value="{{ dia_sel }}" onchange="document.getElementById('periodForm').submit()">
-      <input type="week"  name="semana" class="pf-input" {% if modo != 'semana' %}hidden{% endif %}
-             value="{{ semana_sel }}" onchange="document.getElementById('periodForm').submit()">
-      <input type="month" name="mes"    class="pf-input" {% if modo != 'mes' %}hidden{% endif %}
-             value="{{ mes_sel }}" onchange="document.getElementById('periodForm').submit()">
-    </div>
-
-    <span class="pf-rango"><i class="fa-solid fa-calendar-check"></i> {{ rango_label }}</span>
-  </form>
-
-  <!-- ══ GRÁFICAS FILA 1 ══ -->
-  <div class="charts-row">
-
-    <div class="ad-card chart-card">
-      <div class="chart-head">
-        <div>
-          <h2><i class="fa-solid fa-chart-pie"></i> Estado operativo</h2>
-          <p class="chart-sub">Distribución del estado actual de accesos.</p>
+      <div class="top-right">
+        <div class="top-clock"><b id="clk">—</b><span id="dte">—</span></div>
+        <a class="icon-btn" href="{{ url_for('admin.incidencias') }}"><i class="fa-regular fa-bell"></i>{% if total_incidencias and total_incidencias > 0 %}<span class="dot"></span>{% endif %}</a>
+        <button class="icon-btn" onclick="window.location.reload();"><i class="fa-solid fa-arrows-rotate"></i></button>
+        <div class="top-prof">
+          <div class="tp-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
+          <b>{{ session.nombre.split(' ')[0] if session and session.nombre else 'Admin' }}</b>
+          <i class="fa-solid fa-chevron-down"></i>
         </div>
       </div>
-      <div class="chart-body">
-        <canvas id="estadoChart"></canvas>
-      </div>
-    </div>
+    </header>
 
-    <div class="ad-card chart-card">
-      <div class="chart-head">
-        <div>
-          <h2><i class="fa-solid fa-chart-column"></i> Resumen general</h2>
-          <p class="chart-sub">Distribución de actividades registradas.</p>
-        </div>
-      </div>
-      <div class="chart-body">
-        <canvas id="actividadChart"></canvas>
-      </div>
-    </div>
+    <div class="content">
+      <div class="ad-page">
 
-  </div>
-
-  <!-- ══ GRÁFICAS FILA 2 ══ -->
-  <div class="charts-row">
-
-    <div class="ad-card chart-card">
-      <div class="chart-head">
-        <div>
-          <h2><i class="fa-solid fa-id-card"></i> Modalidades de visita</h2>
-          <p class="chart-sub">Distribución operativa de accesos registrados.</p>
-        </div>
-        <div class="live-tag">
-          <span class="live-dot-sm"></span> Monitoreo
-        </div>
-      </div>
-      <div class="chart-body">
-        <canvas id="tiposChart"></canvas>
-      </div>
-    </div>
-
-    <div class="ad-card chart-card">
-      <div class="chart-head">
-        <div>
-          <h2><i class="fa-solid fa-calendar-days"></i> Accesos por día</h2>
-          <p class="chart-sub">Flujo operativo de accesos registrados diariamente.</p>
-          <div class="mini-kpis">
-            <span>📈 Máximo: {{ dias_data | max if dias_data else 0 }}</span>
-            <span>📊 Promedio: {{ promedio or 0 }}</span>
-          </div>
-        </div>
-        <div class="live-tag">
-          <span class="live-dot-sm"></span> En vivo
-        </div>
-      </div>
-      <div class="chart-body">
-        <canvas id="diasChart"></canvas>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ══ ESTADO DEL SISTEMA + ACTIVIDAD RECIENTE ══ -->
-  <div class="two-col">
-
-    <div class="ad-card">
-      <h2 class="section-title">Estado del sistema</h2>
-      <div class="sys-list">
-
-        <div class="sys-item">
-          <div class="sys-info">
-            <p class="sys-name">Sistema QR</p>
-            <p class="sys-desc">Validación de accesos QR</p>
-            <div class="sys-bar"><div class="sys-fill" style="width:98%"></div></div>
-          </div>
-          <span class="badge b-success">Operativo</span>
-        </div>
-
-        <div class="sys-item">
-          <div class="sys-info">
-            <p class="sys-name">Base de datos</p>
-            <p class="sys-desc">MongoDB conectada correctamente</p>
-            <div class="sys-bar"><div class="sys-fill" style="width:100%"></div></div>
-          </div>
-          <span class="badge b-success">Conectada</span>
-        </div>
-
-        <div class="sys-item">
-          <div class="sys-info">
-            <p class="sys-name">Monitoreo</p>
-            <p class="sys-desc">Supervisión activa del sistema</p>
-            <div class="sys-bar"><div class="sys-fill" style="width:95%"></div></div>
-          </div>
-          <span class="badge b-info">Activo</span>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="ad-card">
-      <h2 class="section-title">Actividad reciente</h2>
-      <div class="activity-list">
-        {% if actividad_reciente %}
-          {% for acceso in actividad_reciente %}
-          <div class="activity-item">
-            <div class="activity-ico">
-              <i class="fa-solid fa-clock-rotate-left"></i>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+            <div class="flash flash-{{ category if category in ['success','danger','info'] else 'info' }}">
+              <i class="fa-solid {{ 'fa-circle-check' if category=='success' else ('fa-circle-exclamation' if category=='danger' else 'fa-circle-info') }}"></i>
+              {{ msg }}
             </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- ══ ENCABEZADO ══ -->
+        <div class="page-head">
+          <div class="ph-l">
+            <h1>Panel general de operación</h1>
+            <p>Monitoreo en tiempo real de accesos, residentes y seguridad mediante validación QR.
+              {% if frac_sel %}Datos de <strong>{{ frac_sel|title }}</strong>.{% else %}Datos consolidados de todos los fraccionamientos.{% endif %}</p>
+          </div>
+          <div class="ph-r">
+            {% set total = (total_visitas or 0) %}
+            {% set efectivas = (salidas or 0) + (dentro or 0) %}
+            <div class="status-strip">
+              <span class="live-dot"></span>
+              {% if total > 0 %}{{ ((efectivas / total) * 100) | round | int }}% operatividad · sistema en línea{% else %}Sistema en línea{% endif %}
+            </div>
+            <button class="btn" onclick="window.location.reload();"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+            <a class="btn btn-pri" href="{{ url_for('admin.reportes') }}"><i class="fa-solid fa-file-export"></i> Generar reporte</a>
+          </div>
+        </div>
+
+        <!-- ══ FILTRO FRACCIONAMIENTO ══ -->
+        <div class="dashboard-filter-card">
+          <div class="df-left">
+            <div class="df-icon"><i class="fa-solid fa-city"></i></div>
             <div>
-              <p class="activity-name">{{ acceso.guardia_nombre }}</p>
-              <p class="activity-sub">{{ acceso.accion }} · {{ acceso.resultado }}</p>
+              <h3>Fraccionamiento</h3>
+              <p>{% if frac_sel %}Mostrando información de <strong>{{ frac_sel|title }}</strong>{% else %}Mostrando información consolidada de todos los fraccionamientos{% endif %}</p>
             </div>
           </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-state">
-            <i class="fa-solid fa-inbox"></i>
-            <p>Sin actividad reciente.</p>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ══ ALERTAS + MÓDULOS ══ -->
-  <div class="two-col">
-
-    <div class="ad-card">
-      <h2 class="section-title">Alertas del sistema</h2>
-
-      <div class="alert-list">
-        {% if dentro and dentro > 0 %}
-        <div class="alert-item a-warning">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <p>{{ dentro }} visita{{ 's' if dentro != 1 else '' }} continúa{{ '' if dentro != 1 else 'n' }} dentro del fraccionamiento.</p>
-        </div>
-        {% endif %}
-
-        {% if rechazados and rechazados > 0 %}
-        <div class="alert-item a-danger">
-          <i class="fa-solid fa-ban"></i>
-          <p>{{ rechazados }} acceso{{ 's' if rechazados != 1 else '' }} rechazado{{ 's' if rechazados != 1 else '' }} detectado{{ 's' if rechazados != 1 else '' }}.</p>
-        </div>
-        {% endif %}
-
-        <div class="alert-item a-info">
-          <i class="fa-solid fa-circle-info"></i>
-          <p>Verificar placas y fotografía del visitante antes de permitir el acceso.</p>
+          <form method="GET" id="fraccionamientoForm">
+            <input type="hidden" name="modo" value="{{ modo }}">
+            <input type="hidden" name="dia" value="{{ dia_sel }}">
+            <input type="hidden" name="semana" value="{{ semana_sel }}">
+            <input type="hidden" name="mes" value="{{ mes_sel }}">
+            <select name="fraccionamiento" class="dashboard-select" onchange="this.form.submit()">
+              <option value="">Todos los fraccionamientos</option>
+              {% for f in fraccionamientos %}
+              <option value="{{ f }}" {% if frac_sel == f|lower %}selected{% endif %}>{{ f|title }}</option>
+              {% endfor %}
+            </select>
+          </form>
         </div>
 
-        {% if total_incidencias and total_incidencias > 0 %}
-        <div class="alert-item a-danger">
-          <i class="fa-solid fa-shield-halved"></i>
-          <p>Hay {{ total_incidencias }} incidencia{{ 's' if total_incidencias != 1 else '' }} registrada{{ 's' if total_incidencias != 1 else '' }}. Revisar bitácora.</p>
+        <!-- ══ KPIs ══ -->
+        <div class="ad-stats">
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Total visitas</p><div class="ast-ico ico-blue"><i class="fa-solid fa-users"></i></div></div><p class="ast-num">{{ total_visitas or 0 }}</p><p class="ast-sub">Registros generales</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Visitas pendientes</p><div class="ast-ico ico-amber"><i class="fa-solid fa-user-clock"></i></div></div><p class="ast-num">{{ activas or 0 }}</p><p class="ast-sub">Aún no han ingresado</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Personas dentro</p><div class="ast-ico ico-green"><i class="fa-solid fa-building-shield"></i></div></div><p class="ast-num">{{ dentro or 0 }}</p><p class="ast-sub">Dentro del residencial</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Salidas registradas</p><div class="ast-ico ico-purple"><i class="fa-solid fa-door-open"></i></div></div><p class="ast-num">{{ salidas or 0 }}</p><p class="ast-sub">Visitas finalizadas</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Residentes</p><div class="ast-ico ico-blue"><i class="fa-solid fa-house"></i></div></div><p class="ast-num">{{ total_residentes or 0 }}</p><p class="ast-sub">Usuarios registrados</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Guardias</p><div class="ast-ico ico-green"><i class="fa-solid fa-shield-halved"></i></div></div><p class="ast-num">{{ total_guardias or 0 }}</p><p class="ast-sub">Personal activo</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Incidencias</p><div class="ast-ico ico-red"><i class="fa-solid fa-triangle-exclamation"></i></div></div><p class="ast-num">{{ total_incidencias or 0 }}</p><p class="ast-sub">Eventos registrados</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">QR rechazados</p><div class="ast-ico ico-red"><i class="fa-solid fa-ban"></i></div></div><p class="ast-num">{{ rechazados or 0 }}</p><p class="ast-sub">Accesos inválidos</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Promedio diario</p><div class="ast-ico ico-purple"><i class="fa-solid fa-chart-line"></i></div></div><p class="ast-num">{{ promedio or 0 }}</p><p class="ast-sub">Visitas por día</p></div>
         </div>
-        {% endif %}
-      </div>
 
-      <!-- Centro de monitoreo -->
-      <div class="monitor-panel">
-        <div class="monitor-head">
-          <h3><i class="fa-solid fa-shield-heart"></i> Centro de monitoreo</h3>
-          <div class="live-tag">
-            <span class="live-dot-sm"></span> En vivo
+        <!-- ══ FILTRO PERÍODO ══ -->
+        <form method="GET" id="periodForm" class="period-filter">
+          <input type="hidden" name="modo" id="modoInput" value="{{ modo }}">
+          <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+          <div class="pf-tabs">
+            <button type="button" class="pf-tab {% if modo == 'dia' %}active{% endif %}" data-modo="dia"><i class="fa-solid fa-calendar-day"></i> Día</button>
+            <button type="button" class="pf-tab {% if modo == 'semana' %}active{% endif %}" data-modo="semana"><i class="fa-solid fa-calendar-week"></i> Semana</button>
+            <button type="button" class="pf-tab {% if modo == 'mes' %}active{% endif %}" data-modo="mes"><i class="fa-solid fa-calendar"></i> Mes</button>
           </div>
-        </div>
-        <div class="monitor-grid">
-          <div class="monitor-box">
-            <span class="monitor-num">
-              {% if (total_visitas or 0) > 0 %}
-                {{ (((salidas or 0) + (dentro or 0)) / total_visitas * 100) | round | int }}%
-              {% else %}—{% endif %}
-            </span>
-            <small>Efectividad</small>
+          <div class="pf-pickers">
+            <input type="date"  name="dia"    class="pf-input" {% if modo != 'dia' %}hidden{% endif %} value="{{ dia_sel }}" onchange="document.getElementById('periodForm').submit()">
+            <input type="week"  name="semana" class="pf-input" {% if modo != 'semana' %}hidden{% endif %} value="{{ semana_sel }}" onchange="document.getElementById('periodForm').submit()">
+            <input type="month" name="mes"    class="pf-input" {% if modo != 'mes' %}hidden{% endif %} value="{{ mes_sel }}" onchange="document.getElementById('periodForm').submit()">
           </div>
-          <div class="monitor-box">
-            <span class="monitor-num">24/7</span>
-            <small>Vigilancia activa</small>
-          </div>
-          <div class="monitor-box">
-            <span class="monitor-num">{{ activas or 0 }}</span>
-            <small>Pendientes de ingreso</small>
-          </div>
-          <div class="monitor-box">
-            <span class="monitor-num">{{ rechazados or 0 }}</span>
-            <small>Bloqueos detectados</small>
-          </div>
-        </div>
-      </div>
-    </div>
+          <span class="pf-rango"><i class="fa-solid fa-calendar-check"></i> {{ rango_label }}</span>
+        </form>
 
-    <!-- Módulos -->
-    <div class="ad-card">
-      <h2 class="section-title">Módulos administrativos</h2>
-      <div class="module-list">
-
-        <a class="module-item" href="/admin/residentes">
-          <div class="module-ico"><i class="fa-solid fa-users"></i></div>
-          <div>
-            <p class="module-name">Gestión de residentes</p>
-            <p class="module-desc">Alta, baja y consulta de residentes registrados.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/guardias">
-          <div class="module-ico"><i class="fa-solid fa-shield-halved"></i></div>
-          <div>
-            <p class="module-name">Gestión de guardias</p>
-            <p class="module-desc">Administración de personal y turnos operativos.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/accesos">
-          <div class="module-ico"><i class="fa-solid fa-door-open"></i></div>
-          <div>
-            <p class="module-name">Historial de accesos</p>
-            <p class="module-desc">Consultar entradas, salidas y accesos rechazados.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/incidencias">
-          <div class="module-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
-          <div>
-            <p class="module-name">Bitácora de incidencias</p>
-            <p class="module-desc">Reportes de seguridad registrados por vigilancia.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/reportes">
-          <div class="module-ico"><i class="fa-solid fa-file-export"></i></div>
-          <div>
-            <p class="module-name">Centro de reportes</p>
-            <p class="module-desc">Genera y exporta reportes de todos los módulos.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/configuracion">
-          <div class="module-ico"><i class="fa-solid fa-gear"></i></div>
-          <div>
-            <p class="module-name">Configuración del sistema</p>
-            <p class="module-desc">Parámetros generales y configuración residencial.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ══ TOP RESIDENTES + VEHÍCULOS ══ -->
-  <div class="two-col">
-
-    <div class="ad-card">
-      <div class="rank-header">
-        <div>
-          <h2 class="section-title"><i class="fa-solid fa-users"></i> Residentes con más visitas</h2>
-          <p class="rank-sub">Mayor actividad de accesos registrados.</p>
-        </div>
-        <span class="badge b-success">Top actividad</span>
-      </div>
-
-      <div class="rank-list">
-        {% if top_residentes %}
-          {% set max_visitas = top_residentes[0][1] if top_residentes else 1 %}
-          {% for residente, total in top_residentes %}
-          <div class="rank-item">
-            <div class="rank-left">
-              <div class="rank-av">{{ residente[0] | upper }}</div>
+        <!-- ══ GRÁFICAS FILA 1 ══ -->
+        <div class="charts-row">
+          <div class="ad-card chart-card">
+            <div class="chart-head">
               <div>
-                <p class="rank-name">
-                  {% if loop.index == 1 %}🥇
-                  {% elif loop.index == 2 %}🥈
-                  {% elif loop.index == 3 %}🥉
-                  {% endif %}
-                  {{ residente }}
-                </p>
-                <div class="rank-bar">
-                  <div class="rank-fill" style="width: {{ ((total / max_visitas) * 100) | round | int }}%;"></div>
+                <h2><i class="fa-solid fa-calendar-days"></i> Accesos por día</h2>
+                <p class="chart-sub">Flujo operativo de accesos registrados diariamente.</p>
+              </div>
+              <div class="live-tag"><span class="live-dot-sm"></span> En vivo</div>
+            </div>
+            <div class="chart-body"><canvas id="diasChart"></canvas></div>
+            <div class="chart-foot">
+              <div class="cf-cell"><b>{{ dias_data | max if dias_data else 0 }}</b><span>Máximo en un día</span></div>
+              <div class="cf-cell"><b>{{ promedio or 0 }}</b><span>Promedio diario</span></div>
+              <div class="cf-cell"><b>{{ total_visitas or 0 }}</b><span>Total del período</span></div>
+            </div>
+          </div>
+
+          <div class="ad-card chart-card">
+            <div class="chart-head">
+              <div><h2><i class="fa-solid fa-chart-pie"></i> Estado operativo</h2><p class="chart-sub">Distribución del estado actual de accesos.</p></div>
+            </div>
+            <div class="chart-body"><canvas id="estadoChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- ══ GRÁFICAS FILA 2 ══ -->
+        <div class="charts-row">
+          <div class="ad-card chart-card">
+            <div class="chart-head">
+              <div><h2><i class="fa-solid fa-chart-column"></i> Resumen general</h2><p class="chart-sub">Distribución de actividades registradas.</p></div>
+            </div>
+            <div class="chart-body"><canvas id="actividadChart"></canvas></div>
+          </div>
+          <div class="ad-card chart-card">
+            <div class="chart-head">
+              <div><h2><i class="fa-solid fa-id-card"></i> Modalidades de visita</h2><p class="chart-sub">Distribución operativa de accesos registrados.</p></div>
+              <div class="live-tag"><span class="live-dot-sm"></span> Monitoreo</div>
+            </div>
+            <div class="chart-body"><canvas id="tiposChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- ══ SISTEMA + ACTIVIDAD ══ -->
+        <div class="two-col">
+          <div class="ad-card">
+            <h2 class="section-title"><i class="fa-solid fa-server"></i> Estado del sistema</h2>
+            <div class="sys-list">
+              <div class="sys-item">
+                <div class="sys-info"><div class="sys-ic ico-blue"><i class="fa-solid fa-qrcode"></i></div><div class="sys-tx"><p class="sys-name">Sistema QR</p><p class="sys-desc">Validación de accesos QR</p><div class="sys-bar"><div class="sys-fill" style="width:98%"></div></div></div></div>
+                <span class="badge b-success">Operativo</span>
+              </div>
+              <div class="sys-item">
+                <div class="sys-info"><div class="sys-ic ico-green"><i class="fa-solid fa-database"></i></div><div class="sys-tx"><p class="sys-name">Base de datos</p><p class="sys-desc">MongoDB conectada correctamente</p><div class="sys-bar"><div class="sys-fill" style="width:100%"></div></div></div></div>
+                <span class="badge b-success">Conectada</span>
+              </div>
+              <div class="sys-item">
+                <div class="sys-info"><div class="sys-ic" style="background:var(--info-bg);color:var(--info)"><i class="fa-solid fa-tower-broadcast"></i></div><div class="sys-tx"><p class="sys-name">Monitoreo</p><p class="sys-desc">Supervisión activa del sistema</p><div class="sys-bar"><div class="sys-fill" style="width:95%"></div></div></div></div>
+                <span class="badge b-info">Activo</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ad-card">
+            <h2 class="section-title"><i class="fa-solid fa-wave-square"></i> Actividad reciente</h2>
+            <div class="activity-list">
+              {% if actividad_reciente %}
+                {% for acceso in actividad_reciente %}
+                <div class="activity-item">
+                  <div class="activity-ico"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                  <div><p class="activity-name">{{ acceso.guardia_nombre }}</p><p class="activity-sub">{{ acceso.accion }} · {{ acceso.resultado }}</p></div>
                 </div>
-                <p class="rank-desc">Residente activo</p>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Sin actividad reciente.</p></div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ ALERTAS DEL SISTEMA ══ -->
+        <div class="ad-card">
+            <h2 class="section-title"><i class="fa-solid fa-bell"></i> Alertas del sistema</h2>
+            <div class="alert-list">
+              {% if dentro and dentro > 0 %}
+              <div class="alert-item a-warning"><i class="fa-solid fa-triangle-exclamation"></i><p>{{ dentro }} visita{{ 's' if dentro != 1 else '' }} continúa{{ '' if dentro != 1 else 'n' }} dentro del fraccionamiento.</p></div>
+              {% endif %}
+              {% if rechazados and rechazados > 0 %}
+              <div class="alert-item a-danger"><i class="fa-solid fa-ban"></i><p>{{ rechazados }} acceso{{ 's' if rechazados != 1 else '' }} rechazado{{ 's' if rechazados != 1 else '' }} detectado{{ 's' if rechazados != 1 else '' }}.</p></div>
+              {% endif %}
+              <div class="alert-item a-info"><i class="fa-solid fa-circle-info"></i><p>Verificar placas y fotografía del visitante antes de permitir el acceso.</p></div>
+              {% if total_incidencias and total_incidencias > 0 %}
+              <div class="alert-item a-danger"><i class="fa-solid fa-shield-halved"></i><p>Hay {{ total_incidencias }} incidencia{{ 's' if total_incidencias != 1 else '' }} registrada{{ 's' if total_incidencias != 1 else '' }}. Revisar bitácora.</p></div>
+              {% endif %}
+            </div>
+
+            <div class="monitor-panel">
+              <div class="monitor-head"><h3><i class="fa-solid fa-shield-heart"></i> Centro de monitoreo</h3><div class="live-tag"><span class="live-dot-sm"></span> En vivo</div></div>
+              <div class="monitor-grid">
+                <div class="monitor-box"><span class="monitor-num">{% if (total_visitas or 0) > 0 %}{{ (((salidas or 0) + (dentro or 0)) / total_visitas * 100) | round | int }}%{% else %}—{% endif %}</span><small>Efectividad</small></div>
+                <div class="monitor-box"><span class="monitor-num">24/7</span><small>Vigilancia activa</small></div>
+                <div class="monitor-box"><span class="monitor-num">{{ activas or 0 }}</span><small>Pendientes de ingreso</small></div>
+                <div class="monitor-box"><span class="monitor-num">{{ rechazados or 0 }}</span><small>Bloqueos detectados</small></div>
               </div>
             </div>
-            <div class="rank-count">
-              <span class="rank-num">{{ total }}</span>
-              <small>visita{{ 's' if total != 1 else '' }}</small>
+          </div>
+
+        <!-- ══ TOP RESIDENTES + VEHÍCULOS ══ -->
+        <div class="two-col">
+          <div class="ad-card">
+            <div class="rank-header">
+              <div><h2 class="section-title"><i class="fa-solid fa-ranking-star"></i> Residentes con más visitas</h2><p class="rank-sub">Mayor actividad de accesos registrados.</p></div>
+              <span class="badge b-success">Top actividad</span>
             </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-state">
-            <i class="fa-solid fa-user-slash"></i>
-            <p>No hay residentes registrados aún.</p>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="ad-card">
-      <div class="rank-header">
-        <div>
-          <h2 class="section-title"><i class="fa-solid fa-car-side"></i> Vehículos frecuentes</h2>
-          <p class="rank-sub">Mayor recurrencia de ingreso.</p>
-        </div>
-        <span class="badge b-info">Monitoreo activo</span>
-      </div>
-
-      <div class="rank-list">
-        {% if vehiculos %}
-          {% for placa in vehiculos %}
-          <div class="rank-item">
-            <div class="rank-left">
-              <div class="veh-ico"><i class="fa-solid fa-car"></i></div>
-              <div>
-                <p class="rank-name">{{ placa }}</p>
-                <p class="rank-desc">Vehículo autorizado</p>
-              </div>
-            </div>
-            <span class="badge b-success">Frecuente</span>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-state">
-            <i class="fa-solid fa-car-burst"></i>
-            <p>No hay vehículos registrados.</p>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ══ HISTORIAL DE VISITAS ══ -->
-  <div class="ad-card">
-
-    <div class="hist-header">
-      <div>
-        <h2 class="section-title">Historial de visitas</h2>
-        <p class="rank-sub">
-          Registro operativo de accesos y visitas dentro del fraccionamiento.
-          {% if frac_sel %}<strong>· {{ frac_sel | title }}</strong>{% else %}<strong>· Todos los fraccionamientos</strong>{% endif %}
-        </p>
-      </div>
-    </div>
-
-    <!-- Filtro fechas -->
-    <form method="GET" class="hist-filter">
-      <input type="hidden" name="modo" value="{{ modo }}">
-      <input type="hidden" name="dia" value="{{ dia_sel }}">
-      <input type="hidden" name="semana" value="{{ semana_sel }}">
-      <input type="hidden" name="mes" value="{{ mes_sel }}">
-      <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
-      <input type="hidden" name="busqueda" value="{{ busqueda or '' }}">
-      <div class="hf-field">
-        <label>Fecha inicio</label>
-        <input type="date" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla or '' }}">
-      </div>
-      <div class="hf-field">
-        <label>Fecha fin</label>
-        <input type="date" name="fecha_fin_tabla" value="{{ fecha_fin_tabla or '' }}">
-      </div>
-      <div class="hf-actions">
-        <button type="submit" class="btn-filter">
-          <i class="fa-solid fa-magnifying-glass"></i> Filtrar
-        </button>
-        {% if fecha_inicio_tabla or fecha_fin_tabla %}
-        <a href="?{{ periodo_qs }}{% if frac_sel %}&fraccionamiento={{ frac_sel | urlencode }}{% endif %}" class="btn-clear">
-          <i class="fa-solid fa-rotate-left"></i> Limpiar
-        </a>
-        {% endif %}
-      </div>
-    </form>
-
-    <!-- Toolbar -->
-    <div class="tbl-toolbar">
-      <form method="GET" id="searchForm" class="tbl-search-form">
-        <input type="hidden" name="modo" value="{{ modo }}">
-        <input type="hidden" name="dia" value="{{ dia_sel }}">
-        <input type="hidden" name="semana" value="{{ semana_sel }}">
-        <input type="hidden" name="mes" value="{{ mes_sel }}">
-        <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
-        <input type="hidden" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla or '' }}">
-        <input type="hidden" name="fecha_fin_tabla" value="{{ fecha_fin_tabla or '' }}">
-        <input type="hidden" name="per_page" value="{{ por_pagina_tabla }}">
-
-        <div class="tbl-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="searchTable" name="busqueda"
-                value="{{ busqueda or '' }}"
-                placeholder="Buscar visitante, residente o placa...">
-          {% if busqueda %}
-          <a href="?{{ periodo_qs }}{% if frac_sel %}&fraccionamiento={{ frac_sel | urlencode }}{% endif %}"
-            class="tbl-search-clear" title="Limpiar búsqueda">
-            <i class="fa-solid fa-xmark"></i>
-          </a>
-          {% endif %}
-        </div>
-      </form>
-
-      <div class="tbl-exports">
-        <a href="{{ url_for('admin.exportar_visitas_pdf', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-pdf">
-          <i class="fa-solid fa-file-pdf"></i> PDF
-        </a>
-        <a href="{{ url_for('admin.exportar_visitas_excel', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-excel">
-          <i class="fa-solid fa-file-excel"></i> Excel
-        </a>
-      </div>
-    </div>
-
-    <!-- ════════════════════════════════════════════════════════ -->
-    <!-- TABLA + PAGINACIÓN (se refresca por AJAX, sin recargar todo) -->
-    <!-- ════════════════════════════════════════════════════════ -->
-    <div id="tablaVisitasWrap">
-
-      <!-- Tabla -->
-      <div class="tbl-wrap">
-        <table class="ad-table">
-          <thead>
-            <tr>
-              <th>Visitante</th>
-              <th>Residente</th>
-              <th>Fraccionamiento</th>
-              <th>Destino</th>
-              <th>Modalidad</th>
-              <th>Fecha</th>
-              <th>Horario</th>
-              <th>Estado</th>
-              <th>Vehículo</th>
-              <th>Foto placa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for visita in visitas_tabla %}
-            <tr>
-
-              <td>
-                <div class="vis-cell">
-                  {% if visita.foto_visitante %}
-                    <img src="{{ visita.foto_visitante.url }}"
-                         class="vis-img zoomable-image"
-                         alt="Foto de {{ visita.nombre_visitante }}">
-                  {% else %}
-                    <div class="vis-av"><i class="fa-solid fa-user"></i></div>
-                  {% endif %}
-                  <div>
-                    <p class="vis-name">{{ visita.nombre_visitante }}</p>
-                    <p class="vis-phone">{{ visita.telefono or '—' }}</p>
+            <div class="rank-list">
+              {% if top_residentes %}
+                {% set max_visitas = top_residentes[0][1] if top_residentes else 1 %}
+                {% for residente, total in top_residentes %}
+                <div class="rank-item">
+                  <div class="rank-left">
+                    <div class="rank-av">{{ residente[0] | upper }}</div>
+                    <div>
+                      <p class="rank-name">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% endif %} {{ residente }}</p>
+                      <div class="rank-bar"><div class="rank-fill" style="width: {{ ((total / max_visitas) * 100) | round | int }}%;"></div></div>
+                      <p class="rank-desc">Residente activo</p>
+                    </div>
                   </div>
+                  <div class="rank-count"><span class="rank-num">{{ total }}</span><small>visita{{ 's' if total != 1 else '' }}</small></div>
                 </div>
-              </td>
-
-              <td class="td-residente">{{ visita.residente_nombre or '—' }}</td>
-
-              <td>
-                {% if visita.fraccionamiento %}
-                  <span class="badge b-info">{{ visita.fraccionamiento | title }}</span>
-                {% else %}
-                  <span class="td-muted">—</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if visita.condominio %}
-                  <p class="td-strong">{{ visita.condominio | title }}</p>
-                {% endif %}
-                <p class="td-muted">Casa {{ visita.residencia_destino or '—' }}</p>
-              </td>
-
-              <td>
-                {% if visita.modalidad_visita == "recurrente" %}
-                  <span class="badge b-rec">Recurrente</span>
-                  {% if visita.dia_semana %}
-                    <p class="td-muted">{{ visita.dia_semana | capitalize }}</p>
-                  {% endif %}
-                {% elif visita.modalidad_visita == "temporal" %}
-                  <span class="badge b-temp">Temporal</span>
-                {% else %}
-                  <span class="td-muted">{{ visita.tipo_visita or "—" }}</span>
-                {% endif %}
-              </td>
-
-              <td class="td-fecha">
-                {% if visita.fecha_visita %}
-                  {% set partes = visita.fecha_visita.split('-') %}
-                  {{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }}
-                {% else %}—{% endif %}
-              </td>
-
-              <td>
-                <div class="horario">
-                  <p>
-                    <span class="h-label">Entrada:</span>
-                    {{ visita.hora_inicio or '—' }}
-                  </p>
-                  <p>
-                    <span class="h-label">Salida:</span>
-                    {% if visita.hora_salida %}
-                      {{ visita.hora_salida }}
-                    {% elif visita.estado == 'dentro' %}
-                      <span class="h-curso">En curso</span>
-                    {% else %}
-                      —
-                    {% endif %}
-                  </p>
-                </div>
-              </td>
-
-              <td>
-                {% if visita.estado == "activo" %}
-                  <span class="badge b-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>
-                {% elif visita.estado == "dentro" %}
-                  <span class="badge b-in"><i class="fa-solid fa-check"></i> Dentro</span>
-                {% elif visita.estado == "salida_registrada" %}
-                  <span class="badge b-done"><i class="fa-solid fa-flag-checkered"></i> Finalizada</span>
-                {% else %}
-                  <span class="badge b-danger">{{ visita.estado }}</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if visita.vehiculo %}
-                  <p class="veh-plate">{{ visita.vehiculo.placa }}</p>
-                  <p class="td-muted">
-                    {{ visita.vehiculo.marca | title }}
-                    {% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo }}{% endif %}
-                    · {{ visita.vehiculo.color | title }}
-                  </p>
-                {% else %}
-                  <span class="td-muted">Sin vehículo</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if visita.foto_placa %}
-                  <img src="{{ visita.foto_placa.url }}"
-                       alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
-                       class="placa-thumb zoomable-image">
-                {% else %}
-                  <span class="td-muted">Sin foto</span>
-                {% endif %}
-              </td>
-
-            </tr>
-            {% endfor %}
-
-            {% if not visitas_tabla %}
-            <tr>
-              <td colspan="10" class="tbl-empty">
-                <i class="fa-solid fa-inbox"></i>
-                {% if busqueda %}
-                <p>No se encontraron visitas que coincidan con «{{ busqueda }}».</p>
-                {% else %}
-                <p>No hay visitas registradas para el período seleccionado.</p>
-                {% endif %}
-              </td>
-            </tr>
-            {% endif %}
-
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Paginación -->
-      {% if total_registros_tabla and total_registros_tabla > 0 %}
-      {% set base_qs = periodo_qs ~ '&fraccionamiento=' ~ (frac_sel or '') ~ '&busqueda=' ~ (busqueda or '') ~ '&fecha_inicio_tabla=' ~ (fecha_inicio_tabla or '') ~ '&fecha_fin_tabla=' ~ (fecha_fin_tabla or '') ~ '&per_page=' ~ por_pagina_tabla %}
-      {% set desde = (pagina_tabla - 1) * por_pagina_tabla + 1 %}
-      {% set hasta = [pagina_tabla * por_pagina_tabla, total_registros_tabla] | min %}
-      {% set ventana = 1 %}
-      {% set p_ini = [pagina_tabla - ventana, 1] | max %}
-      {% set p_fin = [pagina_tabla + ventana, total_paginas_tabla] | min %}
-
-      <div class="pgx">
-        <div class="pgx-left">
-          <span>Mostrar</span>
-          <select class="pgx-select" data-base="?{{ base_qs }}" aria-label="Registros por página">
-            {% for n in per_page_opciones %}
-              <option value="{{ n }}" {% if n == por_pagina_tabla %}selected{% endif %}>{{ n }}</option>
-            {% endfor %}
-          </select>
-          <span>por página</span>
-        </div>
-
-        <div class="pgx-info">
-          Mostrando <strong>{{ "{:,}".format(desde) }}–{{ "{:,}".format(hasta) }}</strong>
-          de <strong>{{ "{:,}".format(total_registros_tabla) }}</strong>
-        </div>
-
-        <div class="pgx-right">
-          <nav class="pagination" aria-label="Paginación de la tabla">
-            {% if pagina_tabla > 1 %}
-              <a href="?{{ base_qs }}&page=1" class="page-btn page-edge" aria-label="Primera página"><i class="fa-solid fa-angles-left"></i></a>
-              <a href="?{{ base_qs }}&page={{ pagina_tabla - 1 }}" class="page-btn" aria-label="Página anterior"><i class="fa-solid fa-angle-left"></i></a>
-            {% else %}
-              <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-left"></i></span>
-              <span class="page-btn disabled"><i class="fa-solid fa-angle-left"></i></span>
-            {% endif %}
-
-            {% if p_ini > 1 %}
-              <a href="?{{ base_qs }}&page=1" class="page-btn">1</a>
-              {% if p_ini > 2 %}<span class="page-ellipsis">…</span>{% endif %}
-            {% endif %}
-
-            {% for p in range(p_ini, p_fin + 1) %}
-              <a href="?{{ base_qs }}&page={{ p }}"
-                class="page-btn {% if p == pagina_tabla %}active{% endif %}"
-                {% if p == pagina_tabla %}aria-current="page"{% endif %}>{{ p }}</a>
-            {% endfor %}
-
-            {% if p_fin < total_paginas_tabla %}
-              {% if p_fin < total_paginas_tabla - 1 %}<span class="page-ellipsis">…</span>{% endif %}
-              <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn">{{ total_paginas_tabla }}</a>
-            {% endif %}
-
-            {% if pagina_tabla < total_paginas_tabla %}
-              <a href="?{{ base_qs }}&page={{ pagina_tabla + 1 }}" class="page-btn" aria-label="Página siguiente"><i class="fa-solid fa-angle-right"></i></a>
-              <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn page-edge" aria-label="Última página"><i class="fa-solid fa-angles-right"></i></a>
-            {% else %}
-              <span class="page-btn disabled"><i class="fa-solid fa-angle-right"></i></span>
-              <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-right"></i></span>
-            {% endif %}
-          </nav>
-
-          {% if total_paginas_tabla > 1 %}
-          <div class="pgx-jump">
-            <span>Ir a</span>
-            <input type="number" min="1" max="{{ total_paginas_tabla }}"
-                  class="pgx-jump-input" data-base="?{{ base_qs }}"
-                  placeholder="{{ pagina_tabla }}/{{ total_paginas_tabla }}" aria-label="Ir a la página">
+                {% endfor %}
+              {% else %}
+                <div class="empty-state"><i class="fa-solid fa-user-slash"></i><p>No hay residentes registrados aún.</p></div>
+              {% endif %}
+            </div>
           </div>
-          {% endif %}
+
+          <div class="ad-card">
+            <div class="rank-header">
+              <div><h2 class="section-title"><i class="fa-solid fa-car-side"></i> Vehículos frecuentes</h2><p class="rank-sub">Mayor recurrencia de ingreso.</p></div>
+              <span class="badge b-info">Monitoreo activo</span>
+            </div>
+            <div class="rank-list">
+              {% if vehiculos %}
+                {% for placa in vehiculos %}
+                <div class="rank-item">
+                  <div class="rank-left"><div class="veh-ico"><i class="fa-solid fa-car"></i></div><div><p class="rank-name"><span class="veh-plate">{{ placa }}</span></p><p class="rank-desc">Vehículo autorizado</p></div></div>
+                  <span class="badge b-success"><i class="fa-solid fa-circle-check"></i> Frecuente</span>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state"><i class="fa-solid fa-car-burst"></i><p>No hay vehículos registrados.</p></div>
+              {% endif %}
+            </div>
+          </div>
         </div>
+
+        <!-- ══ HISTORIAL DE VISITAS ══ -->
+        <div class="ad-card">
+          <div class="hist-header">
+            <div>
+              <h2 class="section-title"><i class="fa-solid fa-table-list"></i> Historial de visitas</h2>
+              <p class="rank-sub">Registro operativo de accesos y visitas dentro del fraccionamiento.
+                {% if frac_sel %}<strong>· {{ frac_sel | title }}</strong>{% else %}<strong>· Todos los fraccionamientos</strong>{% endif %}</p>
+            </div>
+          </div>
+
+          <!-- Filtro fechas -->
+          <form method="GET" class="hist-filter">
+            <input type="hidden" name="modo" value="{{ modo }}">
+            <input type="hidden" name="dia" value="{{ dia_sel }}">
+            <input type="hidden" name="semana" value="{{ semana_sel }}">
+            <input type="hidden" name="mes" value="{{ mes_sel }}">
+            <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+            <input type="hidden" name="busqueda" value="{{ busqueda or '' }}">
+            <div class="hf-field"><label>Fecha inicio</label><input type="date" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla or '' }}"></div>
+            <div class="hf-field"><label>Fecha fin</label><input type="date" name="fecha_fin_tabla" value="{{ fecha_fin_tabla or '' }}"></div>
+            <div class="hf-actions">
+              <button type="submit" class="btn-filter"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
+              {% if fecha_inicio_tabla or fecha_fin_tabla %}
+              <a href="?{{ periodo_qs }}{% if frac_sel %}&fraccionamiento={{ frac_sel | urlencode }}{% endif %}" class="btn-clear"><i class="fa-solid fa-rotate-left"></i> Limpiar</a>
+              {% endif %}
+            </div>
+          </form>
+
+          <!-- Toolbar -->
+          <div class="tbl-toolbar">
+            <form method="GET" id="searchForm" class="tbl-search-form">
+              <input type="hidden" name="modo" value="{{ modo }}">
+              <input type="hidden" name="dia" value="{{ dia_sel }}">
+              <input type="hidden" name="semana" value="{{ semana_sel }}">
+              <input type="hidden" name="mes" value="{{ mes_sel }}">
+              <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+              <input type="hidden" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla or '' }}">
+              <input type="hidden" name="fecha_fin_tabla" value="{{ fecha_fin_tabla or '' }}">
+              <input type="hidden" name="per_page" value="{{ por_pagina_tabla }}">
+              <div class="tbl-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchTable" name="busqueda" value="{{ busqueda or '' }}" placeholder="Buscar visitante, residente o placa...">
+                {% if busqueda %}
+                <a href="?{{ periodo_qs }}{% if frac_sel %}&fraccionamiento={{ frac_sel | urlencode }}{% endif %}" class="tbl-search-clear" title="Limpiar búsqueda"><i class="fa-solid fa-xmark"></i></a>
+                {% endif %}
+              </div>
+            </form>
+            <div class="tbl-exports">
+              <a href="{{ url_for('admin.exportar_visitas_pdf', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</a>
+              <a href="{{ url_for('admin.exportar_visitas_excel', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-excel"><i class="fa-solid fa-file-excel"></i> Excel</a>
+            </div>
+          </div>
+
+          <!-- Tabla + paginación (mismo parcial que usa el AJAX) -->
+          <div id="tablaVisitasWrap">
+            {% include 'partials/_visitas_tabla.html' %}
+          </div>
+        </div>
+
       </div>
-      {% endif %}
-
     </div>
-    <!-- ════════ FIN #tablaVisitasWrap ════════ -->
 
+    <footer class="app-foot">
+      <div>© 2026 <b>AccessQR</b> · Sistema de control de acceso residencial</div>
+      <div>Última sincronización <span class="mono" id="syncTime">—</span></div>
+    </footer>
   </div>
-
 </div>
 
 <!-- ══ MODAL IMAGEN ══ -->
@@ -1071,7 +806,26 @@
 
 <!-- ══ SCRIPTS ══ -->
 <script>
-  // Pestañas del filtro de período (Día / Semana / Mes)
+  // Reloj topbar + sincronización
+  function tick(){
+    const now=new Date();
+    const t=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const d=now.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'}).replace('.','');
+    const clk=document.getElementById('clk'); if(clk)clk.textContent=t;
+    const dte=document.getElementById('dte'); if(dte)dte.textContent=d;
+    const sy=document.getElementById('syncTime'); if(sy)sy.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  }
+  tick(); setInterval(tick,1000);
+
+  // Menú móvil
+  document.getElementById('burger')?.addEventListener('click',()=>document.getElementById('rail').classList.toggle('open'));
+
+  // Buscador del topbar → enfoca la búsqueda de la tabla
+  document.getElementById('topSearch')?.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ const t=document.getElementById('searchTable'); if(t){ t.value=e.target.value; t.dispatchEvent(new Event('input')); t.scrollIntoView({behavior:'smooth',block:'center'}); } }
+  });
+
+  // Pestañas del filtro de período
   document.querySelectorAll('.pf-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.getElementById('modoInput').value = tab.dataset.modo;
@@ -1079,448 +833,199 @@
     });
   });
 
-  // Fecha en vivo (se actualiza sola)
-  function actualizarFecha() {
-    const el = document.getElementById('fechaActual');
-    if (el) el.textContent = new Date().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
-  }
-  actualizarFecha();
-  setInterval(actualizarFecha, 60000);
-
   // Modal de imagen
-  const modal    = document.getElementById('imgModal');
-  const modalImg = document.getElementById('modalImg');
-  const closeModal = () => modal.classList.remove('open');
-
+  const modal=document.getElementById('imgModal'), modalImg=document.getElementById('modalImg');
+  const closeModal=()=>modal.classList.remove('open');
   document.getElementById('modalClose').addEventListener('click', closeModal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-  document.querySelectorAll('.zoomable-image').forEach(img => {
-    img.style.cursor = 'zoom-in';
-    img.addEventListener('click', () => {
-      modalImg.src = img.src;
-      modal.classList.add('open');
-    });
+  modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+  document.querySelectorAll('.zoomable-image').forEach(img=>{
+    img.addEventListener('click', ()=>{ modalImg.src=img.src; modal.classList.add('open'); });
   });
 
-  // Conteo animado con separador de miles + easing
-  document.querySelectorAll('.ast-num').forEach(el => {
-    const final = parseInt(el.innerText.replace(/\D/g, '')) || 0;
-    if (final === 0) { el.innerText = '0'; return; }
-    const dur = 900, ini = performance.now();
-    function frame(now) {
-      const p = Math.min((now - ini) / dur, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      el.innerText = Math.round(final * eased).toLocaleString('es-MX');
-      if (p < 1) requestAnimationFrame(frame);
+  // Conteo animado de KPIs
+  document.querySelectorAll('.ast-num').forEach(el=>{
+    const final=parseInt(el.innerText.replace(/\D/g,''))||0;
+    if(final===0){ el.innerText='0'; return; }
+    const dur=900, ini=performance.now();
+    function frame(now){
+      const p=Math.min((now-ini)/dur,1), eased=1-Math.pow(1-p,3);
+      el.innerText=Math.round(final*eased).toLocaleString('es-MX');
+      if(p<1) requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
   });
 
-  // Paginación tipo ranking (residentes y vehículos)
-  function paginarRanking(lista, porPagina) {
-    const items = Array.from(lista.querySelectorAll('.rank-item'));
-    if (items.length <= porPagina) return;
-    let pagina = 0;
-    const totalPaginas = Math.ceil(items.length / porPagina);
-
-    const nav = document.createElement('div');
-    nav.className = 'rank-pager';
-    nav.innerHTML =
-      '<button class="rp-btn rp-prev" aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>' +
-      '<span class="rp-info"></span>' +
-      '<button class="rp-btn rp-next" aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>';
+  // Paginación de rankings (residentes / vehículos)
+  function paginarRanking(lista, porPagina){
+    const items=Array.from(lista.querySelectorAll('.rank-item'));
+    if(items.length<=porPagina) return;
+    let pagina=0; const totalPaginas=Math.ceil(items.length/porPagina);
+    const nav=document.createElement('div'); nav.className='rank-pager';
+    nav.innerHTML='<button class="rp-btn rp-prev"><i class="fa-solid fa-chevron-left"></i></button><span class="rp-info"></span><button class="rp-btn rp-next"><i class="fa-solid fa-chevron-right"></i></button>';
     lista.after(nav);
-
-    const info = nav.querySelector('.rp-info');
-    const prev = nav.querySelector('.rp-prev');
-    const next = nav.querySelector('.rp-next');
-
-    function render() {
-      items.forEach((it, i) => {
-        it.style.display = (i >= pagina * porPagina && i < (pagina + 1) * porPagina) ? '' : 'none';
-      });
-      info.textContent = (pagina + 1) + ' / ' + totalPaginas;
-      prev.disabled = pagina === 0;
-      next.disabled = pagina === totalPaginas - 1;
+    const info=nav.querySelector('.rp-info'), prev=nav.querySelector('.rp-prev'), next=nav.querySelector('.rp-next');
+    function render(){
+      items.forEach((it,i)=>{ it.style.display=(i>=pagina*porPagina && i<(pagina+1)*porPagina)?'':'none'; });
+      info.textContent=(pagina+1)+' / '+totalPaginas; prev.disabled=pagina===0; next.disabled=pagina===totalPaginas-1;
     }
-    prev.onclick = () => { if (pagina > 0) { pagina--; render(); } };
-    next.onclick = () => { if (pagina < totalPaginas - 1) { pagina++; render(); } };
+    prev.onclick=()=>{ if(pagina>0){pagina--;render();} };
+    next.onclick=()=>{ if(pagina<totalPaginas-1){pagina++;render();} };
     render();
   }
-  document.querySelectorAll('.rank-list').forEach(lista => paginarRanking(lista, 5));
+  document.querySelectorAll('.rank-list').forEach(l=>paginarRanking(l,5));
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <script>
-  // Tiempo real: en vez de recargar de golpe, avisa con un toast
-  const socket = io();
-  let nuevosRegistros = 0;
-  socket.on('nueva_visita', () => {
-    nuevosRegistros++;
-    const toast = document.getElementById('updateToast');
-    const txt   = document.getElementById('updateToastText');
-    if (toast && txt) {
-      txt.textContent = nuevosRegistros + (nuevosRegistros === 1 ? ' nuevo registro' : ' nuevos registros');
-      toast.classList.add('show');
-    }
-  });
+  // Tiempo real: toast (sin recargar de golpe)
+  try{
+    const socket=io();
+    let nuevos=0;
+    const avisar=()=>{ nuevos++; const toast=document.getElementById('updateToast'), txt=document.getElementById('updateToastText');
+      if(toast&&txt){ txt.textContent=nuevos+(nuevos===1?' nuevo registro':' nuevos registros'); toast.classList.add('show'); } };
+    socket.on('nueva_visita', avisar);
+    socket.on('actualizar_dashboard', avisar);
+  }catch(e){}
 
-  Chart.defaults.color = '#94a3b8';
-  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
-  Chart.defaults.plugins.legend.labels.usePointStyle = true;
-  Chart.defaults.plugins.legend.labels.padding = 20;
-  Chart.defaults.plugins.tooltip.backgroundColor = '#0f172a';
-  Chart.defaults.plugins.tooltip.titleColor = '#f8fafc';
-  Chart.defaults.plugins.tooltip.bodyColor = '#94a3b8';
-  Chart.defaults.plugins.tooltip.padding = 14;
-  Chart.defaults.plugins.tooltip.cornerRadius = 12;
-  Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,.08)';
-  Chart.defaults.plugins.tooltip.borderWidth = 1;
+  Chart.defaults.color='#8a93a6';
+  Chart.defaults.font.family="'Inter', system-ui, sans-serif";
+  Chart.defaults.font.size=12;
+  Chart.defaults.plugins.legend.labels.usePointStyle=true;
+  Chart.defaults.plugins.legend.labels.padding=18;
+  Chart.defaults.plugins.tooltip.backgroundColor='#0c1322';
+  Chart.defaults.plugins.tooltip.titleColor='#fff';
+  Chart.defaults.plugins.tooltip.bodyColor='#aab2c2';
+  Chart.defaults.plugins.tooltip.padding=12;
+  Chart.defaults.plugins.tooltip.cornerRadius=10;
+  Chart.defaults.plugins.tooltip.boxPadding=5;
 
-  // Plugin: total al centro de las donas + "Sin datos"
-  const totalCentro = {
-    id: 'totalCentro',
-    afterDraw(chart) {
-      if (chart.config.type !== 'doughnut') return;
-      const d = chart.data.datasets[0]?.data || [];
-      const total = d.reduce((a, b) => a + (Number(b) || 0), 0);
-      const { ctx, chartArea: { left, right, top, bottom } } = chart;
-      const cx = (left + right) / 2, cy = (top + bottom) / 2;
-      ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      if (total === 0) {
-        ctx.fillStyle = '#94a3b8'; ctx.font = "600 13px Inter, sans-serif";
-        ctx.fillText('Sin datos', cx, cy);
-      } else {
-        ctx.fillStyle = '#0f172a'; ctx.font = "800 26px Inter, sans-serif";
-        ctx.fillText(total.toLocaleString('es-MX'), cx, cy - 7);
-        ctx.fillStyle = '#94a3b8'; ctx.font = "700 10px Inter, sans-serif";
-        ctx.fillText('TOTAL', cx, cy + 14);
-      }
-      ctx.restore();
-    }
-  };
-  // Plugin: estado vacío para barras/líneas
-  const estadoVacio = {
-    id: 'estadoVacio',
-    afterDraw(chart) {
-      if (chart.config.type === 'doughnut') return;
-      const total = (chart.data.datasets || [])
-        .reduce((s, ds) => s + (ds.data || []).reduce((a, b) => a + (Number(b) || 0), 0), 0);
-      if (total > 0) return;
-      const { ctx, chartArea: { left, right, top, bottom } } = chart;
-      ctx.save(); ctx.fillStyle = '#94a3b8'; ctx.font = "600 13px Inter, sans-serif";
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('Sin datos en este período', (left + right) / 2, (top + bottom) / 2);
-      ctx.restore();
-    }
-  };
+  const totalCentro={id:'totalCentro',afterDraw(chart){
+    if(chart.config.type!=='doughnut')return;
+    const d=chart.data.datasets[0]?.data||[], total=d.reduce((a,b)=>a+(Number(b)||0),0);
+    const{ctx,chartArea:{left,right,top,bottom}}=chart, cx=(left+right)/2, cy=(top+bottom)/2;
+    ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+    if(total===0){ ctx.fillStyle='#8a93a6'; ctx.font="600 13px Inter, sans-serif"; ctx.fillText('Sin datos',cx,cy); }
+    else{ ctx.fillStyle='#0c1322'; ctx.font="700 24px 'JetBrains Mono', monospace"; ctx.fillText(total.toLocaleString('es-MX'),cx,cy-8);
+          ctx.fillStyle='#8a93a6'; ctx.font="700 10px Inter, sans-serif"; ctx.fillText('TOTAL',cx,cy+13); }
+    ctx.restore();
+  }};
+  const estadoVacio={id:'estadoVacio',afterDraw(chart){
+    if(chart.config.type==='doughnut')return;
+    const total=(chart.data.datasets||[]).reduce((s,ds)=>s+(ds.data||[]).reduce((a,b)=>a+(Number(b)||0),0),0);
+    if(total>0)return;
+    const{ctx,chartArea:{left,right,top,bottom}}=chart;
+    ctx.save(); ctx.fillStyle='#8a93a6'; ctx.font="600 13px Inter, sans-serif"; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Sin datos en este período',(left+right)/2,(top+bottom)/2); ctx.restore();
+  }};
   Chart.register(totalCentro, estadoVacio);
 
-  const ctxLine = document.getElementById('diasChart').getContext('2d');
-  const gradBlue = ctxLine.createLinearGradient(0, 0, 0, 340);
-  gradBlue.addColorStop(0, 'rgba(37,99,235,.40)');
-  gradBlue.addColorStop(1, 'rgba(37,99,235,0)');
+  const ctxLine=document.getElementById('diasChart').getContext('2d');
+  const gradBlue=ctxLine.createLinearGradient(0,0,0,300);
+  gradBlue.addColorStop(0,'rgba(37,99,235,.28)'); gradBlue.addColorStop(1,'rgba(37,99,235,0)');
 
-  new Chart(document.getElementById('estadoChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Pendientes', 'Dentro', 'Finalizadas'],
-      datasets: [{
-        data: [{{ activas or 0 }}, {{ dentro or 0 }}, {{ salidas or 0 }}],
-        backgroundColor: ['#f59e0b', '#22c55e', '#2563eb'],
-        borderColor: '#ffffff',
-        borderWidth: 4,
-        borderRadius: 6,
-        spacing: 2,
-        hoverOffset: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '70%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 10, font: { size: 12, weight: '600' } }
-        },
-        tooltip: { displayColors: false }
-      }
-    }
-  });
+  new Chart(document.getElementById('estadoChart'),{type:'doughnut',
+    data:{labels:['Pendientes','Dentro','Finalizadas'],datasets:[{data:[{{ activas or 0 }},{{ dentro or 0 }},{{ salidas or 0 }}],backgroundColor:['#c2820a','#16a34a','#2563eb'],borderColor:'#fff',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{pointStyle:'circle',padding:18,font:{size:12,weight:'600'}}},tooltip:{displayColors:false}}}});
 
-  new Chart(document.getElementById('actividadChart'), {
-    type: 'bar',
-    data: {
-      labels: ['Total', 'Pendientes', 'Dentro', 'Salidas', 'Rechazados'],
-      datasets: [{
-        data: [{{ total_visitas or 0 }}, {{ activas or 0 }}, {{ dentro or 0 }}, {{ salidas or 0 }}, {{ rechazados or 0 }}],
-        backgroundColor: ['#2563eb', '#f59e0b', '#22c55e', '#8b5cf6', '#ef4444'],
-        categoryPercentage: 0.55,
-        barPercentage: 0.70,
-        maxBarThickness: 52,
-        borderRadius: { topLeft: 10, topRight: 10 },
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 12, weight: '600' } } },
-        y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.07)' } }
-      }
-    }
-  });
+  new Chart(document.getElementById('actividadChart'),{type:'bar',
+    data:{labels:['Total','Pendientes','Dentro','Salidas','Rechazados'],datasets:[{data:[{{ total_visitas or 0 }},{{ activas or 0 }},{{ dentro or 0 }},{{ salidas or 0 }},{{ rechazados or 0 }}],backgroundColor:['#2563eb','#c2820a','#16a34a','#7c3aed','#d6342c'],borderRadius:7,maxBarThickness:48}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},border:{display:false},ticks:{color:'#5b6678',font:{size:12,weight:'600'}}},y:{beginAtZero:true,ticks:{stepSize:1,color:'#8a93a6'},grid:{color:'#eef0f5'},border:{display:false}}}}});
 
-  new Chart(document.getElementById('tiposChart'), {
-    type: 'doughnut',
-    data: {
-      labels: {{ tipo_labels | tojson }},
-      datasets: [{
-        data: {{ tipo_data | tojson }},
-        backgroundColor: ['#2563eb', '#38bdf8', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'],
-        borderColor: '#ffffff',
-        borderWidth: 4,
-        borderRadius: 6,
-        spacing: 2,
-        hoverOffset: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '70%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, font: { size: 12, weight: '600' } }
-        }
-      }
-    }
-  });
+  new Chart(document.getElementById('tiposChart'),{type:'doughnut',
+    data:{labels:{{ tipo_labels | tojson }},datasets:[{data:{{ tipo_data | tojson }},backgroundColor:['#2563eb','#38bdf8','#16a34a','#c2820a','#d6342c','#7c3aed'],borderColor:'#fff',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{pointStyle:'circle',padding:18,font:{size:12,weight:'600'}}}}}});
 
-  new Chart(document.getElementById('diasChart'), {
-    type: 'line',
-    data: {
-      labels: {{ dias_labels | tojson }},
-      datasets: [{
-        label: 'Accesos',
-        data: {{ dias_data | tojson }},
-        borderColor: '#2563eb',
-        backgroundColor: gradBlue,
-        fill: true,
-        tension: 0.38,
-        borderWidth: 3,
-        pointRadius: 4,
-        pointHoverRadius: 7,
-        pointBackgroundColor: '#ffffff',
-        pointBorderColor: '#2563eb',
-        pointBorderWidth: 2.5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { intersect: false, mode: 'index' },
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 12, weight: '600' } } },
-        y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1, precision: 0 }, grid: { color: 'rgba(148,163,184,.07)' } }
-      }
-    }
-  });
+  new Chart(document.getElementById('diasChart'),{type:'line',
+    data:{labels:{{ dias_labels | tojson }},datasets:[{label:'Accesos',data:{{ dias_data | tojson }},borderColor:'#2563eb',backgroundColor:gradBlue,fill:true,tension:0.4,borderWidth:2.5,pointRadius:0,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#2563eb',pointBorderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false}},scales:{x:{grid:{display:false},border:{display:false},ticks:{color:'#5b6678',font:{size:12,weight:'600'}}},y:{beginAtZero:true,ticks:{color:'#8a93a6',stepSize:1,precision:0},grid:{color:'#eef0f5'},border:{display:false}}}}});
 </script>
 
 <script>
-// ════════════════════════════════════════════════════════════════
-// BÚSQUEDA + PAGINACIÓN EN VIVO (AJAX) — sin recargar la pantalla.
-// Solo se refresca la tabla (endpoint /admin/visitas/tabla),
-// así se siente instantáneo y profesional, como en guardias.
-// ════════════════════════════════════════════════════════════════
+// ════ BÚSQUEDA + PAGINACIÓN EN VIVO (AJAX) ════
 (function () {
-  const input = document.getElementById('searchTable');
-  const form  = document.getElementById('searchForm');
-  const wrap  = document.getElementById('tablaVisitasWrap');
-  if (!input || !form || !wrap) return;
+  const input=document.getElementById('searchTable'), form=document.getElementById('searchForm'), wrap=document.getElementById('tablaVisitasWrap');
+  if(!input||!form||!wrap) return;
+  const ENDPOINT="{{ url_for('admin.buscar_visitas_tabla') }}";
+  const bar=document.getElementById('topLoader'); let timer=null, controller=null;
 
-  const ENDPOINT = "{{ url_for('admin.buscar_visitas_tabla') }}";
-  const bar = document.getElementById('topLoader');
-  let timer = null, controller = null;
-
-  // Arma los parámetros a partir de los filtros actuales del form.
-  function construirParams(extra) {
-    const p = new URLSearchParams();
-    form.querySelectorAll('input[name]').forEach(i => {
-      if (i.name === 'busqueda') return;
-      if (i.value !== '') p.set(i.name, i.value);
-    });
+  function construirParams(extra){
+    const p=new URLSearchParams();
+    form.querySelectorAll('input[name]').forEach(i=>{ if(i.name==='busqueda')return; if(i.value!=='')p.set(i.name,i.value); });
     p.set('busqueda', input.value.trim());
-    if (extra) Object.keys(extra).forEach(k => p.set(k, extra[k]));
+    if(extra) Object.keys(extra).forEach(k=>p.set(k,extra[k]));
     return p;
   }
+  function barra(activa){ if(!bar)return; if(activa){bar.classList.add('active');bar.style.width='40%';} else {bar.style.width='100%'; setTimeout(()=>{bar.classList.remove('active');bar.style.width='0';},250);} }
 
-  function barra(activa) {
-    if (!bar) return;
-    if (activa) { bar.classList.add('active'); bar.style.width = '40%'; }
-    else { bar.style.width = '100%';
-           setTimeout(() => { bar.classList.remove('active'); bar.style.width = '0'; }, 250); }
-  }
-
-  async function cargar(extra) {
-    const params = construirParams(extra);
-    if (controller) controller.abort();      // cancela la búsqueda anterior (evita parpadeos)
-    controller = new AbortController();
-
-    barra(true);
-    wrap.classList.add('tbl-loading');
-    try {
-      const resp = await fetch(ENDPOINT + '?' + params.toString(), {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        signal: controller.signal
-      });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      wrap.innerHTML = await resp.text();
-      // Refleja la búsqueda en la URL (sin recargar) para poder refrescar/compartir.
-      history.replaceState(null, '', location.pathname + '?' + params.toString());
+  async function cargar(extra){
+    const params=construirParams(extra);
+    if(controller) controller.abort(); controller=new AbortController();
+    barra(true); wrap.classList.add('tbl-loading');
+    try{
+      const resp=await fetch(ENDPOINT+'?'+params.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'},signal:controller.signal});
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      wrap.innerHTML=await resp.text();
+      history.replaceState(null,'',location.pathname+'?'+params.toString());
       activarZoom();
-    } catch (err) {
-      if (err.name !== 'AbortError') form.submit();   // respaldo: recarga normal si algo falla
-    } finally {
-      wrap.classList.remove('tbl-loading');
-      barra(false);
-    }
+    }catch(err){ if(err.name!=='AbortError') form.submit(); }
+    finally{ wrap.classList.remove('tbl-loading'); barra(false); }
   }
-
-  // Reactiva el zoom de las imágenes recién insertadas.
-  function activarZoom() {
-    const modal = document.getElementById('imgModal');
-    const mImg  = document.getElementById('modalImg');
-    if (!modal || !mImg) return;
-    wrap.querySelectorAll('.zoomable-image').forEach(img => {
-      img.style.cursor = 'zoom-in';
-      img.addEventListener('click', () => { mImg.src = img.src; modal.classList.add('open'); });
-    });
+  function activarZoom(){
+    const m=document.getElementById('imgModal'), mi=document.getElementById('modalImg');
+    if(!m||!mi)return;
+    wrap.querySelectorAll('.zoomable-image').forEach(img=>{ img.addEventListener('click',()=>{ mi.src=img.src; m.classList.add('open'); }); });
   }
-
-  // --- Buscar mientras se escribe (debounce corto = sensación instantánea) ---
-  input.addEventListener('input', () => {
-    clearTimeout(timer);
-    timer = setTimeout(() => cargar({ page: 1 }), 180);
+  input.addEventListener('input',()=>{ clearTimeout(timer); timer=setTimeout(()=>cargar({page:1}),180); });
+  input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); clearTimeout(timer); cargar({page:1}); } });
+  const clearBtn=form.querySelector('.tbl-search-clear');
+  if(clearBtn) clearBtn.addEventListener('click',e=>{ e.preventDefault(); input.value=''; input.focus(); cargar({page:1}); });
+  wrap.addEventListener('click',e=>{
+    const link=e.target.closest('.pagination a[href]');
+    if(!link||link.classList.contains('disabled'))return; e.preventDefault();
+    const page=new URL(link.href,location.origin).searchParams.get('page')||1; cargar({page});
   });
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); cargar({ page: 1 }); }
+  wrap.addEventListener('change',e=>{
+    if(!e.target.matches('.pgx-select'))return;
+    const pp=form.querySelector('input[name="per_page"]'); if(pp)pp.value=e.target.value;
+    cargar({per_page:e.target.value,page:1});
   });
-
-  // --- Botón limpiar (x) de la búsqueda ---
-  const clearBtn = form.querySelector('.tbl-search-clear');
-  if (clearBtn) clearBtn.addEventListener('click', e => {
-    e.preventDefault(); input.value = ''; input.focus(); cargar({ page: 1 });
+  wrap.addEventListener('keydown',e=>{
+    if(!e.target.matches('.pgx-jump-input')||e.key!=='Enter')return; e.preventDefault();
+    const v=parseInt(e.target.value,10), max=parseInt(e.target.max,10)||1;
+    if(!isNaN(v)&&v>=1&&v<=max) cargar({page:v});
+    else { e.target.classList.add('error'); setTimeout(()=>e.target.classList.remove('error'),1500); }
   });
-
-  // --- Paginación dentro de la tabla (delegación → también AJAX) ---
-  wrap.addEventListener('click', e => {
-    const link = e.target.closest('.pagination a[href]');
-    if (!link || link.classList.contains('disabled')) return;
-    e.preventDefault();
-    const page = new URL(link.href, location.origin).searchParams.get('page') || 1;
-    cargar({ page });
-  });
-
-  // --- Registros por página ---
-  wrap.addEventListener('change', e => {
-    if (!e.target.matches('.pgx-select')) return;
-    const pp = form.querySelector('input[name="per_page"]');
-    if (pp) pp.value = e.target.value;
-    cargar({ per_page: e.target.value, page: 1 });
-  });
-
-  // --- Salto directo de página ---
-  wrap.addEventListener('keydown', e => {
-    if (!e.target.matches('.pgx-jump-input') || e.key !== 'Enter') return;
-    e.preventDefault();
-    const v = parseInt(e.target.value, 10);
-    const max = parseInt(e.target.max, 10) || 1;
-    if (!isNaN(v) && v >= 1 && v <= max) cargar({ page: v });
-    else { e.target.classList.add('error'); setTimeout(() => e.target.classList.remove('error'), 1500); }
-  });
-
-  // Mantener el cursor al final si ya venía texto.
-  if (input.value) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+  if(input.value){ input.focus(); input.setSelectionRange(input.value.length,input.value.length); }
 })();
 </script>
 
 <script>
-  // Mantener la posición del scroll al filtrar / paginar / cambiar período
-  (function () {
-    // No dejes que el navegador maneje el scroll por su cuenta
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-
-    // 1) Restaurar SOLO si venimos de una consulta dentro del dashboard
-    if (sessionStorage.getItem('adKeep') === '1') {
-      const y = sessionStorage.getItem('adScroll');
-      if (y !== null) window.scrollTo(0, parseInt(y, 10));
-    }
+  // Mantener scroll + barra de carga superior
+  (function(){
+    if('scrollRestoration' in history) history.scrollRestoration='manual';
+    if(sessionStorage.getItem('adKeep')==='1'){ const y=sessionStorage.getItem('adScroll'); if(y!==null) window.scrollTo(0,parseInt(y,10)); }
     sessionStorage.removeItem('adKeep');
+    const marcar=()=>sessionStorage.setItem('adKeep','1');
+    document.querySelectorAll('#periodForm, .hist-filter').forEach(f=>f.addEventListener('submit',marcar));
+    document.querySelectorAll('.pf-input').forEach(i=>i.addEventListener('change',marcar));
+    document.querySelectorAll('.pf-tab').forEach(t=>t.addEventListener('click',marcar));
+    document.querySelectorAll('.btn-clear').forEach(a=>a.addEventListener('click',marcar));
+    window.addEventListener('beforeunload',()=>{ sessionStorage.setItem('adScroll',window.scrollY); });
 
-    // 2) Marcar la intención cuando se filtra, pagina o cambia el período
-    const marcar = () => sessionStorage.setItem('adKeep', '1');
-    document.querySelectorAll('#periodForm, .hist-filter').forEach(f => f.addEventListener('submit', marcar));
-    document.querySelectorAll('.pf-input').forEach(i => i.addEventListener('change', marcar));
-    document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', marcar));
-    document.querySelectorAll('.btn-clear, .module-item, .frac-chip').forEach(a => a.addEventListener('click', marcar));
-    // 3) Guardar la posición justo antes de recargar
-    window.addEventListener('beforeunload', () => {
-      sessionStorage.setItem('adScroll', window.scrollY);
-    });
-
-    // ════════════════════════════════════════════════════
-    // BARRA DE CARGA SUPERIOR: feedback inmediato al filtrar,
-    // paginar o cambiar período (se siente rápido/pro).
-    // ════════════════════════════════════════════════════
-    const bar = document.getElementById('topLoader');
-    let _w = 0, _t = null;
-    function iniciarCarga() {
-      if (!bar) return;
-      bar.classList.add('active');
-      _w = 10; bar.style.width = _w + '%';
-      clearInterval(_t);
-      _t = setInterval(() => {
-        _w = Math.min(_w + Math.random() * 12, 90);
-        bar.style.width = _w + '%';
-      }, 180);
-    }
-    window.iniciarCarga = iniciarCarga;
-
-    // Spinner en el botón Filtrar
-    const formFiltro = document.querySelector('.hist-filter');
-    if (formFiltro) {
-      formFiltro.addEventListener('submit', () => {
-        const btn = formFiltro.querySelector('.btn-filter');
-        if (btn) btn.classList.add('is-loading');
-      });
-    }
-
-    // Disparar la barra en cualquier navegación del dashboard
-    document.querySelectorAll('#periodForm, #fraccionamientoForm, .hist-filter')
-      .forEach(f => f.addEventListener('submit', iniciarCarga));
-    document.querySelectorAll('.btn-filter, .btn-clear, .pf-tab, .module-item')
-      .forEach(el => el.addEventListener('click', iniciarCarga));
-    document.querySelectorAll('.dashboard-select, .pf-input')
-      .forEach(el => el.addEventListener('change', iniciarCarga));
-
-    // Completar la barra cuando la página vuelve a mostrarse
-    window.addEventListener('pageshow', () => {
-      if (!bar) return;
-      clearInterval(_t);
-      bar.style.width = '100%';
-      setTimeout(() => { bar.classList.remove('active'); bar.style.width = '0'; }, 250);
-    });
+    const bar=document.getElementById('topLoader'); let _w=0,_t=null;
+    function iniciarCarga(){ if(!bar)return; bar.classList.add('active'); _w=10; bar.style.width=_w+'%'; clearInterval(_t);
+      _t=setInterval(()=>{ _w=Math.min(_w+Math.random()*12,90); bar.style.width=_w+'%'; },180); }
+    const formFiltro=document.querySelector('.hist-filter');
+    if(formFiltro) formFiltro.addEventListener('submit',()=>{ const b=formFiltro.querySelector('.btn-filter'); if(b)b.classList.add('is-loading'); });
+    document.querySelectorAll('#periodForm, #fraccionamientoForm, .hist-filter').forEach(f=>f.addEventListener('submit',iniciarCarga));
+    document.querySelectorAll('.btn-filter, .btn-clear, .pf-tab').forEach(el=>el.addEventListener('click',iniciarCarga));
+    document.querySelectorAll('.dashboard-select, .pf-input').forEach(el=>el.addEventListener('change',iniciarCarga));
+    window.addEventListener('pageshow',()=>{ if(!bar)return; clearInterval(_t); bar.style.width='100%'; setTimeout(()=>{ bar.classList.remove('active'); bar.style.width='0'; },250); });
   })();
 </script>
 
-{% endblock %}
+</body>
+</html>
