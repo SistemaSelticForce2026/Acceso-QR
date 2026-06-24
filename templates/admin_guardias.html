@@ -1,28 +1,20 @@
-{% extends 'layout.html' %}
+{% extends 'layout_admin.html' %}
+
+{% block title %}Guardias{% endblock %}
+{% block page_title %}Gestión de guardias{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/paginas/admin_guardias.css') }}">
 {% endblock %}
 
-{% block content %}
-
-<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
-    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+{% block header_actions %}
+<a href="{{ url_for('admin.exportar_guardias_pdf') }}" class="btn secondary">
+    <i class="fa-solid fa-file-arrow-down"></i> Exportar listado
 </a>
+{% endblock %}
 
-{# ===== Encabezado ===== #}
-<div class="guardias-page-head">
-    <div class="head-badge">
-        <i class="fa-solid fa-shield-halved"></i>
-    </div>
-    <div>
-        <h1>Gestión de Guardias</h1>
-        <p class="small">
-            Administración de personal de vigilancia, accesos y monitoreo operativo del fraccionamiento.
-        </p>
-    </div>
-</div>
+{% block content %}
 
 {# ===== Estadísticas ===== #}
 {% set activos = guardias | selectattr("estado", "equalto", "activo") | list | length %}
@@ -70,9 +62,6 @@
         <div class="guardias-actions">
             <a href="{{ url_for('admin.registrar_guardia') }}" class="btn">
                 <i class="fa-solid fa-user-plus"></i> Registrar guardia
-            </a>
-            <a href="{{ url_for('admin.exportar_guardias_pdf') }}" class="btn secondary">
-                <i class="fa-solid fa-file-arrow-down"></i> Exportar listado
             </a>
         </div>
 

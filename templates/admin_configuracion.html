@@ -1,4 +1,7 @@
-{% extends 'layout.html' %}
+{% extends 'layout_admin.html' %}
+
+{% block title %}Configuración{% endblock %}
+{% block page_title %}Configuración del fraccionamiento{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -6,36 +9,6 @@
 {% endblock %}
 
 {% block content %}
-
-<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
-    <i class="fa-solid fa-arrow-left"></i> Volver al panel
-</a>
-
-{# ===== Mensajes de confirmación (flash) ===== #}
-{% with mensajes = get_flashed_messages(with_categories=true) %}
-    {% if mensajes %}
-    <div class="flash-stack">
-        {% for categoria, mensaje in mensajes %}
-        <div class="flash flash-{{ categoria }}">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>{{ mensaje }}</span>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-{% endwith %}
-
-{# ===== Encabezado ===== #}
-<div class="page-header">
-    <div class="head-badge"><i class="fa-solid fa-sliders"></i></div>
-    <div>
-        <h1>Configuración del Fraccionamiento</h1>
-        <p class="small">
-            Parámetros generales, accesos, seguridad y funcionamiento — configurables
-            de forma independiente para cada fraccionamiento.
-        </p>
-    </div>
-</div>
 
 {# ===== Selector de fraccionamiento (chips) ===== #}
 <div class="frac-selector" role="tablist" aria-label="Fraccionamientos">
@@ -368,6 +341,12 @@
     </div>
 </div>
 
+{% endblock %}
+
+{# ===== Modal a nivel de body: evita quedar atrapado bajo el sidebar
+   por el stacking context de .adm-main (z-index:10) ===== #}
+{% block modals %}
+
 {# ===== Modal: crear fraccionamiento ===== #}
 <div class="frac-modal" id="fracModal" aria-hidden="true">
     <div class="frac-modal__backdrop" onclick="cerrarModalFrac()"></div>
@@ -408,6 +387,10 @@
         </form>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
 
 <script>
 function abrirModalFrac(){

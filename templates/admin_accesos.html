@@ -1,37 +1,23 @@
-{% extends 'layout.html' %}
+{% extends 'layout_admin.html' %}
+
+{% block title %}Accesos{% endblock %}
+{% block page_title %}Historial de accesos{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/paginas/admin_accesos.css') }}">
 {% endblock %}
 
-{% block content %}
-
-<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
-    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+{% block header_actions %}
+<a href="{{ url_for('admin.exportar_accesos_pdf') }}" class="btn pdf-btn">
+    <i class="fa-solid fa-file-pdf"></i> Exportar PDF
 </a>
+<a href="{{ url_for('admin.exportar_accesos_excel') }}" class="btn success-btn">
+    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+</a>
+{% endblock %}
 
-{# ===== Encabezado ===== #}
-<div class="page-header">
-    <div class="page-title-wrap">
-        <div class="head-badge"><i class="fa-solid fa-clock-rotate-left"></i></div>
-        <div>
-            <h1>Historial de accesos</h1>
-            <p class="page-subtitle">
-                Registro completo de entradas, salidas, accesos autorizados y validaciones QR realizadas en caseta.
-            </p>
-        </div>
-    </div>
-
-    <div class="header-actions">
-        <a href="{{ url_for('admin.exportar_accesos_pdf') }}" class="btn pdf-btn">
-            <i class="fa-solid fa-file-pdf"></i> Exportar PDF
-        </a>
-        <a href="{{ url_for('admin.exportar_accesos_excel') }}" class="btn success-btn">
-            <i class="fa-solid fa-file-excel"></i> Exportar Excel
-        </a>
-    </div>
-</div>
+{% block content %}
 
 {# ===== Estadísticas ===== #}
 {% set entradas    = accesos | selectattr("accion", "equalto", "entrada") | list | length %}

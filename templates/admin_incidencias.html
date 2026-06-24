@@ -1,37 +1,23 @@
-{% extends 'layout.html' %}
+{% extends 'layout_admin.html' %}
+
+{% block title %}Incidencias{% endblock %}
+{% block page_title %}Bitácora de incidencias{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/paginas/admin_incidencias.css') }}">
 {% endblock %}
 
-{% block content %}
-
-<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
-    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+{% block header_actions %}
+<a href="{{ url_for('admin.exportar_incidencias_pdf') }}" class="btn export-btn pdf-btn">
+    <i class="fa-solid fa-file-pdf"></i> Exportar PDF
 </a>
+<a href="{{ url_for('admin.exportar_incidencias_excel') }}" class="btn export-btn excel-btn">
+    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+</a>
+{% endblock %}
 
-{# ===== Encabezado ===== #}
-<div class="page-header">
-    <div class="page-title-wrap">
-        <div class="head-badge"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div>
-            <h1>Bitácora de Incidencias</h1>
-            <p class="page-subtitle">
-                Registro y monitoreo de anomalías, accesos sospechosos, validaciones QR fallidas y reportes generados por vigilancia.
-            </p>
-        </div>
-    </div>
-
-    <div class="header-actions">
-        <a href="{{ url_for('admin.exportar_incidencias_pdf') }}" class="btn export-btn pdf-btn">
-            <i class="fa-solid fa-file-pdf"></i> Exportar PDF
-        </a>
-        <a href="{{ url_for('admin.exportar_incidencias_excel') }}" class="btn export-btn excel-btn">
-            <i class="fa-solid fa-file-excel"></i> Exportar Excel
-        </a>
-    </div>
-</div>
+{% block content %}
 
 {# ===== Estadísticas ===== #}
 {% set qr_inv   = incidencias | selectattr("tipo_incidencia", "equalto", "qr_invalido") | list | length %}

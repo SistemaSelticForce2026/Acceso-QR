@@ -1,0 +1,418 @@
+/* ---- Layout admin ------------------------------------------------- */
+/* ---- Reset para el layout ---------------------------------- */
+.adm-body {
+    margin: 0;
+    background: #fafbfc;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Mobile overlay ---------------------------------------- */
+.adm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(1, 2, 17, 0.20);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 39;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.adm-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+/* ============================================================ */
+/* SIDEBAR                                                     */
+/* ============================================================ */
+
+.adm-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 264px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-right: 1px solid #e6e8ee;
+    box-shadow: 4px 0 30px -16px rgba(20, 30, 60, 0.18);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-out;
+}
+
+.adm-sidebar.open {
+    transform: translateX(0);
+}
+
+/* ---- Brand ------------------------------------------------- */
+.adm-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 26px 22px 18px;
+    flex-shrink: 0;
+}
+
+.adm-brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    background: linear-gradient(150deg, #232a40, #0c0e14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px -10px rgba(12, 16, 30, 0.55);
+    flex-shrink: 0;
+}
+
+.adm-brand-icon img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.adm-brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.adm-brand-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #14192a;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.adm-brand-sub {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #97a1b4;
+    line-height: 1;
+}
+
+/* ---- Nav --------------------------------------------------- */
+.adm-nav {
+    flex: 1;
+    padding: 4px 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+}
+
+/* discreta barra de scroll */
+.adm-nav::-webkit-scrollbar { width: 6px; }
+.adm-nav::-webkit-scrollbar-thumb { background: #e2e5ec; border-radius: 99px; }
+
+.adm-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.adm-nav-group + .adm-nav-group {
+    margin-top: 12px;
+}
+
+.adm-nav-label {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #9aa3b2;
+    padding: 6px 14px 4px;
+}
+
+.adm-nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 13px;
+    text-decoration: none;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #5a6478;
+    transition: color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.adm-nav-item:hover {
+    color: #010211;
+    background: #f5f7fb;
+}
+
+.adm-nav-item.active {
+    color: #fff;
+    background: #1a1c2e;
+    box-shadow: 0 12px 26px -14px rgba(20, 25, 42, 0.55);
+}
+
+.adm-nav-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f2f4f8;
+    flex-shrink: 0;
+    font-size: 13px;
+    color: #5a6478;
+    transition: background 0.2s, color 0.2s;
+}
+
+.adm-nav-item.active .adm-nav-icon {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.adm-nav-item.active .adm-nav-icon svg {
+    stroke-width: 2.4;
+}
+
+.adm-nav-dot {
+    margin-left: auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2e5bff;
+    box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.30);
+    flex-shrink: 0;
+}
+
+/* ---- User section ------------------------------------------ */
+.adm-user-section {
+    padding: 12px;
+    padding-bottom: 18px;
+    border-top: 1px solid #e6e8ee;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.adm-user-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 13px;
+    border-radius: 14px;
+    background: #f5f7fb;
+    border: 1px solid #e6e8ee;
+}
+
+.adm-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #2e5bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.adm-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.adm-user-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #010211;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.adm-user-sub {
+    font-size: 11px;
+    color: #77767d;
+    margin-top: 2px;
+}
+
+.adm-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #77767d;
+    transition: color 0.2s, background 0.2s;
+}
+
+.adm-logout-btn:hover {
+    color: #ba1a1a;
+    background: rgba(255, 218, 214, 0.50);
+}
+
+.adm-logout-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #eceef0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+.adm-logout-btn:hover .adm-logout-icon {
+    background: #ffdad6;
+    color: #ba1a1a;
+}
+
+/* ============================================================ */
+/* MAIN AREA                                                   */
+/* ============================================================ */
+
+.adm-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: relative;
+    z-index: 10;
+}
+
+/* ---- Sticky header ----------------------------------------- */
+.adm-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 60px;
+    padding: 0 16px;
+    background: rgba(255, 255, 255, 0.80);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(199, 197, 205, 0.30);
+}
+
+.adm-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #46464c;
+    font-size: 17px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.adm-menu-btn:focus-visible {
+    outline: 2px solid #2e5bff;
+    outline-offset: 2px;
+}
+
+.adm-menu-btn:hover {
+    background: #eceef0;
+}
+
+.adm-header-title {
+    flex: 1;
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    margin: 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.adm-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.adm-header-actions button,
+.adm-header-actions .btn {
+    margin-top: 0;
+}
+
+/* ---- Content area ------------------------------------------ */
+.adm-content {
+    flex: 1;
+    padding: 28px 16px 88px;
+    max-width: 1520px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* El selector global `button, .btn` de style.css aplica margin-top:18px,
+   lo que descentra los botones dentro de filas flex (tablas, cabeceras de
+   tarjeta, grupos de acciones) en las páginas migradas a este shell.
+   Lo neutralizamos a nivel de contenido; cada módulo gestiona después sus
+   propios márgenes intencionales. */
+.adm-content button,
+.adm-content .btn {
+    margin-top: 0;
+}
+
+/* ============================================================ */
+/* DESKTOP — sidebar siempre visible                          */
+/* ============================================================ */
+
+@media (min-width: 1024px) {
+    .adm-sidebar {
+        transform: translateX(0);
+    }
+
+    .adm-main {
+        padding-left: 264px;
+    }
+
+    .adm-menu-btn {
+        display: none;
+    }
+
+    .adm-content {
+        padding: 30px 32px 48px;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+    .adm-content {
+        padding: 26px 24px 88px;
+    }
+
+    .adm-header {
+        padding: 0 24px;
+    }
+}

@@ -1,4 +1,7 @@
-{% extends 'layout.html' %}
+{% extends 'layout_admin.html' %}
+
+{% block title %}Historial{% endblock %}
+{% block page_title %}Historial de reportes{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -6,37 +9,13 @@ href="{{ url_for('static',
 filename='css/paginas/admin_historial_reportes.css') }}">
 {% endblock %}
 
+{% block header_actions %}
+<button class="btn" onclick="window.location.reload();">
+    <i class="fa-solid fa-rotate"></i> Actualizar
+</button>
+{% endblock %}
+
 {% block content %}
-
-  <!-- =========== -->
-<!-- HEADER -->
-  <!-- =========== -->
-
-<div class="page-header">
-
-    <div>
-
-        <h1>Historial de reportes</h1>
-
-        <p class="page-subtitle">
-            Auditoría administrativa de exportaciones PDF y Excel generadas dentro del sistema AccessQR.
-        </p>
-
-    </div>
-
-    <div class="header-actions">
-
-        <button class="btn"
-                onclick="window.location.reload();">
-
-            <i class="fa-solid fa-rotate"></i>
-            Actualizar
-
-        </button>
-
-    </div>
-
-</div>
 
   <!-- =========== -->
 <!-- ESTADÍSTICAS -->

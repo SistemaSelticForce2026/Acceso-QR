@@ -135,6 +135,45 @@
 .ar-badge.off { background: rgba(239,68,68,.12); color: #b91c1c; }
 .ar-badge.off .dot { background: #ef4444; }
 
+/* ---- Sistema de botones / tarjetas / alertas ----
+   El shell admin carga style.css (no main.css), así que esta página define
+   aquí su propio .btn/.card/.alert para conservar el aspecto original.
+   Va ANTES de .small-btn para que el helper de tamaño lo sobrescriba. */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 11px 18px; border-radius: 11px; border: 1px solid transparent;
+    background: #2563eb; color: #fff; font-weight: 700; font-size: .88rem;
+    font-family: inherit; text-decoration: none; cursor: pointer;
+    transition: all .18s ease; box-shadow: 0 6px 16px rgba(37,99,235,.22);
+}
+.btn:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(37,99,235,.28); }
+.btn.secondary {
+    background: #fff; color: #334155;
+    border-color: #e2e8f0; box-shadow: 0 1px 3px rgba(15,23,42,.06);
+}
+.btn.secondary:hover { background: #f8fafc; border-color: #bfdbfe; color: #2563eb; }
+.btn.danger-btn { background: #dc2626; box-shadow: 0 6px 16px rgba(220,38,38,.22); }
+.btn.danger-btn:hover { background: #b91c1c; box-shadow: 0 10px 22px rgba(220,38,38,.28); }
+.btn.success-btn { background: #16a34a; box-shadow: 0 6px 16px rgba(22,163,74,.22); }
+.btn.success-btn:hover { background: #15803d; box-shadow: 0 10px 22px rgba(22,163,74,.28); }
+
+.card {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 20px; padding: 26px 28px; box-shadow: 0 1px 3px rgba(15,23,42,.06);
+    margin-bottom: 1.75rem;
+}
+.card > h2 { margin: 0 0 18px; font-size: 1.2rem; font-weight: 800; color: #0f172a; }
+
+.alert {
+    display: flex; align-items: flex-start; gap: 13px;
+    padding: 14px 16px; border-radius: 13px; font-size: .88rem; line-height: 1.55;
+    margin-bottom: 12px; border: 1px solid transparent;
+}
+.alert:last-child { margin-bottom: 0; }
+.alert i { font-size: 1rem; margin-top: 2px; flex-shrink: 0; }
+.alert.info { background: rgba(37,99,235,.07); border-color: rgba(37,99,235,.18); color: #1e40af; }
+.alert.warning { background: rgba(245,158,11,.09); border-color: rgba(245,158,11,.22); color: #b45309; }
+
 /* ---- Botones de acción ---- */
 .action-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; min-width: 230px; }
 .small-btn {

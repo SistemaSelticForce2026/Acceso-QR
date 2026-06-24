@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso QR | {% block title %}Administración{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/alertas.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estructura/layout_admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/date_placeholder.css') }}">
+    {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body class="adm-body">
+
+    <!-- Mobile overlay -->
+    <div class="adm-overlay" id="admOverlay" aria-hidden="true"></div>
+
+    {% set ep = request.endpoint %}
+
+    <!-- ======================================================= -->
+    <!-- SIDEBAR                                                 -->
+    <!-- ======================================================= -->
+    <aside class="adm-sidebar" id="admSidebar">
+
+        <!-- Brand -->
+        <div class="adm-brand">
+            <div class="adm-brand-icon">
+                <img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}" alt="AccessQR">
+            </div>
+            <div class="adm-brand-text">
+                <span class="adm-brand-name">AccessQR</span>
+                <span class="adm-brand-sub">Administración</span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="adm-nav">
+
+            <div class="adm-nav-group">
+                <span class="adm-nav-label">Principal</span>
+                <a href="{{ url_for('admin.dashboard') }}"
+                   class="adm-nav-item {% if ep == 'admin.dashboard' %}active{% endif %}">
+                    <span class="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
+                    <span>Panel</span>
+                    {% if ep == 'admin.dashboard' %}<span class="adm-nav-dot"></span>{% endif %}
+                </a>
+            </div>
+
+            <div class="adm-nav-group">
+                <span class="adm-nav-label">Gestión</span>
+                <a href="{{ url_for('admin.residentes') }}"
+                   class="adm-nav-item {% if ep in ('admin.residentes', 'admin.registrar_residente', 'admin.ver_residente', 'admin.editar_residente') %}active{% endif %}">
+                    <span class="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                    <span>Residentes</span>
+                    {% if ep in ('admin.residentes', 'admin.registrar_residente', 'admin.ver_residente', 'admin.editar_residente') %}<span class="adm-nav-dot"></span>{% endif %}
+                </a>
+                <a href="{{ url_for('admin.guardias') }}"
+                   class="adm-nav-item {% if ep in ('admin.guardias', 'admin.registrar_guardia', 'admin.ver_guardia', 'admin.editar_guardia') %}active{% endif %}">
+                    <span class="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                    <span>Guardias</span>
+                    {% if ep in ('admin.guardias', 'admin.registrar_guardia', 'admin.ver_guardia', 'admin.editar_guardia') %}<span class="adm-nav-dot"></span>{% endif %}
+                </a>
+            </div>
+
+            <div class="adm-nav-group">
+                <span class="adm-nav-label">Operación</span>
+                <a href="{{ url_for('admin.accesos') }}"
+                   class="adm-nav-item {% if ep == 'admin.accesos' %}active{% endif %}">
+                    <span class="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v18M13 2l7 4v16M13 2v20M20 22H2"/><path d="M10 12v.01"/></svg></span>
+                    <span>Accesos</span>
+                    {% if ep == 'admin.accesos' %}<span class="adm-nav-dot"></span>{% endif %}
+                </a>
+                <a href="{{ url_for('admin.incidencias') }}"
+                   class="adm-nav-item {% if ep == 'admin.incidencias' %}active{% endif %}">
+                    <span class="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+                    <span>Incidencias</span>
+                    {% if ep == 'admin.incidencias' %}<span class="adm-nav-dot"></span>{% endif %}
+                </a>
+            </div>
+
+            <div class="adm-nav-group">
+                <span class="adm-nav-label">Reportes</span>
+                <a href="{{ url_for('admin.reportes') }}"
+                   class="adm-nav-item {% if ep == 'admin.reportes' %}active{% endif %}">
+                    <span class="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6M9 15l3-3 3 3"/></svg></span>
+                    <span>Reportes</span>
+                    {% if ep == 'admin.reportes' %}<span class="adm-nav-dot"></span>{% endif %}
+                </a>
+                <a href="{{ url_for('admin.historial_reportes') }}"
+                   class="adm-nav-item {% if ep == 'admin.historial_reportes' %}active{% endif %}">
+                    <span class="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
+                    <span>Historial</span>
+                    {% if ep == 'admin.historial_reportes' %}<span class="adm-nav-dot"></span>{% endif %}
+                </a>
+            </div>
+
+            <div class="adm-nav-group">
+                <span class="adm-nav-label">Sistema</span>
+                <a href="{{ url_for('admin.configuracion') }}"
+                   class="adm-nav-item {% if ep == 'admin.configuracion' %}active{% endif %}">
+                    <span class="adm-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                    <span>Configuración</span>
+                    {% if ep == 'admin.configuracion' %}<span class="adm-nav-dot"></span>{% endif %}
+                </a>
+            </div>
+
+        </nav>
+
+        <!-- User + Logout -->
+        <div class="adm-user-section">
+            <div class="adm-user-card">
+                <div class="adm-user-avatar" id="admUserAvatar">
+                    {{ session.nombre[0] if session.nombre else 'A' }}
+                </div>
+                <div class="adm-user-info">
+                    <div class="adm-user-name">{{ session.nombre or 'Administrador' }}</div>
+                    <div class="adm-user-sub">Administrador</div>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="adm-logout-btn">
+                <span class="adm-logout-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </span>
+                Cerrar sesión
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- ======================================================= -->
+    <!-- MAIN AREA                                               -->
+    <!-- ======================================================= -->
+    <div class="adm-main">
+
+        <!-- Sticky header -->
+        <header class="adm-header">
+            <button class="adm-menu-btn" id="admMenuBtn" aria-label="Abrir menú">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            </button>
+            <h1 class="adm-header-title">{% block page_title %}Administración{% endblock %}</h1>
+            <div class="adm-header-actions">{% block header_actions %}{% endblock %}</div>
+        </header>
+
+        <!-- Content -->
+        <main class="adm-content">
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-stack" id="flashStack">
+                        {% for category, message in messages %}
+                            <div class="flash-toast flash-{{ category }}" role="alert">
+                                <div class="flash-icon">
+                                    {% if category == 'success' %}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                    {% elif category == 'danger' %}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+                                    {% elif category == 'warning' %}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                                    {% else %}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                                    {% endif %}
+                                </div>
+                                <span class="flash-text">{{ message }}</span>
+                                <button class="flash-close" onclick="dismissToast(this.parentElement)" aria-label="Cerrar">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                </button>
+                                <div class="flash-progress"></div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+
+        </main>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- MODALES (a nivel de body, fuera de .adm-main)           -->
+    <!-- ======================================================= -->
+    {% block modals %}{% endblock %}
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+
+    <script>
+        /* Sidebar / drawer toggle (móvil) */
+        const admSidebar = document.getElementById('admSidebar');
+        const admOverlay = document.getElementById('admOverlay');
+        const admMenuBtn = document.getElementById('admMenuBtn');
+
+        if (admMenuBtn) {
+            admMenuBtn.addEventListener('click', () => {
+                const open = admSidebar.classList.toggle('open');
+                admOverlay.classList.toggle('show', open);
+            });
+        }
+        if (admOverlay) {
+            admOverlay.addEventListener('click', () => {
+                admSidebar.classList.remove('open');
+                admOverlay.classList.remove('show');
+            });
+        }
+
+        /* Avatar con color determinista */
+        const admAvatar = document.getElementById('admUserAvatar');
+        if (admAvatar) {
+            const COLORS = ['#2e5bff','#009869','#d97706','#7c3aed','#0891b2','#1a1c2e'];
+            const name = "{{ session.nombre | default('') }}";
+            let h = 0;
+            for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i)) % COLORS.length;
+            admAvatar.style.backgroundColor = COLORS[h];
+        }
+    </script>
+
+    <script src="{{ url_for('static', filename='js/date_placeholder.js') }}"></script>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

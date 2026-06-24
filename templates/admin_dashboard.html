@@ -1,4 +1,7 @@
-{% extends 'layout.html' %}
+{% extends 'layout_admin.html' %}
+
+{% block title %}Panel administrativo{% endblock %}
+{% block page_title %}Panel administrativo{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
@@ -26,33 +29,26 @@
     margin-left:auto; color:#475569; font-weight:600; font-size:.9rem;
     display:inline-flex; align-items:center; gap:7px;
   }
+  /* ── Reloj del header del shell ── */
+  .adm-clock{
+    display:inline-flex; align-items:center; gap:7px;
+    color:#64748b; font-weight:600; font-size:.85rem; white-space:nowrap;
+  }
+  .adm-clock i{ color:#94a3b8; }
+  @media (max-width:680px){ .adm-clock{ display:none; } }
 </style>
+{% endblock %}
+
+{% block header_actions %}
+  <span class="adm-clock"><i class="fa-regular fa-clock"></i> <span id="fechaActual"></span></span>
+  <button class="btn-refresh" onclick="window.location.reload();">
+    <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+  </button>
 {% endblock %}
 
 {% block content %}
 
 <div class="ad-page">
-
-  <!-- ══ HEADER ══ -->
-  <div class="ad-header">
-    <div class="ad-header-left">
-      <h1>Panel administrativo</h1>
-      <p class="ad-subtitle">
-        Monitoreo en tiempo real de accesos, residentes, vigilancia e incidencias
-        del fraccionamiento mediante validación QR segura.
-      </p>
-      <div class="live-pill">
-        <span class="live-dot"></span>
-        Sistema en línea · Actualización en tiempo real
-        <span class="live-update">Última actualización: <strong id="fechaActual"></strong></span>
-      </div>
-    </div>
-    <div class="ad-header-right">
-      <button class="btn-refresh" onclick="window.location.reload();">
-        <i class="fa-solid fa-arrows-rotate"></i> Actualizar
-      </button>
-    </div>
-  </div>
 
   <!-- ══ HERO ══ -->
   <div class="ad-hero">

@@ -1,37 +1,20 @@
-{% extends 'layout.html' %}
+{% extends 'layout_admin.html' %}
+
+{% block title %}Reportes{% endblock %}
+{% block page_title %}Centro de reportes{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/paginas/admin_reportes.css') }}">
 {% endblock %}
 
+{% block header_actions %}
+<button class="btn" onclick="window.location.reload();">
+    <i class="fa-solid fa-rotate"></i> Actualizar
+</button>
+{% endblock %}
+
 {% block content %}
-
-<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
-    <i class="fa-solid fa-arrow-left"></i> Volver al panel
-</a>
-
-{# ===== Encabezado ===== #}
-<div class="page-header">
-    <div class="page-title-wrap">
-        <div class="head-badge"><i class="fa-solid fa-file-lines"></i></div>
-        <div>
-            <h1>Centro de Reportes</h1>
-            <p class="page-subtitle">
-                Administración y generación de reportes operativos del sistema AccessQR.
-            </p>
-        </div>
-    </div>
-
-    <div class="header-actions">
-        <a href="{{ url_for('admin.historial_reportes') }}" class="btn dark-btn">
-            <i class="fa-solid fa-clock-rotate-left"></i> Historial
-        </a>
-        <button class="btn" onclick="window.location.reload();">
-            <i class="fa-solid fa-rotate"></i> Actualizar
-        </button>
-    </div>
-</div>
 
 {# ===== Estadísticas ===== #}
 <div class="stats">

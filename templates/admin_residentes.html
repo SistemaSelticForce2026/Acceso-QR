@@ -1,4 +1,7 @@
-{% extends 'layout.html' %}
+{% extends 'layout_admin.html' %}
+
+{% block title %}Residentes{% endblock %}
+{% block page_title %}Gestión de residentes{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/admin_residentes.css') }}">
@@ -24,17 +27,13 @@
 </style>
 {% endblock %}
 
-{% block content %}
-
-<a href="{{ url_for('admin.dashboard') }}" class="btn-volver-dashboard">
-    <i class="fa-solid fa-arrow-left"></i> Volver al panel
+{% block header_actions %}
+<a href="{{ url_for('admin.exportar_residentes_pdf', fraccionamiento=frac_sel) }}" class="btn secondary">
+    <i class="fa-solid fa-file-arrow-down"></i> Exportar listado
 </a>
+{% endblock %}
 
-<div class="ar-header">
-    <p class="ar-eyebrow">Administración</p>
-    <h1 class="ar-title">Gestión de residentes</h1>
-    <p class="ar-sub">Administración general de residentes registrados en el sistema.</p>
-</div>
+{% block content %}
 
 <!-- FILTRO POR FRACCIONAMIENTO -->
 <div class="frac-filter">
@@ -99,9 +98,6 @@
         <div class="ar-card-actions">
             <a href="{{ url_for('admin.registrar_residente') }}" class="btn">
                 <i class="fa-solid fa-plus"></i> Registrar residente
-            </a>
-            <a href="{{ url_for('admin.exportar_residentes_pdf', fraccionamiento=frac_sel) }}"class="btn secondary">
-                <i class="fa-solid fa-file-arrow-down"></i> Exportar listado
             </a>
         </div>
     </div>
