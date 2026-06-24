@@ -196,23 +196,55 @@
 
 {# ===== Paginación ===== #}
 {% if total_paginas and total_paginas > 1 %}
-<div class="pagination-container" style="margin-bottom:1.75rem;">
-    <div class="pagination">
+<div class="ar-pagination-wrap">
+
+    <div class="ar-pagination">
+
         {% if pagina > 1 %}
-        <a href="{{ url_for('admin.incidencias', page=pagina-1) }}" class="btn secondary">
+        <a href="{{ url_for('admin.incidencias', page=pagina-1) }}" class="ar-page">
             <i class="fa-solid fa-chevron-left"></i>
         </a>
         {% endif %}
-        {% for p in range(1, total_paginas + 1) %}
+
+        {% set inicio = [1, pagina - 2] | max %}
+        {% set fin = [total_paginas, pagina + 2] | min %}
+
+        {% for p in range(inicio, fin + 1) %}
         <a href="{{ url_for('admin.incidencias', page=p) }}"
-           class="btn {% if p != pagina %}secondary{% endif %}">{{ p }}</a>
+           class="ar-page {% if p == pagina %}active{% endif %}">
+            {{ p }}
+        </a>
         {% endfor %}
+
         {% if pagina < total_paginas %}
-        <a href="{{ url_for('admin.incidencias', page=pagina+1) }}" class="btn secondary">
+        <a href="{{ url_for('admin.incidencias', page=pagina+1) }}" class="ar-page">
             <i class="fa-solid fa-chevron-right"></i>
         </a>
         {% endif %}
+
     </div>
+
+    <div class="ar-pagination-tools">
+
+        <span class="ar-page-info">
+            Página <strong>{{ pagina }}</strong> de <strong>{{ total_paginas }}</strong>
+        </span>
+
+        <form action="{{ url_for('admin.incidencias') }}"
+              method="GET"
+              class="ar-page-jump">
+
+            <input type="number"
+                   name="page"
+                   min="1"
+                   max="{{ total_paginas }}"
+                   placeholder="#">
+
+            <button type="submit">Ir</button>
+        </form>
+
+    </div>
+
 </div>
 {% endif %}
 

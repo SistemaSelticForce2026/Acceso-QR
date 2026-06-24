@@ -493,6 +493,11 @@ def _facet_visitas(db, match):
                 "dias": [
                     {"$group": {"_id": "$fecha_visita", "n": {"$sum": 1}}},
                 ],
+                # ★ NUEVO: salidas (visitas finalizadas) por día
+                "dias_salidas": [
+                    {"$match": {"estado": "salida_registrada"}},
+                    {"$group": {"_id": "$fecha_visita", "n": {"$sum": 1}}},
+                ],
                 "residentes": [
                     {"$group": {"_id": "$residente_nombre", "n": {"$sum": 1}}},
                     {"$sort": {"n": -1}},
@@ -645,8 +650,6 @@ def dashboard():
     match_visitas = {"fecha_visita": {"$gte": inicio_str, "$lte": fin_str}}
 
     # 👇 FIX: el fraccionamiento y la búsqueda son INDEPENDIENTES.
-    #         Antes el $or estaba anidado dentro del if frac_sel, así que
-    #         en "Todos los fraccionamientos" la búsqueda no se aplicaba.
     if frac_sel:
         match_visitas["fraccionamiento"] = frac_sel
 
@@ -672,9 +675,7 @@ def dashboard():
     _asegurar_indices()
 
     # -----------------------------------------------------
-    # UNA SOLA PASADA sobre las visitas ($facet + $unionWith):
-    #   estados · modalidades · visitas por día · top residentes · placas
-    # Antes esto eran 6+ consultas separadas. Ahora es 1 sola.
+    # UNA SOLA PASADA sobre las visitas ($facet + $unionWith)
     # -----------------------------------------------------
     facet = _facet_visitas(mongo.db, match_visitas)
 
@@ -708,6 +709,12 @@ def dashboard():
     ]
     dias_data = [dias_raw[f] for f in fechas_ordenadas]
 
+    # ★ NUEVO: SALIDAS POR DÍA (visitas finalizadas), alineadas a las mismas fechas
+    salidas_raw = {
+        r["_id"]: r["n"] for r in facet.get("dias_salidas", []) if r.get("_id")
+    }
+    salidas_data = [salidas_raw.get(f, 0) for f in fechas_ordenadas]
+
     # TOP RESIDENTES (del facet)
     residentes_rank = [
         (r["_id"] or "Sin residente", r["n"]) for r in facet.get("residentes", [])
@@ -722,8 +729,7 @@ def dashboard():
     actividad_reciente = list(logs.find(match_accesos).sort("fecha_hora", -1).limit(5))
 
     # -----------------------------------------------------
-    # TABLA (mismo rango/filtros). El total ya lo tenemos del
-    # facet (mismo match) → no hace falta otra consulta de conteo.
+    # TABLA (mismo rango/filtros)
     # -----------------------------------------------------
     PER_PAGE_OPCIONES = [10, 25, 50, 100]
     pagina_tabla = max(1, int(request.args.get("page", 1)))
@@ -758,8 +764,6 @@ def dashboard():
 
     # -----------------------------------------------------
     # Variables que la plantilla recibe pero ya no consultamos
-    # (no se muestran en admin_dashboard.html). Se dejan vacías
-    # para no romper render_template y ahorrar consultas.
     # -----------------------------------------------------
     alertas = []
     horas_labels, horas_data = [], []
@@ -793,6 +797,7 @@ def dashboard():
         tipo_data=tipo_data,
         dias_labels=dias_labels,
         dias_data=dias_data,
+        salidas_data=salidas_data,  # ★ NUEVO
         top_residentes=top_residentes,
         actividad_reciente=actividad_reciente,
         horas_labels=horas_labels,

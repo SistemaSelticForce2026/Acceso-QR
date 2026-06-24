@@ -205,20 +205,68 @@
 
 <!-- PAGINACIÓN (conserva el filtro de fraccionamiento) -->
 {% if total_paginas > 1 %}
-<div class="ar-pagination">
-    {% if pagina > 1 %}
-        <a href="{{ url_for('admin.residentes', page=pagina-1, fraccionamiento=frac_sel) }}" class="ar-page"><i class="fa-solid fa-chevron-left"></i></a>
-    {% endif %}
-    {% set inicio = [1, pagina - 2]|max %}
-    {% set fin = [total_paginas, pagina + 2]|min %}
+<div class="ar-pagination-wrap">
 
-    {% for p in range(inicio, fin + 1) %}
-        <a href="{{ url_for('admin.residentes', page=p, fraccionamiento=frac_sel) }}"class="ar-page {% if p == pagina %}active{% endif %}">{{ p }}</a>
-    {% endfor %}
-    {% if pagina < total_paginas %}
-        <a href="{{ url_for('admin.residentes', page=pagina+1, fraccionamiento=frac_sel) }}" class="ar-page"><i class="fa-solid fa-chevron-right"></i></a>
-    {% endif %}
+    <div class="ar-pagination">
+
+        {% if pagina > 1 %}
+            <a href="{{ url_for('admin.residentes', page=pagina-1, fraccionamiento=frac_sel) }}"
+               class="ar-page">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+        {% endif %}
+
+        {% set inicio = [1, pagina - 2]|max %}
+        {% set fin = [total_paginas, pagina + 2]|min %}
+
+        {% for p in range(inicio, fin + 1) %}
+            <a href="{{ url_for('admin.residentes', page=p, fraccionamiento=frac_sel) }}"
+               class="ar-page {% if p == pagina %}active{% endif %}">
+                {{ p }}
+            </a>
+        {% endfor %}
+
+        {% if pagina < total_paginas %}
+            <a href="{{ url_for('admin.residentes', page=pagina+1, fraccionamiento=frac_sel) }}"
+               class="ar-page">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        {% endif %}
+
+    </div>
+
+    <div class="ar-pagination-tools">
+
+        <span class="ar-page-info">
+            Página <strong>{{ pagina }}</strong> de <strong>{{ total_paginas }}</strong>
+        </span>
+
+        <form action="{{ url_for('admin.residentes') }}"
+              method="GET"
+              class="ar-page-jump">
+
+            {% if frac_sel %}
+            <input type="hidden"
+                   name="fraccionamiento"
+                   value="{{ frac_sel }}">
+            {% endif %}
+
+            <input type="number"
+                   name="page"
+                   min="1"
+                   max="{{ total_paginas }}"
+                   placeholder="#">
+
+            <button type="submit">
+                Ir
+            </button>
+
+        </form>
+
+    </div>
+
 </div>
+
 {% endif %}
 
 <div class="card">

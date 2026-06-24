@@ -231,9 +231,74 @@ table#tablaIncidencias{ width:100%; border-collapse:collapse; min-width:820px; }
 /* =========================================================
    PAGINACIÓN
 ========================================================= */
-.pagination-container{ display:flex; justify-content:center; }
-.pagination{ display:flex; gap:8px; flex-wrap:wrap; }
-.pagination .btn{ min-width:42px; padding:10px 14px; box-shadow:none; }
+.ar-pagination-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin: 30px auto 10px;
+    width:100%;
+}
+
+.ar-pagination{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.ar-pagination-tools{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    text-align:center;
+}
+
+.ar-page-info{
+    font-size:.85rem;
+    font-weight:600;
+    color:#64748b;
+}
+
+.ar-page-jump{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.ar-page-jump input{
+    width:70px;
+    height:38px;
+    border-radius:10px;
+    border:1px solid #e2e8f0;
+    text-align:center;
+    font-weight:700;
+}
+
+.ar-page-jump input:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+.ar-page-jump button{
+    height:38px;
+    padding:0 14px;
+    border-radius:10px;
+    border:none;
+    background:#2563eb;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.ar-page-jump button:hover{
+    background:#1d4ed8;
+}
 
 /* =========================================================
    CENTRO DE MONITOREO (alertas)
