@@ -18,6 +18,14 @@ Dónde caen los datos:
 Cómo se marca lo de prueba:
   - En Mongo: cada residente/visita lleva es_prueba = True.
   - En Cloudinary: public_id empieza con "seed_".
+
+NOVEDADES de esta versión:
+  - fecha_visita repartida del 1-ene-2025 al 31-dic-2026 (pasado, hoy y futuro).
+  - Estados realistas: activo / dentro / salida_registrada, con tiempos de
+    entrada y salida coherentes con la fecha de la visita.
+  - Un porcentaje de visitas "incompletas" (sin foto, sin vehículo, sin
+    teléfono; recurrentes sin días ni horario) para ver cómo se comporta el
+    panel con datos vacíos.
 """
 
 import io
@@ -25,7 +33,7 @@ import os
 import random
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta, date
 
 import cloudinary
 import cloudinary.uploader
@@ -123,6 +131,26 @@ if PRUEBA_RAPIDA:
     print(">> MODO PRUEBA RÁPIDA: generando pocos datos <<\n")
 
 # ==========================================
+# RANGO DE FECHAS Y COMPORTAMIENTO DE LOS DATOS
+# ==========================================
+
+# Las visitas se reparten en TODO este rango (pasado, hoy y futuro).
+FECHA_VISITA_INICIO = date(2025, 1, 1)
+FECHA_VISITA_FIN = date(2026, 12, 31)
+HOY = date.today()
+
+# Los registros históricos (logs / incidencias) sí son del pasado: del inicio
+# del rango hasta "ahora".
+INICIO_HISTORICO = datetime(2025, 1, 1)
+
+# Proporción de visitas "que no tienen nada" (sin foto / vehículo / teléfono;
+# recurrentes sin días ni horario). Sirve para ver el panel con datos vacíos.
+PROB_INCOMPLETA = 0.18
+
+# Mezcla temporal vs recurrente (más temporales, como en la vida real).
+PESOS_MODALIDAD = {"temporal": 7, "recurrente": 3}
+
+# ==========================================
 # CONFIG DE FOTOS
 # ==========================================
 
@@ -138,12 +166,26 @@ HILOS_SUBIDA = 8
 
 THUMB_WIDTH = 150
 
-CARPETA_BASE = "accesoqr"
-CARPETA_VISITANTES = f"{CARPETA_BASE}/visitantes"
-CARPETA_PLACAS = f"{CARPETA_BASE}/placas"
-CARPETA_QR = f"{CARPETA_BASE}/qr"
 
 PREFIJO_PRUEBA = "seed_"
+
+import re
+import unicodedata
+
+
+def slug_cloudinary(texto):
+    texto = (
+        unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
+    )
+
+    texto = texto.lower().strip()
+
+    return re.sub(r"[^a-z0-9]+", "_", texto).strip("_")
+
+
+def carpeta_cloudinary(fraccionamiento, tipo):
+    return f"accesoqr/" f"{slug_cloudinary(fraccionamiento)}/" f"{tipo}"
+
 
 # ==========================================
 # CATÁLOGOS
@@ -163,6 +205,128 @@ TIPOS_INC = [
     "sin_autorizacion",
     "persona_sospechosa",
 ]
+
+# Catálogos para las visitas RECURRENTES (coinciden con la plantilla del panel)
+TIPOS_RECURRENTE = [
+    "domestica",
+    "jardinero",
+    "mantenimiento",
+    "proveedor",
+    "chofer",
+    "familiar",
+    "otro",
+]
+DIAS_SEMANA = [
+    "lunes",
+    "martes",
+    "miércoles",
+    "jueves",
+    "viernes",
+    "sábado",
+    "domingo",
+]
+HORARIOS_PRESET = [
+    ("07:00", "15:00"),
+    ("08:00", "18:00"),
+    ("09:00", "14:00"),
+    ("00:00", "23:59"),  # sin restricción
+]
+
+# ==========================================
+# HELPERS DE ESTADO / TIEMPOS COHERENTES
+# ==========================================
+
+
+def _dt(fecha, hhmm):
+    """datetime (naive) combinando una fecha date + 'HH:MM'."""
+    h, m = (int(x) for x in hhmm.split(":"))
+    return datetime(fecha.year, fecha.month, fecha.day, h, m)
+
+
+def estado_visita(modalidad, fv_date, hora_inicio):
+    """Devuelve estado / qr_estado / tiempos de entrada-salida coherentes con
+    la fecha de la visita, para que el dashboard se vea como uso real:
+
+    - Futuro  -> agendada (activo), sin entrada.
+    - Hoy     -> mezcla: dentro / salió / aún por llegar.
+    - Pasado  -> casi todas entraron y salieron; algunas no se presentaron o
+                 quedaron canceladas/vencidas.
+    - Recurrente -> pase vigente (activo); de vez en cuando alguien dentro.
+    """
+    base = {
+        "estado": "activo",
+        "qr_estado": "activo",
+        "entrada_consumida": False,
+        "hora_entrada_real": None,
+        "fecha_entrada_real": None,
+        "hora_salida": None,
+        "fecha_salida": None,
+    }
+
+    if modalidad == "recurrente":
+        if random.random() < 0.10:  # alguien dentro ahora mismo
+            hi = hora_inicio or "08:00"
+            base.update(
+                estado="dentro",
+                entrada_consumida=True,
+                hora_entrada_real=hi,
+                fecha_entrada_real=_dt(HOY, hi),
+            )
+        base["qr_estado"] = random.choices(["activo", "vencido"], weights=[8, 2])[0]
+        return base
+
+    # ---- Temporal ----
+    if fv_date is None:
+        return base
+
+    hora_inicio = hora_inicio or "10:00"
+    entrada_dt = _dt(fv_date, hora_inicio)
+
+    if fv_date > HOY:  # agendada a futuro
+        return base
+
+    if fv_date == HOY:  # hoy: estado variado
+        r = random.random()
+        if r < 0.45:
+            base.update(
+                estado="dentro",
+                entrada_consumida=True,
+                hora_entrada_real=hora_inicio,
+                fecha_entrada_real=entrada_dt,
+            )
+        elif r < 0.85:
+            salida_dt = entrada_dt + timedelta(hours=random.randint(1, 4))
+            base.update(
+                estado="salida_registrada",
+                qr_estado="finalizado",
+                entrada_consumida=True,
+                hora_entrada_real=hora_inicio,
+                fecha_entrada_real=entrada_dt,
+                hora_salida=salida_dt.strftime("%H:%M:%S"),
+                fecha_salida=salida_dt,
+            )
+        # else -> sigue "activo" (aún por llegar)
+        return base
+
+    # ---- Pasada ----
+    r = random.random()
+    if r < 0.75:  # entró y salió ese día
+        salida_dt = entrada_dt + timedelta(hours=random.randint(1, 5))
+        base.update(
+            estado="salida_registrada",
+            qr_estado="finalizado",
+            entrada_consumida=True,
+            hora_entrada_real=hora_inicio,
+            fecha_entrada_real=entrada_dt,
+            hora_salida=salida_dt.strftime("%H:%M:%S"),
+            fecha_salida=salida_dt,
+        )
+    elif r < 0.90:  # no se presentó
+        base.update(estado="activo", qr_estado="vencido")
+    else:  # cancelada
+        base.update(estado="activo", qr_estado="cancelado")
+    return base
+
 
 # ==========================================
 # HELPERS DE FOTOS
@@ -231,13 +395,13 @@ def estimar_creditos(n_subidas, kb_prom=40):
     return transf, storage
 
 
-def subir_visitante(i):
+def subir_visitante(i, fraccionamiento):
     genero = random.choice(["men", "women"])
     idx = random.randint(0, 99)
     url = f"https://randomuser.me/api/portraits/{genero}/{idx}.jpg"
     res = cloudinary.uploader.upload(
         url,
-        folder=CARPETA_VISITANTES,
+        folder=carpeta_cloudinary(fraccionamiento, "visitantes"),
         public_id=f"{PREFIJO_PRUEBA}v_{i}",
         overwrite=True,
         resource_type="image",
@@ -245,12 +409,12 @@ def subir_visitante(i):
     return _ref_cloudinary(res)
 
 
-def subir_placa(i, texto=None):
+def subir_placa(i, fraccionamiento, texto=None):
     texto = texto or fake.bothify("???-###").upper()
     buf = generar_imagen_placa(texto)
     res = cloudinary.uploader.upload(
         buf,
-        folder=CARPETA_PLACAS,
+        folder=carpeta_cloudinary(fraccionamiento, "placas"),
         public_id=f"{PREFIJO_PRUEBA}p_{i}",
         overwrite=True,
         resource_type="image",
@@ -266,12 +430,13 @@ def generar_imagen_qr(data):
     return buf
 
 
-def subir_qr(i, data=None):
+def subir_qr(i, fraccionamiento, data=None):
+
     data = data or f"https://accesoqr.com/v/{uuid.uuid4()}"
     buf = generar_imagen_qr(data)
     res = cloudinary.uploader.upload(
         buf,
-        folder=CARPETA_QR,
+        folder=carpeta_cloudinary(fraccionamiento, "qr"),
         public_id=f"{PREFIJO_PRUEBA}qr_{i}",
         overwrite=True,
         resource_type="image",
@@ -411,10 +576,14 @@ print(f"Residentes creados: {len(residentes_ref)}")
 # POOL DE FOTOS
 # ==========================================
 
-pool_visitantes, pool_placas, pool_qr = [], [], []
+pool_visitantes = {}
+pool_placas = {}
+pool_qr = {}
 
 if MODO_FOTOS == "pool":
-    n_subidas = POOL_VISITANTES + POOL_PLACAS + POOL_QR
+    n_subidas = len(FRACCIONAMIENTOS) * (POOL_VISITANTES + POOL_PLACAS + POOL_QR)
+
+
 elif MODO_FOTOS == "unico":
     n_subidas = TOTAL_VISITAS * 3
 else:
@@ -440,35 +609,48 @@ if MODO_FOTOS == "pool":
         f"Subiendo pool de fotos a Cloudinary "
         f"({POOL_VISITANTES} visitantes + {POOL_PLACAS} placas + {POOL_QR} QR)..."
     )
-    pool_visitantes = construir_pool(
-        subir_visitante, POOL_VISITANTES, "Pool visitantes"
-    )
-    pool_placas = construir_pool(subir_placa, POOL_PLACAS, "Pool placas")
-    pool_qr = construir_pool(subir_qr, POOL_QR, "Pool QR")
-    if not pool_visitantes or not pool_placas or not pool_qr:
-        print("No se pudo armar el pool de fotos. Revisa Cloudinary/internet.")
-        raise SystemExit(1)
-    print(
-        f"Pool listo: {len(pool_visitantes)} visitantes, "
-        f"{len(pool_placas)} placas, {len(pool_qr)} QR"
-    )
+    for frac in FRACCIONAMIENTOS:
+
+        print(f"\nCreando pool para {frac}")
+
+        pool_visitantes[frac] = construir_pool(
+            lambda i, f=frac: subir_visitante(i, f),
+            POOL_VISITANTES,
+            f"Visitantes {frac}",
+        )
+
+        pool_placas[frac] = construir_pool(
+            lambda i, f=frac: subir_placa(i, f), POOL_PLACAS, f"Placas {frac}"
+        )
+
+        pool_qr[frac] = construir_pool(
+            lambda i, f=frac: subir_qr(i, f), POOL_QR, f"QR {frac}"
+        )
+
+    for frac in FRACCIONAMIENTOS:
+        print(
+            f"{frac}: "
+            f"{len(pool_visitantes[frac])} visitantes, "
+            f"{len(pool_placas[frac])} placas, "
+            f"{len(pool_qr[frac])} qr"
+        )
 elif MODO_FOTOS == "unico":
     print("MODO_FOTOS = 'unico': se subirá 1 imagen por visita.")
 
 
-def obtener_assets(i, placa_texto, qr_data):
+def obtener_assets(i, fraccionamiento, placa_texto, qr_data):
     if MODO_FOTOS == "pool":
         return (
-            random.choice(pool_visitantes),
-            random.choice(pool_placas),
-            random.choice(pool_qr),
+            random.choice(pool_visitantes[fraccionamiento]),
+            random.choice(pool_placas[fraccionamiento]),
+            random.choice(pool_qr[fraccionamiento]),
         )
     if MODO_FOTOS == "unico":
         uid = uuid.uuid4().hex[:10]
         return (
-            subir_visitante(f"u_{uid}"),
-            subir_placa(f"u_{uid}", placa_texto),
-            subir_qr(f"u_{uid}", qr_data),
+            subir_visitante(f"u_{uid}", fraccionamiento),
+            subir_placa(f"u_{uid}", fraccionamiento, placa_texto),
+            subir_qr(f"u_{uid}", fraccionamiento, qr_data),
         )
     return {}, {}, {}
 
@@ -492,6 +674,9 @@ def flush_visitas(col):
         vis_metas[col] = []
 
 
+_modalidades = list(PESOS_MODALIDAD.keys())
+_pesos_modalidad = list(PESOS_MODALIDAD.values())
+
 for i in tqdm(range(TOTAL_VISITAS), desc="Visitas"):
     residente = random.choice(residentes_ref)
     frac = residente["fraccionamiento"]
@@ -501,51 +686,91 @@ for i in tqdm(range(TOTAL_VISITAS), desc="Visitas"):
     placa_texto = fake.bothify("???-###").upper()
     qr_token = str(uuid.uuid4())
     foto_visitante, foto_placa, qr_ref = obtener_assets(
-        i, placa_texto, f"https://accesoqr.com/v/{qr_token}"
+        i, frac, placa_texto, f"https://accesoqr.com/v/{qr_token}"
     )
 
-    vis_buffers[col].append(
-        {
-            "residente_id": str(residente["_id"]),
-            "residente_nombre": residente["nombre"],
-            "telefono_residente": residente["telefono"],
-            "nombre_visitante": nombre_vis,
-            "correo": f"{uuid.uuid4().hex}@accesoqr.com",
-            "foto_visitante": foto_visitante,
-            "foto_placa": foto_placa,
-            "telefono": fake.msisdn()[:10],
-            "modalidad_visita": random.choice(["temporal", "recurrente"]),
-            "motivo": random.choice(MOTIVOS),
-            "fraccionamiento": frac,
-            "condominio": residente["privada"],
-            "residencia_destino": residente["numero_casa"],
-            "fecha_visita": fake.date_between(
-                start_date="-180d", end_date="+30d"
-            ).strftime("%Y-%m-%d"),
-            "hora_inicio": f"{random.randint(7, 22):02}:{random.randint(0, 59):02}",
-            "dias_autorizados": [],
-            "hora_programada": None,
-            "hora_limite_salida": None,
-            "vigencia_desde": None,
-            "vigencia_hasta": None,
-            "hora_salida": None,
-            "fecha_salida": None,
-            "entrada_consumida": random.choice([True, False]),
-            "vehiculo": {
-                "placa": placa_texto,
-                "marca": random.choice(MARCAS),
-                "modelo": random.choice(MODELOS),
-                "color": random.choice(COLORES),
-            },
-            "qr_token": qr_token,
-            "qr_path": (qr_ref or {}).get("url"),
-            "qr_public_id": (qr_ref or {}).get("public_id"),
-            "qr_estado": random.choice(["activo", "vencido", "cancelado"]),
-            "estado": random.choice(["activo", "finalizado"]),
-            "created_at": now_utc(),
-            "es_prueba": True,
-        }
-    )
+    modalidad = random.choices(_modalidades, weights=_pesos_modalidad)[0]
+    incompleta = random.random() < PROB_INCOMPLETA
+
+    # Las temporales tienen fecha fija (repartida en todo el rango); las
+    # recurrentes normalmente NO tienen una fecha concreta.
+    if modalidad == "temporal":
+        fv_date = fake.date_between_dates(FECHA_VISITA_INICIO, FECHA_VISITA_FIN)
+        fecha_visita = fv_date.strftime("%Y-%m-%d")
+        hora_inicio = f"{random.randint(7, 22):02}:{random.randint(0, 59):02}"
+    else:
+        fv_date = None
+        fecha_visita = None
+        hora_inicio = None
+
+    st = estado_visita(modalidad, fv_date, hora_inicio)
+
+    doc = {
+        "residente_id": str(residente["_id"]),
+        "residente_nombre": residente["nombre"],
+        "telefono_residente": residente["telefono"],
+        "nombre_visitante": nombre_vis,
+        "correo": f"{uuid.uuid4().hex}@accesoqr.com",
+        "foto_visitante": foto_visitante,
+        "foto_placa": foto_placa,
+        "telefono": fake.msisdn()[:10],
+        "modalidad_visita": modalidad,
+        "motivo": random.choice(MOTIVOS),
+        "fraccionamiento": frac,
+        "condominio": residente["privada"],
+        "residencia_destino": residente["numero_casa"],
+        "fecha_visita": fecha_visita,
+        "hora_inicio": hora_inicio,
+        "dias_autorizados": [],
+        "hora_programada": None,
+        "hora_limite_salida": None,
+        "vigencia_desde": None,
+        "vigencia_hasta": None,
+        "vehiculo": {
+            "placa": placa_texto,
+            "marca": random.choice(MARCAS),
+            "modelo": random.choice(MODELOS),
+            "color": random.choice(COLORES),
+        },
+        "qr_token": qr_token,
+        "qr_path": (qr_ref or {}).get("url"),
+        "qr_public_id": (qr_ref or {}).get("public_id"),
+        "created_at": now_utc(),
+        "es_prueba": True,
+        # estado + tiempos coherentes con la fecha
+        **st,
+    }
+
+    # Recurrentes "completas": días, horario, tipo y vigencia (lo que muestra
+    # el panel en sus chips).
+    if modalidad == "recurrente" and not incompleta:
+        vig_ini = fake.date_between_dates(FECHA_VISITA_INICIO, HOY)
+        vig_fin = fake.date_between_dates(HOY, FECHA_VISITA_FIN)
+        h_ini, h_fin = random.choice(HORARIOS_PRESET)
+        doc.update(
+            {
+                "tipo_recurrente": random.choice(TIPOS_RECURRENTE),
+                "dias": random.sample(DIAS_SEMANA, k=random.randint(1, 5)),
+                "hora_desde": h_ini,
+                "hora_hasta": h_fin,
+                "fecha_inicio_recurrente": vig_ini.strftime("%Y-%m-%d"),
+                "fecha_fin_recurrente": vig_fin.strftime("%Y-%m-%d"),
+            }
+        )
+
+    # Visitas "que no tienen nada" -> para ver cómo se comporta el panel con
+    # información incompleta (sin foto, sin vehículo, sin teléfono; recurrentes
+    # sin días ni horario).
+    if incompleta:
+        doc["foto_visitante"] = None
+        doc["foto_placa"] = None
+        doc["vehiculo"] = None
+        doc["telefono"] = None
+        if modalidad == "recurrente":
+            doc["dias"] = []
+            doc["dias_autorizados"] = []
+
+    vis_buffers[col].append(doc)
     vis_metas[col].append(
         {"nombre_visitante": nombre_vis, "residencia_destino": residente["numero_casa"]}
     )
@@ -559,7 +784,7 @@ for col in VIS_COL.values():
 print(f"Visitas creadas: {len(visitas_ref)}")
 
 # ==========================================
-# ACCESS LOGS  (sin cambios)
+# ACCESS LOGS  (repartidos del inicio del rango hasta hoy)
 # ==========================================
 
 buf = []
@@ -572,7 +797,9 @@ for i in tqdm(range(TOTAL_ACCESS_LOGS), desc="Access Logs"):
             "guardia_id": str(guardia["_id"]),
             "guardia_nombre": guardia["nombre"],
             "accion": random.choice(ACCIONES),
-            "fecha_hora": fake.date_time_between(start_date="-180d", end_date="now"),
+            "fecha_hora": fake.date_time_between(
+                start_date=INICIO_HISTORICO, end_date="now"
+            ),
             "resultado": random.choice(RESULTADOS),
             "observaciones": random.choice(OBS),
         }
@@ -585,7 +812,7 @@ if buf:
 print("Access logs creados")
 
 # ==========================================
-# INCIDENCIAS  (sin cambios)
+# INCIDENCIAS  (repartidas del inicio del rango hasta hoy)
 # ==========================================
 
 buf = []
@@ -599,7 +826,9 @@ for i in tqdm(range(TOTAL_INCIDENCIAS), desc="Incidencias"):
             "tipo_incidencia": random.choice(TIPOS_INC),
             "descripcion": fake.sentence(),
             "estado": random.choice(["abierta", "cerrada"]),
-            "fecha_hora": fake.date_time_between(start_date="-180d", end_date="now"),
+            "fecha_hora": fake.date_time_between(
+                start_date=INICIO_HISTORICO, end_date="now"
+            ),
             "visita_id": str(visita["_id"]),
             "visitante": visita["nombre_visitante"],
             "residencia_destino": visita["residencia_destino"],
@@ -637,6 +866,10 @@ for col in VIS_COL.values():
     db[col].create_index("estado")
     db[col].create_index([("created_at", -1)])
     db[col].create_index("fecha_visita")
+    # Compuestos que aceleran la agenda/historial y los conteos del panel.
+    db[col].create_index([("fecha_visita", 1), ("estado", 1)])
+    db[col].create_index([("modalidad_visita", 1), ("fecha_visita", 1)])
+    db[col].create_index([("estado", 1), ("fecha_salida", -1)])
 
 db.access_logs.create_index("visita_id")
 db.access_logs.create_index("guardia_id")
@@ -653,5 +886,14 @@ for frac in FRACCIONAMIENTOS:
     nr = db[RES_COL[frac]].count_documents({})
     nv = db[VIS_COL[frac]].count_documents({})
     print(f"  {frac:22s} -> residentes: {nr:5d} | visitas: {nv:6d}")
+
+# Resumen de estados (para confirmar que el panel tendrá de todo)
+print("\nResumen de estados de visitas (todos los fraccionamientos):")
+_estados = {}
+for col in VIS_COL.values():
+    for r in db[col].aggregate([{"$group": {"_id": "$estado", "n": {"$sum": 1}}}]):
+        _estados[r["_id"]] = _estados.get(r["_id"], 0) + r["n"]
+for est, n in sorted(_estados.items(), key=lambda x: -x[1]):
+    print(f"  {str(est):20s} -> {n}")
 
 print("\n¡LISTO! Datos de prueba generados y repartidos en los 3 fraccionamientos.")

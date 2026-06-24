@@ -37,6 +37,11 @@ from datetime import datetime, timedelta
 import os
 from werkzeug.security import generate_password_hash
 
+import secrets
+import string
+
+from utils.fraccionamientos import obtener_fraccionamientos
+
 # =========================================================
 # IMPORT EXCEL
 # =========================================================
@@ -64,6 +69,19 @@ from reportlab.pdfgen import canvas as _canvas
 
 
 from flask import jsonify
+
+# =========================================================
+# ZONA HORARIA DEL NEGOCIO (Centro de México, UTC-6)
+# =========================================================
+from datetime import timezone
+
+TZ_LOCAL = timezone(timedelta(hours=-6))
+
+
+def _ahora_local():
+    """Hora actual en México, como datetime naive."""
+    return datetime.now(TZ_LOCAL).replace(tzinfo=None)
+
 
 # =========================================================
 # BLUEPRINT
@@ -392,6 +410,118 @@ def _distinct_visitas(campo, filtro):
 
 
 # =========================================================
+# RENDIMIENTO: índices + una sola pasada de agregación
+# =========================================================
+
+# Bandera de proceso: los índices se crean UNA sola vez por worker.
+_INDICES_LISTOS = False
+
+
+def _asegurar_indices():
+    """Crea (idempotente) los índices que el dashboard y los exports necesitan.
+
+    create_index NO duplica índices: si ya existe, no hace nada. Se ejecuta solo
+    una vez por proceso gracias a la bandera _INDICES_LISTOS. Esto convierte los
+    escaneos completos de colección en búsquedas por índice (mucho más rápido en
+    producción con miles/millones de registros)."""
+    global _INDICES_LISTOS
+    if _INDICES_LISTOS:
+        return
+    try:
+        # --- Colecciones de visitas (las 3) ---
+        for nombre in VISITAS_COLECCIONES.values():
+            col = mongo.db[nombre]
+            col.create_index("fecha_visita")
+            col.create_index([("fraccionamiento", 1), ("fecha_visita", 1)])
+            col.create_index([("fecha_visita", 1), ("hora_inicio", 1)])
+            col.create_index([("fecha_visita", 1), ("created_at", 1)])
+            col.create_index("estado")
+            col.create_index("residente_nombre")
+            col.create_index("nombre_visitante")
+            col.create_index("vehiculo.placa")
+
+        # --- Accesos / incidencias / reportes (campo datetime real) ---
+        mongo.db.access_logs.create_index([("fecha_hora", -1)])
+        mongo.db.access_logs.create_index([("resultado", 1), ("fecha_hora", -1)])
+        mongo.db.incidencias.create_index([("fecha_hora", -1)])
+        mongo.db.reportes.create_index([("fecha", -1)])
+        mongo.db.users.create_index([("rol", 1)])
+
+        # --- Colecciones de residentes (residentes_<slug>) ---
+        for nombre in mongo.db.list_collection_names():
+            if nombre.startswith("residentes_"):
+                mongo.db[nombre].create_index([("rol", 1), ("nombre", 1)])
+                mongo.db[nombre].create_index("correo")
+
+        _INDICES_LISTOS = True
+    except Exception:
+        # Si por algo falla la creación, no bloqueamos el dashboard.
+        pass
+
+
+def _facet_visitas(db, match):
+    """UNA sola agregación que recorre las 3 colecciones de visitas (con
+    $unionWith) y calcula de golpe: estados, modalidades, visitas por día,
+    top residentes y placas frecuentes.
+
+    Antes el dashboard hacía 6+ consultas separadas (cada una recorría las 3
+    colecciones). Esto lo reduce a 1 sola pasada -> muchísimo más rápido."""
+    cols = list(VISITAS_COLECCIONES.values())
+    if not cols:
+        return {}
+
+    base = cols[0]
+    pipeline = [{"$match": match}]
+    for otra in cols[1:]:
+        pipeline.append({"$unionWith": {"coll": otra, "pipeline": [{"$match": match}]}})
+
+    pipeline.append(
+        {
+            "$facet": {
+                "estado": [
+                    {"$group": {"_id": "$estado", "n": {"$sum": 1}}},
+                ],
+                "tipos": [
+                    {
+                        "$group": {
+                            "_id": {"$ifNull": ["$modalidad_visita", "General"]},
+                            "n": {"$sum": 1},
+                        }
+                    },
+                    {"$sort": {"n": -1}},
+                ],
+                "dias": [
+                    {"$group": {"_id": "$fecha_visita", "n": {"$sum": 1}}},
+                ],
+                "residentes": [
+                    {"$group": {"_id": "$residente_nombre", "n": {"$sum": 1}}},
+                    {"$sort": {"n": -1}},
+                    {"$limit": 10},
+                ],
+                "vehiculos": [
+                    {"$match": {"vehiculo.placa": {"$nin": [None, ""]}}},
+                    {"$group": {"_id": "$vehiculo.placa"}},
+                    {"$limit": 40},
+                ],
+            }
+        }
+    )
+
+    try:
+        res = list(db[base].aggregate(pipeline, allowDiskUse=True))
+        return res[0] if res else {}
+    except Exception:
+        return {}
+
+
+def _generar_password(longitud=10):
+    """Contraseña temporal aleatoria, con un símbolo al final."""
+    alfabeto = string.ascii_letters + string.digits
+    base = "".join(secrets.choice(alfabeto) for _ in range(longitud))
+    return base + "*"
+
+
+# =========================================================
 # DASHBOARD ADMIN
 # =========================================================
 
@@ -425,7 +555,15 @@ def dashboard():
     fecha_inicio_tabla = request.args.get("fecha_inicio_tabla", "").strip()
     fecha_fin_tabla = request.args.get("fecha_fin_tabla", "").strip()
 
-    hoy = datetime.now()
+    # =====================================================
+    # FRACCIONAMIENTO
+    # =====================================================
+
+    frac_sel = request.args.get("fraccionamiento", "").strip().lower()
+
+    fraccionamientos = _fraccionamientos_disponibles()
+
+    hoy = _ahora_local()
     dia_sel = request.args.get("dia", "").strip()
     semana_sel = request.args.get("semana", "").strip()
     mes_sel = request.args.get("mes", "").strip()
@@ -498,9 +636,20 @@ def dashboard():
     busqueda_visitas = None
     if busqueda:
         rx = {"$regex": re.escape(busqueda), "$options": "i"}
-        busqueda_visitas = [{"nombre_visitante": rx}, {"residente_nombre": rx}]
+        busqueda_visitas = [
+            {"nombre_visitante": rx},
+            {"residente_nombre": rx},
+            {"vehiculo.placa": rx},
+        ]
 
     match_visitas = {"fecha_visita": {"$gte": inicio_str, "$lte": fin_str}}
+
+    # 👇 FIX: el fraccionamiento y la búsqueda son INDEPENDIENTES.
+    #         Antes el $or estaba anidado dentro del if frac_sel, así que
+    #         en "Todos los fraccionamientos" la búsqueda no se aplicaba.
+    if frac_sel:
+        match_visitas["fraccionamiento"] = frac_sel
+
     if busqueda_visitas:
         match_visitas["$or"] = busqueda_visitas
 
@@ -513,27 +662,24 @@ def dashboard():
             {"guardia_nombre": rx},
             {"accion": rx},
         ]
-        match_incidencias["$or"] = [
-            {"visitante": rx},
-            {"guardia_nombre": rx},
-            {"descripcion": rx},
-        ]
 
     logs = mongo.db.access_logs
     incs = mongo.db.incidencias
 
     # -----------------------------------------------------
-    # KPIs de visitas  (agg_visitas une las 3 colecciones)
+    # ÍNDICES (se crean una sola vez por proceso → todo más rápido)
     # -----------------------------------------------------
+    _asegurar_indices()
+
+    # -----------------------------------------------------
+    # UNA SOLA PASADA sobre las visitas ($facet + $unionWith):
+    #   estados · modalidades · visitas por día · top residentes · placas
+    # Antes esto eran 6+ consultas separadas. Ahora es 1 sola.
+    # -----------------------------------------------------
+    facet = _facet_visitas(mongo.db, match_visitas)
+
     estado_counts = {
-        row["_id"]: row["n"]
-        for row in agg_visitas(
-            mongo.db,
-            [
-                {"$match": match_visitas},
-                {"$group": {"_id": "$estado", "n": {"$sum": 1}}},
-            ],
-        )
+        r["_id"]: r["n"] for r in facet.get("estado", []) if r.get("_id") is not None
     }
     total_visitas = sum(estado_counts.values())
     dentro = estado_counts.get("dentro", 0)
@@ -546,40 +692,14 @@ def dashboard():
     total_incidencias = incs.count_documents(match_incidencias)
     rechazados = logs.count_documents({**match_accesos, "resultado": "rechazado"})
 
-    # -----------------------------------------------------
-    # TIPOS DE VISITA
-    # -----------------------------------------------------
+    # TIPOS DE VISITA (del facet)
     tipo_labels, tipo_data = [], []
-    for row in agg_visitas(
-        mongo.db,
-        [
-            {"$match": match_visitas},
-            {
-                "$group": {
-                    "_id": {"$ifNull": ["$modalidad_visita", "General"]},
-                    "n": {"$sum": 1},
-                }
-            },
-            {"$sort": {"n": -1}},
-        ],
-    ):
+    for row in facet.get("tipos", []):
         tipo_labels.append(row["_id"] or "General")
         tipo_data.append(row["n"])
 
-    # -----------------------------------------------------
-    # VISITAS POR DÍA
-    # -----------------------------------------------------
-    dias_raw = {
-        row["_id"]: row["n"]
-        for row in agg_visitas(
-            mongo.db,
-            [
-                {"$match": match_visitas},
-                {"$group": {"_id": "$fecha_visita", "n": {"$sum": 1}}},
-            ],
-        )
-        if row["_id"]
-    }
+    # VISITAS POR DÍA (del facet)
+    dias_raw = {r["_id"]: r["n"] for r in facet.get("dias", []) if r.get("_id")}
     fechas_ordenadas = sorted(
         dias_raw.keys(), key=lambda x: _dt.strptime(x, "%Y-%m-%d")
     )
@@ -588,96 +708,22 @@ def dashboard():
     ]
     dias_data = [dias_raw[f] for f in fechas_ordenadas]
 
-    # -----------------------------------------------------
-    # TOP / ACTIVOS RESIDENTES
-    # -----------------------------------------------------
+    # TOP RESIDENTES (del facet)
     residentes_rank = [
-        (row["_id"] or "Sin residente", row["n"])
-        for row in agg_visitas(
-            mongo.db,
-            [
-                {"$match": match_visitas},
-                {"$group": {"_id": "$residente_nombre", "n": {"$sum": 1}}},
-                {"$sort": {"n": -1}},
-                {"$limit": 10},
-            ],
-        )
+        (r["_id"] or "Sin residente", r["n"]) for r in facet.get("residentes", [])
     ]
     top_residentes = residentes_rank[:5]
     residentes_activos = residentes_rank
 
-    # -----------------------------------------------------
-    # PRIVADAS
-    # -----------------------------------------------------
-    privadas_labels, privadas_data = [], []
-    for row in agg_visitas(
-        mongo.db,
-        [
-            {"$match": match_visitas},
-            {
-                "$group": {
-                    "_id": {"$ifNull": ["$condominio", "General"]},
-                    "n": {"$sum": 1},
-                }
-            },
-            {"$sort": {"n": -1}},
-        ],
-    ):
-        privadas_labels.append(row["_id"] or "General")
-        privadas_data.append(row["n"])
+    # PLACAS FRECUENTES (del facet, ya limitadas para no saturar el DOM)
+    vehiculos = [r["_id"] for r in facet.get("vehiculos", []) if r.get("_id")]
 
-    # -----------------------------------------------------
-    # HORAS PICO (accesos)
-    # -----------------------------------------------------
-    horas_raw = {
-        row["_id"]: row["n"]
-        for row in logs.aggregate(
-            [
-                {"$match": match_accesos},
-                {"$group": {"_id": {"$hour": "$fecha_hora"}, "n": {"$sum": 1}}},
-            ]
-        )
-        if row["_id"] is not None
-    }
-    horas_labels = [
-        _dt.strptime(f"{h:02d}", "%H").strftime("%I %p") for h in sorted(horas_raw)
-    ]
-    horas_data = [horas_raw[h] for h in sorted(horas_raw)]
-
-    # -----------------------------------------------------
-    # TOP GUARDIAS
-    # -----------------------------------------------------
-    top_guardias = [
-        (row["_id"] or "Desconocido", row["n"])
-        for row in logs.aggregate(
-            [
-                {"$match": match_accesos},
-                {"$group": {"_id": "$guardia_nombre", "n": {"$sum": 1}}},
-                {"$sort": {"n": -1}},
-                {"$limit": 5},
-            ]
-        )
-    ]
-
-    # -----------------------------------------------------
-    # LISTAS CORTAS
-    # -----------------------------------------------------
+    # ACTIVIDAD RECIENTE (única lista de accesos que usa la plantilla)
     actividad_reciente = list(logs.find(match_accesos).sort("fecha_hora", -1).limit(5))
-    accesos_rechazados = list(
-        logs.find({**match_accesos, "resultado": "rechazado"})
-        .sort("fecha_hora", -1)
-        .limit(10)
-    )
-    visitas_dentro = find_visitas(
-        mongo.db,
-        {**match_visitas, "estado": "dentro"},
-        sort=[("fecha_visita", -1)],
-        limit=50,
-    )
-    vehiculos = _distinct_visitas("vehiculo.placa", match_visitas)
 
     # -----------------------------------------------------
-    # TABLA (mismo rango que todo lo demás)
+    # TABLA (mismo rango/filtros). El total ya lo tenemos del
+    # facet (mismo match) → no hace falta otra consulta de conteo.
     # -----------------------------------------------------
     PER_PAGE_OPCIONES = [10, 25, 50, 100]
     pagina_tabla = max(1, int(request.args.get("page", 1)))
@@ -685,34 +731,43 @@ def dashboard():
     if por_pagina_tabla not in PER_PAGE_OPCIONES:
         por_pagina_tabla = 10
 
-    total_visitas_tabla = contar_visitas(mongo.db, match_visitas)
+    frac_consulta = frac_sel if frac_sel else None
+
+    total_visitas_tabla = total_visitas
     total_paginas_tabla = max(
         1, (total_visitas_tabla + por_pagina_tabla - 1) // por_pagina_tabla
     )
+    if pagina_tabla > total_paginas_tabla:
+        pagina_tabla = total_paginas_tabla
+
     visitas_tabla_paginada = find_visitas(
         mongo.db,
         match_visitas,
-        sort=[("fecha_visita", -1), ("created_at", -1)],
+        sort=[("fecha_visita", 1), ("created_at", 1)],
         skip=(pagina_tabla - 1) * por_pagina_tabla,
         limit=por_pagina_tabla,
+        frac=frac_consulta,
     )
 
     # -----------------------------------------------------
-    # ALERTAS / PROMEDIO
+    # PROMEDIO
     # -----------------------------------------------------
-    alertas = []
-    if rechazados >= 5:
-        alertas.append("Demasiados QR rechazados")
-    if dentro >= 20:
-        alertas.append("Muchas personas dentro")
-
     promedio = (
         total_visitas if dias_periodo <= 1 else round(total_visitas / dias_periodo, 2)
     )
 
-    incidencias_preview = list(
-        incs.find(match_incidencias).sort("fecha_hora", -1).limit(50)
-    )
+    # -----------------------------------------------------
+    # Variables que la plantilla recibe pero ya no consultamos
+    # (no se muestran en admin_dashboard.html). Se dejan vacías
+    # para no romper render_template y ahorrar consultas.
+    # -----------------------------------------------------
+    alertas = []
+    horas_labels, horas_data = [], []
+    privadas_labels, privadas_data = [], []
+    top_guardias = []
+    accesos_rechazados = []
+    visitas_dentro = []
+    incidencias_preview = []
 
     return render_template(
         "admin_dashboard.html",
@@ -759,6 +814,126 @@ def dashboard():
         total_paginas_tabla=total_paginas_tabla,
         pendientes_autorizacion=pendientes_autorizacion,
         total_registros_tabla=total_visitas_tabla,
+        por_pagina_tabla=por_pagina_tabla,
+        per_page_opciones=PER_PAGE_OPCIONES,
+        fraccionamientos=fraccionamientos,
+        frac_sel=frac_sel,
+    )
+
+
+# =========================================================
+# BÚSQUEDA / PAGINACIÓN INSTANTÁNEA DE LA TABLA (AJAX)
+# Devuelve SOLO el HTML de la tabla, sin gráficas ni facet,
+# para que la búsqueda en vivo no recargue todo el dashboard.
+# =========================================================
+
+
+@admin_bp.route("/visitas/tabla")
+@login_required
+@role_required("admin")
+def buscar_visitas_tabla():
+
+    import re
+    from datetime import datetime as _dt
+
+    modo = request.args.get("modo", "dia")
+    busqueda = request.args.get("busqueda", "").strip()
+    fecha_inicio_tabla = request.args.get("fecha_inicio_tabla", "").strip()
+    fecha_fin_tabla = request.args.get("fecha_fin_tabla", "").strip()
+    frac_sel = request.args.get("fraccionamiento", "").strip().lower()
+    dia_sel = request.args.get("dia", "").strip()
+    semana_sel = request.args.get("semana", "").strip()
+    mes_sel = request.args.get("mes", "").strip()
+
+    hoy = _ahora_local()
+
+    # ----- Rango del período (en STRING, igual que el dashboard) -----
+    if modo == "semana":
+        if not semana_sel:
+            iso = hoy.isocalendar()
+            semana_sel = f"{iso[0]}-W{iso[1]:02d}"
+        anio, sem = semana_sel.split("-W")
+        ini = _dt.strptime(f"{anio}-W{int(sem):02d}-1", "%G-W%V-%u")
+        fin = ini + timedelta(days=6)
+        periodo_qs = f"modo=semana&semana={semana_sel}"
+    elif modo == "mes":
+        if not mes_sel:
+            mes_sel = hoy.strftime("%Y-%m")
+        anio, mes = map(int, mes_sel.split("-"))
+        ini = datetime(anio, mes, 1)
+        fin = (
+            datetime(anio + 1, 1, 1) if mes == 12 else datetime(anio, mes + 1, 1)
+        ) - timedelta(days=1)
+        periodo_qs = f"modo=mes&mes={mes_sel}"
+    else:
+        modo = "dia"
+        if not dia_sel:
+            dia_sel = hoy.strftime("%Y-%m-%d")
+        ini = _dt.strptime(dia_sel, "%Y-%m-%d")
+        fin = ini
+        periodo_qs = f"modo=dia&dia={dia_sel}"
+
+    inicio_str = ini.strftime("%Y-%m-%d")
+    fin_str = fin.strftime("%Y-%m-%d")
+
+    # override por rango de fechas de la tabla
+    if fecha_inicio_tabla or fecha_fin_tabla:
+        inicio_str = fecha_inicio_tabla or inicio_str
+        fin_str = fecha_fin_tabla or fin_str
+        if inicio_str > fin_str:
+            inicio_str, fin_str = fin_str, inicio_str
+
+    # ----- Filtro (fecha_visita es STRING) + búsqueda -----
+    match_visitas = {"fecha_visita": {"$gte": inicio_str, "$lte": fin_str}}
+    if frac_sel:
+        match_visitas["fraccionamiento"] = frac_sel
+    if busqueda:
+        rx = {"$regex": re.escape(busqueda), "$options": "i"}
+        match_visitas["$or"] = [
+            {"nombre_visitante": rx},
+            {"residente_nombre": rx},
+            {"vehiculo.placa": rx},
+        ]
+
+    # ----- Paginación -----
+    PER_PAGE_OPCIONES = [10, 25, 50, 100]
+    pagina_tabla = max(1, int(request.args.get("page", 1)))
+    por_pagina_tabla = int(request.args.get("per_page", 10))
+    if por_pagina_tabla not in PER_PAGE_OPCIONES:
+        por_pagina_tabla = 10
+
+    frac_consulta = frac_sel if frac_sel else None
+
+    total = contar_visitas(mongo.db, match_visitas)
+    total_paginas = max(1, (total + por_pagina_tabla - 1) // por_pagina_tabla)
+    if pagina_tabla > total_paginas:
+        pagina_tabla = total_paginas
+
+    visitas = find_visitas(
+        mongo.db,
+        match_visitas,
+        sort=[("fecha_visita", 1), ("created_at", 1)],
+        skip=(pagina_tabla - 1) * por_pagina_tabla,
+        limit=por_pagina_tabla,
+        frac=frac_consulta,
+    )
+
+    # Solo el HTML de la tabla (mismo parcial que usa el dashboard)
+    return render_template(
+        "partials/_visitas_tabla.html",
+        visitas_tabla=visitas,
+        busqueda=busqueda,
+        frac_sel=frac_sel,
+        periodo_qs=periodo_qs,
+        fecha_inicio_tabla=fecha_inicio_tabla,
+        fecha_fin_tabla=fecha_fin_tabla,
+        modo=modo,
+        dia_sel=dia_sel,
+        semana_sel=semana_sel,
+        mes_sel=mes_sel,
+        pagina_tabla=pagina_tabla,
+        total_paginas_tabla=total_paginas,
+        total_registros_tabla=total,
         por_pagina_tabla=por_pagina_tabla,
         per_page_opciones=PER_PAGE_OPCIONES,
     )
@@ -1202,11 +1377,21 @@ def registrar_guardia():
         telefono = request.form["telefono"].strip()
         turno = request.form["turno"].strip()
         estado = request.form["estado"].strip()
+        fraccionamiento = request.form.get("fraccionamiento", "").strip().lower()
+        password = request.form.get("password", "").strip()
 
-        password_default = "Guardia123*"
+        disponibles_norm = {f.strip().lower() for f in _fraccionamientos_disponibles()}
+        if fraccionamiento not in disponibles_norm:
+            flash("Selecciona un fraccionamiento válido para el guardia.", "danger")
+            return redirect(url_for("admin.registrar_guardia"))
+
+        if not password:
+            password = _generar_password()
+        elif len(password) < 8:
+            flash("La contraseña debe tener al menos 8 caracteres.", "danger")
+            return redirect(url_for("admin.registrar_guardia"))
 
         existe = mongo.db.users.find_one({"correo": correo})
-
         if existe:
             flash("Ese correo ya se encuentra registrado.", "danger")
             return redirect(url_for("admin.registrar_guardia"))
@@ -1214,10 +1399,11 @@ def registrar_guardia():
         nuevo = {
             "nombre": nombre,
             "correo": correo,
-            "password": generate_password_hash(password_default),
+            "password": generate_password_hash(password),
             "telefono": telefono,
             "turno": turno,
             "estado": estado,
+            "fraccionamiento": fraccionamiento,
             "rol": "guardia",
             "created_at": datetime.now(),
             "ultimo_acceso": None,
@@ -1231,14 +1417,16 @@ def registrar_guardia():
         socketio.emit("actualizar_dashboard", to="rol:admin")
 
         flash(
-            f"Guardia registrado correctamente. "
-            f"Contraseña temporal: {password_default}",
+            f"Guardia registrado correctamente. Contraseña: {password}",
             "success",
         )
 
         return redirect(url_for("admin.guardias"))
 
-    return render_template("registrar_guardia.html")
+    return render_template(
+        "registrar_guardia.html",
+        fraccionamientos=_fraccionamientos_disponibles(),
+    )
 
 
 @admin_bp.route("/guardias/<id>")
@@ -1269,6 +1457,9 @@ def editar_guardia(id):
                     "telefono": request.form["telefono"],
                     "turno": request.form["turno"],
                     "estado": request.form["estado"],
+                    "fraccionamiento": request.form.get("fraccionamiento", "")
+                    .strip()
+                    .lower(),  # 👈
                 }
             },
         )
@@ -1280,7 +1471,11 @@ def editar_guardia(id):
 
         return redirect(url_for("admin.guardias"))
 
-    return render_template("editar_guardia.html", guardia=guardia)
+    return render_template(
+        "editar_guardia.html",
+        guardia=guardia,
+        fraccionamientos=_fraccionamientos_disponibles(),  # 👈
+    )
 
 
 @admin_bp.route("/guardias/desactivar/<id>")
@@ -1747,7 +1942,100 @@ def reportes():
 @role_required("admin")
 def exportar_visitas_pdf():
 
-    visitas = list(find_visitas(mongo.db, {}, sort=[("created_at", -1)]))
+    from datetime import datetime, timedelta
+
+    MESES_ES = [
+        "",
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+    ]
+
+    frac_sel = request.args.get("fraccionamiento", "").strip().lower()
+    modo = request.args.get("modo", "dia")
+    dia_sel = request.args.get("dia", "").strip()
+    semana_sel = request.args.get("semana", "").strip()
+    mes_sel = request.args.get("mes", "").strip()
+    fecha_inicio_tabla = request.args.get("fecha_inicio_tabla", "").strip()
+    fecha_fin_tabla = request.args.get("fecha_fin_tabla", "").strip()
+    busqueda = request.args.get("busqueda", "").strip()
+
+    hoy = _ahora_local()
+
+    # ============ RANGO EN STRING (igual que el dashboard) ============
+    if modo == "semana":
+        if not semana_sel:
+            iso = hoy.isocalendar()
+            semana_sel = f"{iso[0]}-W{iso[1]:02d}"
+        anio, sem = semana_sel.split("-W")
+        ini = datetime.strptime(f"{anio}-W{int(sem):02d}-1", "%G-W%V-%u")
+        fin = ini + timedelta(days=6)
+        periodo_label = (
+            f"Semana del {ini.strftime('%d/%m/%Y')} al {fin.strftime('%d/%m/%Y')}"
+        )
+
+    elif modo == "mes":
+        if not mes_sel:
+            mes_sel = hoy.strftime("%Y-%m")
+        anio, mes = map(int, mes_sel.split("-"))
+        ini = datetime(anio, mes, 1)
+        fin = (
+            datetime(anio + 1, 1, 1) if mes == 12 else datetime(anio, mes + 1, 1)
+        ) - timedelta(days=1)
+        periodo_label = f"{MESES_ES[mes]} {anio}"
+
+    else:
+        modo = "dia"
+        if not dia_sel:
+            dia_sel = hoy.strftime("%Y-%m-%d")
+        ini = datetime.strptime(dia_sel, "%Y-%m-%d")
+        fin = ini
+        periodo_label = ini.strftime("%d/%m/%Y")
+
+    inicio_str = ini.strftime("%Y-%m-%d")
+    fin_str = fin.strftime("%Y-%m-%d")
+
+    # override por rango de fechas de la tabla (si se mandó)
+    if fecha_inicio_tabla or fecha_fin_tabla:
+        inicio_str = fecha_inicio_tabla or inicio_str
+        fin_str = fecha_fin_tabla or fin_str
+        if inicio_str > fin_str:
+            inicio_str, fin_str = fin_str, inicio_str
+        periodo_label = f"Del {inicio_str} al {fin_str}"
+
+    # ============ FILTRO (fecha_visita es STRING) ============
+    filtro = {"fecha_visita": {"$gte": inicio_str, "$lte": fin_str}}
+    if frac_sel:
+        filtro["fraccionamiento"] = frac_sel
+
+    # búsqueda opcional (mismo criterio que el dashboard)
+    if busqueda:
+        import re as _re
+
+        rx = {"$regex": _re.escape(busqueda), "$options": "i"}
+        filtro["$or"] = [
+            {"nombre_visitante": rx},
+            {"residente_nombre": rx},
+            {"vehiculo.placa": rx},
+        ]
+
+    visitas = list(
+        find_visitas(
+            mongo.db,
+            filtro,
+            sort=[("fecha_visita", 1), ("hora_inicio", 1)],
+            frac=frac_sel if frac_sel else None,
+        )
+    )
 
     estado_map = {
         "activo": "Activo",
@@ -1758,16 +2046,23 @@ def exportar_visitas_pdf():
     }
 
     def _cuenta(*estados):
-        return sum(1 for v in visitas if (v.get("estado") or "") in estados)
+        return sum(1 for v in visitas if v.get("estado") in estados)
+
+    titulo = "Reporte de Visitas"
+    subtitulo = (
+        f"{frac_sel.title()} \u00b7 {periodo_label}"
+        if frac_sel
+        else f"Todos los fraccionamientos \u00b7 {periodo_label}"
+    )
 
     ancho = _ancho_util()
     elementos = [
         _fila_kpis(
             [
                 _kpi_card(len(visitas), "Total visitas", BRAND_ACCENT),
-                _kpi_card(_cuenta("dentro"), "Dentro", BRAND_ACCENT),
+                _kpi_card(_cuenta("dentro"), "Dentro", CYAN),
                 _kpi_card(_cuenta("activo"), "Activas", OK_GREEN),
-                _kpi_card(_cuenta("salida_registrada"), "Finalizadas", CYAN),
+                _kpi_card(_cuenta("salida_registrada"), "Finalizadas", TEXT_MUTED),
             ],
             ancho,
         ),
@@ -1776,47 +2071,46 @@ def exportar_visitas_pdf():
 
     data = [["#", "Visitante", "Residente", "Placas", "Estado"]]
     for i, v in enumerate(visitas, start=1):
-        placa = ""
         vehiculo = v.get("vehiculo", {})
-        if isinstance(vehiculo, dict):
-            placa = vehiculo.get("placa", "")
-        estado = v.get("estado", "")
+        placa = vehiculo.get("placa", "") if isinstance(vehiculo, dict) else ""
         data.append(
             [
                 _c(i, _CELDA_NUM),
                 _c(v.get("nombre_visitante", ""), _CELDA_FUERTE),
                 _c(v.get("residente_nombre", "")),
                 _c(str(placa).upper(), _CELDA_NUM),
-                _badge_estado(estado, estado_map.get(estado, estado)),
+                _badge_estado(
+                    v.get("estado", ""),
+                    estado_map.get(v.get("estado", ""), v.get("estado", "")),
+                ),
             ]
         )
 
     elementos.append(
         _tabla_datos(
             data,
-            [35, 230, 230, 110, 110],
+            [35, 240, 230, 110, 95],
             aligns=["CENTER", "LEFT", "LEFT", "CENTER", "CENTER"],
         )
     )
 
     buffer = BytesIO()
-    _construir_reporte_pdf(
-        buffer,
-        "Reporte de Visitas",
-        "Consolidado de los fraccionamientos",
-        elementos,
-        "Reporte de Visitas",
-    )
+    _construir_reporte_pdf(buffer, titulo, subtitulo, elementos, "Reporte de Visitas")
     buffer.seek(0)
 
+    nombre_reporte = (
+        f"Reporte_Visitas_{frac_sel.replace(' ', '_')}"
+        if frac_sel
+        else "Reporte_Visitas_Todos"
+    )
     _registrar_historial_reporte(
-        f"Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.pdf", "Visitas", "PDF"
+        f"{nombre_reporte}_{datetime.now().strftime('%d%m%Y')}.pdf", "Visitas", "PDF"
     )
 
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"Acceso_QR_Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.pdf",
+        download_name=f"Acceso_QR_{nombre_reporte}_{datetime.now().strftime('%d%m%Y')}.pdf",
         mimetype="application/pdf",
     )
 
@@ -1826,9 +2120,73 @@ def exportar_visitas_pdf():
 @role_required("admin")
 def exportar_visitas_excel():
 
+    from datetime import datetime, timedelta
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-    visitas = find_visitas(mongo.db, {}, sort=[("created_at", -1)])
+    frac_sel = request.args.get("fraccionamiento", "").strip().lower()
+    modo = request.args.get("modo", "dia")
+    dia_sel = request.args.get("dia", "").strip()
+    semana_sel = request.args.get("semana", "").strip()
+    mes_sel = request.args.get("mes", "").strip()
+    fecha_inicio_tabla = request.args.get("fecha_inicio_tabla", "").strip()
+    fecha_fin_tabla = request.args.get("fecha_fin_tabla", "").strip()
+    busqueda = request.args.get("busqueda", "").strip()
+
+    hoy = _ahora_local()
+
+    # ============ RANGO EN STRING (igual que el dashboard) ============
+    if modo == "semana":
+        if not semana_sel:
+            iso = hoy.isocalendar()
+            semana_sel = f"{iso[0]}-W{iso[1]:02d}"
+        anio, sem = semana_sel.split("-W")
+        ini = datetime.strptime(f"{anio}-W{int(sem):02d}-1", "%G-W%V-%u")
+        fin = ini + timedelta(days=6)
+    elif modo == "mes":
+        if not mes_sel:
+            mes_sel = hoy.strftime("%Y-%m")
+        anio, mes = map(int, mes_sel.split("-"))
+        ini = datetime(anio, mes, 1)
+        fin = (
+            datetime(anio + 1, 1, 1) if mes == 12 else datetime(anio, mes + 1, 1)
+        ) - timedelta(days=1)
+    else:
+        modo = "dia"
+        if not dia_sel:
+            dia_sel = hoy.strftime("%Y-%m-%d")
+        ini = datetime.strptime(dia_sel, "%Y-%m-%d")
+        fin = ini
+
+    inicio_str = ini.strftime("%Y-%m-%d")
+    fin_str = fin.strftime("%Y-%m-%d")
+
+    if fecha_inicio_tabla or fecha_fin_tabla:
+        inicio_str = fecha_inicio_tabla or inicio_str
+        fin_str = fecha_fin_tabla or fin_str
+        if inicio_str > fin_str:
+            inicio_str, fin_str = fin_str, inicio_str
+
+    # ============ FILTRO (fecha_visita es STRING) ============
+    filtro = {"fecha_visita": {"$gte": inicio_str, "$lte": fin_str}}
+    if frac_sel:
+        filtro["fraccionamiento"] = frac_sel
+
+    if busqueda:
+        import re as _re
+
+        rx = {"$regex": _re.escape(busqueda), "$options": "i"}
+        filtro["$or"] = [
+            {"nombre_visitante": rx},
+            {"residente_nombre": rx},
+            {"vehiculo.placa": rx},
+        ]
+
+    visitas = find_visitas(
+        mongo.db,
+        filtro,
+        sort=[("fecha_visita", 1), ("hora_inicio", 1)],
+        frac=frac_sel if frac_sel else None,
+    )
 
     estado_map = {
         "activo": "Activo",
@@ -1839,18 +2197,17 @@ def exportar_visitas_excel():
     }
 
     data = []
-    for visita in visitas:
-        placa = ""
-        vehiculo = visita.get("vehiculo", {})
-        if isinstance(vehiculo, dict):
-            placa = vehiculo.get("placa", "")
-        estado = visita.get("estado", "")
+    for v in visitas:
+        vehiculo = v.get("vehiculo", {})
+        placa = vehiculo.get("placa", "") if isinstance(vehiculo, dict) else ""
         data.append(
             {
-                "Visitante": visita.get("nombre_visitante", ""),
-                "Residente": visita.get("residente_nombre", ""),
+                "Visitante": v.get("nombre_visitante", ""),
+                "Residente": v.get("residente_nombre", ""),
+                "Fraccionamiento": str(v.get("fraccionamiento", "")).title(),
+                "Fecha": v.get("fecha_visita", ""),
                 "Placas": placa,
-                "Estado": estado_map.get(estado, estado),
+                "Estado": estado_map.get(v.get("estado", ""), v.get("estado", "")),
             }
         )
 
@@ -1859,45 +2216,38 @@ def exportar_visitas_excel():
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Visitas", index=False)
-        worksheet = writer.sheets["Visitas"]
-        header_fill = PatternFill(
-            start_color="0F172A", end_color="0F172A", fill_type="solid"
-        )
+        ws = writer.sheets["Visitas"]
+        header_fill = PatternFill("solid", fgColor="0F172A")
         header_font = Font(color="FFFFFF", bold=True, size=11)
-        thin = Side(border_style="thin", color="CBD5E1")
-        border = Border(left=thin, right=thin, top=thin, bottom=thin)
-        for cell in worksheet[1]:
+        border = Border(
+            left=Side(style="thin", color="CBD5E1"),
+            right=Side(style="thin", color="CBD5E1"),
+            top=Side(style="thin", color="CBD5E1"),
+            bottom=Side(style="thin", color="CBD5E1"),
+        )
+        for cell in ws[1]:
             cell.fill = header_fill
             cell.font = header_font
-            cell.alignment = Alignment(
-                horizontal="center", vertical="center", wrap_text=True
-            )
+            cell.alignment = Alignment(horizontal="center", vertical="center")
             cell.border = border
-        for row in worksheet.iter_rows(min_row=2):
-            for cell in row:
-                cell.alignment = Alignment(
-                    horizontal="center", vertical="center", wrap_text=True
-                )
-                cell.border = border
-        worksheet.column_dimensions["A"].width = 35
-        worksheet.column_dimensions["B"].width = 35
-        worksheet.column_dimensions["C"].width = 20
-        worksheet.column_dimensions["D"].width = 20
-        for row in worksheet.iter_rows(min_row=2):
-            worksheet.row_dimensions[row[0].row].height = 35
-        worksheet.freeze_panes = "A2"
-        worksheet.auto_filter.ref = worksheet.dimensions
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = ws.dimensions
 
     output.seek(0)
 
+    nombre_reporte = (
+        f"Reporte_Visitas_{frac_sel.replace(' ', '_')}"
+        if frac_sel
+        else "Reporte_Visitas_Todos"
+    )
     _registrar_historial_reporte(
-        f"Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.xlsx", "Visitas", "Excel"
+        f"{nombre_reporte}_{datetime.now().strftime('%d%m%Y')}.xlsx", "Visitas", "Excel"
     )
 
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"Acceso_QR_Reporte_Visitas_{datetime.now().strftime('%d%m%Y')}.xlsx",
+        download_name=f"Acceso_QR_{nombre_reporte}_{datetime.now().strftime('%d%m%Y')}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 

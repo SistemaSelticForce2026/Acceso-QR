@@ -167,6 +167,24 @@ filename='css/paginas/editar_guardia.css') }}">
 
                     </div>
 
+                    <div class="info-item">
+
+                        <span>Fraccionamiento</span>
+
+                        <select name="fraccionamiento" required>
+                            <option value="">
+                                Selecciona un fraccionamiento…
+                            </option>
+                            {% for f in fraccionamientos %}
+                            <option value="{{ f }}"
+                                {% if (guardia.fraccionamiento or '')|lower == f|lower %}selected{% endif %}>
+                                {{ f }}
+                            </option>
+                            {% endfor %}
+                        </select>
+
+                    </div>
+
                 </div>
 
                 <div class="form-actions">
