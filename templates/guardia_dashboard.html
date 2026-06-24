@@ -62,36 +62,50 @@
     <div class="grd-visits-header">
         <h2 class="grd-visits-title">Visitas registradas</h2>
 
-        {% if not ver_historial %}
+        {% if fecha_inicio or fecha_fin %}
             <p class="grd-visits-sub">
-                Mostrando visitas de los últimos 7 días.
+                <i class="fa-regular fa-calendar"></i>
+                {% if fecha_inicio and fecha_fin %}
+                    Visitas del {{ fecha_inicio.split('-')[2] }}/{{ fecha_inicio.split('-')[1] }}/{{ fecha_inicio.split('-')[0] }}
+                    al {{ fecha_fin.split('-')[2] }}/{{ fecha_fin.split('-')[1] }}/{{ fecha_fin.split('-')[0] }}
+                {% elif fecha_inicio %}
+                    Visitas desde el {{ fecha_inicio.split('-')[2] }}/{{ fecha_inicio.split('-')[1] }}/{{ fecha_inicio.split('-')[0] }}
+                {% else %}
+                    Visitas hasta el {{ fecha_fin.split('-')[2] }}/{{ fecha_fin.split('-')[1] }}/{{ fecha_fin.split('-')[0] }}
+                {% endif %}
+                {% if busqueda %} · «{{ busqueda }}»{% endif %}
+            </p>
+        {% elif busqueda %}
+            <p class="grd-visits-sub">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Resultados para «{{ busqueda }}».
+            </p>
+        {% elif ver_historial %}
+            <p class="grd-visits-sub">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Historial completo de visitas registradas.
             </p>
         {% else %}
             <p class="grd-visits-sub">
-                Mostrando historial completo de visitas.
+                <i class="fa-solid fa-tower-broadcast"></i>
+                Agenda en vivo · visitas de hoy en adelante.
             </p>
         {% endif %}
     </div>
 
     <div class="dashboard-actions">
 
-        {% if not ver_historial %}
+        <a href="{{ url_for('guard.dashboard') }}"
+           class="grd-filter-btn {% if not ver_historial %}primary{% else %}secondary{% endif %}">
+            <i class="fa-solid fa-tower-broadcast"></i>
+            Agenda en vivo
+        </a>
 
         <a href="{{ url_for('guard.dashboard', historial=1) }}"
-        class="grd-filter-btn secondary">
+           class="grd-filter-btn {% if ver_historial %}primary{% else %}secondary{% endif %}">
             <i class="fa-solid fa-clock-rotate-left"></i>
-            Ver historial completo
+            Historial completo
         </a>
-
-        {% else %}
-
-        <a href="{{ url_for('guard.dashboard') }}"
-        class="grd-filter-btn secondary">
-            <i class="fa-solid fa-calendar-week"></i>
-            Ver solo últimos 7 días
-        </a>
-
-        {% endif %}
 
     </div>
 
@@ -144,6 +158,22 @@
 
     </form>
 
+    <!-- Pestañas por estado + contador de resultados -->
+    {% set _f = {'historial': 1 if ver_historial else None, 'fecha_inicio': fecha_inicio or None, 'fecha_fin': fecha_fin or None, 'busqueda': busqueda or None} %}
+    <div class="grd-status-tabs">
+        <a href="{{ url_for('guard.dashboard', estado="", **_f) }}"               class="grd-stab {% if not estado_sel %}on{% endif %}">Todas <span>{{ conteo.todas }}</span></a>
+        <a href="{{ url_for('guard.dashboard', estado='activo', **_f) }}"            class="grd-stab {% if estado_sel == 'activo' %}on{% endif %}">Vigentes <span>{{ conteo.activo }}</span></a>
+        <a href="{{ url_for('guard.dashboard', estado='dentro', **_f) }}"            class="grd-stab {% if estado_sel == 'dentro' %}on{% endif %}">Dentro <span>{{ conteo.dentro }}</span></a>
+        <a href="{{ url_for('guard.dashboard', estado='salida_registrada', **_f) }}" class="grd-stab {% if estado_sel == 'salida_registrada' %}on{% endif %}">Finalizadas <span>{{ conteo.salida_registrada }}</span></a>
+    </div>
+
+    <p class="grd-results-count">
+        <i class="fa-solid fa-list-check"></i>
+        {{ total_visitas }} visita{{ 's' if total_visitas != 1 else '' }} encontrada{{ 's' if total_visitas != 1 else '' }}
+        {% if estado_sel or busqueda or fecha_inicio or fecha_fin %}con los filtros aplicados{% endif %}
+    </p>
+
+
     {# ============================================================ #}
     {# Etiquetas legibles para el tipo de visitante recurrente      #}
     {# (deben coincidir con los data-tipo del formulario)           #}
@@ -185,6 +215,10 @@
                     <div class="grd-visit-primary">
                         <div class="grd-visit-name-row">
                             <p class="grd-visit-name">{{ visita.nombre_visitante }}</p>
+                            <span class="grd-visit-badges">
+                            {% if visita.fecha_visita == hoy %}
+                                <span class="grd-badge today">Hoy</span>
+                            {% endif %}
                             {% if visita.estado == "dentro" %}
                                 <span class="grd-badge success">Dentro</span>
                             {% elif visita.estado == "pendiente_autorizacion" %}
@@ -198,6 +232,7 @@
                             {% else %}
                                 <span class="grd-badge neutral">{{ visita.estado | capitalize }}</span>
                             {% endif %}
+                            </span>
                         </div>
                         <p class="grd-visit-phone">
                             <i class="fa-solid fa-phone"></i>
@@ -353,7 +388,8 @@
                     historial=1 if ver_historial else None,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin,
-                    busqueda=busqueda
+                    busqueda=busqueda,
+                    estado=estado_sel or None
                 ) }}"
                     class="grd-page-btn" aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></a>
             {% else %}
@@ -362,14 +398,15 @@
 
             {% if ini > 1 %}
                 <a href="{{ url_for(
-                'guard.dashboard',
-                page=1,
-                historial=1 if ver_historial else None,
-                fecha_inicio=fecha_inicio,
-                fecha_fin=fecha_fin,
-                busqueda=busqueda
-            ) }}"
-                class="grd-page-btn">1</a>
+                    'guard.dashboard',
+                    page=1,
+                    historial=1 if ver_historial else None,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    busqueda=busqueda,
+                    estado=estado_sel or None
+                ) }}"
+                    class="grd-page-btn">1</a>
                 {% if ini > 2 %}<span class="grd-page-dots">…</span>{% endif %}
             {% endif %}
 
@@ -380,7 +417,8 @@
                     historial=1 if ver_historial else None,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin,
-                    busqueda=busqueda
+                    busqueda=busqueda,
+                    estado=estado_sel or None
                 ) }}"
                     class="grd-page-btn {% if p == pagina %}active{% endif %}">{{ p }}</a>
             {% endfor %}
@@ -393,7 +431,8 @@
                     historial=1 if ver_historial else None,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin,
-                    busqueda=busqueda
+                    busqueda=busqueda,
+                    estado=estado_sel or None
                 ) }}"
                     class="grd-page-btn">{{ total_paginas }}</a>
             {% endif %}
@@ -405,7 +444,8 @@
                     historial=1 if ver_historial else None,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin,
-                    busqueda=busqueda
+                    busqueda=busqueda,
+                    estado=estado_sel or None
                 ) }}"
                     class="grd-page-btn" aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></a>
             {% else %}
@@ -421,6 +461,7 @@
             <input type="hidden" name="fecha_fin" value="{{ fecha_fin }}">
             <input type="hidden" name="busqueda" value="{{ busqueda }}">
             <input type="hidden" name="historial" value="{% if ver_historial %}1{% endif %}">
+            <input type="hidden" name="estado" value="{{ estado_sel }}">
             <span class="grd-jump-label">Ir a</span>
             <input type="number" name="page" min="1" max="{{ total_paginas }}"
                    value="{{ pagina }}" class="grd-jump-input" aria-label="Ir a página">

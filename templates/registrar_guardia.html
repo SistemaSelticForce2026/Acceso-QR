@@ -140,6 +140,46 @@ filename='css/paginas/registrar_guardia.css') }}">
 
                     </div>
 
+                    <div class="info-item">
+
+                        <span>Fraccionamiento</span>
+
+                        <select name="fraccionamiento" required>
+                            <option value="">
+                                Selecciona un fraccionamiento…
+                            </option>
+                            {% for f in fraccionamientos %}
+                            <option value="{{ f }}">{{ f }}</option>
+                            {% endfor %}
+                        </select>
+
+                    </div>
+
+                    <div class="info-item">
+
+                        <span>Contraseña temporal</span>
+
+                        <div class="pass-row">
+                            <input
+                                type="text"
+                                name="password"
+                                id="passGuardia"
+                                placeholder="Escríbela o presiona Generar"
+                                minlength="8"
+                                autocomplete="off"
+                            >
+                            <button type="button" class="btn secondary" id="btnGenPass">
+                                <i class="fa-solid fa-key"></i> Generar
+                            </button>
+                        </div>
+
+                        <small class="pass-hint">
+                            Si la dejas vacía, el sistema generará una automáticamente.
+                            El guardia deberá cambiarla en su primer inicio de sesión.
+                        </small>
+
+                    </div>
+
                 </div>
 
                 <div class="form-actions">
@@ -188,6 +228,16 @@ filename='css/paginas/registrar_guardia.css') }}">
 
                 <div class="info-item">
 
+                    <span>Contraseña</span>
+
+                    <strong>
+                        Temporal: el guardia la cambia al primer ingreso.
+                    </strong>
+
+                </div>
+
+                <div class="info-item">
+
                     <span>Seguridad</span>
 
                     <strong>
@@ -203,5 +253,46 @@ filename='css/paginas/registrar_guardia.css') }}">
     </div>
 
 </div>
+
+<style>
+    /* Fila contraseña + botón Generar */
+    .pass-row {
+        display: flex;
+        gap: 8px;
+        align-items: stretch;
+    }
+    .pass-row input {
+        flex: 1;
+        min-width: 0;
+    }
+    .pass-row .btn.secondary {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .pass-hint {
+        display: block;
+        margin-top: 6px;
+        font-size: 12.5px;
+        color: #64748b;
+        line-height: 1.4;
+    }
+</style>
+
+<script>
+    (function () {
+        var btn = document.getElementById('btnGenPass');
+        var campo = document.getElementById('passGuardia');
+        if (!btn || !campo) return;
+
+        btn.addEventListener('click', function () {
+            var chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+            var p = "";
+            for (var i = 0; i < 10; i++) {
+                p += chars[Math.floor(Math.random() * chars.length)];
+            }
+            campo.value = p + "*";   // garantiza un símbolo
+        });
+    })();
+</script>
 
 {% endblock %}

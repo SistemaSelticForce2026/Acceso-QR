@@ -1,227 +1,57 @@
 from app import create_app
-
 from extensions import mongo
-
 from werkzeug.security import generate_password_hash
-
 from datetime import datetime
-
-# =====================================================
-# CREAR APP
-# =====================================================
 
 app = create_app()
 
-# =====================================================
-# CONTEXTO FLASK
-# =====================================================
-
 with app.app_context():
 
+    # ============================================
+    # CREDENCIALES DEL ADMINISTRADOR
+    # Cambia estos valores si lo necesitas
+    # ============================================
+    correo_admin = "adminSeltic@gmail.com"
+    password_admin = "Admin321*"
+    nombre_admin = "Administrador"
+
     print("\n=====================================")
-    print("ACTUALIZANDO USUARIOS DEL SISTEMA")
+    print("CONFIGURACIÓN DE ADMINISTRADOR")
     print("=====================================\n")
 
-    # =================================================
-    # =================================================
-    # ADMINISTRADOR
-    # =================================================
-    # =================================================
+    admin = mongo.db.users.find_one({"correo": correo_admin, "rol": "admin"})
 
-    # =================================================
-    # CORREO ACTUAL DEL ADMIN EN MONGODB
-    # ESTE CORREO DEBE EXISTIR YA EN LA BASE
-    # =================================================
-
-    correo_actual_admin = "adminSelticForce@gmail.com"
-
-    # =================================================
-    # NUEVO CORREO ADMIN
-    # AQUI PUEDES CAMBIARLO MANUALMENTE
-    # =================================================
-
-    nuevo_correo_admin = "adminSeltic@gmail.com"
-
-    # =================================================
-    # NUEVA CONTRASEÑA ADMIN
-    # AQUI PUEDES CAMBIARLA MANUALMENTE
-    # =================================================
-
-    nueva_password_admin = "Admin321*"
-
-    # =================================================
-    # BUSCAR ADMIN
-    # =================================================
-
-    admin_existente = mongo.db.users.find_one(
-        {
-            "correo": correo_actual_admin,
-            "rol": "admin",
-        }
-    )
-
-    # =================================================
-    # SI EXISTE -> ACTUALIZAR
-    # =================================================
-
-    if admin_existente:
-
+    if admin:
+        # Ya existe -> solo restablece contraseña y lo deja activo
         mongo.db.users.update_one(
-            {"_id": admin_existente["_id"]},
+            {"_id": admin["_id"]},
             {
                 "$set": {
-                    # =============================
-                    # NUEVO CORREO
-                    # =============================
-                    "correo": nuevo_correo_admin,
-                    # =============================
-                    # NUEVA CONTRASEÑA
-                    # =============================
-                    "password": generate_password_hash(nueva_password_admin),
-                    # =============================
-                    # ESTADO
-                    # =============================
+                    "password": generate_password_hash(password_admin),
                     "estado": "activo",
-                    # =============================
-                    # FECHA ACTUALIZACIÓN
-                    # =============================
                     "updated_at": datetime.now(),
                 }
             },
         )
-
-        print("ADMINISTRADOR ACTUALIZADO\n")
-
-        print(f"ID: {admin_existente['_id']}")
-
-        print(f"Nuevo correo: {nuevo_correo_admin}")
-
+        print("ADMINISTRADOR ACTUALIZADO (contraseña restablecida)")
     else:
-
+        # No existe -> lo crea
         mongo.db.users.insert_one(
             {
-                "nombre": "Administrador",
-                "correo": nuevo_correo_admin,
-                "password": generate_password_hash(nueva_password_admin),
+                "nombre": nombre_admin,
+                "correo": correo_admin,
+                "password": generate_password_hash(password_admin),
                 "rol": "admin",
                 "estado": "activo",
                 "created_at": datetime.now(),
                 "updated_at": datetime.now(),
             }
         )
-
         print("ADMINISTRADOR CREADO")
 
-    # =================================================
-    # =================================================
-    # GUARDIA
-    # =================================================
-    # =================================================
-
-    # =================================================
-    # CORREO ACTUAL DEL GUARDIA EN MONGODB
-    # ESTE CORREO DEBE EXISTIR YA EN LA BASE
-    # =================================================
-
-    correo_actual_guardia = "guardiaSelticForce@gmail.com"
-
-    # =================================================
-    # NUEVO CORREO GUARDIA
-    # AQUI PUEDES CAMBIARLO MANUALMENTE
-    # =================================================
-
-    nuevo_correo_guardia = "guardiaSeltic@gmail.com"
-
-    # =================================================
-    # NUEVA CONTRASEÑA GUARDIA
-    # AQUI PUEDES CAMBIARLA MANUALMENTE
-    # =================================================
-
-    nueva_password_guardia = "Guardia321*"
-
-    # =================================================
-    # BUSCAR GUARDIA
-    # =================================================
-
-    guardia_existente = mongo.db.users.find_one(
-        {
-            "correo": correo_actual_guardia,
-            "rol": "guardia",
-        }
-    )
-
-    # =================================================
-    # SI EXISTE -> ACTUALIZAR
-    # =================================================
-
-    if guardia_existente:
-
-        mongo.db.users.update_one(
-            {"_id": guardia_existente["_id"]},
-            {
-                "$set": {
-                    # =============================
-                    # NUEVO CORREO
-                    # =============================
-                    "correo": nuevo_correo_guardia,
-                    # =============================
-                    # NUEVA CONTRASEÑA
-                    # =============================
-                    "password": generate_password_hash(nueva_password_guardia),
-                    # =============================
-                    # ESTADO
-                    # =============================
-                    "estado": "activo",
-                    # =============================
-                    # FECHA ACTUALIZACIÓN
-                    # =============================
-                    "updated_at": datetime.now(),
-                }
-            },
-        )
-
-        print("GUARDIA ACTUALIZADO\n")
-
-        print(f"ID: {guardia_existente['_id']}")
-
-        print(f"Nuevo correo: {nuevo_correo_guardia}")
-
-    else:
-
-        mongo.db.users.insert_one(
-            {
-                "nombre": "Guardia Principal",
-                "correo": nuevo_correo_guardia,
-                "password": generate_password_hash(nueva_password_guardia),
-                "rol": "guardia",
-                "estado": "activo",
-                "created_at": datetime.now(),
-                "updated_at": datetime.now(),
-            }
-        )
-
-        print("GUARDIA CREADO")
-
-    # =================================================
-    # MENSAJES FINALES
-    # =================================================
-
-    print("\n=====================================")
-    print("CREDENCIALES ACTUALIZADAS")
-    print("=====================================\n")
-
-    print("ADMIN")
-
-    print(f"Correo: {nuevo_correo_admin}")
-
-    print(f"Contraseña: {nueva_password_admin}\n")
-
-    print("GUARDIA")
-
-    print(f"Correo: {nuevo_correo_guardia}")
-
-    print(f"Contraseña: {nueva_password_guardia}\n")
-
-    print("=====================================")
-    print("PROCESO FINALIZADO")
+    print("\n-------------------------------------")
+    print("CREDENCIALES DE ACCESO")
+    print("-------------------------------------")
+    print(f"Correo:     {correo_admin}")
+    print(f"Contraseña: {password_admin}")
     print("=====================================\n")

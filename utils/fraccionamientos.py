@@ -263,7 +263,7 @@ def _union(db, colecciones, pipeline):
 
     etapas = [{"$unionWith": {"coll": c}} for c in cols[1:]]
 
-    return db[cols[0]].aggregate(etapas + list(pipeline))
+    return db[cols[0]].aggregate(etapas + list(pipeline), allowDiskUse=True)
 
 
 # ------------------------------------------------------------------
@@ -285,33 +285,66 @@ def agg_residentes(db, pipeline):
 # Find visitas
 # ------------------------------------------------------------------
 
-
-def find_visitas(db, filtro=None, sort=None, skip=0, limit=0):
-
-    pipe = [{"$match": filtro or {}}]
-
-    if sort:
-        pipe.append({"$sort": dict(sort)})
-
-    if skip:
-        pipe.append({"$skip": skip})
-
-    if limit:
-        pipe.append({"$limit": limit})
-
-    return list(agg_visitas(db, pipe))
+_indices_visitas_ok = False
 
 
-def contar_visitas(db, filtro=None):
+def _asegurar_indices_visitas(db):
+    global _indices_visitas_ok
+    if _indices_visitas_ok:
+        return
+    for nombre in visitas_colecciones(db).values():
+        try:
+            db[nombre].create_index([("created_at", -1)])
+        except Exception:
+            pass
+    _indices_visitas_ok = True
+
+
+def _cols_visitas(db, frac=None):
+    """Colecciones de visitas a consultar.
+    Con 'frac' -> solo la de ese fraccionamiento; sin 'frac' -> todas."""
+    if frac:
+        col = coleccion_visitas(db, frac)
+        return [col] if col is not None else []
+    return [db[n] for n in visitas_colecciones(db).values()]
+
+
+def find_visitas(db, filtro=None, sort=None, skip=0, limit=0, frac=None):
 
     filtro = filtro or {}
+    sort_list = list(sort) if sort else None
 
+    if sort_list:
+        _asegurar_indices_visitas(db)
+
+    need = (skip + limit) if limit else 0
+
+    docs = []
+    for col in _cols_visitas(db, frac):
+        cur = col.find(filtro)
+        if sort_list:
+            cur = cur.sort(sort_list)
+        if need:
+            cur = cur.limit(need)
+        docs.extend(cur)
+
+    if sort_list:
+        for campo, direccion in reversed(sort_list):
+            docs.sort(
+                key=lambda d, c=campo: (d.get(c) is not None, d.get(c)),
+                reverse=(direccion == -1),
+            )
+
+    if limit:
+        return docs[skip : skip + limit]
+    return docs[skip:] if skip else docs
+
+
+def contar_visitas(db, filtro=None, frac=None):
+    filtro = filtro or {}
     total = 0
-
-    for nombre in visitas_colecciones(db).values():
-
-        total += db[nombre].count_documents(filtro)
-
+    for col in _cols_visitas(db, frac):
+        total += col.count_documents(filtro)
     return total
 
 

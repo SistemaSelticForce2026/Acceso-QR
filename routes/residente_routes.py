@@ -155,7 +155,10 @@ def visitors():
 
     if busqueda:
 
-        filtro["nombre_visitante"] = {"$regex": busqueda, "$options": "i"}
+        filtro["$or"] = [
+            {"nombre_visitante": {"$regex": busqueda, "$options": "i"}},
+            {"telefono": {"$regex": busqueda, "$options": "i"}},
+        ]
 
     # =============================================
     # CONSULTA

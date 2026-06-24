@@ -1,3 +1,5 @@
+import re
+
 from flask import (
     Blueprint,
     render_template,
@@ -10,12 +12,13 @@ from flask import (
 
 from datetime import datetime, timedelta
 
+from pymongo.errors import PyMongoError
+
 from extensions import mongo, socketio
 
 from utils.auth import login_required, role_required
 from utils.visita_validacion import validar_acceso_qr, actualizar_qr_vencido_si_aplica
 
-# >>> NUEVO: helpers de colecciones por fraccionamiento
 from utils.fraccionamientos import (
     buscar_visita_por_token,
     coleccion_visitas,
@@ -28,9 +31,36 @@ import ast
 guard_bp = Blueprint("guard", __name__, url_prefix="/guard")
 
 
-# =====================================================
-# HELPER: colección de visitas según el fraccionamiento de la visita
-# =====================================================
+# ---------------------------------------------------------------------------
+# Zona horaria del negocio (Centro de México)
+# ---------------------------------------------------------------------------
+
+try:
+    from zoneinfo import ZoneInfo
+
+    TZ_LOCAL = ZoneInfo("America/Mexico_City")
+except Exception:
+    from datetime import timezone
+
+    TZ_LOCAL = timezone(timedelta(hours=-6))
+
+
+def _ahora_local():
+    """Hora actual en la zona del negocio, como datetime naive (para mantener
+    consistencia con el resto del sistema, que guarda fechas sin tz)."""
+    return datetime.now(TZ_LOCAL).replace(tzinfo=None)
+
+
+# ---------------------------------------------------------------------------
+# Constantes del dashboard
+# ---------------------------------------------------------------------------
+VISITAS_POR_PAGINA = 20
+ESTADOS_VALIDOS = {"activo", "dentro", "salida_registrada"}
+
+
+# ---------------------------------------------------------------------------
+# Helpers de visitas / QR
+# ---------------------------------------------------------------------------
 
 
 def _col_visita(visita):
@@ -39,17 +69,17 @@ def _col_visita(visita):
 
 
 def _buscar_visita(token):
-    """Busca la visita por token en las 3 colecciones (o None)."""
-    visita, _ = buscar_visita_por_token(mongo.db, token)
-    return visita
+    """Busca la visita por token SOLO en la colección del fraccionamiento del guardia."""
+    col = coleccion_visitas(mongo.db, session.get("fraccionamiento"))
+    if col is None:
+        return None
+    return col.find_one({"qr_token": token})
 
 
 def _render_scan(modo, resultado=None, bloquear_camara=False):
-
+    """Renderiza la pantalla de escaneo con el resultado."""
     visita = None
-
     if resultado and resultado.get("visita"):
-
         visita = resultado.get("visita")
 
     return render_template(
@@ -62,6 +92,55 @@ def _render_scan(modo, resultado=None, bloquear_camara=False):
             "guard.scan_entrada" if modo == "entrada" else "guard.scan_salida"
         ),
     )
+
+
+def _normalizar_fotos(visita):
+    """Convierte foto_visitante / foto_placa de string a dict (Cloudinary)."""
+    if not visita:
+        return
+    for campo in ("foto_visitante", "foto_placa"):
+        if isinstance(visita.get(campo), str):
+            try:
+                visita[campo] = ast.literal_eval(visita[campo])
+            except Exception:
+                pass
+
+
+def _clasificar_razon(mensaje):
+    """Convierte el mensaje de validar_acceso_qr en un código de razón
+    para que la plantilla muestre la tarjeta correcta."""
+    m = (mensaje or "").lower()
+    if any(p in m for p in ["venc", "expir", "caduc", "ya pas"]):
+        return "fecha_vencida"
+    if any(
+        p in m
+        for p in [
+            "futur",
+            "aún no",
+            "aun no",
+            "todavía no",
+            "todavia no",
+            "próxim",
+            "proxim",
+            "no inici",
+        ]
+    ):
+        return "fecha_futura"
+    if any(
+        p in m
+        for p in [
+            "día no",
+            "dia no",
+            "no autoriz",
+            "no corresponde",
+            "fuera de día",
+            "fuera de dia",
+        ]
+    ):
+        return "dia_no_autorizado"
+    if "horario" in m or "fuera de hora" in m:
+        return "fuera_horario"
+    return "qr_no_valido"
 
 
 def _registrar_incidencia_qr(session, tipo, descripcion, visita=None, token=None):
@@ -119,82 +198,303 @@ def _registrar_salida(visita, session):
     return visita
 
 
+# ---------------------------------------------------------------------------
+# Helpers del dashboard
+# ---------------------------------------------------------------------------
+
+
+def _entero_en_rango(valor, *, por_defecto=1, minimo=1, maximo=None):
+    """Convierte un parámetro del querystring a entero acotado a [minimo, maximo]."""
+    try:
+        n = int(valor)
+    except (TypeError, ValueError):
+        return por_defecto
+    n = max(minimo, n)
+    if maximo is not None:
+        n = min(maximo, n)
+    return n
+
+
+def _parse_fecha(valor, *, fin_de_dia=False):
+    """Parsea 'AAAA-MM-DD'. Devuelve datetime o None si el formato es inválido."""
+    if not valor:
+        return None
+    try:
+        fecha = datetime.strptime(valor, "%Y-%m-%d")
+    except ValueError:
+        return None
+    if fin_de_dia:
+        fecha = fecha.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return fecha
+
+
+def _construir_filtro_visitas(*, busqueda, f_inicio, f_fin, ver_historial, ahora):
+    """Arma el filtro Mongo del listado (sin la pestaña de estado).
+
+    'fecha_visita' se almacena como TEXTO ISO 'YYYY-MM-DD', por eso el rango se
+    compara como CADENA (el formato ISO ordena cronológicamente). Comparar
+    contra objetos datetime NO funciona: en BSON el texto y las fechas son
+    tipos distintos y la comparación nunca coincide.
+
+    - Rango manual: visitas cuya 'fecha_visita' cae dentro del rango.
+    - Agenda en vivo (por defecto): de HOY en adelante + pases recurrentes
+      (que no tienen fecha fija).
+    - Historial completo: de HOY hacia atrás, hasta la primera visita
+      registrada. No incluye visitas futuras ni recurrentes sin fecha.
+    """
+    filtro = {}
+    hoy_str = ahora.strftime("%Y-%m-%d")
+
+    if f_inicio or f_fin:
+        rango = {}
+        if f_inicio:
+            rango["$gte"] = f_inicio  # 'YYYY-MM-DD'
+        if f_fin:
+            rango["$lte"] = f_fin  # 'YYYY-MM-DD'
+        filtro["fecha_visita"] = rango
+
+    elif ver_historial:
+        filtro["fecha_visita"] = {"$lte": hoy_str}
+
+    else:
+        filtro["$or"] = [
+            {"fecha_visita": {"$gte": hoy_str}},
+            {"modalidad_visita": "recurrente"},
+        ]
+
+    if busqueda:
+        # re.escape evita que el texto del usuario rompa o inyecte el regex.
+        filtro["nombre_visitante"] = {"$regex": re.escape(busqueda), "$options": "i"}
+
+    return filtro
+
+
+def _listar_visitas(col, filtro, *, modo_orden, hoy_str, skip, limit):
+    """Trae la página de visitas ya ordenada según el modo.
+
+    - 'operativo' (vista por defecto): agenda de caseta -> primero las de HOY,
+      luego las próximas en orden ascendente, y al final los pases recurrentes
+      (sin fecha fija). Es lo que quiere ver el guardia al entrar.
+    - 'ascendente' (rango de fechas elegido): cronológico, de la más cercana a
+      la más lejana dentro del rango.
+    - 'historial': de la más reciente a la más antigua.
+    """
+    if col is None:
+        return []
+
+    pipeline = [{"$match": filtro}]
+
+    if modo_orden == "operativo":
+        pipeline += [
+            {
+                "$addFields": {
+                    "_grupo_orden": {
+                        "$switch": {
+                            "branches": [
+                                {
+                                    "case": {"$eq": ["$fecha_visita", hoy_str]},
+                                    "then": 0,  # hoy
+                                },
+                                {
+                                    "case": {
+                                        "$gt": [
+                                            {"$ifNull": ["$fecha_visita", ""]},
+                                            hoy_str,
+                                        ]
+                                    },
+                                    "then": 1,  # próximas
+                                },
+                                {
+                                    "case": {
+                                        "$eq": ["$modalidad_visita", "recurrente"]
+                                    },
+                                    "then": 2,  # recurrentes sin fecha
+                                },
+                            ],
+                            "default": 3,
+                        }
+                    }
+                }
+            },
+            {"$sort": {"_grupo_orden": 1, "fecha_visita": 1, "hora_inicio": 1}},
+            {"$project": {"_grupo_orden": 0}},
+        ]
+    elif modo_orden == "historial":
+        pipeline += [
+            {"$sort": {"fecha_visita": -1, "hora_inicio": -1, "created_at": -1}}
+        ]
+    else:  # ascendente
+        pipeline += [{"$sort": {"fecha_visita": 1, "hora_inicio": 1, "created_at": 1}}]
+
+    pipeline += [{"$skip": skip}, {"$limit": limit}]
+
+    try:
+        return list(col.aggregate(pipeline))
+    except PyMongoError:
+        return []
+
+
+def _extraer_conteos(col, pipeline, claves):
+    """Ejecuta un $facet y devuelve {clave: entero} de forma tolerante a fallos."""
+    base = {clave: 0 for clave in claves}
+    if col is None:
+        return base
+    try:
+        doc = next(col.aggregate(pipeline), {}) or {}
+    except PyMongoError:
+        return base
+    return {clave: ((doc.get(clave) or [{}])[0].get("n", 0)) for clave in claves}
+
+
+def _conteos_por_estado(col, filtro_base):
+    """Conteos de las pestañas (sobre el filtro base, antes de la pestaña activa)."""
+    pipeline = [
+        {"$match": filtro_base},
+        {
+            "$facet": {
+                "todas": [{"$count": "n"}],
+                "activo": [{"$match": {"estado": "activo"}}, {"$count": "n"}],
+                "dentro": [{"$match": {"estado": "dentro"}}, {"$count": "n"}],
+                "salida_registrada": [
+                    {"$match": {"estado": "salida_registrada"}},
+                    {"$count": "n"},
+                ],
+            }
+        },
+    ]
+    return _extraer_conteos(
+        col, pipeline, ("todas", "activo", "dentro", "salida_registrada")
+    )
+
+
+def _conteos_estado_actual(col, inicio_hoy):
+    """KPIs operativos: pases activos, visitantes dentro y salidas de hoy."""
+    pipeline = [
+        {
+            "$facet": {
+                "activas": [{"$match": {"estado": "activo"}}, {"$count": "n"}],
+                "dentro": [{"$match": {"estado": "dentro"}}, {"$count": "n"}],
+                "salidas": [
+                    {
+                        "$match": {
+                            "estado": "salida_registrada",
+                            "fecha_salida": {"$gte": inicio_hoy},
+                        }
+                    },
+                    {"$count": "n"},
+                ],
+            }
+        }
+    ]
+    return _extraer_conteos(col, pipeline, ("activas", "dentro", "salidas"))
+
+
+# ---------------------------------------------------------------------------
+# DASHBOARD
+# ---------------------------------------------------------------------------
+
+
 @guard_bp.route("/dashboard")
 @login_required
 @role_required("guardia")
 def dashboard():
+    """Panel del guardia: listado paginado de visitas con filtros, búsqueda y KPIs."""
 
-    # =============================================
-    # PAGINACION
-    # =============================================
+    frac = session.get("fraccionamiento")
+    col = coleccion_visitas(mongo.db, frac)
+    ahora = datetime.now()
 
-    pagina = int(request.args.get("page", 1))
-
-    por_pagina = 20
-
+    # --- Parámetros de la petición (validados) ----------------------------
+    pagina = _entero_en_rango(request.args.get("page"), por_defecto=1, minimo=1)
     busqueda = request.args.get("busqueda", "").strip()
+    estado_sel = request.args.get("estado", "").strip()
+    ver_historial = bool(request.args.get("historial"))
 
-    fecha_inicio = request.args.get("fecha_inicio", "").strip()
+    # fecha_visita se guarda como texto ISO 'YYYY-MM-DD', así que el filtro
+    # compara como cadena (ver _construir_filtro_visitas). Aquí solo validamos
+    # el formato y descartamos lo que venga mal escrito en la URL.
+    f_inicio = request.args.get("fecha_inicio", "").strip()
+    f_fin = request.args.get("fecha_fin", "").strip()
 
-    fecha_fin = request.args.get("fecha_fin", "").strip()
+    fecha_invalida = False
+    if f_inicio and _parse_fecha(f_inicio) is None:
+        f_inicio, fecha_invalida = "", True
+    if f_fin and _parse_fecha(f_fin) is None:
+        f_fin, fecha_invalida = "", True
+    if fecha_invalida:
+        flash("Formato de fecha inválido. Usa AAAA-MM-DD.", "warning")
 
-    # =============================================
-    # VISTA OPERATIVA POR DEFECTO
-    # =============================================
+    if estado_sel and estado_sel not in ESTADOS_VALIDOS:
+        estado_sel = ""  # descarta valores manipulados en la URL
 
-    ver_historial = request.args.get("historial")
-
-    filtro = {}
-
-    # Rango de fechas explícito (si el usuario eligió fechas)
-    if fecha_inicio:
-        filtro.setdefault("fecha_visita", {})["$gte"] = fecha_inicio
-    if fecha_fin:
-        filtro.setdefault("fecha_visita", {})["$lte"] = fecha_fin
-
-    # Vista por defecto: SOLO últimos 7 días por FECHA DE VISITA,
-    # salvo que se pida el historial completo o ya haya un rango elegido.
-    if not ver_historial and not fecha_inicio and not fecha_fin:
-        hace_7_str = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
-        hace_7_dt = datetime.now() - timedelta(days=7)
-        filtro["$or"] = [
-            {"fecha_visita": {"$type": "string", "$gte": hace_7_str}},
-            {"fecha_visita": {"$type": "date", "$gte": hace_7_dt}},
-        ]
-
-    if busqueda:
-        filtro["nombre_visitante"] = {"$regex": busqueda, "$options": "i"}
-
-    total_visitas = contar_visitas(mongo.db, filtro)
-
-    total_paginas = (total_visitas + por_pagina - 1) // por_pagina
-
-    visitas = find_visitas(
-        mongo.db,
-        filtro,
-        sort=[("fecha_visita", 1), ("created_at", 1)],
-        skip=(pagina - 1) * por_pagina,
-        limit=por_pagina,
+    # --- Filtro base (sin la pestaña de estado) ---------------------------
+    filtro = _construir_filtro_visitas(
+        busqueda=busqueda,
+        f_inicio=f_inicio,
+        f_fin=f_fin,
+        ver_historial=ver_historial,
+        ahora=ahora,
     )
 
-    activas = contar_visitas(mongo.db, {"estado": "activo"})
-    dentro = contar_visitas(mongo.db, {"estado": "dentro"})
-    salidas = contar_visitas(mongo.db, {"estado": "salida_registrada"})
-    incidencias = mongo.db.incidencias.count_documents({})
+    # Conteos de pestañas: una sola consulta sobre el filtro base.
+    conteo = _conteos_por_estado(col, filtro)
+
+    # --- Pestaña activa ----------------------------------------------------
+    if estado_sel:
+        filtro = {**filtro, "estado": estado_sel}
+        total_visitas = conteo.get(estado_sel, 0)
+    else:
+        total_visitas = conteo["todas"]
+
+    # --- Paginación segura -------------------------------------------------
+    total_paginas = max(
+        1, (total_visitas + VISITAS_POR_PAGINA - 1) // VISITAS_POR_PAGINA
+    )
+    pagina = min(pagina, total_paginas)
+
+    # Modo de orden: el historial manda (más reciente primero); si hay un rango
+    # elegido fuera del historial, cronológico ascendente; si no, agenda de hoy.
+    if ver_historial:
+        modo_orden = "historial"
+    elif f_inicio or f_fin:
+        modo_orden = "ascendente"
+    else:
+        modo_orden = "operativo"
+
+    hoy_str = ahora.strftime("%Y-%m-%d")
+
+    visitas = _listar_visitas(
+        col,
+        filtro,
+        modo_orden=modo_orden,
+        hoy_str=hoy_str,
+        skip=(pagina - 1) * VISITAS_POR_PAGINA,
+        limit=VISITAS_POR_PAGINA,
+    )
+
+    # --- KPIs operativos (estado actual del fraccionamiento) --------------
+    inicio_hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
+    kpis = _conteos_estado_actual(col, inicio_hoy)
+
+    incidencias = mongo.db.incidencias.count_documents({"estado": "abierta"})
 
     return render_template(
         "guardia_dashboard.html",
         visitas=visitas,
-        activas=activas,
-        dentro=dentro,
-        salidas=salidas,
+        hoy=ahora.strftime("%Y-%m-%d"),
+        activas=kpis["activas"],
+        dentro=kpis["dentro"],
+        salidas=kpis["salidas"],
         incidencias=incidencias,
         pagina=pagina,
         total_paginas=total_paginas,
-        fecha_inicio=fecha_inicio,
-        fecha_fin=fecha_fin,
+        total_visitas=total_visitas,
+        conteo=conteo,
+        estado_sel=estado_sel,
+        fecha_inicio=f_inicio,
+        fecha_fin=f_fin,
         busqueda=busqueda,
-        ver_historial=bool(ver_historial),
+        ver_historial=ver_historial,
     )
 
 
@@ -203,6 +503,11 @@ def dashboard():
 @role_required("guardia")
 def scan():
     return redirect(url_for("guard.scan_entrada"))
+
+
+# ---------------------------------------------------------------------------
+# ESCANEO DE ENTRADA  (SOLO LECTURA — no consume hasta autorizar)
+# ---------------------------------------------------------------------------
 
 
 @guard_bp.route("/scan/entrada", methods=["GET", "POST"])
@@ -215,28 +520,7 @@ def scan_entrada():
     if request.method == "POST":
         token = request.form["qr_token"].strip()
         visita = _buscar_visita(token)
-
-        # =====================================
-        # NORMALIZAR FOTOS CLOUDINARY
-        # =====================================
-
-        if visita:
-
-            if isinstance(visita.get("foto_visitante"), str):
-
-                try:
-                    visita["foto_visitante"] = ast.literal_eval(
-                        visita["foto_visitante"]
-                    )
-                except:
-                    pass
-
-            if isinstance(visita.get("foto_placa"), str):
-
-                try:
-                    visita["foto_placa"] = ast.literal_eval(visita["foto_placa"])
-                except:
-                    pass
+        _normalizar_fotos(visita)
 
         if not visita:
             _registrar_incidencia_qr(
@@ -246,6 +530,7 @@ def scan_entrada():
             )
             resultado = {
                 "estado": "rechazado",
+                "razon": "qr_no_encontrado",
                 "mensaje": "QR no encontrado. Incidencia registrada automáticamente.",
             }
 
@@ -256,14 +541,23 @@ def scan_entrada():
                 f"Entrada: QR con estado {visita.get('qr_estado')}",
                 visita=visita,
             )
+            _razon_qr = {
+                "vencido": "fecha_vencida",
+                "cancelado": "qr_cancelado",
+                "finalizado": "qr_finalizado",
+            }.get(visita.get("qr_estado"), "qr_finalizado")
             resultado = {
                 "estado": "rechazado",
-                "mensaje": "QR no válido o ya finalizado.",
+                "razon": _razon_qr,
+                "mensaje": "Este QR ya no es válido o fue finalizado.",
+                "visita": visita,
+                "fecha_visita": visita.get("fecha_visita"),
             }
 
         elif visita.get("estado") == "dentro":
             resultado = {
                 "estado": "rechazado",
+                "razon": "ya_dentro",
                 "mensaje": "Este visitante ya está dentro. Use el escáner de salida.",
                 "visita": visita,
             }
@@ -271,28 +565,7 @@ def scan_entrada():
         else:
             actualizar_qr_vencido_si_aplica(visita["_id"], visita)
             visita = _buscar_visita(token)
-
-            # =====================================
-            # NORMALIZAR FOTOS CLOUDINARY
-            # =====================================
-
-            if visita:
-
-                if isinstance(visita.get("foto_visitante"), str):
-
-                    try:
-                        visita["foto_visitante"] = ast.literal_eval(
-                            visita["foto_visitante"]
-                        )
-                    except:
-                        pass
-
-                if isinstance(visita.get("foto_placa"), str):
-
-                    try:
-                        visita["foto_placa"] = ast.literal_eval(visita["foto_placa"])
-                    except:
-                        pass
+            _normalizar_fotos(visita)
 
             valido, mensaje_val = validar_acceso_qr(visita)
 
@@ -303,44 +576,19 @@ def scan_entrada():
                     f"Entrada: {mensaje_val}",
                     visita=visita,
                 )
-                resultado = {"estado": "rechazado", "mensaje": mensaje_val}
+                resultado = {
+                    "estado": "rechazado",
+                    "razon": _clasificar_razon(mensaje_val),
+                    "mensaje": mensaje_val,
+                    "visita": visita,
+                    "fecha_visita": visita.get("fecha_visita"),
+                }
 
             else:
-                ahora = datetime.now()
-                update_entrada = {
-                    "estado": "pendiente_autorizacion",
-                    "hora_escaneo": ahora.strftime("%H:%M:%S"),
-                    "fecha_escaneo": ahora,
-                }
-                if visita.get("modalidad_visita", "temporal") == "temporal":
-                    update_entrada["entrada_consumida"] = True
-                else:
-                    # Recurrente: limpiar el ciclo anterior (día previo)
-                    update_entrada["hora_salida"] = None
-                    update_entrada["fecha_salida"] = None
-                    update_entrada["hora_entrada_real"] = None
-
-                mongo.db.access_logs.insert_one(
-                    {
-                        "visita_id": str(visita["_id"]),
-                        "guardia_id": session["user_id"],
-                        "guardia_nombre": session["nombre"],
-                        "accion": "entrada",
-                        "fecha_hora": ahora,
-                        "resultado": "permitido",
-                        "observaciones": "Entrada autorizada por QR",
-                    }
-                )
-                _col_visita(visita).update_one(
-                    {"_id": visita["_id"]}, {"$set": update_entrada}
-                )
-                socketio.emit("actualizar_dashboard", to="rol:admin")
-                socketio.emit(
-                    "actualizar_dashboard", to=f"user:{visita['residente_id']}"
-                )
-
+                # ESCANEO = SOLO LECTURA. No se modifica la base de datos.
+                # El estado solo cambia al presionar "Autorizar acceso".
                 visita["estado"] = "pendiente_autorizacion"
-                visita["hora_escaneo"] = ahora.strftime("%H:%M:%S")
+                visita["hora_escaneo"] = datetime.now().strftime("%H:%M:%S")
 
                 resultado = {
                     "estado": "permitido",
@@ -352,6 +600,11 @@ def scan_entrada():
     return _render_scan("entrada", resultado, bloquear_camara=bloquear)
 
 
+# ---------------------------------------------------------------------------
+# ESCANEO DE SALIDA
+# ---------------------------------------------------------------------------
+
+
 @guard_bp.route("/scan/salida", methods=["GET", "POST"])
 @login_required
 @role_required("guardia")
@@ -360,32 +613,9 @@ def scan_salida():
     resultado = None
 
     if request.method == "POST":
-
         token = request.form["qr_token"].strip()
-
         visita = _buscar_visita(token)
-
-        # =====================================
-        # NORMALIZAR FOTOS CLOUDINARY
-        # =====================================
-
-        if visita:
-
-            if isinstance(visita.get("foto_visitante"), str):
-
-                try:
-                    visita["foto_visitante"] = ast.literal_eval(
-                        visita["foto_visitante"]
-                    )
-                except:
-                    pass
-
-            if isinstance(visita.get("foto_placa"), str):
-
-                try:
-                    visita["foto_placa"] = ast.literal_eval(visita["foto_placa"])
-                except:
-                    pass
+        _normalizar_fotos(visita)
 
         if not visita:
             _registrar_incidencia_qr(
@@ -395,13 +625,15 @@ def scan_salida():
             )
             resultado = {
                 "estado": "rechazado",
+                "razon": "qr_no_encontrado",
                 "mensaje": "QR no encontrado. Incidencia registrada automáticamente.",
             }
 
         elif visita.get("estado") != "dentro":
             resultado = {
                 "estado": "rechazado",
-                "mensaje": "Este visitante no está registrado como dentro. Use el escáner de entrada.",
+                "razon": "no_dentro",
+                "mensaje": "Este visitante no está dentro del fraccionamiento. Use el escáner de entrada.",
                 "visita": visita,
             }
 
@@ -418,6 +650,11 @@ def scan_salida():
         "incidencia",
     )
     return _render_scan("salida", resultado, bloquear_camara=bloquear)
+
+
+# ---------------------------------------------------------------------------
+# INCIDENCIA MANUAL (RECHAZO)
+# ---------------------------------------------------------------------------
 
 
 @guard_bp.route("/incidencia-manual", methods=["POST"])
@@ -464,6 +701,11 @@ def incidencia_manual():
     return _render_scan(modo, resultado, bloquear_camara=True)
 
 
+# ---------------------------------------------------------------------------
+# AUTORIZAR ACCESO (aquí SÍ se consume / cambia el estado)
+# ---------------------------------------------------------------------------
+
+
 @guard_bp.route("/confirm-access", methods=["POST"])
 @login_required
 @role_required("guardia")
@@ -474,16 +716,24 @@ def confirm_access():
 
     if visita:
 
-        _col_visita(visita).update_one(
-            {"_id": visita["_id"]},
-            {
-                "$set": {
-                    "estado": "dentro",
-                    "hora_entrada_real": datetime.now().strftime("%H:%M:%S"),
-                    "fecha_entrada_real": datetime.now(),
-                }
-            },
-        )
+        ahora = datetime.now()
+
+        update_entrada = {
+            "estado": "dentro",
+            "hora_entrada_real": ahora.strftime("%H:%M:%S"),
+            "fecha_entrada_real": ahora,
+            "hora_escaneo": ahora.strftime("%H:%M:%S"),
+            "fecha_escaneo": ahora,
+        }
+
+        if visita.get("modalidad_visita", "temporal") == "temporal":
+            update_entrada["entrada_consumida"] = True  # se consume al autorizar
+        else:
+            # Recurrente: limpiar el ciclo del día anterior
+            update_entrada["hora_salida"] = None
+            update_entrada["fecha_salida"] = None
+
+        _col_visita(visita).update_one({"_id": visita["_id"]}, {"$set": update_entrada})
 
         mongo.db.access_logs.insert_one(
             {
@@ -491,7 +741,7 @@ def confirm_access():
                 "guardia_id": session["user_id"],
                 "guardia_nombre": session["nombre"],
                 "accion": "confirmacion_manual",
-                "fecha_hora": datetime.now(),
+                "fecha_hora": ahora,
                 "resultado": "acceso_confirmado",
                 "observaciones": "Guardia confirmó físicamente al visitante",
             }

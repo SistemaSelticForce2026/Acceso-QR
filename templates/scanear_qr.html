@@ -45,7 +45,7 @@
 
     {% if not bloquear_camara and (
         not resultado
-        or resultado.estado == "denegado"
+        or resultado.estado in ["denegado", "rechazado"]
     ) %}
 
     <div class="card scanner-wrapper">
@@ -166,42 +166,54 @@
     <div class="result-container">
 
         {# ============================================================ #}
-        {# RAZONES EQUIVALENTES — ajusta estas listas según tu backend  #}
-        {# (usa el comentario DEBUG de abajo para ver el valor real)    #}
+        {# CÓDIGOS DE RAZÓN — el backend manda resultado.razon          #}
         {# ============================================================ #}
-        {% set razon  = resultado.get("razon") %}
-        {% set R_DIA   = ["dia_no_autorizado", "dia_incorrecto", "dia_no_corresponde", "fuera_de_dia", "dia_invalido"] %}
-        {% set R_FUT   = ["fecha_futura", "no_iniciado", "pase_no_activo"] %}
-        {% set R_VEN   = ["fecha_vencida", "pase_vencido", "fecha_expirada", "expirado"] %}
-        {% set R_USADO = ["qr_usado", "ya_usado", "acceso_activo", "ya_dentro", "acceso_registrado", "pase_usado"] %}
+        {% set razon   = resultado.get("razon") %}
+        {% set es_neg  = resultado.estado in ['denegado', 'rechazado'] %}
+
+        {% set R_DIA     = ["dia_no_autorizado", "dia_incorrecto", "dia_no_corresponde", "fuera_de_dia", "dia_invalido"] %}
+        {% set R_FUT     = ["fecha_futura", "no_iniciado", "pase_no_activo"] %}
+        {% set R_VEN     = ["fecha_vencida", "pase_vencido", "fecha_expirada", "expirado"] %}
+        {% set R_HORARIO = ["fuera_horario"] %}
+        {% set R_DENTRO  = ["ya_dentro"] %}
+        {% set R_SINENT  = ["no_dentro", "sin_entrada", "no_en_fraccionamiento"] %}
+        {% set R_USADO   = ["qr_usado", "ya_usado", "acceso_registrado", "pase_usado"] %}
+        {% set R_NOFOUND = ["qr_no_encontrado"] %}
 
         <!-- =========== -->
         <!-- ALERTA      -->
         <!-- =========== -->
 
         <div class="access-alert
-            {% if resultado.estado == 'permitido' %}success
+            {% if resultado.estado in ['permitido', 'salida_registrada'] %}success
             {% elif resultado.estado == 'salida_pendiente' %}warning
-            {% elif resultado.estado == 'salida_registrada' %}success
-            {% elif resultado.estado == 'denegado' and razon in R_FUT %}warning
+            {% elif es_neg and (razon in R_FUT or razon in R_DENTRO or razon in R_SINENT) %}warning
             {% else %}danger{% endif %}
         ">
 
             <div class="alert-icon">
                 {% if resultado.estado == "permitido" %}
                     <i class="fa-solid fa-circle-check"></i>
-                {% elif resultado.estado == "salida_pendiente" %}
-                    <i class="fa-solid fa-user-clock"></i>
                 {% elif resultado.estado == "salida_registrada" %}
                     <i class="fa-solid fa-door-open"></i>
-                {% elif resultado.estado == "denegado" and razon in R_DIA %}
+                {% elif resultado.estado == "salida_pendiente" %}
+                    <i class="fa-solid fa-user-clock"></i>
+                {% elif es_neg and razon in R_DENTRO %}
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                {% elif es_neg and razon in R_SINENT %}
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                {% elif es_neg and razon in R_DIA %}
                     <i class="fa-solid fa-calendar-xmark"></i>
-                {% elif resultado.estado == "denegado" and razon in R_FUT %}
+                {% elif es_neg and razon in R_FUT %}
                     <i class="fa-solid fa-calendar-clock"></i>
-                {% elif resultado.estado == "denegado" and razon in R_VEN %}
+                {% elif es_neg and razon in R_VEN %}
                     <i class="fa-solid fa-calendar-xmark"></i>
-                {% elif resultado.estado == "denegado" and razon in R_USADO %}
+                {% elif es_neg and razon in R_HORARIO %}
+                    <i class="fa-solid fa-clock"></i>
+                {% elif es_neg and razon in R_USADO %}
                     <i class="fa-solid fa-rotate-left"></i>
+                {% elif es_neg and razon in R_NOFOUND %}
+                    <i class="fa-solid fa-qrcode"></i>
                 {% else %}
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 {% endif %}
@@ -209,112 +221,91 @@
 
             <div class="alert-content">
 
-                {# DEBUG: invisible para el guardia. Mira el código fuente (clic derecho → Ver código) para leer la razón real y agregarla a la lista de arriba. #}
                 <!-- DEBUG → estado: {{ resultado.estado }} · razon: {{ razon }} -->
 
                 <h2>
-                    {% if resultado.estado == "permitido" %}
-                        QR validado correctamente
-                    {% elif resultado.estado == "salida_pendiente" %}
-                        Salida pendiente detectada
-                    {% elif resultado.estado == "salida_registrada" %}
-                        Salida registrada correctamente
-                    {% elif resultado.estado == "denegado" and razon in R_DIA %}
-                        Día no autorizado
-                    {% elif resultado.estado == "denegado" and razon in R_FUT %}
-                        Pase aún no vigente
-                    {% elif resultado.estado == "denegado" and razon in R_VEN %}
-                        Pase vencido
-                    {% elif resultado.estado == "denegado" and razon in R_USADO %}
-                        Pase ya utilizado
-                    {% else %}
-                        Acceso rechazado
-                    {% endif %}
+                    {% if resultado.estado == "permitido" %}QR validado correctamente
+                    {% elif resultado.estado == "salida_registrada" %}Salida registrada correctamente
+                    {% elif resultado.estado == "salida_pendiente" %}Salida pendiente detectada
+                    {% elif es_neg and razon in R_DENTRO %}El visitante ya está dentro
+                    {% elif es_neg and razon in R_SINENT %}El visitante no ha ingresado
+                    {% elif es_neg and razon in R_DIA %}Día no autorizado
+                    {% elif es_neg and razon in R_FUT %}Pase aún no vigente
+                    {% elif es_neg and razon in R_VEN %}Pase vencido
+                    {% elif es_neg and razon in R_HORARIO %}Fuera del horario permitido
+                    {% elif es_neg and razon in R_USADO %}Pase ya utilizado
+                    {% elif es_neg and razon in R_NOFOUND %}QR no reconocido
+                    {% else %}Acceso rechazado{% endif %}
                 </h2>
 
                 <p>
                     {% if resultado.estado == "permitido" %}
-                        Código QR validado correctamente.
-                        Espere la autorización manual del guardia para permitir el acceso.
-                    {% elif resultado.estado == "salida_pendiente" %}
-                        El visitante mantiene un acceso activo dentro del residencial.
-                        Se requiere registrar la salida antes de generar un nuevo ingreso.
+                        Código QR validado correctamente. Espere la autorización manual del guardia para permitir el acceso.
                     {% elif resultado.estado == "salida_registrada" %}
                         El flujo de salida fue completado correctamente y el acceso quedó cerrado.
-                    {% elif resultado.estado == "denegado" and razon in R_DIA %}
+                    {% elif resultado.estado == "salida_pendiente" %}
+                        El visitante mantiene un acceso activo dentro del residencial. Registre la salida antes de generar un nuevo ingreso.
+                    {% elif es_neg and razon in R_DENTRO %}
+                        Este QR ya fue escaneado en la entrada y el visitante se encuentra dentro. Para dejarlo salir, use el escáner de <b>Salida</b>.
+                    {% elif es_neg and razon in R_SINENT %}
+                        Este visitante todavía no ha ingresado al fraccionamiento. Primero debe registrarse su entrada en el escáner de <b>Entrada</b>.
+                    {% elif es_neg and razon in R_DIA %}
                         El día de hoy no corresponde con los días autorizados de este pase.
-                    {% elif resultado.estado == "denegado" and razon in R_FUT %}
+                    {% elif es_neg and razon in R_FUT %}
                         Este pase aún no está activo para la fecha actual.
-                    {% elif resultado.estado == "denegado" and razon in R_VEN %}
+                    {% elif es_neg and razon in R_VEN %}
                         Este pase ya venció y no puede utilizarse.
-                    {% elif resultado.estado == "denegado" and razon in R_USADO %}
+                    {% elif es_neg and razon in R_HORARIO %}
+                        El pase es válido hoy, pero no dentro del horario actual.
+                    {% elif es_neg and razon in R_USADO %}
                         Este pase ya fue utilizado y cuenta con un acceso registrado en el sistema.
+                    {% elif resultado.get("mensaje") %}
+                        {{ resultado.mensaje }}
                     {% else %}
-                        Este pase no es válido en este momento.
-                        Verifica la fecha, el día autorizado o el estado del acceso.
+                        Este pase no es válido en este momento. Verifique la fecha, el día autorizado o el estado del acceso.
                     {% endif %}
                 </p>
 
                 <!-- ============================================================ -->
-                <!-- DETALLE ESPECÍFICO DE RECHAZO POR DÍA / FECHA / USO          -->
+                <!-- DETALLE ESPECÍFICO DE RECHAZO                                -->
                 <!-- ============================================================ -->
 
-                {% if resultado.estado == "denegado" and razon in R_DIA %}
+                {% if es_neg and razon in R_DIA %}
                 <div class="grd-deny-detail amber">
                     <i class="fa-solid fa-calendar-xmark"></i>
                     <div>
-                        <strong>
-                            Este pase no es válido el día de hoy{% if resultado.get("dia_hoy") %} ({{ resultado.dia_hoy }}){% endif %}.
-                        </strong>
+                        <strong>Este pase no es válido el día de hoy{% if resultado.get("dia_hoy") %} ({{ resultado.dia_hoy }}){% endif %}.</strong>
                         <span>
-                            {% if resultado.get("dias_autorizados_label") %}
-                                Días autorizados: <b>{{ resultado.dias_autorizados_label }}</b>.
-                            {% endif %}
-                            {% if resultado.get("proximo_acceso") %}
-                                Próximo acceso disponible: <b>{{ resultado.proximo_acceso }}</b>.
-                            {% endif %}
+                            {% if resultado.get("dias_autorizados_label") %}Días autorizados: <b>{{ resultado.dias_autorizados_label }}</b>. {% endif %}
+                            {% if resultado.get("proximo_acceso") %}Próximo acceso disponible: <b>{{ resultado.proximo_acceso }}</b>.{% endif %}
                         </span>
                     </div>
                 </div>
 
-                {% elif resultado.estado == "denegado" and razon in R_FUT %}
+                {% elif es_neg and razon in R_FUT %}
                 <div class="grd-deny-detail blue">
                     <i class="fa-solid fa-calendar-clock"></i>
                     <div>
                         <strong>Este pase todavía no está activo.</strong>
-                        <span>
-                            {% if resultado.get("fecha_visita") %}
-                                Será válido a partir del <b>{{ resultado.fecha_visita }}</b>.
-                            {% endif %}
-                            La fecha programada aún no ha llegado.
-                        </span>
+                        <span>{% if resultado.get("fecha_visita") %}Será válido a partir del <b>{{ resultado.fecha_visita }}</b>. {% endif %}La fecha programada aún no ha llegado.</span>
                     </div>
                 </div>
 
-                {% elif resultado.estado == "denegado" and razon in R_VEN %}
+                {% elif es_neg and razon in R_VEN %}
                 <div class="grd-deny-detail red">
                     <i class="fa-solid fa-calendar-xmark"></i>
                     <div>
                         <strong>Este pase ha vencido.</strong>
-                        <span>
-                            {% if resultado.get("fecha_visita") %}
-                                Fue válido el <b>{{ resultado.fecha_visita }}</b> y ya no puede utilizarse.
-                            {% else %}
-                                La fecha de validez ya pasó y no puede utilizarse.
-                            {% endif %}
-                        </span>
+                        <span>{% if resultado.get("fecha_visita") %}Fue válido el <b>{{ resultado.fecha_visita }}</b> y ya no puede utilizarse.{% else %}La fecha de validez ya pasó y no puede utilizarse.{% endif %}</span>
                     </div>
                 </div>
 
-                {% elif resultado.estado == "denegado" and razon in R_USADO %}
+                {% elif es_neg and razon in R_USADO %}
                 <div class="grd-deny-detail amber">
                     <i class="fa-solid fa-rotate-left"></i>
                     <div>
                         <strong>Este QR ya fue utilizado.</strong>
-                        <span>
-                            El visitante ya cuenta con un acceso registrado.
-                            Para un nuevo ingreso, primero debe registrarse su salida.
-                        </span>
+                        <span>El visitante ya cuenta con un acceso registrado. Para un nuevo ingreso, primero debe registrarse su salida.</span>
                     </div>
                 </div>
                 {% endif %}
@@ -759,6 +750,24 @@
     }
 })();
 </script>
+
+
+<!-- Evita el reenvío del POST al refrescar (PRG en el cliente) -->
+{% if resultado %}
+<script>
+(function () {
+    var cleanUrl = "{{ url_for('guard.scan_salida') if modo == 'salida' else url_for('guard.scan_entrada') }}";
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState({ scanDone: true }, document.title, cleanUrl);
+    }
+})();
+
+// Si la página se restaura desde la caché del navegador (botón atrás), recargar limpio
+window.addEventListener("pageshow", function (e) {
+    if (e.persisted) window.location.reload();
+});
+</script>
+{% endif %}
 
 
 <!-- ===================================================== -->

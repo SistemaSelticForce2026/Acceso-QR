@@ -29,13 +29,157 @@
     margin-left:auto; color:#475569; font-weight:600; font-size:.9rem;
     display:inline-flex; align-items:center; gap:7px;
   }
-  /* ── Reloj del header del shell ── */
+
+  /* ══ FILTRO POR FRACCIONAMIENTO (chips tipo "Gestión de residentes") ══ */
+  .frac-filter{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; }
+  .frac-chip{
+    display:inline-flex; align-items:center; gap:8px;
+    background:#fff; border:1px solid #e2e8f0; border-radius:999px;
+    padding:9px 16px; font-weight:600; font-size:.9rem; color:#475569;
+    text-decoration:none; transition:.15s;
+  }
+  .frac-chip:hover{ border-color:#cbd5e1; color:#0f172a; }
+  .frac-chip.active{
+    background:#2563eb; border-color:#2563eb; color:#fff;
+    box-shadow:0 2px 8px rgba(37,99,235,.3);
+  }
+  .frac-count{
+    background:#f1f5f9; color:#475569; border-radius:999px;
+    padding:1px 9px; font-size:.8rem; font-weight:700; line-height:1.6;
+  }
+  .frac-chip.active .frac-count{ background:rgba(255,255,255,.25); color:#fff; }
+
+/* =======================================
+   FILTRO PROFESIONAL FRACCIONAMIENTO
+======================================= */
+
+.dashboard-filter-card{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:20px;
+
+    padding:22px 24px;
+
+    margin-bottom:24px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+
+    box-shadow:0 4px 14px rgba(15,23,42,.04);
+}
+
+.df-left{
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+
+.df-icon{
+    width:54px;
+    height:54px;
+
+    border-radius:14px;
+
+    background:#eff6ff;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#2563eb;
+
+    font-size:1.3rem;
+}
+
+.df-left h3{
+    margin:0;
+    font-size:1rem;
+    font-weight:700;
+    color:#0f172a;
+}
+
+.df-left p{
+    margin-top:4px;
+    color:#64748b;
+    font-size:.92rem;
+}
+
+.dashboard-select{
+    min-width:320px;
+
+    border:1px solid #cbd5e1;
+    border-radius:12px;
+
+    padding:12px 14px;
+
+    background:#fff;
+
+    font-size:.95rem;
+    font-weight:600;
+
+    color:#0f172a;
+
+    outline:none;
+}
+
+.dashboard-select:focus{
+    border-color:#2563eb;
+
+    box-shadow:
+      0 0 0 4px rgba(37,99,235,.15);
+}
+
+/* =======================================
+   BUSCADOR DE LA TABLA (server-side)
+======================================= */
+.tbl-search-form{ flex:1; min-width:0; }
+.tbl-search{ position:relative; }
+.tbl-search input{ padding-right:38px; }
+.tbl-search-clear{
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  width:22px; height:22px; border-radius:50%;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#f1f5f9; color:#64748b; text-decoration:none;
+  font-size:.75rem; transition:.15s;
+}
+.tbl-search-clear:hover{ background:#e2e8f0; color:#0f172a; }
+
+/* =======================================
+   BARRA DE CARGA SUPERIOR (feedback rápido)
+======================================= */
+#topLoader{
+  position:fixed; top:0; left:0; height:3px; width:0; z-index:99999;
+  background:linear-gradient(90deg,#2563eb,#38bdf8);
+  box-shadow:0 0 10px rgba(37,99,235,.55);
+  border-radius:0 3px 3px 0;
+  opacity:0; transition:width .25s ease, opacity .3s ease;
+  pointer-events:none;
+}
+#topLoader.active{ opacity:1; }
+
+/* Botón Filtrar con estado "cargando" */
+.btn-filter.is-loading,
+.btn-clear.is-loading{ opacity:.7; pointer-events:none; }
+.btn-filter.is-loading i{ animation:spinFilter .7s linear infinite; }
+@keyframes spinFilter{ to{ transform:rotate(360deg); } }
+
+/* =======================================
+   TABLA EN VIVO (AJAX): atenúa suave mientras carga
+======================================= */
+#tablaVisitasWrap{ transition:opacity .15s ease; }
+#tablaVisitasWrap.tbl-loading{ opacity:.55; pointer-events:none; }
+
+  /* ══ Reloj en vivo del header (header_actions del shell admin) ══ */
   .adm-clock{
     display:inline-flex; align-items:center; gap:7px;
-    color:#64748b; font-weight:600; font-size:.85rem; white-space:nowrap;
+    padding:7px 12px; border-radius:10px;
+    background:#f1f5f9; border:1px solid #e2e8f0;
+    color:#475569; font-size:.82rem; font-weight:600; white-space:nowrap;
   }
-  .adm-clock i{ color:#94a3b8; }
-  @media (max-width:680px){ .adm-clock{ display:none; } }
+  .adm-clock i{ color:#2563eb; }
+  @media (max-width:640px){ .adm-clock{ display:none; } }
 </style>
 {% endblock %}
 
@@ -47,6 +191,8 @@
 {% endblock %}
 
 {% block content %}
+
+<div id="topLoader"></div>
 
 <div class="ad-page">
 
@@ -80,6 +226,64 @@
         <span>Incidencias</span>
       </div>
     </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- FILTRO PROFESIONAL DE FRACCIONAMIENTO -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dashboard-filter-card">
+
+    <div class="df-left">
+      <div class="df-icon">
+        <i class="fa-solid fa-city"></i>
+      </div>
+
+      <div>
+        <h3>Fraccionamiento</h3>
+
+        <p>
+          {% if frac_sel %}
+            Mostrando información de
+            <strong>{{ frac_sel|title }}</strong>
+          {% else %}
+            Mostrando información consolidada de todos los fraccionamientos
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="df-right">
+
+      <form method="GET" id="fraccionamientoForm">
+
+        <input type="hidden" name="modo" value="{{ modo }}">
+        <input type="hidden" name="dia" value="{{ dia_sel }}">
+        <input type="hidden" name="semana" value="{{ semana_sel }}">
+        <input type="hidden" name="mes" value="{{ mes_sel }}">
+
+        <select
+          name="fraccionamiento"
+          class="dashboard-select"
+          onchange="this.form.submit()"
+        >
+          <option value="">
+            Todos los fraccionamientos
+          </option>
+
+          {% for f in fraccionamientos %}
+          <option
+            value="{{ f }}"
+            {% if frac_sel == f|lower %}selected{% endif %}
+          >
+            {{ f|title }}
+          </option>
+          {% endfor %}
+        </select>
+
+      </form>
+
+    </div>
+
   </div>
 
   <!-- ══ STATS GRID ══ -->
@@ -171,6 +375,7 @@
   <!-- ══ FILTRO PERÍODO (Día / Semana / Mes con calendarios) ══ -->
   <form method="GET" id="periodForm" class="period-filter">
     <input type="hidden" name="modo" id="modoInput" value="{{ modo }}">
+    <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
 
     <div class="pf-tabs">
       <button type="button" class="pf-tab {% if modo == 'dia' %}active{% endif %}" data-modo="dia">
@@ -438,8 +643,8 @@
         <a class="module-item" href="/admin/reportes">
           <div class="module-ico"><i class="fa-solid fa-file-export"></i></div>
           <div>
-            <p class="module-name">Reportes PDF / Excel</p>
-            <p class="module-desc">Exportación de información administrativa.</p>
+            <p class="module-name">Centro de reportes</p>
+            <p class="module-desc">Genera y exporta reportes de todos los módulos.</p>
           </div>
           <i class="fa-solid fa-chevron-right module-arrow"></i>
         </a>
@@ -546,7 +751,10 @@
     <div class="hist-header">
       <div>
         <h2 class="section-title">Historial de visitas</h2>
-        <p class="rank-sub">Registro operativo de accesos y visitas dentro del fraccionamiento.</p>
+        <p class="rank-sub">
+          Registro operativo de accesos y visitas dentro del fraccionamiento.
+          {% if frac_sel %}<strong>· {{ frac_sel | title }}</strong>{% else %}<strong>· Todos los fraccionamientos</strong>{% endif %}
+        </p>
       </div>
     </div>
 
@@ -556,6 +764,8 @@
       <input type="hidden" name="dia" value="{{ dia_sel }}">
       <input type="hidden" name="semana" value="{{ semana_sel }}">
       <input type="hidden" name="mes" value="{{ mes_sel }}">
+      <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+      <input type="hidden" name="busqueda" value="{{ busqueda or '' }}">
       <div class="hf-field">
         <label>Fecha inicio</label>
         <input type="date" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla or '' }}">
@@ -569,7 +779,7 @@
           <i class="fa-solid fa-magnifying-glass"></i> Filtrar
         </button>
         {% if fecha_inicio_tabla or fecha_fin_tabla %}
-        <a href="?{{ periodo_qs }}" class="btn-clear">
+        <a href="?{{ periodo_qs }}{% if frac_sel %}&fraccionamiento={{ frac_sel | urlencode }}{% endif %}" class="btn-clear">
           <i class="fa-solid fa-rotate-left"></i> Limpiar
         </a>
         {% endif %}
@@ -578,226 +788,267 @@
 
     <!-- Toolbar -->
     <div class="tbl-toolbar">
-      <div class="tbl-search">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchTable" placeholder="Buscar visitante, residente o placa...">
-      </div>
+      <form method="GET" id="searchForm" class="tbl-search-form">
+        <input type="hidden" name="modo" value="{{ modo }}">
+        <input type="hidden" name="dia" value="{{ dia_sel }}">
+        <input type="hidden" name="semana" value="{{ semana_sel }}">
+        <input type="hidden" name="mes" value="{{ mes_sel }}">
+        <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
+        <input type="hidden" name="fecha_inicio_tabla" value="{{ fecha_inicio_tabla or '' }}">
+        <input type="hidden" name="fecha_fin_tabla" value="{{ fecha_fin_tabla or '' }}">
+        <input type="hidden" name="per_page" value="{{ por_pagina_tabla }}">
+
+        <div class="tbl-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchTable" name="busqueda"
+                value="{{ busqueda or '' }}"
+                placeholder="Buscar visitante, residente o placa...">
+          {% if busqueda %}
+          <a href="?{{ periodo_qs }}{% if frac_sel %}&fraccionamiento={{ frac_sel | urlencode }}{% endif %}"
+            class="tbl-search-clear" title="Limpiar búsqueda">
+            <i class="fa-solid fa-xmark"></i>
+          </a>
+          {% endif %}
+        </div>
+      </form>
+
       <div class="tbl-exports">
-        <a href="{{ url_for('admin.exportar_visitas_pdf') }}" class="btn-export btn-pdf">
+        <a href="{{ url_for('admin.exportar_visitas_pdf', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-pdf">
           <i class="fa-solid fa-file-pdf"></i> PDF
         </a>
-        <a href="{{ url_for('admin.exportar_visitas_excel') }}" class="btn-export btn-excel">
+        <a href="{{ url_for('admin.exportar_visitas_excel', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-excel">
           <i class="fa-solid fa-file-excel"></i> Excel
         </a>
       </div>
     </div>
 
-    <!-- Tabla -->
-    <div class="tbl-wrap">
-      <table class="ad-table">
-        <thead>
-          <tr>
-            <th>Visitante</th>
-            <th>Residente</th>
-            <th>Destino</th>
-            <th>Modalidad</th>
-            <th>Fecha</th>
-            <th>Horario</th>
-            <th>Estado</th>
-            <th>Vehículo</th>
-            <th>Foto placa</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for visita in visitas_tabla %}
-          <tr>
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TABLA + PAGINACIÓN (se refresca por AJAX, sin recargar todo) -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div id="tablaVisitasWrap">
 
-            <td>
-              <div class="vis-cell">
-                {% if visita.foto_visitante %}
-                  <img src="{{ visita.foto_visitante.url }}"
-                       class="vis-img zoomable-image"
-                       alt="Foto de {{ visita.nombre_visitante }}">
-                {% else %}
-                  <div class="vis-av"><i class="fa-solid fa-user"></i></div>
-                {% endif %}
-                <div>
-                  <p class="vis-name">{{ visita.nombre_visitante }}</p>
-                  <p class="vis-phone">{{ visita.telefono or '—' }}</p>
-                </div>
-              </div>
-            </td>
+      <!-- Tabla -->
+      <div class="tbl-wrap">
+        <table class="ad-table">
+          <thead>
+            <tr>
+              <th>Visitante</th>
+              <th>Residente</th>
+              <th>Fraccionamiento</th>
+              <th>Destino</th>
+              <th>Modalidad</th>
+              <th>Fecha</th>
+              <th>Horario</th>
+              <th>Estado</th>
+              <th>Vehículo</th>
+              <th>Foto placa</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for visita in visitas_tabla %}
+            <tr>
 
-            <td class="td-residente">{{ visita.residente_nombre or '—' }}</td>
-
-            <td>
-              {% if visita.condominio %}
-                <p class="td-strong">{{ visita.condominio | title }}</p>
-              {% endif %}
-              <p class="td-muted">Casa {{ visita.residencia_destino or '—' }}</p>
-            </td>
-
-            <td>
-              {% if visita.modalidad_visita == "recurrente" %}
-                <span class="badge b-rec">Recurrente</span>
-                {% if visita.dia_semana %}
-                  <p class="td-muted">{{ visita.dia_semana | capitalize }}</p>
-                {% endif %}
-              {% elif visita.modalidad_visita == "temporal" %}
-                <span class="badge b-temp">Temporal</span>
-              {% else %}
-                <span class="td-muted">{{ visita.tipo_visita or "—" }}</span>
-              {% endif %}
-            </td>
-
-            <td class="td-fecha">
-              {% if visita.fecha_visita %}
-                {% set partes = visita.fecha_visita.split('-') %}
-                {{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }}
-              {% else %}—{% endif %}
-            </td>
-
-            <td>
-              <div class="horario">
-                <p>
-                  <span class="h-label">Entrada:</span>
-                  {{ visita.hora_inicio or '—' }}
-                </p>
-                <p>
-                  <span class="h-label">Salida:</span>
-                  {% if visita.hora_salida %}
-                    {{ visita.hora_salida }}
-                  {% elif visita.estado == 'dentro' %}
-                    <span class="h-curso">En curso</span>
+              <td>
+                <div class="vis-cell">
+                  {% if visita.foto_visitante %}
+                    <img src="{{ visita.foto_visitante.url }}"
+                         class="vis-img zoomable-image"
+                         alt="Foto de {{ visita.nombre_visitante }}">
                   {% else %}
-                    —
+                    <div class="vis-av"><i class="fa-solid fa-user"></i></div>
                   {% endif %}
-                </p>
-              </div>
-            </td>
+                  <div>
+                    <p class="vis-name">{{ visita.nombre_visitante }}</p>
+                    <p class="vis-phone">{{ visita.telefono or '—' }}</p>
+                  </div>
+                </div>
+              </td>
 
-            <td>
-              {% if visita.estado == "activo" %}
-                <span class="badge b-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>
-              {% elif visita.estado == "dentro" %}
-                <span class="badge b-in"><i class="fa-solid fa-check"></i> Dentro</span>
-              {% elif visita.estado == "salida_registrada" %}
-                <span class="badge b-done"><i class="fa-solid fa-flag-checkered"></i> Finalizada</span>
-              {% else %}
-                <span class="badge b-danger">{{ visita.estado }}</span>
-              {% endif %}
-            </td>
+              <td class="td-residente">{{ visita.residente_nombre or '—' }}</td>
 
-            <td>
-              {% if visita.vehiculo %}
-                <p class="veh-plate">{{ visita.vehiculo.placa }}</p>
-                <p class="td-muted">
-                  {{ visita.vehiculo.marca | title }}
-                  {% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo }}{% endif %}
-                  · {{ visita.vehiculo.color | title }}
-                </p>
-              {% else %}
-                <span class="td-muted">Sin vehículo</span>
-              {% endif %}
-            </td>
+              <td>
+                {% if visita.fraccionamiento %}
+                  <span class="badge b-info">{{ visita.fraccionamiento | title }}</span>
+                {% else %}
+                  <span class="td-muted">—</span>
+                {% endif %}
+              </td>
 
-            <td>
-              {% if visita.foto_placa %}
-                <img src="{{ visita.foto_placa.url }}"
-                     alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
-                     class="placa-thumb zoomable-image">
-              {% else %}
-                <span class="td-muted">Sin foto</span>
-              {% endif %}
-            </td>
+              <td>
+                {% if visita.condominio %}
+                  <p class="td-strong">{{ visita.condominio | title }}</p>
+                {% endif %}
+                <p class="td-muted">Casa {{ visita.residencia_destino or '—' }}</p>
+              </td>
 
-          </tr>
-          {% endfor %}
+              <td>
+                {% if visita.modalidad_visita == "recurrente" %}
+                  <span class="badge b-rec">Recurrente</span>
+                  {% if visita.dia_semana %}
+                    <p class="td-muted">{{ visita.dia_semana | capitalize }}</p>
+                  {% endif %}
+                {% elif visita.modalidad_visita == "temporal" %}
+                  <span class="badge b-temp">Temporal</span>
+                {% else %}
+                  <span class="td-muted">{{ visita.tipo_visita or "—" }}</span>
+                {% endif %}
+              </td>
 
-          {% if not visitas_tabla %}
-          <tr>
-            <td colspan="9" class="tbl-empty">
-              <i class="fa-solid fa-inbox"></i>
-              <p>No hay visitas registradas para el período seleccionado.</p>
-            </td>
-          </tr>
-          {% endif %}
+              <td class="td-fecha">
+                {% if visita.fecha_visita %}
+                  {% set partes = visita.fecha_visita.split('-') %}
+                  {{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }}
+                {% else %}—{% endif %}
+              </td>
 
-        </tbody>
-      </table>
-    </div>
+              <td>
+                <div class="horario">
+                  <p>
+                    <span class="h-label">Entrada:</span>
+                    {{ visita.hora_inicio or '—' }}
+                  </p>
+                  <p>
+                    <span class="h-label">Salida:</span>
+                    {% if visita.hora_salida %}
+                      {{ visita.hora_salida }}
+                    {% elif visita.estado == 'dentro' %}
+                      <span class="h-curso">En curso</span>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </p>
+                </div>
+              </td>
 
-    <!-- Paginación -->
-    {% if total_registros_tabla and total_registros_tabla > 0 %}
-    {% set base_qs = periodo_qs ~ '&busqueda=' ~ (busqueda or '') ~ '&fecha_inicio_tabla=' ~ (fecha_inicio_tabla or '') ~ '&fecha_fin_tabla=' ~ (fecha_fin_tabla or '') ~ '&per_page=' ~ por_pagina_tabla %}
-    {% set desde = (pagina_tabla - 1) * por_pagina_tabla + 1 %}
-    {% set hasta = [pagina_tabla * por_pagina_tabla, total_registros_tabla] | min %}
-    {% set ventana = 1 %}
-    {% set p_ini = [pagina_tabla - ventana, 1] | max %}
-    {% set p_fin = [pagina_tabla + ventana, total_paginas_tabla] | min %}
+              <td>
+                {% if visita.estado == "activo" %}
+                  <span class="badge b-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>
+                {% elif visita.estado == "dentro" %}
+                  <span class="badge b-in"><i class="fa-solid fa-check"></i> Dentro</span>
+                {% elif visita.estado == "salida_registrada" %}
+                  <span class="badge b-done"><i class="fa-solid fa-flag-checkered"></i> Finalizada</span>
+                {% else %}
+                  <span class="badge b-danger">{{ visita.estado }}</span>
+                {% endif %}
+              </td>
 
-    <div class="pgx">
-      <div class="pgx-left">
-        <span>Mostrar</span>
-        <select class="pgx-select" data-base="?{{ base_qs }}" aria-label="Registros por página">
-          {% for n in per_page_opciones %}
-            <option value="{{ n }}" {% if n == por_pagina_tabla %}selected{% endif %}>{{ n }}</option>
-          {% endfor %}
-        </select>
-        <span>por página</span>
+              <td>
+                {% if visita.vehiculo %}
+                  <p class="veh-plate">{{ visita.vehiculo.placa }}</p>
+                  <p class="td-muted">
+                    {{ visita.vehiculo.marca | title }}
+                    {% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo }}{% endif %}
+                    · {{ visita.vehiculo.color | title }}
+                  </p>
+                {% else %}
+                  <span class="td-muted">Sin vehículo</span>
+                {% endif %}
+              </td>
+
+              <td>
+                {% if visita.foto_placa %}
+                  <img src="{{ visita.foto_placa.url }}"
+                       alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
+                       class="placa-thumb zoomable-image">
+                {% else %}
+                  <span class="td-muted">Sin foto</span>
+                {% endif %}
+              </td>
+
+            </tr>
+            {% endfor %}
+
+            {% if not visitas_tabla %}
+            <tr>
+              <td colspan="10" class="tbl-empty">
+                <i class="fa-solid fa-inbox"></i>
+                {% if busqueda %}
+                <p>No se encontraron visitas que coincidan con «{{ busqueda }}».</p>
+                {% else %}
+                <p>No hay visitas registradas para el período seleccionado.</p>
+                {% endif %}
+              </td>
+            </tr>
+            {% endif %}
+
+          </tbody>
+        </table>
       </div>
 
-      <div class="pgx-info">
-        Mostrando <strong>{{ "{:,}".format(desde) }}–{{ "{:,}".format(hasta) }}</strong>
-        de <strong>{{ "{:,}".format(total_registros_tabla) }}</strong>
-      </div>
+      <!-- Paginación -->
+      {% if total_registros_tabla and total_registros_tabla > 0 %}
+      {% set base_qs = periodo_qs ~ '&fraccionamiento=' ~ (frac_sel or '') ~ '&busqueda=' ~ (busqueda or '') ~ '&fecha_inicio_tabla=' ~ (fecha_inicio_tabla or '') ~ '&fecha_fin_tabla=' ~ (fecha_fin_tabla or '') ~ '&per_page=' ~ por_pagina_tabla %}
+      {% set desde = (pagina_tabla - 1) * por_pagina_tabla + 1 %}
+      {% set hasta = [pagina_tabla * por_pagina_tabla, total_registros_tabla] | min %}
+      {% set ventana = 1 %}
+      {% set p_ini = [pagina_tabla - ventana, 1] | max %}
+      {% set p_fin = [pagina_tabla + ventana, total_paginas_tabla] | min %}
 
-      <div class="pgx-right">
-        <nav class="pagination" aria-label="Paginación de la tabla">
-          {% if pagina_tabla > 1 %}
-            <a href="?{{ base_qs }}&page=1" class="page-btn page-edge" aria-label="Primera página"><i class="fa-solid fa-angles-left"></i></a>
-            <a href="?{{ base_qs }}&page={{ pagina_tabla - 1 }}" class="page-btn" aria-label="Página anterior"><i class="fa-solid fa-angle-left"></i></a>
-          {% else %}
-            <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-left"></i></span>
-            <span class="page-btn disabled"><i class="fa-solid fa-angle-left"></i></span>
-          {% endif %}
-
-          {% if p_ini > 1 %}
-            <a href="?{{ base_qs }}&page=1" class="page-btn">1</a>
-            {% if p_ini > 2 %}<span class="page-ellipsis">…</span>{% endif %}
-          {% endif %}
-
-          {% for p in range(p_ini, p_fin + 1) %}
-            <a href="?{{ base_qs }}&page={{ p }}"
-              class="page-btn {% if p == pagina_tabla %}active{% endif %}"
-              {% if p == pagina_tabla %}aria-current="page"{% endif %}>{{ p }}</a>
-          {% endfor %}
-
-          {% if p_fin < total_paginas_tabla %}
-            {% if p_fin < total_paginas_tabla - 1 %}<span class="page-ellipsis">…</span>{% endif %}
-            <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn">{{ total_paginas_tabla }}</a>
-          {% endif %}
-
-          {% if pagina_tabla < total_paginas_tabla %}
-            <a href="?{{ base_qs }}&page={{ pagina_tabla + 1 }}" class="page-btn" aria-label="Página siguiente"><i class="fa-solid fa-angle-right"></i></a>
-            <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn page-edge" aria-label="Última página"><i class="fa-solid fa-angles-right"></i></a>
-          {% else %}
-            <span class="page-btn disabled"><i class="fa-solid fa-angle-right"></i></span>
-            <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-right"></i></span>
-          {% endif %}
-        </nav>
-
-        {% if total_paginas_tabla > 1 %}
-        <div class="pgx-jump">
-          <span>Ir a</span>
-          <input type="number" min="1" max="{{ total_paginas_tabla }}"
-                class="pgx-jump-input" data-base="?{{ base_qs }}"
-                placeholder="{{ pagina_tabla }}/{{ total_paginas_tabla }}" aria-label="Ir a la página">
+      <div class="pgx">
+        <div class="pgx-left">
+          <span>Mostrar</span>
+          <select class="pgx-select" data-base="?{{ base_qs }}" aria-label="Registros por página">
+            {% for n in per_page_opciones %}
+              <option value="{{ n }}" {% if n == por_pagina_tabla %}selected{% endif %}>{{ n }}</option>
+            {% endfor %}
+          </select>
+          <span>por página</span>
         </div>
-        {% endif %}
+
+        <div class="pgx-info">
+          Mostrando <strong>{{ "{:,}".format(desde) }}–{{ "{:,}".format(hasta) }}</strong>
+          de <strong>{{ "{:,}".format(total_registros_tabla) }}</strong>
+        </div>
+
+        <div class="pgx-right">
+          <nav class="pagination" aria-label="Paginación de la tabla">
+            {% if pagina_tabla > 1 %}
+              <a href="?{{ base_qs }}&page=1" class="page-btn page-edge" aria-label="Primera página"><i class="fa-solid fa-angles-left"></i></a>
+              <a href="?{{ base_qs }}&page={{ pagina_tabla - 1 }}" class="page-btn" aria-label="Página anterior"><i class="fa-solid fa-angle-left"></i></a>
+            {% else %}
+              <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-left"></i></span>
+              <span class="page-btn disabled"><i class="fa-solid fa-angle-left"></i></span>
+            {% endif %}
+
+            {% if p_ini > 1 %}
+              <a href="?{{ base_qs }}&page=1" class="page-btn">1</a>
+              {% if p_ini > 2 %}<span class="page-ellipsis">…</span>{% endif %}
+            {% endif %}
+
+            {% for p in range(p_ini, p_fin + 1) %}
+              <a href="?{{ base_qs }}&page={{ p }}"
+                class="page-btn {% if p == pagina_tabla %}active{% endif %}"
+                {% if p == pagina_tabla %}aria-current="page"{% endif %}>{{ p }}</a>
+            {% endfor %}
+
+            {% if p_fin < total_paginas_tabla %}
+              {% if p_fin < total_paginas_tabla - 1 %}<span class="page-ellipsis">…</span>{% endif %}
+              <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn">{{ total_paginas_tabla }}</a>
+            {% endif %}
+
+            {% if pagina_tabla < total_paginas_tabla %}
+              <a href="?{{ base_qs }}&page={{ pagina_tabla + 1 }}" class="page-btn" aria-label="Página siguiente"><i class="fa-solid fa-angle-right"></i></a>
+              <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn page-edge" aria-label="Última página"><i class="fa-solid fa-angles-right"></i></a>
+            {% else %}
+              <span class="page-btn disabled"><i class="fa-solid fa-angle-right"></i></span>
+              <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-right"></i></span>
+            {% endif %}
+          </nav>
+
+          {% if total_paginas_tabla > 1 %}
+          <div class="pgx-jump">
+            <span>Ir a</span>
+            <input type="number" min="1" max="{{ total_paginas_tabla }}"
+                  class="pgx-jump-input" data-base="?{{ base_qs }}"
+                  placeholder="{{ pagina_tabla }}/{{ total_paginas_tabla }}" aria-label="Ir a la página">
+          </div>
+          {% endif %}
+        </div>
       </div>
+      {% endif %}
+
     </div>
-  {% endif %}
+    <!-- ════════ FIN #tablaVisitasWrap ════════ -->
 
   </div>
 
@@ -1084,67 +1335,121 @@
 </script>
 
 <script>
-document.getElementById('searchTable').addEventListener('input', function () {
-  const filtro = this.value.toLowerCase().trim();
-  document.querySelectorAll('.ad-table tbody tr').forEach(fila => {
-    if (fila.querySelector('.tbl-empty')) return;
-    const visitante = fila.querySelector('.vis-name')?.textContent.toLowerCase() || '';
-    const residente = fila.querySelector('.td-residente')?.textContent.toLowerCase() || '';
-    const placa     = fila.querySelector('.veh-plate')?.textContent.toLowerCase() || '';
-    fila.style.display = (!filtro || visitante.includes(filtro) || residente.includes(filtro) || placa.includes(filtro)) ? '' : 'none';
-  });
-});
+// ════════════════════════════════════════════════════════════════
+// BÚSQUEDA + PAGINACIÓN EN VIVO (AJAX) — sin recargar la pantalla.
+// Solo se refresca la tabla (endpoint /admin/visitas/tabla),
+// así se siente instantáneo y profesional, como en guardias.
+// ════════════════════════════════════════════════════════════════
+(function () {
+  const input = document.getElementById('searchTable');
+  const form  = document.getElementById('searchForm');
+  const wrap  = document.getElementById('tablaVisitasWrap');
+  if (!input || !form || !wrap) return;
 
-// Selector de registros por página
-document.querySelectorAll('.pgx-select').forEach(sel => {
-  sel.addEventListener('change', e => {
-    const url = new URL(window.location.href); 
-    url.searchParams.set('per_page', e.target.value);
-    url.searchParams.set('page', '1');
-    sessionStorage.setItem('adKeep', '1');
-    window.location.href = url.pathname + url.search;
-  });
-});
+  const ENDPOINT = "{{ url_for('admin.buscar_visitas_tabla') }}";
+  const bar = document.getElementById('topLoader');
+  let timer = null, controller = null;
 
-// Salto directo a página (con aviso si no existe)
-document.querySelectorAll('.pgx-jump-input').forEach(inp => {
-  const cont = inp.closest('.pgx-jump');
+  // Arma los parámetros a partir de los filtros actuales del form.
+  function construirParams(extra) {
+    const p = new URLSearchParams();
+    form.querySelectorAll('input[name]').forEach(i => {
+      if (i.name === 'busqueda') return;
+      if (i.value !== '') p.set(i.name, i.value);
+    });
+    p.set('busqueda', input.value.trim());
+    if (extra) Object.keys(extra).forEach(k => p.set(k, extra[k]));
+    return p;
+  }
 
-  // Mensaje de aviso (se crea solo)
-  const msg = document.createElement('span');
-  msg.className = 'pgx-jump-error';
-  cont.appendChild(msg);
+  function barra(activa) {
+    if (!bar) return;
+    if (activa) { bar.classList.add('active'); bar.style.width = '40%'; }
+    else { bar.style.width = '100%';
+           setTimeout(() => { bar.classList.remove('active'); bar.style.width = '0'; }, 250); }
+  }
 
-  let timer;
-  const aviso = (texto) => {
-    msg.textContent = texto;
-    msg.classList.add('show');
-    inp.classList.add('error');
+  async function cargar(extra) {
+    const params = construirParams(extra);
+    if (controller) controller.abort();      // cancela la búsqueda anterior (evita parpadeos)
+    controller = new AbortController();
+
+    barra(true);
+    wrap.classList.add('tbl-loading');
+    try {
+      const resp = await fetch(ENDPOINT + '?' + params.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: controller.signal
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      wrap.innerHTML = await resp.text();
+      // Refleja la búsqueda en la URL (sin recargar) para poder refrescar/compartir.
+      history.replaceState(null, '', location.pathname + '?' + params.toString());
+      activarZoom();
+    } catch (err) {
+      if (err.name !== 'AbortError') form.submit();   // respaldo: recarga normal si algo falla
+    } finally {
+      wrap.classList.remove('tbl-loading');
+      barra(false);
+    }
+  }
+
+  // Reactiva el zoom de las imágenes recién insertadas.
+  function activarZoom() {
+    const modal = document.getElementById('imgModal');
+    const mImg  = document.getElementById('modalImg');
+    if (!modal || !mImg) return;
+    wrap.querySelectorAll('.zoomable-image').forEach(img => {
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', () => { mImg.src = img.src; modal.classList.add('open'); });
+    });
+  }
+
+  // --- Buscar mientras se escribe (debounce corto = sensación instantánea) ---
+  input.addEventListener('input', () => {
     clearTimeout(timer);
-    timer = setTimeout(() => {
-      msg.classList.remove('show');
-      inp.classList.remove('error');
-    }, 2500);
-  };
+    timer = setTimeout(() => cargar({ page: 1 }), 180);
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); cargar({ page: 1 }); }
+  });
 
-  const ir = () => {
-    const raw = (inp.value || '').trim();
-    const v = parseInt(raw, 10);
-    const max = parseInt(inp.max, 10) || 1;
+  // --- Botón limpiar (x) de la búsqueda ---
+  const clearBtn = form.querySelector('.tbl-search-clear');
+  if (clearBtn) clearBtn.addEventListener('click', e => {
+    e.preventDefault(); input.value = ''; input.focus(); cargar({ page: 1 });
+  });
 
-    if (!raw || isNaN(v))   { aviso('Ingresa un número de página'); return; }
-    if (v < 1 || v > max)   { aviso('Esta página no existe (1 - ' + max + ')'); return; }
+  // --- Paginación dentro de la tabla (delegación → también AJAX) ---
+  wrap.addEventListener('click', e => {
+    const link = e.target.closest('.pagination a[href]');
+    if (!link || link.classList.contains('disabled')) return;
+    e.preventDefault();
+    const page = new URL(link.href, location.origin).searchParams.get('page') || 1;
+    cargar({ page });
+  });
 
-    const url = new URL(window.location.href);
-    url.searchParams.set('page', v);
-    sessionStorage.setItem('adKeep', '1');
-    window.location.href = url.pathname + url.search;
-  };
+  // --- Registros por página ---
+  wrap.addEventListener('change', e => {
+    if (!e.target.matches('.pgx-select')) return;
+    const pp = form.querySelector('input[name="per_page"]');
+    if (pp) pp.value = e.target.value;
+    cargar({ per_page: e.target.value, page: 1 });
+  });
 
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ir(); } });
-  // al escribir, limpia el aviso anterior
-  inp.addEventListener('input', () => { msg.classList.remove('show'); inp.classList.remove('error'); });
-});
+  // --- Salto directo de página ---
+  wrap.addEventListener('keydown', e => {
+    if (!e.target.matches('.pgx-jump-input') || e.key !== 'Enter') return;
+    e.preventDefault();
+    const v = parseInt(e.target.value, 10);
+    const max = parseInt(e.target.max, 10) || 1;
+    if (!isNaN(v) && v >= 1 && v <= max) cargar({ page: v });
+    else { e.target.classList.add('error'); setTimeout(() => e.target.classList.remove('error'), 1500); }
+  });
+
+  // Mantener el cursor al final si ya venía texto.
+  if (input.value) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+})();
 </script>
 
 <script>
@@ -1165,10 +1470,53 @@ document.querySelectorAll('.pgx-jump-input').forEach(inp => {
     document.querySelectorAll('#periodForm, .hist-filter').forEach(f => f.addEventListener('submit', marcar));
     document.querySelectorAll('.pf-input').forEach(i => i.addEventListener('change', marcar));
     document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', marcar));
-    document.querySelectorAll('.pagination a, .btn-clear, .module-item').forEach(a => a.addEventListener('click', marcar));
+    document.querySelectorAll('.btn-clear, .module-item, .frac-chip').forEach(a => a.addEventListener('click', marcar));
     // 3) Guardar la posición justo antes de recargar
     window.addEventListener('beforeunload', () => {
       sessionStorage.setItem('adScroll', window.scrollY);
+    });
+
+    // ════════════════════════════════════════════════════
+    // BARRA DE CARGA SUPERIOR: feedback inmediato al filtrar,
+    // paginar o cambiar período (se siente rápido/pro).
+    // ════════════════════════════════════════════════════
+    const bar = document.getElementById('topLoader');
+    let _w = 0, _t = null;
+    function iniciarCarga() {
+      if (!bar) return;
+      bar.classList.add('active');
+      _w = 10; bar.style.width = _w + '%';
+      clearInterval(_t);
+      _t = setInterval(() => {
+        _w = Math.min(_w + Math.random() * 12, 90);
+        bar.style.width = _w + '%';
+      }, 180);
+    }
+    window.iniciarCarga = iniciarCarga;
+
+    // Spinner en el botón Filtrar
+    const formFiltro = document.querySelector('.hist-filter');
+    if (formFiltro) {
+      formFiltro.addEventListener('submit', () => {
+        const btn = formFiltro.querySelector('.btn-filter');
+        if (btn) btn.classList.add('is-loading');
+      });
+    }
+
+    // Disparar la barra en cualquier navegación del dashboard
+    document.querySelectorAll('#periodForm, #fraccionamientoForm, .hist-filter')
+      .forEach(f => f.addEventListener('submit', iniciarCarga));
+    document.querySelectorAll('.btn-filter, .btn-clear, .pf-tab, .module-item')
+      .forEach(el => el.addEventListener('click', iniciarCarga));
+    document.querySelectorAll('.dashboard-select, .pf-input')
+      .forEach(el => el.addEventListener('change', iniciarCarga));
+
+    // Completar la barra cuando la página vuelve a mostrarse
+    window.addEventListener('pageshow', () => {
+      if (!bar) return;
+      clearInterval(_t);
+      bar.style.width = '100%';
+      setTimeout(() => { bar.classList.remove('active'); bar.style.width = '0'; }, 250);
     });
   })();
 </script>

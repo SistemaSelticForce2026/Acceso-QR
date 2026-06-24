@@ -390,6 +390,19 @@ def forgot_password():
 
         return redirect(url_for("auth.forgot_password"))
 
+    # ============================================
+    # SOLO RESIDENTES PUEDEN RECUPERAR POR ESTE MEDIO
+    # ============================================
+    if usuario.get("rol") != "residente":
+
+        flash(
+            "La recuperación de contraseña es solo para residentes. "
+            "Si eres guardia o administrador, contacta al administrador del sistema.",
+            "danger",
+        )
+
+        return redirect(url_for("auth.forgot_password"))
+
     import random
 
     token = str(random.randint(100000, 999999))
@@ -501,6 +514,53 @@ def reset_password():
     )
 
     return redirect(url_for("auth.login"))
+
+
+@auth_bp.route("/cambiar-password", methods=["GET", "POST"])
+def cambiar_password():
+
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    if request.method == "POST":
+
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+
+        if len(password) < 8:
+            flash("La contraseña debe tener al menos 8 caracteres.", "danger")
+            return redirect(url_for("auth.cambiar_password"))
+
+        if password != confirm:
+            flash("Las contraseñas no coinciden.", "danger")
+            return redirect(url_for("auth.cambiar_password"))
+
+        usuario, col = buscar_login(mongo.db, session.get("correo"))
+        if not usuario:
+            session.clear()
+            return redirect(url_for("auth.login"))
+
+        col.update_one(
+            {"_id": usuario["_id"]},
+            {
+                "$set": {
+                    "password": generate_password_hash(password),
+                    "debe_cambiar_password": False,
+                }
+            },
+        )
+
+        flash("Contraseña actualizada correctamente.", "success")
+
+        rol = session.get("rol")
+        if rol == "admin":
+            return redirect(url_for("admin.dashboard"))
+        elif rol == "guardia":
+            return redirect(url_for("guard.scan_entrada"))
+        else:
+            return redirect(url_for("resident.dashboard"))
+
+    return render_template("cambiar_password.html")
 
 
 # ============
