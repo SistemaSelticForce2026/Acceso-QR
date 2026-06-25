@@ -767,13 +767,28 @@
         pointBackgroundColor: '#ffffff',
         pointBorderColor: '#2563eb',
         pointBorderWidth: 2.5
+      }, {
+        label: 'Salidas',
+        data: {{ salidas_data | tojson }},
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,.10)',
+        fill: false,
+        tension: 0.38,
+        borderWidth: 2.5,
+        borderDash: [5, 4],
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#10b981',
+        pointBorderWidth: 2
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { intersect: false, mode: 'index' },
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: true, position: 'top', align: 'end',
+        labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 16, font: { size: 12, weight: '600' } } } },
       scales: {
         x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 12, weight: '600' } } },
         y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1, precision: 0 }, grid: { color: 'rgba(148,163,184,.07)' } }
