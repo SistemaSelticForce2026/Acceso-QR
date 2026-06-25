@@ -955,7 +955,7 @@ footer.app-foot b{color:var(--ink-600)}
   gArea.addColorStop(0,'rgba(37,99,235,.30)'); gArea.addColorStop(.55,'rgba(37,99,235,.08)'); gArea.addColorStop(1,'rgba(37,99,235,0)');
   const diasData={{ dias_data | tojson }};
   const salidasData={{ (salidas_data if salidas_data is defined else []) | tojson }};
-  const dsDias=[{label:'Accesos',data:diasData,borderColor:'#2563eb',backgroundColor:gArea,fill:true,tension:.4,borderWidth:2.6,pointRadius:0,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#2563eb',pointBorderWidth:2}];
+  const dsDias=[{label:'Accesos',data:diasData,borderColor:'#2563eb',backgroundColor:gArea,fill:true,tension:.4,borderWidth:2.6,pointRadius:3,pointHoverRadius:7,pointBackgroundColor:'#fff',pointBorderColor:'#2563eb',pointBorderWidth:2}];
   const haySalidas=Array.isArray(salidasData)&&salidasData.length===diasData.length&&salidasData.some(x=>Number(x)>0);
   if(haySalidas){ dsDias.push({label:'Salidas',data:salidasData,borderColor:'#16a34a',backgroundColor:'transparent',fill:false,tension:.4,borderWidth:2.4,borderDash:[5,4],pointRadius:0,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#16a34a',pointBorderWidth:2}); }
   new Chart(ctxLine,{type:'line',
