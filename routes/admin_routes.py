@@ -1086,7 +1086,10 @@ def registrar_residente():
 
         return redirect(url_for("admin.residentes"))
 
-    return render_template("registrar_residente.html")
+    return render_template(
+        "registrar_residente.html",
+        fraccionamientos=_fraccionamientos_disponibles(),
+    )
 
 
 # =========================================
