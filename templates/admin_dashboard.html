@@ -6,12 +6,55 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
 <style>
-  /* ══ FILTRO PERÍODO (Día / Semana / Mes) ══ */
-  .period-filter{
-    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-    background:#fff; border:1px solid #e2e8f0; border-radius:16px;
-    padding:12px 16px; margin-bottom:22px;
+  /* ══ CONTROL BAR — selector de fraccionamiento ══ */
+  .control-bar{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    background:transparent; border:0; border-radius:0;
+    padding:2px 0; box-shadow:none;
   }
+  .cb-ico{
+    display:inline-flex; align-items:center; flex:none;
+    color:#64748b; font-size:1.05rem;
+  }
+  .cb-label{
+    font-size:.9rem; font-weight:700; color:#334155; white-space:nowrap;
+  }
+  .cb-select{ position:relative; display:inline-flex; align-items:center; }
+  .cb-select select{
+    appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    border:1px solid #e2e8f0; border-radius:10px;
+    padding:8px 34px 8px 12px; background:#fff;
+    font-family:inherit; font-size:.88rem; font-weight:700; color:#0f172a;
+    outline:none; cursor:pointer;
+  }
+  .cb-select select:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+  .cb-select::after{
+    content:""; position:absolute; right:13px; top:50%; pointer-events:none;
+    width:8px; height:8px; transform:translateY(-65%) rotate(45deg);
+    border-right:2px solid #64748b; border-bottom:2px solid #64748b;
+  }
+  .cb-note{ font-size:.85rem; color:#94a3b8; white-space:nowrap; margin-left:auto; }
+
+  /* ══ BARRA DE PERÍODO (Día / Semana / Mes) ══ */
+  .dash-filters{
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    background:#fff; border:1px solid #e2e8f0; border-radius:16px;
+    padding:12px 18px; box-shadow:0 4px 14px rgba(15,23,42,.04);
+  }
+  .df-group{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .df-label{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:.78rem; font-weight:700; letter-spacing:.02em;
+    text-transform:uppercase; color:#94a3b8; white-space:nowrap;
+  }
+  .df-label .svg-ico{ color:#2563eb; }
+  .df-select{
+    min-width:230px; border:1px solid #cbd5e1; border-radius:10px;
+    padding:9px 12px; background:#fff; font-family:inherit;
+    font-size:.92rem; font-weight:600; color:#0f172a; outline:none; cursor:pointer;
+  }
+  .df-select:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+
   .pf-tabs{ display:inline-flex; background:#f1f5f9; border-radius:12px; padding:4px; }
   .pf-tab{
     border:0; background:transparent; cursor:pointer;
@@ -25,111 +68,14 @@
     font-size:.92rem; color:#0f172a; font-family:inherit; outline:none;
   }
   .pf-input:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
-  .pf-rango{
+  .df-rango{
     margin-left:auto; color:#475569; font-weight:600; font-size:.9rem;
-    display:inline-flex; align-items:center; gap:7px;
+    display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
   }
-
-  /* ══ FILTRO POR FRACCIONAMIENTO (chips tipo "Gestión de residentes") ══ */
-  .frac-filter{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; }
-  .frac-chip{
-    display:inline-flex; align-items:center; gap:8px;
-    background:#fff; border:1px solid #e2e8f0; border-radius:999px;
-    padding:9px 16px; font-weight:600; font-size:.9rem; color:#475569;
-    text-decoration:none; transition:.15s;
+  @media (max-width:720px){
+    .df-rango{ margin-left:0; }
+    .cb-note{ white-space:normal; }
   }
-  .frac-chip:hover{ border-color:#cbd5e1; color:#0f172a; }
-  .frac-chip.active{
-    background:#2563eb; border-color:#2563eb; color:#fff;
-    box-shadow:0 2px 8px rgba(37,99,235,.3);
-  }
-  .frac-count{
-    background:#f1f5f9; color:#475569; border-radius:999px;
-    padding:1px 9px; font-size:.8rem; font-weight:700; line-height:1.6;
-  }
-  .frac-chip.active .frac-count{ background:rgba(255,255,255,.25); color:#fff; }
-
-/* =======================================
-   FILTRO PROFESIONAL FRACCIONAMIENTO
-======================================= */
-
-.dashboard-filter-card{
-    background:#fff;
-    border:1px solid #e2e8f0;
-    border-radius:20px;
-
-    padding:22px 24px;
-
-    margin-bottom:24px;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:20px;
-
-    box-shadow:0 4px 14px rgba(15,23,42,.04);
-}
-
-.df-left{
-    display:flex;
-    align-items:center;
-    gap:16px;
-}
-
-.df-icon{
-    width:54px;
-    height:54px;
-
-    border-radius:14px;
-
-    background:#eff6ff;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    color:#2563eb;
-
-    font-size:1.3rem;
-}
-
-.df-left h3{
-    margin:0;
-    font-size:1rem;
-    font-weight:700;
-    color:#0f172a;
-}
-
-.df-left p{
-    margin-top:4px;
-    color:#64748b;
-    font-size:.92rem;
-}
-
-.dashboard-select{
-    min-width:320px;
-
-    border:1px solid #cbd5e1;
-    border-radius:12px;
-
-    padding:12px 14px;
-
-    background:#fff;
-
-    font-size:.95rem;
-    font-weight:600;
-
-    color:#0f172a;
-
-    outline:none;
-}
-
-.dashboard-select:focus{
-    border-color:#2563eb;
-
-    box-shadow:
-      0 0 0 4px rgba(37,99,235,.15);
-}
 
 /* =======================================
    BUSCADOR DE LA TABLA (server-side)
@@ -162,7 +108,7 @@
 /* Botón Filtrar con estado "cargando" */
 .btn-filter.is-loading,
 .btn-clear.is-loading{ opacity:.7; pointer-events:none; }
-.btn-filter.is-loading i{ animation:spinFilter .7s linear infinite; }
+.btn-filter.is-loading .svg-ico{ animation:spinFilter .7s linear infinite; }
 @keyframes spinFilter{ to{ transform:rotate(360deg); } }
 
 /* =======================================
@@ -170,288 +116,184 @@
 ======================================= */
 #tablaVisitasWrap{ transition:opacity .15s ease; }
 #tablaVisitasWrap.tbl-loading{ opacity:.55; pointer-events:none; }
-
-  /* ══ Reloj en vivo del header (header_actions del shell admin) ══ */
-  .adm-clock{
-    display:inline-flex; align-items:center; gap:7px;
-    padding:7px 12px; border-radius:10px;
-    background:#f1f5f9; border:1px solid #e2e8f0;
-    color:#475569; font-size:.82rem; font-weight:600; white-space:nowrap;
-  }
-  .adm-clock i{ color:#2563eb; }
-  @media (max-width:640px){ .adm-clock{ display:none; } }
 </style>
 {% endblock %}
 
-{% block header_actions %}
-  <span class="adm-clock"><i class="fa-regular fa-clock"></i> <span id="fechaActual"></span></span>
-  <button class="btn-refresh" onclick="window.location.reload();">
-    <i class="fa-solid fa-arrows-rotate"></i> Actualizar
-  </button>
-{% endblock %}
-
 {% block content %}
+{% import 'macros/icons.html' as ic %}
 
 <div id="topLoader"></div>
 
 <div class="ad-page">
 
-  <!-- ══ HERO ══ -->
-  <div class="ad-hero">
-    <div class="hero-circle"></div>
-    <div class="hero-text">
-      <span class="hero-tag">🟢 Sistema Seguro</span>
-      <h2>
-        {% set total = (total_visitas or 0) %}
-        {% set efectivas = (salidas or 0) + (dentro or 0) %}
-        {% if total > 0 %}
-          {{ ((efectivas / total) * 100) | round | int }}% Operatividad
-        {% else %}
-          Sin registros aún
-        {% endif %}
-      </h2>
-      <p>Monitoreo activo de accesos, residentes y seguridad.</p>
+  <!-- ══ PAGE HEAD (título + reloj + actualizar) ══ -->
+  <div class="ad-pagehead">
+    <div class="aph-text">
+      <h1>Resumen general</h1>
+      <p>Monitoreo en tiempo real de accesos, residentes y seguridad del fraccionamiento.</p>
+      <span class="aph-live">
+        <span class="aph-live-dot"></span>
+        <span class="aph-live-text">
+          {% set op_total = (total_visitas or 0) %}
+          {% if op_total > 0 %}<strong>{{ (((salidas or 0) + (dentro or 0)) / op_total * 100) | round | int }}% Operatividad</strong> · {% endif %}Sistema en línea
+        </span>
+      </span>
     </div>
-    <div class="hero-metrics">
-      <div class="hero-metric">
-        <strong>{{ dentro or 0 }}</strong>
-        <span>Dentro</span>
+    <div class="aph-actions">
+      <div class="aph-clock">
+        {{ ic.icon('calendar-regular') }}
+        <span class="aph-date" id="fechaActual"></span>
+        <span class="aph-time" id="horaActual"></span>
       </div>
-      <div class="hero-metric">
-        <strong>{{ rechazados or 0 }}</strong>
-        <span>Bloqueados</span>
-      </div>
-      <div class="hero-metric">
-        <strong>{{ total_incidencias or 0 }}</strong>
-        <span>Incidencias</span>
-      </div>
+      <button class="aph-refresh" onclick="window.location.reload();">
+        {{ ic.icon('arrows-rotate') }} Actualizar
+      </button>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════ -->
-  <!-- FILTRO PROFESIONAL DE FRACCIONAMIENTO -->
-  <!-- ═══════════════════════════════════════ -->
-  <div class="dashboard-filter-card">
-
-    <div class="df-left">
-      <div class="df-icon">
-        <i class="fa-solid fa-city"></i>
-      </div>
-
-      <div>
-        <h3>Fraccionamiento</h3>
-
-        <p>
-          {% if frac_sel %}
-            Mostrando información de
-            <strong>{{ frac_sel|title }}</strong>
-          {% else %}
-            Mostrando información consolidada de todos los fraccionamientos
-          {% endif %}
-        </p>
-      </div>
-    </div>
-
-    <div class="df-right">
-
-      <form method="GET" id="fraccionamientoForm">
-
-        <input type="hidden" name="modo" value="{{ modo }}">
-        <input type="hidden" name="dia" value="{{ dia_sel }}">
-        <input type="hidden" name="semana" value="{{ semana_sel }}">
-        <input type="hidden" name="mes" value="{{ mes_sel }}">
-
-        <select
-          name="fraccionamiento"
-          class="dashboard-select"
-          onchange="this.form.submit()"
-        >
-          <option value="">
-            Todos los fraccionamientos
-          </option>
-
-          {% for f in fraccionamientos %}
-          <option
-            value="{{ f }}"
-            {% if frac_sel == f|lower %}selected{% endif %}
-          >
-            {{ f|title }}
-          </option>
-          {% endfor %}
-        </select>
-
-      </form>
-
-    </div>
-
+  <!-- ══ CATÁLOGO DEL SISTEMA — tira de contexto (estilo referente) ══ -->
+  <!-- Residentes/Guardias = totales fijos · Fraccionamientos = conteo del selector -->
+  <div class="catalog-strip">
+    <a class="catalog-item" href="/admin/residentes">
+      <span class="catalog-ico">{{ ic.icon('house') }}</span>
+      <span class="catalog-meta">
+        <strong>{{ total_residentes or 0 }}</strong>
+        <small>Residentes registrados</small>
+      </span>
+    </a>
+    <a class="catalog-item" href="/admin/guardias">
+      <span class="catalog-ico">{{ ic.icon('shield-halved') }}</span>
+      <span class="catalog-meta">
+        <strong>{{ total_guardias or 0 }}</strong>
+        <small>Guardias activos</small>
+      </span>
+    </a>
+    <a class="catalog-item" href="/admin/configuracion">
+      <span class="catalog-ico">{{ ic.icon('city') }}</span>
+      <span class="catalog-meta">
+        <strong>{{ fraccionamientos|length }}</strong>
+        <small>Fraccionamientos</small>
+      </span>
+    </a>
   </div>
 
-  <!-- ══ STATS GRID ══ -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- CONTROL BAR — selector de fraccionamiento (form aparte)   -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <form method="GET" id="fraccForm" class="control-bar">
+    <!-- arrastra el período actual para no perderlo al filtrar -->
+    <input type="hidden" name="modo"   value="{{ modo }}">
+    <input type="hidden" name="dia"    value="{{ dia_sel }}">
+    <input type="hidden" name="semana" value="{{ semana_sel }}">
+    <input type="hidden" name="mes"    value="{{ mes_sel }}">
+
+    <span class="cb-ico">{{ ic.icon('house') }}</span>
+    <span class="cb-label">Fraccionamiento</span>
+    <div class="cb-select">
+      <select name="fraccionamiento" onchange="this.form.submit()">
+        <option value="">Todos los fraccionamientos</option>
+        {% for f in fraccionamientos %}
+        <option value="{{ f }}" {% if frac_sel == f|lower %}selected{% endif %}>{{ f|title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <span class="cb-note">
+      {% if frac_sel %}Mostrando solo {{ frac_sel|title }}
+      {% else %}Información consolidada de {{ fraccionamientos|length }} fraccionamiento{{ 's' if fraccionamientos|length != 1 else '' }}{% endif %}
+    </span>
+  </form>
+
+  <!-- ══ STATS GRID — KPIs del período (estilo tarjeta referente) ══ -->
   <div class="ad-stats">
 
     <div class="ad-stat">
       <div class="ast-top">
-        <p class="ast-label">Total visitas</p>
-        <div class="ast-ico ico-blue"><i class="fa-solid fa-users"></i></div>
+        <div class="ast-ico ico-blue">{{ ic.icon('users') }}</div>
       </div>
       <p class="ast-num">{{ total_visitas or 0 }}</p>
-      <p class="ast-sub">Registros generales</p>
+      <p class="ast-label">Total visitas</p>
+      <p class="ast-sub">Registros del período</p>
     </div>
 
     <div class="ad-stat">
       <div class="ast-top">
-        <p class="ast-label">Visitas pendientes</p>
-        <div class="ast-ico ico-amber"><i class="fa-solid fa-user-clock"></i></div>
-      </div>
-      <p class="ast-num">{{ activas or 0 }}</p>
-      <p class="ast-sub">Aún no han ingresado</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Personas dentro</p>
-        <div class="ast-ico ico-green"><i class="fa-solid fa-building-shield"></i></div>
+        <div class="ast-ico ico-green">{{ ic.icon('building-shield') }}</div>
       </div>
       <p class="ast-num">{{ dentro or 0 }}</p>
+      <p class="ast-label">Personas dentro</p>
       <p class="ast-sub">Dentro del residencial</p>
     </div>
 
     <div class="ad-stat">
       <div class="ast-top">
-        <p class="ast-label">Salidas registradas</p>
-        <div class="ast-ico ico-purple"><i class="fa-solid fa-door-open"></i></div>
+        <div class="ast-ico ico-amber">{{ ic.icon('user-round-check') }}</div>
       </div>
-      <p class="ast-num">{{ salidas or 0 }}</p>
-      <p class="ast-sub">Visitas finalizadas</p>
+      <p class="ast-num">{{ activas or 0 }}</p>
+      <p class="ast-label">Visitas pendientes</p>
+      <p class="ast-sub">Aún no han ingresado</p>
     </div>
 
     <div class="ad-stat">
       <div class="ast-top">
-        <p class="ast-label">Residentes</p>
-        <div class="ast-ico ico-blue"><i class="fa-solid fa-house"></i></div>
-      </div>
-      <p class="ast-num">{{ total_residentes or 0 }}</p>
-      <p class="ast-sub">Usuarios registrados</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Guardias</p>
-        <div class="ast-ico ico-green"><i class="fa-solid fa-shield-halved"></i></div>
-      </div>
-      <p class="ast-num">{{ total_guardias or 0 }}</p>
-      <p class="ast-sub">Personal activo</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">Incidencias</p>
-        <div class="ast-ico ico-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      </div>
-      <p class="ast-num">{{ total_incidencias or 0 }}</p>
-      <p class="ast-sub">Eventos registrados</p>
-    </div>
-
-    <div class="ad-stat">
-      <div class="ast-top">
-        <p class="ast-label">QR rechazados</p>
-        <div class="ast-ico ico-red"><i class="fa-solid fa-ban"></i></div>
+        <div class="ast-ico ico-red">{{ ic.icon('ban') }}</div>
       </div>
       <p class="ast-num">{{ rechazados or 0 }}</p>
+      <p class="ast-label">QR rechazados</p>
       <p class="ast-sub">Accesos inválidos</p>
     </div>
 
     <div class="ad-stat">
       <div class="ast-top">
-        <p class="ast-label">Promedio diario</p>
-        <div class="ast-ico ico-purple"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="ast-ico ico-red">{{ ic.icon('triangle-exclamation') }}</div>
       </div>
-      <p class="ast-num">{{ promedio or 0 }}</p>
-      <p class="ast-sub">Visitas por día</p>
+      <p class="ast-num">{{ total_incidencias or 0 }}</p>
+      <p class="ast-label">Incidencias</p>
+      <p class="ast-sub">Eventos registrados</p>
     </div>
 
   </div>
 
-  <!-- ══ FILTRO PERÍODO (Día / Semana / Mes con calendarios) ══ -->
-  <form method="GET" id="periodForm" class="period-filter">
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- BARRA DE PERÍODO (Día / Semana / Mes)                     -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <form method="GET" id="filtrosForm" class="dash-filters">
     <input type="hidden" name="modo" id="modoInput" value="{{ modo }}">
+    <!-- arrastra el fraccionamiento actual para no perderlo al cambiar período -->
     <input type="hidden" name="fraccionamiento" value="{{ frac_sel }}">
 
-    <div class="pf-tabs">
-      <button type="button" class="pf-tab {% if modo == 'dia' %}active{% endif %}" data-modo="dia">
-        <i class="fa-solid fa-calendar-day"></i> Día
-      </button>
-      <button type="button" class="pf-tab {% if modo == 'semana' %}active{% endif %}" data-modo="semana">
-        <i class="fa-solid fa-calendar-week"></i> Semana
-      </button>
-      <button type="button" class="pf-tab {% if modo == 'mes' %}active{% endif %}" data-modo="mes">
-        <i class="fa-solid fa-calendar"></i> Mes
-      </button>
+    <div class="df-group">
+      <span class="df-label">{{ ic.icon('calendar-regular') }} Período</span>
+      <div class="pf-tabs">
+        <button type="button" class="pf-tab {% if modo == 'dia' %}active{% endif %}" data-modo="dia">
+          {{ ic.icon('calendar-day') }} Día
+        </button>
+        <button type="button" class="pf-tab {% if modo == 'semana' %}active{% endif %}" data-modo="semana">
+          {{ ic.icon('calendar-week') }} Semana
+        </button>
+        <button type="button" class="pf-tab {% if modo == 'mes' %}active{% endif %}" data-modo="mes">
+          {{ ic.icon('calendar') }} Mes
+        </button>
+      </div>
+      <div class="pf-pickers">
+        <input type="date"  name="dia"    class="pf-input" {% if modo != 'dia' %}hidden{% endif %}
+               value="{{ dia_sel }}" onchange="document.getElementById('filtrosForm').submit()">
+        <input type="week"  name="semana" class="pf-input" {% if modo != 'semana' %}hidden{% endif %}
+               value="{{ semana_sel }}" onchange="document.getElementById('filtrosForm').submit()">
+        <input type="month" name="mes"    class="pf-input" {% if modo != 'mes' %}hidden{% endif %}
+               value="{{ mes_sel }}" onchange="document.getElementById('filtrosForm').submit()">
+      </div>
     </div>
 
-    <div class="pf-pickers">
-      <input type="date"  name="dia"    class="pf-input" {% if modo != 'dia' %}hidden{% endif %}
-             value="{{ dia_sel }}" onchange="document.getElementById('periodForm').submit()">
-      <input type="week"  name="semana" class="pf-input" {% if modo != 'semana' %}hidden{% endif %}
-             value="{{ semana_sel }}" onchange="document.getElementById('periodForm').submit()">
-      <input type="month" name="mes"    class="pf-input" {% if modo != 'mes' %}hidden{% endif %}
-             value="{{ mes_sel }}" onchange="document.getElementById('periodForm').submit()">
-    </div>
-
-    <span class="pf-rango"><i class="fa-solid fa-calendar-check"></i> {{ rango_label }}</span>
+    <span class="df-rango">{{ ic.icon('calendar-check') }} {{ rango_label }}</span>
   </form>
 
-  <!-- ══ GRÁFICAS FILA 1 ══ -->
+  <!-- ══ GRÁFICAS — Flujo de accesos (ancha) + Estado operativo (dona) ══ -->
   <div class="charts-row">
 
     <div class="ad-card chart-card">
       <div class="chart-head">
         <div>
-          <h2><i class="fa-solid fa-chart-pie"></i> Estado operativo</h2>
-          <p class="chart-sub">Distribución del estado actual de accesos.</p>
-        </div>
-      </div>
-      <div class="chart-body">
-        <canvas id="estadoChart"></canvas>
-      </div>
-    </div>
-
-    <div class="ad-card chart-card">
-      <div class="chart-head">
-        <div>
-          <h2><i class="fa-solid fa-chart-column"></i> Resumen general</h2>
-          <p class="chart-sub">Distribución de actividades registradas.</p>
-        </div>
-      </div>
-      <div class="chart-body">
-        <canvas id="actividadChart"></canvas>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ══ GRÁFICAS FILA 2 ══ -->
-  <div class="charts-row">
-
-    <div class="ad-card chart-card">
-      <div class="chart-head">
-        <div>
-          <h2><i class="fa-solid fa-id-card"></i> Modalidades de visita</h2>
-          <p class="chart-sub">Distribución operativa de accesos registrados.</p>
-        </div>
-        <div class="live-tag">
-          <span class="live-dot-sm"></span> Monitoreo
-        </div>
-      </div>
-      <div class="chart-body">
-        <canvas id="tiposChart"></canvas>
-      </div>
-    </div>
-
-    <div class="ad-card chart-card">
-      <div class="chart-head">
-        <div>
-          <h2><i class="fa-solid fa-calendar-days"></i> Accesos por día</h2>
+          <h2>{{ ic.icon('chart-line') }} Flujo de accesos</h2>
           <p class="chart-sub">Flujo operativo de accesos registrados diariamente.</p>
           <div class="mini-kpis">
             <span>📈 Máximo: {{ dias_data | max if dias_data else 0 }}</span>
@@ -467,279 +309,15 @@
       </div>
     </div>
 
-  </div>
-
-  <!-- ══ ESTADO DEL SISTEMA + ACTIVIDAD RECIENTE ══ -->
-  <div class="two-col">
-
-    <div class="ad-card">
-      <h2 class="section-title">Estado del sistema</h2>
-      <div class="sys-list">
-
-        <div class="sys-item">
-          <div class="sys-info">
-            <p class="sys-name">Sistema QR</p>
-            <p class="sys-desc">Validación de accesos QR</p>
-            <div class="sys-bar"><div class="sys-fill" style="width:98%"></div></div>
-          </div>
-          <span class="badge b-success">Operativo</span>
-        </div>
-
-        <div class="sys-item">
-          <div class="sys-info">
-            <p class="sys-name">Base de datos</p>
-            <p class="sys-desc">MongoDB conectada correctamente</p>
-            <div class="sys-bar"><div class="sys-fill" style="width:100%"></div></div>
-          </div>
-          <span class="badge b-success">Conectada</span>
-        </div>
-
-        <div class="sys-item">
-          <div class="sys-info">
-            <p class="sys-name">Monitoreo</p>
-            <p class="sys-desc">Supervisión activa del sistema</p>
-            <div class="sys-bar"><div class="sys-fill" style="width:95%"></div></div>
-          </div>
-          <span class="badge b-info">Activo</span>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="ad-card">
-      <h2 class="section-title">Actividad reciente</h2>
-      <div class="activity-list">
-        {% if actividad_reciente %}
-          {% for acceso in actividad_reciente %}
-          <div class="activity-item">
-            <div class="activity-ico">
-              <i class="fa-solid fa-clock-rotate-left"></i>
-            </div>
-            <div>
-              <p class="activity-name">{{ acceso.guardia_nombre }}</p>
-              <p class="activity-sub">{{ acceso.accion }} · {{ acceso.resultado }}</p>
-            </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-state">
-            <i class="fa-solid fa-inbox"></i>
-            <p>Sin actividad reciente.</p>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ══ ALERTAS + MÓDULOS ══ -->
-  <div class="two-col">
-
-    <div class="ad-card">
-      <h2 class="section-title">Alertas del sistema</h2>
-
-      <div class="alert-list">
-        {% if dentro and dentro > 0 %}
-        <div class="alert-item a-warning">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <p>{{ dentro }} visita{{ 's' if dentro != 1 else '' }} continúa{{ '' if dentro != 1 else 'n' }} dentro del fraccionamiento.</p>
-        </div>
-        {% endif %}
-
-        {% if rechazados and rechazados > 0 %}
-        <div class="alert-item a-danger">
-          <i class="fa-solid fa-ban"></i>
-          <p>{{ rechazados }} acceso{{ 's' if rechazados != 1 else '' }} rechazado{{ 's' if rechazados != 1 else '' }} detectado{{ 's' if rechazados != 1 else '' }}.</p>
-        </div>
-        {% endif %}
-
-        <div class="alert-item a-info">
-          <i class="fa-solid fa-circle-info"></i>
-          <p>Verificar placas y fotografía del visitante antes de permitir el acceso.</p>
-        </div>
-
-        {% if total_incidencias and total_incidencias > 0 %}
-        <div class="alert-item a-danger">
-          <i class="fa-solid fa-shield-halved"></i>
-          <p>Hay {{ total_incidencias }} incidencia{{ 's' if total_incidencias != 1 else '' }} registrada{{ 's' if total_incidencias != 1 else '' }}. Revisar bitácora.</p>
-        </div>
-        {% endif %}
-      </div>
-
-      <!-- Centro de monitoreo -->
-      <div class="monitor-panel">
-        <div class="monitor-head">
-          <h3><i class="fa-solid fa-shield-heart"></i> Centro de monitoreo</h3>
-          <div class="live-tag">
-            <span class="live-dot-sm"></span> En vivo
-          </div>
-        </div>
-        <div class="monitor-grid">
-          <div class="monitor-box">
-            <span class="monitor-num">
-              {% if (total_visitas or 0) > 0 %}
-                {{ (((salidas or 0) + (dentro or 0)) / total_visitas * 100) | round | int }}%
-              {% else %}—{% endif %}
-            </span>
-            <small>Efectividad</small>
-          </div>
-          <div class="monitor-box">
-            <span class="monitor-num">24/7</span>
-            <small>Vigilancia activa</small>
-          </div>
-          <div class="monitor-box">
-            <span class="monitor-num">{{ activas or 0 }}</span>
-            <small>Pendientes de ingreso</small>
-          </div>
-          <div class="monitor-box">
-            <span class="monitor-num">{{ rechazados or 0 }}</span>
-            <small>Bloqueos detectados</small>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Módulos -->
-    <div class="ad-card">
-      <h2 class="section-title">Módulos administrativos</h2>
-      <div class="module-list">
-
-        <a class="module-item" href="/admin/residentes">
-          <div class="module-ico"><i class="fa-solid fa-users"></i></div>
-          <div>
-            <p class="module-name">Gestión de residentes</p>
-            <p class="module-desc">Alta, baja y consulta de residentes registrados.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/guardias">
-          <div class="module-ico"><i class="fa-solid fa-shield-halved"></i></div>
-          <div>
-            <p class="module-name">Gestión de guardias</p>
-            <p class="module-desc">Administración de personal y turnos operativos.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/accesos">
-          <div class="module-ico"><i class="fa-solid fa-door-open"></i></div>
-          <div>
-            <p class="module-name">Historial de accesos</p>
-            <p class="module-desc">Consultar entradas, salidas y accesos rechazados.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/incidencias">
-          <div class="module-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
-          <div>
-            <p class="module-name">Bitácora de incidencias</p>
-            <p class="module-desc">Reportes de seguridad registrados por vigilancia.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/reportes">
-          <div class="module-ico"><i class="fa-solid fa-file-export"></i></div>
-          <div>
-            <p class="module-name">Centro de reportes</p>
-            <p class="module-desc">Genera y exporta reportes de todos los módulos.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-        <a class="module-item" href="/admin/configuracion">
-          <div class="module-ico"><i class="fa-solid fa-gear"></i></div>
-          <div>
-            <p class="module-name">Configuración del sistema</p>
-            <p class="module-desc">Parámetros generales y configuración residencial.</p>
-          </div>
-          <i class="fa-solid fa-chevron-right module-arrow"></i>
-        </a>
-
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ══ TOP RESIDENTES + VEHÍCULOS ══ -->
-  <div class="two-col">
-
-    <div class="ad-card">
-      <div class="rank-header">
+    <div class="ad-card chart-card">
+      <div class="chart-head">
         <div>
-          <h2 class="section-title"><i class="fa-solid fa-users"></i> Residentes con más visitas</h2>
-          <p class="rank-sub">Mayor actividad de accesos registrados.</p>
+          <h2>{{ ic.icon('chart-pie') }} Estado operativo</h2>
+          <p class="chart-sub">Distribución del estado actual de accesos.</p>
         </div>
-        <span class="badge b-success">Top actividad</span>
       </div>
-
-      <div class="rank-list">
-        {% if top_residentes %}
-          {% set max_visitas = top_residentes[0][1] if top_residentes else 1 %}
-          {% for residente, total in top_residentes %}
-          <div class="rank-item">
-            <div class="rank-left">
-              <div class="rank-av">{{ residente[0] | upper }}</div>
-              <div>
-                <p class="rank-name">
-                  {% if loop.index == 1 %}🥇
-                  {% elif loop.index == 2 %}🥈
-                  {% elif loop.index == 3 %}🥉
-                  {% endif %}
-                  {{ residente }}
-                </p>
-                <div class="rank-bar">
-                  <div class="rank-fill" style="width: {{ ((total / max_visitas) * 100) | round | int }}%;"></div>
-                </div>
-                <p class="rank-desc">Residente activo</p>
-              </div>
-            </div>
-            <div class="rank-count">
-              <span class="rank-num">{{ total }}</span>
-              <small>visita{{ 's' if total != 1 else '' }}</small>
-            </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-state">
-            <i class="fa-solid fa-user-slash"></i>
-            <p>No hay residentes registrados aún.</p>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="ad-card">
-      <div class="rank-header">
-        <div>
-          <h2 class="section-title"><i class="fa-solid fa-car-side"></i> Vehículos frecuentes</h2>
-          <p class="rank-sub">Mayor recurrencia de ingreso.</p>
-        </div>
-        <span class="badge b-info">Monitoreo activo</span>
-      </div>
-
-      <div class="rank-list">
-        {% if vehiculos %}
-          {% for placa in vehiculos %}
-          <div class="rank-item">
-            <div class="rank-left">
-              <div class="veh-ico"><i class="fa-solid fa-car"></i></div>
-              <div>
-                <p class="rank-name">{{ placa }}</p>
-                <p class="rank-desc">Vehículo autorizado</p>
-              </div>
-            </div>
-            <span class="badge b-success">Frecuente</span>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-state">
-            <i class="fa-solid fa-car-burst"></i>
-            <p>No hay vehículos registrados.</p>
-          </div>
-        {% endif %}
+      <div class="chart-body">
+        <canvas id="estadoChart"></canvas>
       </div>
     </div>
 
@@ -776,11 +354,11 @@
       </div>
       <div class="hf-actions">
         <button type="submit" class="btn-filter">
-          <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+          {{ ic.icon('magnifying-glass') }} Filtrar
         </button>
         {% if fecha_inicio_tabla or fecha_fin_tabla %}
         <a href="?{{ periodo_qs }}{% if frac_sel %}&fraccionamiento={{ frac_sel | urlencode }}{% endif %}" class="btn-clear">
-          <i class="fa-solid fa-rotate-left"></i> Limpiar
+          {{ ic.icon('rotate-left') }} Limpiar
         </a>
         {% endif %}
       </div>
@@ -799,14 +377,14 @@
         <input type="hidden" name="per_page" value="{{ por_pagina_tabla }}">
 
         <div class="tbl-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
+          {{ ic.icon('magnifying-glass') }}
           <input type="text" id="searchTable" name="busqueda"
                 value="{{ busqueda or '' }}"
                 placeholder="Buscar visitante, residente o placa...">
           {% if busqueda %}
           <a href="?{{ periodo_qs }}{% if frac_sel %}&fraccionamiento={{ frac_sel | urlencode }}{% endif %}"
             class="tbl-search-clear" title="Limpiar búsqueda">
-            <i class="fa-solid fa-xmark"></i>
+            {{ ic.icon('xmark') }}
           </a>
           {% endif %}
         </div>
@@ -814,10 +392,10 @@
 
       <div class="tbl-exports">
         <a href="{{ url_for('admin.exportar_visitas_pdf', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-pdf">
-          <i class="fa-solid fa-file-pdf"></i> PDF
+          {{ ic.icon('file-pdf') }} PDF
         </a>
         <a href="{{ url_for('admin.exportar_visitas_excel', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-excel">
-          <i class="fa-solid fa-file-excel"></i> Excel
+          {{ ic.icon('file-excel') }} Excel
         </a>
       </div>
     </div>
@@ -826,229 +404,148 @@
     <!-- TABLA + PAGINACIÓN (se refresca por AJAX, sin recargar todo) -->
     <!-- ════════════════════════════════════════════════════════ -->
     <div id="tablaVisitasWrap">
-
-      <!-- Tabla -->
-      <div class="tbl-wrap">
-        <table class="ad-table">
-          <thead>
-            <tr>
-              <th>Visitante</th>
-              <th>Residente</th>
-              <th>Fraccionamiento</th>
-              <th>Destino</th>
-              <th>Modalidad</th>
-              <th>Fecha</th>
-              <th>Horario</th>
-              <th>Estado</th>
-              <th>Vehículo</th>
-              <th>Foto placa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for visita in visitas_tabla %}
-            <tr>
-
-              <td>
-                <div class="vis-cell">
-                  {% if visita.foto_visitante %}
-                    <img src="{{ visita.foto_visitante.url }}"
-                         class="vis-img zoomable-image"
-                         alt="Foto de {{ visita.nombre_visitante }}">
-                  {% else %}
-                    <div class="vis-av"><i class="fa-solid fa-user"></i></div>
-                  {% endif %}
-                  <div>
-                    <p class="vis-name">{{ visita.nombre_visitante }}</p>
-                    <p class="vis-phone">{{ visita.telefono or '—' }}</p>
-                  </div>
-                </div>
-              </td>
-
-              <td class="td-residente">{{ visita.residente_nombre or '—' }}</td>
-
-              <td>
-                {% if visita.fraccionamiento %}
-                  <span class="badge b-info">{{ visita.fraccionamiento | title }}</span>
-                {% else %}
-                  <span class="td-muted">—</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if visita.condominio %}
-                  <p class="td-strong">{{ visita.condominio | title }}</p>
-                {% endif %}
-                <p class="td-muted">Casa {{ visita.residencia_destino or '—' }}</p>
-              </td>
-
-              <td>
-                {% if visita.modalidad_visita == "recurrente" %}
-                  <span class="badge b-rec">Recurrente</span>
-                  {% if visita.dia_semana %}
-                    <p class="td-muted">{{ visita.dia_semana | capitalize }}</p>
-                  {% endif %}
-                {% elif visita.modalidad_visita == "temporal" %}
-                  <span class="badge b-temp">Temporal</span>
-                {% else %}
-                  <span class="td-muted">{{ visita.tipo_visita or "—" }}</span>
-                {% endif %}
-              </td>
-
-              <td class="td-fecha">
-                {% if visita.fecha_visita %}
-                  {% set partes = visita.fecha_visita.split('-') %}
-                  {{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }}
-                {% else %}—{% endif %}
-              </td>
-
-              <td>
-                <div class="horario">
-                  <p>
-                    <span class="h-label">Entrada:</span>
-                    {{ visita.hora_inicio or '—' }}
-                  </p>
-                  <p>
-                    <span class="h-label">Salida:</span>
-                    {% if visita.hora_salida %}
-                      {{ visita.hora_salida }}
-                    {% elif visita.estado == 'dentro' %}
-                      <span class="h-curso">En curso</span>
-                    {% else %}
-                      —
-                    {% endif %}
-                  </p>
-                </div>
-              </td>
-
-              <td>
-                {% if visita.estado == "activo" %}
-                  <span class="badge b-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>
-                {% elif visita.estado == "dentro" %}
-                  <span class="badge b-in"><i class="fa-solid fa-check"></i> Dentro</span>
-                {% elif visita.estado == "salida_registrada" %}
-                  <span class="badge b-done"><i class="fa-solid fa-flag-checkered"></i> Finalizada</span>
-                {% else %}
-                  <span class="badge b-danger">{{ visita.estado }}</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if visita.vehiculo %}
-                  <p class="veh-plate">{{ visita.vehiculo.placa }}</p>
-                  <p class="td-muted">
-                    {{ visita.vehiculo.marca | title }}
-                    {% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo }}{% endif %}
-                    · {{ visita.vehiculo.color | title }}
-                  </p>
-                {% else %}
-                  <span class="td-muted">Sin vehículo</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if visita.foto_placa %}
-                  <img src="{{ visita.foto_placa.url }}"
-                       alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
-                       class="placa-thumb zoomable-image">
-                {% else %}
-                  <span class="td-muted">Sin foto</span>
-                {% endif %}
-              </td>
-
-            </tr>
-            {% endfor %}
-
-            {% if not visitas_tabla %}
-            <tr>
-              <td colspan="10" class="tbl-empty">
-                <i class="fa-solid fa-inbox"></i>
-                {% if busqueda %}
-                <p>No se encontraron visitas que coincidan con «{{ busqueda }}».</p>
-                {% else %}
-                <p>No hay visitas registradas para el período seleccionado.</p>
-                {% endif %}
-              </td>
-            </tr>
-            {% endif %}
-
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Paginación -->
-      {% if total_registros_tabla and total_registros_tabla > 0 %}
-      {% set base_qs = periodo_qs ~ '&fraccionamiento=' ~ (frac_sel or '') ~ '&busqueda=' ~ (busqueda or '') ~ '&fecha_inicio_tabla=' ~ (fecha_inicio_tabla or '') ~ '&fecha_fin_tabla=' ~ (fecha_fin_tabla or '') ~ '&per_page=' ~ por_pagina_tabla %}
-      {% set desde = (pagina_tabla - 1) * por_pagina_tabla + 1 %}
-      {% set hasta = [pagina_tabla * por_pagina_tabla, total_registros_tabla] | min %}
-      {% set ventana = 1 %}
-      {% set p_ini = [pagina_tabla - ventana, 1] | max %}
-      {% set p_fin = [pagina_tabla + ventana, total_paginas_tabla] | min %}
-
-      <div class="pgx">
-        <div class="pgx-left">
-          <span>Mostrar</span>
-          <select class="pgx-select" data-base="?{{ base_qs }}" aria-label="Registros por página">
-            {% for n in per_page_opciones %}
-              <option value="{{ n }}" {% if n == por_pagina_tabla %}selected{% endif %}>{{ n }}</option>
-            {% endfor %}
-          </select>
-          <span>por página</span>
-        </div>
-
-        <div class="pgx-info">
-          Mostrando <strong>{{ "{:,}".format(desde) }}–{{ "{:,}".format(hasta) }}</strong>
-          de <strong>{{ "{:,}".format(total_registros_tabla) }}</strong>
-        </div>
-
-        <div class="pgx-right">
-          <nav class="pagination" aria-label="Paginación de la tabla">
-            {% if pagina_tabla > 1 %}
-              <a href="?{{ base_qs }}&page=1" class="page-btn page-edge" aria-label="Primera página"><i class="fa-solid fa-angles-left"></i></a>
-              <a href="?{{ base_qs }}&page={{ pagina_tabla - 1 }}" class="page-btn" aria-label="Página anterior"><i class="fa-solid fa-angle-left"></i></a>
-            {% else %}
-              <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-left"></i></span>
-              <span class="page-btn disabled"><i class="fa-solid fa-angle-left"></i></span>
-            {% endif %}
-
-            {% if p_ini > 1 %}
-              <a href="?{{ base_qs }}&page=1" class="page-btn">1</a>
-              {% if p_ini > 2 %}<span class="page-ellipsis">…</span>{% endif %}
-            {% endif %}
-
-            {% for p in range(p_ini, p_fin + 1) %}
-              <a href="?{{ base_qs }}&page={{ p }}"
-                class="page-btn {% if p == pagina_tabla %}active{% endif %}"
-                {% if p == pagina_tabla %}aria-current="page"{% endif %}>{{ p }}</a>
-            {% endfor %}
-
-            {% if p_fin < total_paginas_tabla %}
-              {% if p_fin < total_paginas_tabla - 1 %}<span class="page-ellipsis">…</span>{% endif %}
-              <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn">{{ total_paginas_tabla }}</a>
-            {% endif %}
-
-            {% if pagina_tabla < total_paginas_tabla %}
-              <a href="?{{ base_qs }}&page={{ pagina_tabla + 1 }}" class="page-btn" aria-label="Página siguiente"><i class="fa-solid fa-angle-right"></i></a>
-              <a href="?{{ base_qs }}&page={{ total_paginas_tabla }}" class="page-btn page-edge" aria-label="Última página"><i class="fa-solid fa-angles-right"></i></a>
-            {% else %}
-              <span class="page-btn disabled"><i class="fa-solid fa-angle-right"></i></span>
-              <span class="page-btn page-edge disabled"><i class="fa-solid fa-angles-right"></i></span>
-            {% endif %}
-          </nav>
-
-          {% if total_paginas_tabla > 1 %}
-          <div class="pgx-jump">
-            <span>Ir a</span>
-            <input type="number" min="1" max="{{ total_paginas_tabla }}"
-                  class="pgx-jump-input" data-base="?{{ base_qs }}"
-                  placeholder="{{ pagina_tabla }}/{{ total_paginas_tabla }}" aria-label="Ir a la página">
-          </div>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-
+      {% include 'partials/_visitas_tabla.html' %}
     </div>
     <!-- ════════ FIN #tablaVisitasWrap ════════ -->
+
+  </div>
+
+  <!-- ══ ESTADO DEL SISTEMA + ACTIVIDAD RECIENTE ══ -->
+  <div class="two-col">
+
+    <div class="ad-card">
+      <h2 class="section-title">Estado del sistema</h2>
+
+      <ul class="sys-list">
+        <li class="sys-item">
+          <div class="sys-txt">
+            <strong>Sistema QR</strong>
+            <span>Validación de accesos</span>
+          </div>
+          <span class="sys-pill tone-green"><span class="sys-dot"></span>Operativo</span>
+        </li>
+        <li class="sys-item">
+          <div class="sys-txt">
+            <strong>Base de datos</strong>
+            <span>Sincronización en tiempo real</span>
+          </div>
+          <span class="sys-pill tone-green"><span class="sys-dot"></span>Conectada</span>
+        </li>
+        <li class="sys-item">
+          <div class="sys-txt">
+            <strong>Monitoreo</strong>
+            <span>Supervisión activa</span>
+          </div>
+          <span class="sys-pill tone-blue"><span class="sys-dot"></span>Activo</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="ad-card">
+      <h2 class="section-title">Actividad reciente</h2>
+      <div class="activity-list">
+        {% if actividad_reciente %}
+          {% for acceso in actividad_reciente %}
+          <div class="activity-item">
+            <div class="activity-ico">
+              {{ ic.icon('clock-rotate-left') }}
+            </div>
+            <div>
+              <p class="activity-name">{{ acceso.guardia_nombre }}</p>
+              <p class="activity-sub">{{ acceso.accion }} · {{ acceso.resultado }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            {{ ic.icon('inbox') }}
+            <p>Sin actividad reciente.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ TOP RESIDENTES + VEHÍCULOS ══ -->
+  <div class="two-col">
+
+    <div class="ad-card">
+      <div class="rank-header">
+        <div>
+          <h2 class="section-title">{{ ic.icon('users') }} Residentes con más visitas</h2>
+          <p class="rank-sub">Mayor actividad de accesos registrados.</p>
+        </div>
+        <span class="badge b-success">Top actividad</span>
+      </div>
+
+      <div class="rank-list">
+        {% if top_residentes %}
+          {% set max_visitas = top_residentes[0][1] if top_residentes else 1 %}
+          {% for residente, total in top_residentes %}
+          <div class="rank-item">
+            <div class="rank-left">
+              <div class="rank-av">{{ residente[0] | upper }}</div>
+              <div>
+                <p class="rank-name">
+                  {% if loop.index == 1 %}🥇
+                  {% elif loop.index == 2 %}🥈
+                  {% elif loop.index == 3 %}🥉
+                  {% endif %}
+                  {{ residente }}
+                </p>
+                <div class="rank-bar">
+                  <div class="rank-fill" style="width: {{ ((total / max_visitas) * 100) | round | int }}%;"></div>
+                </div>
+                <p class="rank-desc">Residente activo</p>
+              </div>
+            </div>
+            <div class="rank-count">
+              <span class="rank-num">{{ total }}</span>
+              <small>visita{{ 's' if total != 1 else '' }}</small>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            {{ ic.icon('user-slash') }}
+            <p>No hay residentes registrados aún.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="ad-card">
+      <div class="rank-header">
+        <div>
+          <h2 class="section-title">{{ ic.icon('car-side') }} Vehículos frecuentes</h2>
+          <p class="rank-sub">Mayor recurrencia de ingreso.</p>
+        </div>
+        <span class="badge b-info">Monitoreo activo</span>
+      </div>
+
+      <div class="rank-list">
+        {% if vehiculos %}
+          {% for placa in vehiculos %}
+          <div class="rank-item">
+            <div class="rank-left">
+              <div class="veh-ico">{{ ic.icon('car') }}</div>
+              <div>
+                <p class="rank-name">{{ placa }}</p>
+                <p class="rank-desc">Vehículo autorizado</p>
+              </div>
+            </div>
+            <span class="badge b-success">Frecuente</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            {{ ic.icon('car-burst') }}
+            <p>No hay vehículos registrados.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
 
   </div>
 
@@ -1073,17 +570,20 @@
   document.querySelectorAll('.pf-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.getElementById('modoInput').value = tab.dataset.modo;
-      document.getElementById('periodForm').submit();
+      document.getElementById('filtrosForm').submit();
     });
   });
 
-  // Fecha en vivo (se actualiza sola)
-  function actualizarFecha() {
-    const el = document.getElementById('fechaActual');
-    if (el) el.textContent = new Date().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+  // Reloj en vivo del page-head: fecha + hora con segundos (tic cada 1 s)
+  function actualizarReloj() {
+    const fEl = document.getElementById('fechaActual');
+    const hEl = document.getElementById('horaActual');
+    const now = new Date();
+    if (fEl) fEl.textContent = now.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+    if (hEl) hEl.textContent = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
   }
-  actualizarFecha();
-  setInterval(actualizarFecha, 60000);
+  actualizarReloj();
+  setInterval(actualizarReloj, 1000);
 
   // Modal de imagen
   const modal    = document.getElementById('imgModal');
@@ -1125,9 +625,9 @@
     const nav = document.createElement('div');
     nav.className = 'rank-pager';
     nav.innerHTML =
-      '<button class="rp-btn rp-prev" aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>' +
+      '<button class="rp-btn rp-prev" aria-label="Anterior">{{ ic.icon('chevron-left') }}</button>' +
       '<span class="rp-info"></span>' +
-      '<button class="rp-btn rp-next" aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>';
+      '<button class="rp-btn rp-next" aria-label="Siguiente">{{ ic.icon('chevron-right') }}</button>';
     lista.after(nav);
 
     const info = nav.querySelector('.rp-info');
@@ -1246,58 +746,6 @@
           labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, boxWidth: 10, font: { size: 12, weight: '600' } }
         },
         tooltip: { displayColors: false }
-      }
-    }
-  });
-
-  new Chart(document.getElementById('actividadChart'), {
-    type: 'bar',
-    data: {
-      labels: ['Total', 'Pendientes', 'Dentro', 'Salidas', 'Rechazados'],
-      datasets: [{
-        data: [{{ total_visitas or 0 }}, {{ activas or 0 }}, {{ dentro or 0 }}, {{ salidas or 0 }}, {{ rechazados or 0 }}],
-        backgroundColor: ['#2563eb', '#f59e0b', '#22c55e', '#8b5cf6', '#ef4444'],
-        categoryPercentage: 0.55,
-        barPercentage: 0.70,
-        maxBarThickness: 52,
-        borderRadius: { topLeft: 10, topRight: 10 },
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 12, weight: '600' } } },
-        y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.07)' } }
-      }
-    }
-  });
-
-  new Chart(document.getElementById('tiposChart'), {
-    type: 'doughnut',
-    data: {
-      labels: {{ tipo_labels | tojson }},
-      datasets: [{
-        data: {{ tipo_data | tojson }},
-        backgroundColor: ['#2563eb', '#38bdf8', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'],
-        borderColor: '#ffffff',
-        borderWidth: 4,
-        borderRadius: 6,
-        spacing: 2,
-        hoverOffset: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '70%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, font: { size: 12, weight: '600' } }
-        }
       }
     }
   });
@@ -1467,10 +915,10 @@
 
     // 2) Marcar la intención cuando se filtra, pagina o cambia el período
     const marcar = () => sessionStorage.setItem('adKeep', '1');
-    document.querySelectorAll('#periodForm, .hist-filter').forEach(f => f.addEventListener('submit', marcar));
+    document.querySelectorAll('#filtrosForm, #fraccForm, .hist-filter').forEach(f => f.addEventListener('submit', marcar));
     document.querySelectorAll('.pf-input').forEach(i => i.addEventListener('change', marcar));
     document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', marcar));
-    document.querySelectorAll('.btn-clear, .module-item, .frac-chip').forEach(a => a.addEventListener('click', marcar));
+    document.querySelectorAll('.btn-clear').forEach(a => a.addEventListener('click', marcar));
     // 3) Guardar la posición justo antes de recargar
     window.addEventListener('beforeunload', () => {
       sessionStorage.setItem('adScroll', window.scrollY);
@@ -1504,11 +952,11 @@
     }
 
     // Disparar la barra en cualquier navegación del dashboard
-    document.querySelectorAll('#periodForm, #fraccionamientoForm, .hist-filter')
+    document.querySelectorAll('#filtrosForm, #fraccForm, .hist-filter')
       .forEach(f => f.addEventListener('submit', iniciarCarga));
-    document.querySelectorAll('.btn-filter, .btn-clear, .pf-tab, .module-item')
+    document.querySelectorAll('.btn-filter, .btn-clear, .pf-tab')
       .forEach(el => el.addEventListener('click', iniciarCarga));
-    document.querySelectorAll('.dashboard-select, .pf-input')
+    document.querySelectorAll('.df-select, .pf-input')
       .forEach(el => el.addEventListener('change', iniciarCarga));
 
     // Completar la barra cuando la página vuelve a mostrarse

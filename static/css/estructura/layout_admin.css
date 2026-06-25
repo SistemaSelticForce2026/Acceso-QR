@@ -368,7 +368,7 @@
 /* ---- Content area ------------------------------------------ */
 .adm-content {
     flex: 1;
-    padding: 28px 16px 88px;
+    padding: 20px 16px 88px;
     max-width: 1520px;
     width: 100%;
     margin: 0 auto;
@@ -403,7 +403,7 @@
     }
 
     .adm-content {
-        padding: 30px 32px 48px;
+        padding: 20px 32px 48px;
     }
 }
 
