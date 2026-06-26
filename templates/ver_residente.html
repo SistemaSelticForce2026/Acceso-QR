@@ -1,124 +1,271 @@
 {% extends 'layout.html' %}
 
 {% block extra_css %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/ver_residente.css') }}">
+<style>
+/* ============================================================
+   VER RESIDENTE — mismo lenguaje visual que admin/residentes
+   ============================================================ */
+:root{
+  --bg:#eef0f4; --panel:#fff; --panel-2:#f7f8fb;
+  --ink-900:#0c1322; --ink-700:#243049; --ink-600:#475569;
+  --ink-500:#5b6678; --ink-400:#8a93a6; --ink-300:#aab2c2;
+  --line:#e4e7ef; --line-soft:#eef0f5;
+  --pri-50:#eff4ff; --pri-100:#dbe6ff; --pri-200:#c2d3fb;
+  --pri-500:#3b6ef5; --pri-600:#2563eb; --pri-700:#1d4ed8;
+  --ok:#16a34a; --ok-bg:#e8f6ee; --ok-bd:#c2e6cf;
+  --warn:#c2820a; --warn-bg:#fcf3df; --warn-bd:#f0dca6;
+  --bad:#d6342c; --bad-bg:#fdeceb; --bad-bd:#f5c8c5;
+  --vio:#7c3aed; --vio-bg:#f1ecfd;
+  --rad:12px; --rad-sm:9px; --rad-lg:16px;
+  --sh-1:0 1px 2px rgba(16,24,40,.05);
+  --sh-2:0 2px 8px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --sh-3:0 12px 30px rgba(13,20,40,.12);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink-700);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ===== Shell / contenedor ===== */
+.vr-page{display:flex;flex-direction:column;gap:20px;max-width:1000px;width:100%;margin:0 auto;padding:24px 26px 40px}
+
+/* ===== Back link ===== */
+.vr-back{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-500);text-decoration:none;transition:.15s var(--ease)}
+.vr-back i{font-size:11px}
+.vr-back:hover{color:var(--pri-600)}
+
+/* ===== Page head ===== */
+.vr-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.vr-head-l{display:flex;align-items:flex-start;gap:16px}
+.vr-avatar{width:64px;height:64px;border-radius:16px;flex-shrink:0;display:grid;place-items:center;color:#fff;font-size:24px;font-weight:700;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));box-shadow:0 8px 20px rgba(37,99,235,.3)}
+.ph-eyebrow{font-size:11px;font-weight:700;color:var(--pri-600);text-transform:uppercase;letter-spacing:.08em;margin:0 0 4px}
+.vr-name{font-size:22px;font-weight:800;color:var(--ink-900);letter-spacing:-.5px;line-height:1.15}
+.vr-sub{font-size:13px;color:var(--ink-500);margin-top:5px}
+.vr-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-on{background:var(--ok-bg);color:var(--ok)}
+.b-on .dot,.b-off .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-off{background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line)}
+.b-frac{background:var(--pri-50);color:var(--pri-700)}
+.b-casa{background:var(--vio-bg);color:var(--vio)}
+
+/* ===== Botones ===== */
+.vr-head-r{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border-radius:var(--rad-sm);font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink-700);transition:.16s var(--ease);box-shadow:var(--sh-1);text-decoration:none;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+.btn i{font-size:12px}
+.btn-pri{background:var(--pri-600);border-color:var(--pri-600);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.btn-pri:hover{background:var(--pri-700);border-color:var(--pri-700);color:#fff}
+.btn-warn{background:#fff;border-color:var(--warn-bd);color:var(--warn)}
+.btn-warn:hover{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.btn-ok{background:#fff;border-color:var(--ok-bd);color:var(--ok)}
+.btn-ok:hover{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.btn-del{background:#fff;border-color:var(--bad-bd);color:var(--bad)}
+.btn-del:hover{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+
+/* ===== Cards ===== */
+.ad-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:20px 22px;box-shadow:var(--sh-2)}
+.section-title{font-size:14px;font-weight:700;color:var(--ink-900);margin:0 0 16px;display:flex;align-items:center;gap:9px;letter-spacing:-.2px}
+.section-title i{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600);flex-shrink:0}
+
+/* ===== Grid layout ===== */
+.vr-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+@media(max-width:860px){.vr-grid{grid-template-columns:1fr}}
+
+/* ===== Info list ===== */
+.info-list{display:flex;flex-direction:column;gap:0}
+.info-row{display:flex;align-items:flex-start;gap:16px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
+.info-row:last-child{border-bottom:none}
+.ir-icon{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:13px;background:var(--panel-2);color:var(--ink-400);border:1px solid var(--line)}
+.ir-label{font-size:11px;font-weight:700;color:var(--ink-400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.ir-value{font-size:13.5px;font-weight:600;color:var(--ink-900);word-break:break-all}
+.ir-value.mono{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-600)}
+
+/* ===== Columna derecha: acciones ===== */
+.vr-actions{display:flex;flex-direction:column;gap:12px}
+.action-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:18px 20px;box-shadow:var(--sh-2)}
+.action-btns{display:flex;flex-direction:column;gap:9px}
+.action-sep{height:1px;background:var(--line-soft);margin:4px 0}
+.action-info{font-size:12px;color:var(--ink-400);line-height:1.55;margin-top:4px;padding:10px 12px;background:var(--panel-2);border-radius:var(--rad-sm);border:1px solid var(--line-soft)}
+.action-info i{color:var(--pri-500);margin-right:5px}
+
+/* ===== ID badge ===== */
+.id-badge{display:inline-flex;align-items:center;gap:9px;padding:9px 13px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--rad-sm);margin-top:4px}
+.id-badge span{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-600);word-break:break-all}
+.id-badge i{color:var(--ink-300);font-size:11px;flex-shrink:0}
+
+/* ===== Responsive ===== */
+@media(max-width:680px){
+  .vr-page{padding:16px 14px 32px}
+  .vr-head{flex-direction:column}
+  .vr-head-r{width:100%}
+  .btn{flex:1;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
 {% endblock %}
 
 {% block content %}
 
-<div class="resident-profile">
+<div class="vr-page">
 
-    <!-- HEADER -->
-    <div class="profile-header">
+  <!-- Back -->
+  <a href="{{ url_for('admin.residentes') }}" class="vr-back">
+    <i class="fa-solid fa-arrow-left"></i> Volver al directorio
+  </a>
 
-        <div class="profile-avatar">
-            {{ usuario.nombre[0] }}
+  <!-- Page head -->
+  <div class="vr-head">
+    <div class="vr-head-l">
+      <div class="vr-avatar" id="profileAvatar">{{ usuario.nombre[0] | upper }}</div>
+      <div>
+        <p class="ph-eyebrow">Perfil de residente</p>
+        <h1 class="vr-name">{{ usuario.nombre }}</h1>
+        <p class="vr-sub">Residente registrado en el sistema de control de acceso</p>
+        <div class="vr-badges">
+          {% if usuario.estado == "activo" %}
+            <span class="badge b-on"><span class="dot"></span> Activo</span>
+          {% else %}
+            <span class="badge b-off"><span class="dot"></span> Inactivo</span>
+          {% endif %}
+          <span class="badge b-frac"><i class="fa-solid fa-location-dot"></i> {{ usuario.fraccionamiento | title }}</span>
+          <span class="badge b-casa"><i class="fa-solid fa-house"></i> Casa {{ usuario.numero_casa }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="vr-head-r">
+      <a href="{{ url_for('admin.editar_residente', id=usuario._id) }}" class="btn btn-pri">
+        <i class="fa-solid fa-pen"></i> Editar residente
+      </a>
+    </div>
+  </div>
+
+  <!-- Grid principal -->
+  <div class="vr-grid">
+
+    <!-- Información general -->
+    <div class="ad-card">
+      <h2 class="section-title"><i class="fa-solid fa-circle-info"></i> Información general</h2>
+
+      <div class="info-list">
+
+        <div class="info-row">
+          <div class="ir-icon"><i class="fa-solid fa-envelope"></i></div>
+          <div>
+            <div class="ir-label">Correo electrónico</div>
+            <div class="ir-value">{{ usuario.correo }}</div>
+          </div>
         </div>
 
-        <div class="profile-info">
+        <div class="info-row">
+          <div class="ir-icon"><i class="fa-solid fa-phone"></i></div>
+          <div>
+            <div class="ir-label">Teléfono</div>
+            <div class="ir-value">{{ usuario.telefono }}</div>
+          </div>
+        </div>
 
-            <h1>{{ usuario.nombre }}</h1>
+        <div class="info-row">
+          <div class="ir-icon"><i class="fa-solid fa-city"></i></div>
+          <div>
+            <div class="ir-label">Fraccionamiento</div>
+            <div class="ir-value">{{ usuario.fraccionamiento | title }}</div>
+          </div>
+        </div>
 
-            <p>
-                Residente registrado dentro del sistema residencial
-            </p>
+        <div class="info-row">
+          <div class="ir-icon"><i class="fa-solid fa-road"></i></div>
+          <div>
+            <div class="ir-label">Privada</div>
+            <div class="ir-value">{{ usuario.privada | title }}</div>
+          </div>
+        </div>
 
-            <div class="profile-badges">
+        <div class="info-row">
+          <div class="ir-icon"><i class="fa-solid fa-house"></i></div>
+          <div>
+            <div class="ir-label">Número de casa</div>
+            <div class="ir-value">{{ usuario.numero_casa }}</div>
+          </div>
+        </div>
 
-                {% if usuario.estado == "activo" %}
-
-                    <span class="badge success">
-                        Activo
-                    </span>
-
-                {% else %}
-
-                    <span class="badge danger">
-                        Inactivo
-                    </span>
-
-                {% endif %}
-
-                <span class="badge">
-                    Casa {{ usuario.numero_casa }}
-                </span>
-
+        <div class="info-row">
+          <div class="ir-icon"><i class="fa-solid fa-fingerprint"></i></div>
+          <div>
+            <div class="ir-label">ID de residente</div>
+            <div class="id-badge">
+              <i class="fa-solid fa-hashtag"></i>
+              <span>{{ usuario._id }}</span>
             </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Columna derecha -->
+    <div class="vr-actions">
+
+      <!-- Acciones rápidas -->
+      <div class="action-card">
+        <h2 class="section-title"><i class="fa-solid fa-bolt"></i> Acciones rápidas</h2>
+        <div class="action-btns">
+
+          <a href="{{ url_for('admin.editar_residente', id=usuario._id) }}" class="btn btn-pri">
+            <i class="fa-solid fa-pen"></i> Editar información
+          </a>
+
+          <div class="action-sep"></div>
+
+          {% if usuario.estado == "activo" %}
+            <a href="{{ url_for('admin.bloquear_residente', id=usuario._id) }}"
+               class="btn btn-warn"
+               onclick="return confirm('¿Deseas bloquear este residente?')">
+              <i class="fa-solid fa-user-lock"></i> Bloquear residente
+            </a>
+            <a href="{{ url_for('admin.eliminar_residente', id=usuario._id) }}"
+               class="btn btn-del"
+               onclick="return confirm('¿Deseas eliminar este residente permanentemente? Esta acción no se puede deshacer.')">
+              <i class="fa-solid fa-trash"></i> Eliminar residente
+            </a>
+          {% else %}
+            <a href="{{ url_for('admin.desbloquear_residente', id=usuario._id) }}"
+               class="btn btn-ok"
+               onclick="return confirm('¿Deseas desbloquear este residente?')">
+              <i class="fa-solid fa-lock-open"></i> Desbloquear residente
+            </a>
+          {% endif %}
+
+          <div class="action-sep"></div>
+
+          <a href="{{ url_for('admin.residentes') }}" class="btn">
+            <i class="fa-solid fa-arrow-left"></i> Volver al directorio
+          </a>
 
         </div>
+
+        <div class="action-info">
+          <i class="fa-solid fa-circle-info"></i>
+          Los cambios de estado afectan el acceso inmediato del residente al sistema de control QR.
+        </div>
+      </div>
 
     </div>
 
-    <!-- GRID -->
-    <div class="profile-grid">
-
-        <!-- INFORMACIÓN -->
-        <div class="card">
-
-            <h2>Información general</h2>
-
-            <div class="info-group">
-
-                <div class="info-item">
-                    <span>Correo electrónico</span>
-                    <strong>{{ usuario.correo }}</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>Teléfono</span>
-                    <strong>{{ usuario.telefono }}</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>Fraccionamiento</span>
-                    <strong>{{ usuario.fraccionamiento }}</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>Privada</span>
-                    <strong>{{ usuario.privada }}</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>Número de casa</span>
-                    <strong>{{ usuario.numero_casa }}</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>ID de residente</span>
-                    <strong>{{ usuario._id }}</strong>
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- ACCIONES -->
-        <div class="card">
-
-            <h2>Acciones rápidas</h2>
-
-            <div class="action-buttons">
-
-                <a href="{{ url_for('admin.bloquear_residente', id=usuario._id) }}"
-                   class="btn danger-btn"
-                   onclick="return confirm('¿Deseas bloquear este residente?')">
-                    Bloquear residente
-                </a>
-
-                <a href="{{ url_for('admin.residentes') }}"
-                    class="btn btn-secondary">
-                    Volver al listado
-                </a>
-
-            </div>
-
-        </div>
-
-    </div>
+  </div>
 
 </div>
+
+<script>
+(function(){
+  // Color de avatar según nombre (mismo sistema que residentes.html)
+  var paletas=[['#2563eb','#60a5fa'],['#7c3aed','#a78bfa'],['#0891b2','#22d3ee'],['#059669','#34d399'],['#d97706','#fbbf24'],['#db2777','#f472b6']];
+  var nombre="{{ usuario.nombre }}", h=0;
+  for(var i=0;i<nombre.length;i++){ h=(h*31+nombre.charCodeAt(i))>>>0; }
+  var c=paletas[h%paletas.length];
+  var av=document.getElementById('profileAvatar');
+  if(av) av.style.background='linear-gradient(135deg,'+c[0]+','+c[1]+')';
+})();
+</script>
 
 {% endblock %}

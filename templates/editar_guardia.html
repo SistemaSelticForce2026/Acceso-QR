@@ -1,252 +1,397 @@
-{% extends 'layout.html' %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar Guardia · AccessQR</title>
 
-{% block extra_css %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/editar_guardia.css') }}">
-{% endblock %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-{% block content %}
+<style>
+:root{
+  --bg:#eef0f4;--panel:#fff;--panel-2:#f7f8fb;
+  --ink-900:#0c1322;--ink-700:#243049;--ink-600:#475569;
+  --ink-500:#5b6678;--ink-400:#8a93a6;--ink-300:#aab2c2;
+  --line:#e4e7ef;--line-soft:#eef0f5;
+  --pri-50:#eff4ff;--pri-100:#dbe6ff;--pri-200:#c2d3fb;
+  --pri-500:#3b6ef5;--pri-600:#2563eb;--pri-700:#1d4ed8;
+  --ok:#16a34a;--ok-bg:#e8f6ee;--ok-bd:#c2e6cf;
+  --warn:#c2820a;--warn-bg:#fcf3df;--warn-bd:#f0dca6;
+  --bad:#d6342c;--bad-bg:#fdeceb;--bad-bd:#f5c8c5;
+  --info:#0e7490;--info-bg:#e3f4f7;--info-bd:#bce4ec;
+  --vio:#7c3aed;--vio-bg:#f1ecfd;
+  --rail-bg:#0d1424;--rail-bg-2:#111a2e;--rail-ink:#9aa6bf;
+  --rail-ink-2:#5e6b88;--rail-line:#1c2740;
+  --rad:12px;--rad-sm:9px;--rad-lg:16px;
+  --sh-1:0 1px 2px rgba(16,24,40,.05);
+  --sh-2:0 2px 8px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --sh-3:0 12px 30px rgba(13,20,40,.12);
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --rail-w:248px;--top-h:60px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink-700);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',monospace}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+::selection{background:var(--pri-100)}
 
-<div class="resident-profile">
+/* SHELL */
+.app{display:flex;min-height:100vh}
+.rail{width:var(--rail-w);flex:0 0 var(--rail-w);background:linear-gradient(185deg,var(--rail-bg),var(--rail-bg-2));color:var(--rail-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid #060b16;z-index:30}
+.brand{display:flex;align-items:center;gap:11px;padding:0 20px;height:var(--top-h);border-bottom:1px solid var(--rail-line);flex-shrink:0}
+.brand-mark{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));display:grid;place-items:center;color:#fff;font-size:15px;box-shadow:0 4px 12px rgba(37,99,235,.45),inset 0 1px 0 rgba(255,255,255,.25)}
+.brand-txt b{color:#fff;font-size:14.5px;font-weight:700;letter-spacing:-.2px;display:block;line-height:1.15}
+.brand-txt span{font-size:10.5px;color:var(--rail-ink-2);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.rail-scroll{flex:1;overflow-y:auto;padding:14px 12px 20px}
+.rail-scroll::-webkit-scrollbar{width:6px}
+.rail-scroll::-webkit-scrollbar-thumb{background:#1d2942;border-radius:9px}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rail-ink-2);padding:14px 12px 7px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:var(--rad-sm);font-size:13.5px;font-weight:500;color:var(--rail-ink);margin-bottom:1px;position:relative;transition:.16s var(--ease)}
+.nav-item i:first-child{width:18px;text-align:center;font-size:14px;color:var(--rail-ink-2);transition:.16s}
+.nav-item:hover{background:#172339;color:#dfe5f2}
+.nav-item:hover i:first-child{color:var(--pri-500)}
+.nav-item.active{background:linear-gradient(90deg,rgba(37,99,235,.18),rgba(37,99,235,.04));color:#fff;font-weight:600}
+.nav-item.active i:first-child{color:var(--pri-500)}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:22px;border-radius:0 3px 3px 0;background:var(--pri-500)}
+.nav-logout{margin-top:6px;border-top:1px solid var(--rail-line);border-radius:0;padding-top:14px}
+.nav-logout:hover{background:rgba(214,52,44,.12);color:#fca5a5}
+.nav-logout:hover i:first-child{color:#fb7185}
+.rail-foot{padding:12px;border-top:1px solid var(--rail-line);flex-shrink:0}
+.rail-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--rad-sm);transition:.16s;cursor:pointer}
+.rail-user:hover{background:#172339}
+.ru-av{width:34px;height:34px;border-radius:8px;flex-shrink:0;background:linear-gradient(145deg,#334155,#1e293b);color:#cbd5e1;display:grid;place-items:center;font-weight:700;font-size:13px;border:1px solid #2a3650}
+.ru-meta b{color:#e7ecf6;font-size:12.5px;font-weight:600;display:block;line-height:1.2}
+.ru-meta span{font-size:10.5px;color:var(--rail-ink-2)}
+.rail-user .fa-ellipsis-vertical{margin-left:auto;color:var(--rail-ink-2);font-size:12px}
 
-    <!-- HEADER -->
-    <div class="profile-header">
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:var(--top-h);position:sticky;top:0;z-index:25;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px}
+.burger{display:none;background:none;border:none;color:var(--ink-500);font-size:17px}
+.crumb{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-400);font-weight:500}
+.crumb b{color:var(--ink-900);font-weight:700}
+.crumb a{color:var(--ink-400);transition:.15s}
+.crumb a:hover{color:var(--pri-600)}
+.crumb i{font-size:8px;color:var(--ink-300)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+.top-clock{display:flex;flex-direction:column;align-items:flex-end;margin-right:6px;line-height:1.15}
+.top-clock b{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-900);font-weight:600;letter-spacing:-.3px}
+.top-clock span{font-size:10px;color:var(--ink-400);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.icon-btn{width:38px;height:38px;border-radius:var(--rad-sm);border:1px solid var(--line);background:#fff;color:var(--ink-500);display:grid;place-items:center;font-size:14px;position:relative;transition:.16s}
+.icon-btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+.top-prof{display:flex;align-items:center;gap:9px;padding:5px 10px 5px 6px;border:1px solid var(--line);border-radius:999px;background:#fff;margin-left:4px;transition:.16s}
+.top-prof:hover{border-color:var(--pri-200);box-shadow:var(--sh-1)}
+.tp-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+.top-prof b{font-size:12.5px;color:var(--ink-900);font-weight:600}
+.top-prof i{font-size:10px;color:var(--ink-400)}
 
-        <div class="profile-avatar">
-            {{ guardia.nombre[0] }}
+.content{padding:24px 26px 40px;max-width:1640px;width:100%;margin:0 auto}
+footer.app-foot{padding:18px 26px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-400);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:auto}
+footer.app-foot b{color:var(--ink-600)}
+
+/* Componentes */
+.btn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border-radius:var(--rad-sm);font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink-700);transition:.16s var(--ease);box-shadow:var(--sh-1);cursor:pointer}
+.btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+.btn i{font-size:12px}
+.btn-pri{background:var(--pri-600);border-color:var(--pri-600);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.btn-pri:hover{background:var(--pri-700);border-color:var(--pri-700);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.4)}
+.btn-ghost{background:transparent;border-color:var(--line);color:var(--ink-600)}
+.btn-ghost:hover{border-color:var(--ink-300);color:var(--ink-900);background:var(--panel-2)}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-success{background:var(--ok-bg);color:var(--ok)}
+.b-info{background:var(--pri-50);color:var(--pri-700)}
+.b-danger{background:var(--bad-bg);color:var(--bad)}
+.b-neutral{background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line)}
+
+.ad-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:20px;box-shadow:var(--sh-2);transition:box-shadow .2s var(--ease)}
+.ad-card:hover{box-shadow:var(--sh-3)}
+.section-title{font-size:14px;font-weight:700;color:var(--ink-900);margin:0 0 4px;display:flex;align-items:center;gap:9px;letter-spacing:-.2px}
+.section-title i{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600)}
+.card-sub{font-size:12.5px;color:var(--ink-500);margin:6px 0 18px;line-height:1.55}
+
+/* Página */
+.gd-page{display:flex;flex-direction:column;gap:16px}
+
+/* Hero */
+.profile-hero{background:linear-gradient(135deg,#101a30,#0c1322);border:1px solid #060b16;border-radius:var(--rad-lg);padding:24px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden;box-shadow:var(--sh-2)}
+.profile-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 88% 0%,rgba(37,99,235,.28),transparent 55%);pointer-events:none}
+.hero-av{width:72px;height:72px;border-radius:18px;flex-shrink:0;display:grid;place-items:center;font-size:28px;font-weight:800;color:#fff;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));box-shadow:0 10px 26px rgba(37,99,235,.4),inset 0 1px 0 rgba(255,255,255,.25);position:relative;z-index:1}
+.hero-av.inactivo{background:linear-gradient(145deg,#94a3b8,#64748b)}
+.hero-info{position:relative;z-index:1;min-width:0}
+.hero-info h1{font-size:23px;font-weight:800;color:#fff;letter-spacing:-.6px;line-height:1.1;margin:0}
+.hero-info p{font-size:13px;color:#9aa6bf;margin:6px 0 0;line-height:1.5;max-width:560px}
+.hero-badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#dfe5f2}
+.hero-badge.on{background:rgba(22,163,74,.18);border-color:rgba(22,163,74,.32);color:#4ade80}
+.hero-badge.off{background:rgba(214,52,44,.18);border-color:rgba(214,52,44,.3);color:#fb7185}
+
+/* Grid */
+.profile-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+
+/* Formulario */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+.form-grid .span-2{grid-column:1 / -1}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--ink-500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+.field label .req{color:var(--bad);margin-left:2px}
+.field input,.field select{width:100%;height:44px;border:1px solid var(--line);border-radius:var(--rad-sm);background:var(--panel-2);padding:0 14px;font-size:13.5px;color:var(--ink-900);font-family:inherit;outline:none;transition:.16s var(--ease)}
+.field input::placeholder{color:var(--ink-400)}
+.field input:focus,.field select:focus{background:#fff;border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+.field select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a93a6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+.form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;padding-top:18px;border-top:1px solid var(--line-soft)}
+
+/* Panel operativo */
+.op-list{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.op-item{display:flex;gap:12px;align-items:flex-start;padding:13px;border-radius:var(--rad-sm);background:var(--panel-2);border:1px solid var(--line-soft)}
+.op-item .op-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:13px;background:var(--pri-50);color:var(--pri-600)}
+.op-item.op-cyan .op-ico{background:var(--info-bg);color:var(--info)}
+.op-item.op-warn .op-ico{background:var(--warn-bg);color:var(--warn)}
+.op-item b{display:block;font-size:12.5px;font-weight:700;color:var(--ink-900);margin-bottom:2px}
+.op-item span{font-size:12px;color:var(--ink-500);line-height:1.5;word-break:break-word}
+.op-item span.id-val{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-600)}
+
+/* Alertas */
+.alert-list{display:flex;flex-direction:column;gap:9px}
+.alert-item{display:flex;gap:11px;align-items:flex-start;padding:12px 13px;border-radius:var(--rad-sm);border:1px solid;font-size:12.5px;font-weight:500;line-height:1.5}
+.alert-item i{margin-top:1px;flex-shrink:0;font-size:13px}
+.alert-item p{margin:0}
+.a-warning{background:var(--warn-bg);border-color:var(--warn-bd);color:#8a5d04}.a-warning i{color:var(--warn)}
+
+/* Responsive */
+@media(max-width:1100px){.profile-grid{grid-template-columns:1fr}}
+@media(max-width:980px){
+  .rail{position:fixed;left:0;transform:translateX(-100%);transition:transform .25s var(--ease);box-shadow:var(--sh-3)}
+  .rail.open{transform:translateX(0)}
+  .burger{display:inline-grid;place-items:center}
+}
+@media(max-width:768px){
+  .content{padding:18px 14px 32px}
+  .top-clock{display:none}
+  .form-grid{grid-template-columns:1fr}
+  .profile-hero{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:520px){.form-actions{flex-direction:column}.form-actions .btn{width:100%;justify-content:center}}
+@media(prefers-reduced-motion:reduce){*,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="rail" id="rail">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="brand-txt"><b>AccessQR</b><span>Control de acceso</span></div>
+    </div>
+    <div class="rail-scroll">
+      <div class="nav-group">
+        <div class="nav-label">Operación</div>
+        <a class="nav-item" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Panel general</a>
+        <a class="nav-item" href="{{ url_for('admin.accesos') }}"><i class="fa-solid fa-right-to-bracket"></i> Historial de accesos</a>
+        <a class="nav-item" href="#"><i class="fa-solid fa-qrcode"></i> Validación QR</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Administración</div>
+        <a class="nav-item" href="{{ url_for('admin.residentes') }}"><i class="fa-solid fa-users"></i> Residentes</a>
+        <a class="nav-item active" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-user-shield"></i> Guardias</a>
+        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-city"></i> Fraccionamientos</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Seguridad</div>
+        <a class="nav-item" href="{{ url_for('admin.incidencias') }}"><i class="fa-solid fa-triangle-exclamation"></i> Incidencias</a>
+        <a class="nav-item" href="{{ url_for('admin.reportes') }}"><i class="fa-solid fa-file-export"></i> Reportes</a>
+        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-gear"></i> Configuración</a>
+        <a class="nav-item nav-logout" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
+      </div>
+    </div>
+    <div class="rail-foot">
+      <div class="rail-user">
+        <div class="ru-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
+        <div class="ru-meta"><b>{{ session.nombre if session and session.nombre else 'Administrador' }}</b><span>Administrador</span></div>
+        <i class="fa-solid fa-ellipsis-vertical"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- PRINCIPAL -->
+  <div class="main">
+
+    <header class="topbar">
+      <button class="burger" id="burger"><i class="fa-solid fa-bars"></i></button>
+      <div class="crumb">
+        <span>Administración</span>
+        <i class="fa-solid fa-chevron-right"></i>
+        <a href="{{ url_for('admin.guardias') }}">Guardias</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <b>Editar</b>
+      </div>
+      <div class="top-right">
+        <div class="top-clock"><b id="clk">—</b><span id="dte">—</span></div>
+        <a class="icon-btn" href="{{ url_for('admin.incidencias') }}"><i class="fa-regular fa-bell"></i></a>
+        <a class="icon-btn" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="top-prof">
+          <div class="tp-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
+          <b>{{ session.nombre.split(' ')[0] if session and session.nombre else 'Admin' }}</b>
+          <i class="fa-solid fa-chevron-down"></i>
         </div>
+      </div>
+    </header>
 
-        <div class="profile-info">
+    <div class="content">
+      <div class="gd-page">
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+            <div class="badge b-info" style="padding:12px 15px;border-radius:9px;font-size:13px">
+              <i class="fa-solid fa-circle-info"></i> {{ msg }}
+            </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- HERO -->
+        <div class="profile-hero">
+          <div class="hero-av {% if guardia.estado != 'activo' %}inactivo{% endif %}">{{ guardia.nombre[0] | upper if guardia.nombre else 'G' }}</div>
+          <div class="hero-info">
             <h1>Editar guardia</h1>
+            <p>Actualización de información operativa y administrativa del personal de vigilancia.</p>
+            <div class="hero-badges">
+              {% if guardia.estado == 'activo' %}
+              <span class="hero-badge on"><i class="fa-solid fa-circle-check"></i> Guardia activo</span>
+              {% else %}
+              <span class="hero-badge off"><i class="fa-solid fa-ban"></i> Guardia inactivo</span>
+              {% endif %}
+              {% if guardia.turno %}<span class="hero-badge"><i class="fa-solid fa-clock"></i> {{ guardia.turno }}</span>{% endif %}
+            </div>
+          </div>
+        </div>
 
-            <p>
-                Actualización de información operativa y administrativa del personal de vigilancia.
-            </p>
+        <!-- GRID -->
+        <form method="POST">
+        <div class="profile-grid">
 
-            <div class="profile-badges">
+          <!-- FORMULARIO -->
+          <div class="ad-card">
+            <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Información del guardia</h2>
+            <p class="card-sub">Modifica los datos necesarios y guarda los cambios. Los campos con <span style="color:var(--bad);font-weight:700">*</span> son obligatorios.</p>
 
-                {% if guardia.estado == "activo" %}
+            <div class="form-grid">
 
-                    <span class="badge success">
-                        Guardia activo
-                    </span>
+              <div class="field span-2">
+                <label>Nombre completo <span class="req">*</span></label>
+                <input type="text" name="nombre" value="{{ guardia.nombre }}" required>
+              </div>
 
-                {% else %}
+              <div class="field">
+                <label>Correo electrónico <span class="req">*</span></label>
+                <input type="email" name="correo" value="{{ guardia.correo }}" required>
+              </div>
 
-                    <span class="badge danger">
-                        Guardia inactivo
-                    </span>
+              <div class="field">
+                <label>Teléfono <span class="req">*</span></label>
+                <input type="text" name="telefono" value="{{ guardia.telefono }}" required>
+              </div>
 
-                {% endif %}
+              <div class="field">
+                <label>Turno operativo <span class="req">*</span></label>
+                <select name="turno" required>
+                  <option value="Matutino" {% if guardia.turno == 'Matutino' %}selected{% endif %}>Turno matutino</option>
+                  <option value="Vespertino" {% if guardia.turno == 'Vespertino' %}selected{% endif %}>Turno vespertino</option>
+                  <option value="Nocturno" {% if guardia.turno == 'Nocturno' %}selected{% endif %}>Turno nocturno</option>
+                </select>
+              </div>
 
-                <span class="badge">
-                    {{ guardia.turno }}
-                </span>
+              <div class="field">
+                <label>Estado operativo</label>
+                <select name="estado">
+                  <option value="activo" {% if guardia.estado == 'activo' %}selected{% endif %}>Activo</option>
+                  <option value="inactivo" {% if guardia.estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                </select>
+              </div>
+
+              <div class="field span-2">
+                <label>Fraccionamiento <span class="req">*</span></label>
+                <select name="fraccionamiento" required>
+                  <option value="">Selecciona un fraccionamiento…</option>
+                  {% for f in fraccionamientos %}
+                  <option value="{{ f }}" {% if (guardia.fraccionamiento or '')|lower == f|lower %}selected{% endif %}>{{ f }}</option>
+                  {% endfor %}
+                </select>
+              </div>
 
             </div>
 
-        </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-pri"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
+              <a href="{{ url_for('admin.guardias') }}" class="btn btn-ghost">Cancelar</a>
+            </div>
+          </div>
 
-    </div>
+          <!-- PANEL LATERAL -->
+          <div style="display:flex;flex-direction:column;gap:16px">
 
-    <!-- GRID -->
-    <div class="profile-grid">
-
-        <!-- FORM -->
-        <div class="card">
-
-            <h2>Información del guardia</h2>
-
-            <form method="POST">
-
-                <div class="info-group">
-
-                    <div class="info-item">
-
-                        <span>Nombre completo</span>
-
-                        <input
-                            type="text"
-                            name="nombre"
-                            value="{{ guardia.nombre }}"
-                            required
-                        >
-
-                    </div>
-
-                    <div class="info-item">
-
-                        <span>Correo electrónico</span>
-
-                        <input
-                            type="email"
-                            name="correo"
-                            value="{{ guardia.correo }}"
-                            required
-                        >
-
-                    </div>
-
-                    <div class="info-item">
-
-                        <span>Teléfono</span>
-
-                        <input
-                            type="text"
-                            name="telefono"
-                            value="{{ guardia.telefono }}"
-                            required
-                        >
-
-                    </div>
-
-                    <div class="info-item">
-
-                        <span>Turno operativo</span>
-
-                        <select name="turno" required>
-
-                            <option
-                                value="Matutino"
-                                {% if guardia.turno == "Matutino" %}
-                                    selected
-                                {% endif %}
-                            >
-                                Turno matutino
-                            </option>
-
-                            <option
-                                value="Vespertino"
-                                {% if guardia.turno == "Vespertino" %}
-                                    selected
-                                {% endif %}
-                            >
-                                Turno vespertino
-                            </option>
-
-                            <option
-                                value="Nocturno"
-                                {% if guardia.turno == "Nocturno" %}
-                                    selected
-                                {% endif %}
-                            >
-                                Turno nocturno
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <div class="info-item">
-
-                        <span>Estado operativo</span>
-
-                        <select name="estado">
-
-                            <option
-                                value="activo"
-                                {% if guardia.estado == "activo" %}
-                                    selected
-                                {% endif %}
-                            >
-                                Activo
-                            </option>
-
-                            <option
-                                value="inactivo"
-                                {% if guardia.estado == "inactivo" %}
-                                    selected
-                                {% endif %}
-                            >
-                                Inactivo
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <div class="info-item">
-
-                        <span>Fraccionamiento</span>
-
-                        <select name="fraccionamiento" required>
-                            <option value="">
-                                Selecciona un fraccionamiento…
-                            </option>
-                            {% for f in fraccionamientos %}
-                            <option value="{{ f }}"
-                                {% if (guardia.fraccionamiento or '')|lower == f|lower %}selected{% endif %}>
-                                {{ f }}
-                            </option>
-                            {% endfor %}
-                        </select>
-
-                    </div>
-
+            <div class="ad-card">
+              <h2 class="section-title"><i class="fa-solid fa-circle-info"></i> Información operativa</h2>
+              <div class="op-list">
+                <div class="op-item">
+                  <div class="op-ico"><i class="fa-solid fa-id-badge"></i></div>
+                  <div><b>ID del guardia</b><span class="id-val">{{ guardia._id }}</span></div>
                 </div>
-
-                <div class="form-actions">
-
-                    <button type="submit" class="btn">
-                        Guardar cambios
-                    </button>
-
-                    <a href="{{ url_for('admin.guardias') }}"
-                       class="btn secondary">
-                        Cancelar
-                    </a>
-
+                <div class="op-item op-cyan">
+                  <div class="op-ico"><i class="fa-solid fa-qrcode"></i></div>
+                  <div><b>Funciones</b><span>Validación QR, control de accesos y monitoreo.</span></div>
                 </div>
-
-            </form>
-
-        </div>
-
-        <!-- PANEL -->
-        <div class="card">
-
-            <h2>Información operativa</h2>
-
-            <div class="info-group">
-
-                <div class="info-item">
-
-                    <span>ID del guardia</span>
-
-                    <strong>
-                        {{ guardia._id }}
-                    </strong>
-
+                <div class="op-item op-warn">
+                  <div class="op-ico"><i class="fa-solid fa-shield-halved"></i></div>
+                  <div><b>Seguridad</b><span>Verificar periódicamente permisos y credenciales.</span></div>
                 </div>
-
-                <div class="info-item">
-
-                    <span>Funciones</span>
-
-                    <strong>
-                        Validación QR, control de accesos y monitoreo.
-                    </strong>
-
-                </div>
-
-                <div class="info-item">
-
-                    <span>Seguridad</span>
-
-                    <strong>
-                        Verificar periódicamente permisos y credenciales.
-                    </strong>
-
-                </div>
-
+              </div>
             </div>
 
-        </div>
+            <div class="ad-card">
+              <h2 class="section-title"><i class="fa-solid fa-triangle-exclamation"></i> Antes de guardar</h2>
+              <div class="alert-list">
+                <div class="alert-item a-warning">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <p>Cambiar el estado a inactivo retira de inmediato el acceso del guardia al módulo de caseta.</p>
+                </div>
+              </div>
+            </div>
 
+          </div>
+
+        </div>
+        </form>
+
+      </div>
     </div>
 
+    <footer class="app-foot">
+      <div>© 2026 <b>AccessQR</b> · Sistema de control de acceso residencial</div>
+      <div>Última actualización <span class="mono" id="syncTime">—</span></div>
+    </footer>
+  </div>
 </div>
 
-{% endblock %}
+<script>
+(function(){
+  function tick(){
+    const now=new Date();
+    const clk=document.getElementById('clk'),dte=document.getElementById('dte'),sy=document.getElementById('syncTime');
+    if(clk)clk.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if(dte)dte.textContent=now.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'}).replace('.','');
+    if(sy)sy.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  }
+  tick(); setInterval(tick,1000);
+  document.getElementById('burger')?.addEventListener('click',()=>document.getElementById('rail').classList.toggle('open'));
+})();
+</script>
+
+</body>
+</html>

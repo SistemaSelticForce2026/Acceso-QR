@@ -1,170 +1,487 @@
-{% extends 'layout.html' %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detalle de Guardia · AccessQR</title>
 
-{% block extra_css %}
-<link rel="stylesheet"
-href="{{ url_for('static',
-filename='css/paginas/editar_guardia.css') }}">
-{% endblock %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-{% block content %}
+<style>
+:root{
+  --bg:#eef0f4;--panel:#fff;--panel-2:#f7f8fb;
+  --ink-900:#0c1322;--ink-700:#243049;--ink-600:#475569;
+  --ink-500:#5b6678;--ink-400:#8a93a6;--ink-300:#aab2c2;
+  --line:#e4e7ef;--line-soft:#eef0f5;
+  --pri-50:#eff4ff;--pri-100:#dbe6ff;--pri-200:#c2d3fb;
+  --pri-500:#3b6ef5;--pri-600:#2563eb;--pri-700:#1d4ed8;
+  --ok:#16a34a;--ok-bg:#e8f6ee;--ok-bd:#c2e6cf;
+  --warn:#c2820a;--warn-bg:#fcf3df;--warn-bd:#f0dca6;
+  --bad:#d6342c;--bad-bg:#fdeceb;--bad-bd:#f5c8c5;
+  --info:#0e7490;--info-bg:#e3f4f7;--info-bd:#bce4ec;
+  --vio:#7c3aed;--vio-bg:#f1ecfd;
+  --rail-bg:#0d1424;--rail-bg-2:#111a2e;--rail-ink:#9aa6bf;
+  --rail-ink-2:#5e6b88;--rail-line:#1c2740;
+  --rad:12px;--rad-sm:9px;--rad-lg:16px;
+  --sh-1:0 1px 2px rgba(16,24,40,.05);
+  --sh-2:0 2px 8px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --sh-3:0 12px 30px rgba(13,20,40,.12);
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --rail-w:248px;--top-h:60px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink-700);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',monospace}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+::selection{background:var(--pri-100)}
 
-<div class="resident-profile">
+/* SHELL */
+.app{display:flex;min-height:100vh}
+.rail{width:var(--rail-w);flex:0 0 var(--rail-w);background:linear-gradient(185deg,var(--rail-bg),var(--rail-bg-2));color:var(--rail-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid #060b16;z-index:30}
+.brand{display:flex;align-items:center;gap:11px;padding:0 20px;height:var(--top-h);border-bottom:1px solid var(--rail-line);flex-shrink:0}
+.brand-mark{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));display:grid;place-items:center;color:#fff;font-size:15px;box-shadow:0 4px 12px rgba(37,99,235,.45),inset 0 1px 0 rgba(255,255,255,.25)}
+.brand-txt b{color:#fff;font-size:14.5px;font-weight:700;letter-spacing:-.2px;display:block;line-height:1.15}
+.brand-txt span{font-size:10.5px;color:var(--rail-ink-2);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.rail-scroll{flex:1;overflow-y:auto;padding:14px 12px 20px}
+.rail-scroll::-webkit-scrollbar{width:6px}
+.rail-scroll::-webkit-scrollbar-thumb{background:#1d2942;border-radius:9px}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rail-ink-2);padding:14px 12px 7px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:var(--rad-sm);font-size:13.5px;font-weight:500;color:var(--rail-ink);margin-bottom:1px;position:relative;transition:.16s var(--ease)}
+.nav-item i:first-child{width:18px;text-align:center;font-size:14px;color:var(--rail-ink-2);transition:.16s}
+.nav-item:hover{background:#172339;color:#dfe5f2}
+.nav-item:hover i:first-child{color:var(--pri-500)}
+.nav-item.active{background:linear-gradient(90deg,rgba(37,99,235,.18),rgba(37,99,235,.04));color:#fff;font-weight:600}
+.nav-item.active i:first-child{color:var(--pri-500)}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:22px;border-radius:0 3px 3px 0;background:var(--pri-500)}
+.nav-logout{margin-top:6px;border-top:1px solid var(--rail-line);border-radius:0;padding-top:14px}
+.nav-logout:hover{background:rgba(214,52,44,.12);color:#fca5a5}
+.nav-logout:hover i:first-child{color:#fb7185}
+.rail-foot{padding:12px;border-top:1px solid var(--rail-line);flex-shrink:0}
+.rail-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--rad-sm);transition:.16s;cursor:pointer}
+.rail-user:hover{background:#172339}
+.ru-av{width:34px;height:34px;border-radius:8px;flex-shrink:0;background:linear-gradient(145deg,#334155,#1e293b);color:#cbd5e1;display:grid;place-items:center;font-weight:700;font-size:13px;border:1px solid #2a3650}
+.ru-meta b{color:#e7ecf6;font-size:12.5px;font-weight:600;display:block;line-height:1.2}
+.ru-meta span{font-size:10.5px;color:var(--rail-ink-2)}
+.rail-user .fa-ellipsis-vertical{margin-left:auto;color:var(--rail-ink-2);font-size:12px}
 
-    <!-- HEADER -->
-    <div class="profile-header">
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:var(--top-h);position:sticky;top:0;z-index:25;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px}
+.burger{display:none;background:none;border:none;color:var(--ink-500);font-size:17px}
+.crumb{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-400);font-weight:500}
+.crumb b{color:var(--ink-900);font-weight:700}
+.crumb a{color:var(--ink-400);transition:.15s}
+.crumb a:hover{color:var(--pri-600)}
+.crumb i{font-size:8px;color:var(--ink-300)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+.top-clock{display:flex;flex-direction:column;align-items:flex-end;margin-right:6px;line-height:1.15}
+.top-clock b{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-900);font-weight:600;letter-spacing:-.3px}
+.top-clock span{font-size:10px;color:var(--ink-400);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.icon-btn{width:38px;height:38px;border-radius:var(--rad-sm);border:1px solid var(--line);background:#fff;color:var(--ink-500);display:grid;place-items:center;font-size:14px;position:relative;transition:.16s}
+.icon-btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+.top-prof{display:flex;align-items:center;gap:9px;padding:5px 10px 5px 6px;border:1px solid var(--line);border-radius:999px;background:#fff;margin-left:4px;transition:.16s}
+.top-prof:hover{border-color:var(--pri-200);box-shadow:var(--sh-1)}
+.tp-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+.top-prof b{font-size:12.5px;color:var(--ink-900);font-weight:600}
+.top-prof i{font-size:10px;color:var(--ink-400)}
 
-        <div class="profile-avatar">
-            {{ guardia.nombre[0] }}
+.content{padding:24px 26px 40px;max-width:1640px;width:100%;margin:0 auto}
+footer.app-foot{padding:18px 26px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-400);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:auto}
+footer.app-foot b{color:var(--ink-600)}
+
+/* Componentes */
+.btn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border-radius:var(--rad-sm);font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink-700);transition:.16s var(--ease);box-shadow:var(--sh-1);cursor:pointer}
+.btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+.btn i{font-size:12px}
+.btn-pri{background:var(--pri-600);border-color:var(--pri-600);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.btn-pri:hover{background:var(--pri-700);border-color:var(--pri-700);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.4)}
+.btn-ghost{background:transparent;border-color:var(--line);color:var(--ink-600)}
+.btn-ghost:hover{border-color:var(--ink-300);color:var(--ink-900);background:var(--panel-2)}
+.btn-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:var(--bad)}
+.btn-danger:hover{background:#fbd9d7;border-color:var(--bad);color:#a8261f}
+.btn-success{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
+.btn-success:hover{background:#c6e9d3;border-color:var(--ok);color:#0d6634}
+.btn-block{width:100%;justify-content:center}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-success{background:var(--ok-bg);color:var(--ok)}
+.b-info{background:var(--pri-50);color:var(--pri-700)}
+.b-warning{background:var(--warn-bg);color:var(--warn)}
+.b-danger{background:var(--bad-bg);color:var(--bad)}
+.b-neutral{background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line)}
+.b-vio{background:var(--vio-bg);color:var(--vio)}
+
+.ad-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:20px;box-shadow:var(--sh-2);transition:box-shadow .2s var(--ease)}
+.ad-card:hover{box-shadow:var(--sh-3)}
+.section-title{font-size:14px;font-weight:700;color:var(--ink-900);margin:0 0 16px;display:flex;align-items:center;gap:9px;letter-spacing:-.2px;padding-bottom:14px;border-bottom:1px solid var(--line-soft)}
+.section-title i{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600)}
+
+/* Página */
+.gd-page{display:flex;flex-direction:column;gap:16px}
+
+/* Hero del perfil */
+.profile-hero{background:linear-gradient(135deg,#101a30,#0c1322);border:1px solid #060b16;border-radius:var(--rad-lg);padding:26px;display:flex;align-items:center;gap:22px;position:relative;overflow:hidden;box-shadow:var(--sh-2)}
+.profile-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 88% 0%,rgba(37,99,235,.28),transparent 55%);pointer-events:none}
+.profile-hero::after{content:'';position:absolute;right:-40px;bottom:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.18),transparent 70%);pointer-events:none}
+.hero-av{width:84px;height:84px;border-radius:20px;flex-shrink:0;display:grid;place-items:center;font-size:32px;font-weight:800;color:#fff;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));box-shadow:0 10px 26px rgba(37,99,235,.4),inset 0 1px 0 rgba(255,255,255,.25);position:relative;z-index:1}
+.hero-av.inactivo{background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 10px 26px rgba(100,116,139,.35)}
+.hero-info{position:relative;z-index:1;min-width:0}
+.hero-info h1{font-size:25px;font-weight:800;color:#fff;letter-spacing:-.6px;line-height:1.1;margin:0}
+.hero-info p{font-size:13px;color:#9aa6bf;margin:7px 0 0;line-height:1.5}
+.hero-badges{display:flex;gap:8px;margin-top:13px;flex-wrap:wrap}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#dfe5f2}
+.hero-badge.on{background:rgba(22,163,74,.18);border-color:rgba(22,163,74,.32);color:#4ade80}
+.hero-badge.off{background:rgba(214,52,44,.18);border-color:rgba(214,52,44,.3);color:#fb7185}
+.hero-badge .hb-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;position:relative}
+.hero-badge.on .hb-dot::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid #4ade80;animation:ring 1.8s infinite}
+@keyframes ring{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.hero-actions{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap;position:relative;z-index:1}
+.hero-actions .btn{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14);color:#e7ecf6;box-shadow:none}
+.hero-actions .btn:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff}
+.hero-actions .btn-pri{background:var(--pri-600);border-color:var(--pri-600);color:#fff}
+.hero-actions .btn-pri:hover{background:var(--pri-700);border-color:var(--pri-700)}
+
+/* Grid */
+.profile-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+
+/* Lista de info */
+.info-list{display:flex;flex-direction:column}
+.info-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
+.info-row:last-child{border-bottom:none}
+.info-ic{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:14px;background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line-soft)}
+.info-tx{min-width:0;flex:1}
+.info-tx span{display:block;font-size:11px;font-weight:700;color:var(--ink-400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.info-tx strong{font-size:13.5px;font-weight:600;color:var(--ink-900);word-break:break-word}
+.info-tx .id-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-600)}
+.copy-mini{margin-left:auto;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink-400);display:grid;place-items:center;font-size:11px;flex-shrink:0;transition:.15s}
+.copy-mini:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+
+.turno-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 11px;border-radius:999px}
+.turno-matutino{background:var(--warn-bg);color:var(--warn)}
+.turno-vespertino{background:var(--info-bg);color:var(--info)}
+.turno-nocturno{background:var(--vio-bg);color:var(--vio)}
+.estado-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 11px;border-radius:999px}
+.estado-pill.on{background:var(--ok-bg);color:var(--ok)}
+.estado-pill.off{background:var(--bad-bg);color:var(--bad)}
+
+/* Acciones rápidas */
+.qa-list{display:flex;flex-direction:column;gap:10px}
+.qa-note{font-size:12px;color:var(--ink-400);margin:14px 0 0;line-height:1.5;padding-top:14px;border-top:1px solid var(--line-soft)}
+
+/* Capacidades */
+.cap-list{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.cap-item{display:flex;gap:11px;align-items:center;padding:11px 12px;border-radius:var(--rad-sm);background:var(--panel-2);border:1px solid var(--line-soft)}
+.cap-item .cap-ic{width:32px;height:32px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600)}
+.cap-item.g .cap-ic{background:var(--ok-bg);color:var(--ok)}
+.cap-item.c .cap-ic{background:var(--info-bg);color:var(--info)}
+.cap-item b{font-size:12.5px;color:var(--ink-900);font-weight:600}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);display:flex;align-items:center;gap:10px;background:#0c1322;color:#fff;padding:10px 18px;border-radius:999px;box-shadow:var(--sh-3);font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;z-index:9998;transition:.22s var(--ease)}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast i{color:var(--ok)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(9,14,26,.72);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
+.modal-overlay.open{opacity:1;pointer-events:auto}
+.modal-box{background:#fff;border-radius:var(--rad-lg);padding:28px 28px 24px;max-width:420px;width:100%;box-shadow:var(--sh-3);transform:translateY(10px);transition:transform .2s var(--ease)}
+.modal-overlay.open .modal-box{transform:none}
+.modal-ico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:20px;margin:0 auto 16px;background:var(--bad-bg);color:var(--bad)}
+.modal-box h3{text-align:center;font-size:17px;font-weight:700;color:var(--ink-900);margin:0 0 8px;letter-spacing:-.3px}
+.modal-box p{text-align:center;font-size:13px;color:var(--ink-500);margin:0 0 22px;line-height:1.6}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1;justify-content:center}
+
+/* Responsive */
+@media(max-width:1100px){.profile-grid{grid-template-columns:1fr}}
+@media(max-width:980px){
+  .rail{position:fixed;left:0;transform:translateX(-100%);transition:transform .25s var(--ease);box-shadow:var(--sh-3)}
+  .rail.open{transform:translateX(0)}
+  .burger{display:inline-grid;place-items:center}
+}
+@media(max-width:768px){
+  .content{padding:18px 14px 32px}
+  .top-clock{display:none}
+  .profile-hero{flex-direction:column;align-items:flex-start;text-align:left}
+  .hero-actions{margin-left:0;width:100%}
+  .hero-actions .btn{flex:1;justify-content:center}
+}
+@media(max-width:520px){.modal-actions{flex-direction:column}}
+@media(prefers-reduced-motion:reduce){*,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="rail" id="rail">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="brand-txt"><b>AccessQR</b><span>Control de acceso</span></div>
+    </div>
+    <div class="rail-scroll">
+      <div class="nav-group">
+        <div class="nav-label">Operación</div>
+        <a class="nav-item" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Panel general</a>
+        <a class="nav-item" href="{{ url_for('admin.accesos') }}"><i class="fa-solid fa-right-to-bracket"></i> Historial de accesos</a>
+        <a class="nav-item" href="#"><i class="fa-solid fa-qrcode"></i> Validación QR</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Administración</div>
+        <a class="nav-item" href="{{ url_for('admin.residentes') }}"><i class="fa-solid fa-users"></i> Residentes</a>
+        <a class="nav-item active" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-user-shield"></i> Guardias</a>
+        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-city"></i> Fraccionamientos</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Seguridad</div>
+        <a class="nav-item" href="{{ url_for('admin.incidencias') }}"><i class="fa-solid fa-triangle-exclamation"></i> Incidencias</a>
+        <a class="nav-item" href="{{ url_for('admin.reportes') }}"><i class="fa-solid fa-file-export"></i> Reportes</a>
+        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-gear"></i> Configuración</a>
+        <a class="nav-item nav-logout" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
+      </div>
+    </div>
+    <div class="rail-foot">
+      <div class="rail-user">
+        <div class="ru-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
+        <div class="ru-meta"><b>{{ session.nombre if session and session.nombre else 'Administrador' }}</b><span>Administrador</span></div>
+        <i class="fa-solid fa-ellipsis-vertical"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- PRINCIPAL -->
+  <div class="main">
+
+    <header class="topbar">
+      <button class="burger" id="burger"><i class="fa-solid fa-bars"></i></button>
+      <div class="crumb">
+        <span>Administración</span>
+        <i class="fa-solid fa-chevron-right"></i>
+        <a href="{{ url_for('admin.guardias') }}">Guardias</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <b>Detalle</b>
+      </div>
+      <div class="top-right">
+        <div class="top-clock"><b id="clk">—</b><span id="dte">—</span></div>
+        <a class="icon-btn" href="{{ url_for('admin.incidencias') }}"><i class="fa-regular fa-bell"></i></a>
+        <a class="icon-btn" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="top-prof">
+          <div class="tp-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
+          <b>{{ session.nombre.split(' ')[0] if session and session.nombre else 'Admin' }}</b>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="gd-page">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+            <div class="badge b-info" style="padding:12px 15px;border-radius:9px;font-size:13px">
+              <i class="fa-solid fa-circle-info"></i> {{ msg }}
+            </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- HERO -->
+        <div class="profile-hero">
+          <div class="hero-av {% if guardia.estado != 'activo' %}inactivo{% endif %}">{{ guardia.nombre[0] | upper if guardia.nombre else 'G' }}</div>
+          <div class="hero-info">
+            <h1>{{ guardia.nombre }}</h1>
+            <p>Guardia de seguridad registrado dentro del sistema residencial.</p>
+            <div class="hero-badges">
+              {% if guardia.estado == 'activo' %}
+              <span class="hero-badge on"><span class="hb-dot"></span> Activo</span>
+              {% else %}
+              <span class="hero-badge off"><span class="hb-dot"></span> Inactivo</span>
+              {% endif %}
+              <span class="hero-badge"><i class="fa-solid fa-user-shield"></i> Personal de vigilancia</span>
+            </div>
+          </div>
+          <div class="hero-actions">
+          </div>
         </div>
 
-        <div class="profile-info">
+        <!-- GRID -->
+        <div class="profile-grid">
 
-            <h1>{{ guardia.nombre }}</h1>
+          <!-- INFORMACIÓN GENERAL -->
+          <div class="ad-card">
+            <h2 class="section-title"><i class="fa-solid fa-id-card"></i> Información general</h2>
+            <div class="info-list">
 
-            <p>
-                Guardia de seguridad registrado dentro del sistema residencial
-            </p>
+              <div class="info-row">
+                <div class="info-ic"><i class="fa-solid fa-user"></i></div>
+                <div class="info-tx"><span>Nombre completo</span><strong>{{ guardia.nombre }}</strong></div>
+              </div>
 
-            <div class="profile-badges">
+              <div class="info-row">
+                <div class="info-ic"><i class="fa-solid fa-envelope"></i></div>
+                <div class="info-tx"><span>Correo electrónico</span><strong>{{ guardia.correo }}</strong></div>
+                <button type="button" class="copy-mini" data-copy="{{ guardia.correo }}" title="Copiar correo"><i class="fa-regular fa-copy"></i></button>
+              </div>
 
-                {% if guardia.estado == "activo" %}
+              <div class="info-row">
+                <div class="info-ic"><i class="fa-solid fa-phone"></i></div>
+                <div class="info-tx"><span>Teléfono</span><strong>{{ guardia.telefono }}</strong></div>
+              </div>
 
-                    <span class="badge success">
-                        Activo
-                    </span>
+              <div class="info-row">
+                <div class="info-ic"><i class="fa-solid fa-clock"></i></div>
+                <div class="info-tx">
+                  <span>Turno asignado</span>
+                  {% set t = (guardia.turno or '') | lower %}
+                  {% if t == 'matutino' %}
+                  <strong><span class="turno-pill turno-matutino"><i class="fa-solid fa-sun"></i> Matutino</span></strong>
+                  {% elif t == 'vespertino' %}
+                  <strong><span class="turno-pill turno-vespertino"><i class="fa-solid fa-cloud-sun"></i> Vespertino</span></strong>
+                  {% elif t == 'nocturno' %}
+                  <strong><span class="turno-pill turno-nocturno"><i class="fa-solid fa-moon"></i> Nocturno</span></strong>
+                  {% else %}
+                  <strong>{{ guardia.turno or '—' }}</strong>
+                  {% endif %}
+                </div>
+              </div>
 
+              <div class="info-row">
+                <div class="info-ic"><i class="fa-solid fa-user-tag"></i></div>
+                <div class="info-tx"><span>Rol dentro del sistema</span><strong>Guardia de seguridad</strong></div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-ic"><i class="fa-solid fa-circle-dot"></i></div>
+                <div class="info-tx">
+                  <span>Estado operativo</span>
+                  {% if guardia.estado == 'activo' %}
+                  <strong><span class="estado-pill on"><i class="fa-solid fa-circle-check"></i> Activo</span></strong>
+                  {% else %}
+                  <strong><span class="estado-pill off"><i class="fa-solid fa-ban"></i> Inactivo</span></strong>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-ic"><i class="fa-solid fa-id-badge"></i></div>
+                <div class="info-tx"><span>ID de guardia</span><strong class="id-val">{{ guardia._id }}</strong></div>
+                <button type="button" class="copy-mini" data-copy="{{ guardia._id }}" title="Copiar ID"><i class="fa-regular fa-copy"></i></button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- COLUMNA DERECHA -->
+          <div style="display:flex;flex-direction:column;gap:16px">
+
+            <!-- ACCIONES RÁPIDAS -->
+            <div class="ad-card">
+              <h2 class="section-title"><i class="fa-solid fa-bolt"></i> Acciones rápidas</h2>
+              <div class="qa-list">
+                <a href="{{ url_for('admin.editar_guardia', id=guardia._id) }}" class="btn btn-pri btn-block"><i class="fa-solid fa-pen"></i> Editar información</a>
+
+                {% if guardia.estado == 'activo' %}
+                <button type="button" class="btn btn-danger btn-block"
+                        data-confirm="¿Deseas desactivar a {{ guardia.nombre }}? Perderá el acceso al módulo de caseta."
+                        data-href="{{ url_for('admin.desactivar_guardia', id=guardia._id) }}">
+                  <i class="fa-solid fa-ban"></i> Desactivar guardia
+                </button>
                 {% else %}
-
-                    <span class="badge danger">
-                        Inactivo
-                    </span>
-
+                <a href="{{ url_for('admin.activar_guardia', id=guardia._id) }}" class="btn btn-success btn-block">
+                  <i class="fa-solid fa-circle-check"></i> Activar guardia
+                </a>
                 {% endif %}
 
-                <span class="badge">
-                    Personal de vigilancia
-                </span>
-
+                <a href="{{ url_for('admin.guardias') }}" class="btn btn-ghost btn-block"><i class="fa-solid fa-arrow-left"></i> Volver al listado</a>
+              </div>
+              <p class="qa-note">Las acciones de estado afectan de inmediato el acceso del guardia al módulo de caseta.</p>
             </div>
+
+            <!-- CAPACIDADES -->
+            <div class="ad-card">
+              <h2 class="section-title"><i class="fa-solid fa-list-check"></i> Capacidades</h2>
+              <div class="cap-list">
+                <div class="cap-item"><div class="cap-ic"><i class="fa-solid fa-qrcode"></i></div><b>Validación de códigos QR</b></div>
+                <div class="cap-item g"><div class="cap-ic"><i class="fa-solid fa-door-open"></i></div><b>Registro de entradas y salidas</b></div>
+                <div class="cap-item c"><div class="cap-ic"><i class="fa-solid fa-users-viewfinder"></i></div><b>Monitoreo de visitantes</b></div>
+              </div>
+            </div>
+
+          </div>
 
         </div>
 
+      </div>
     </div>
 
-    <!-- GRID -->
-    <div class="profile-grid">
-
-        <!-- INFORMACIÓN -->
-        <div class="card">
-
-            <h2>Información general</h2>
-
-            <div class="info-group">
-
-                <div class="info-item">
-                    <span>Nombre completo</span>
-                    <strong>{{ guardia.nombre }}</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>Correo electrónico</span>
-                    <strong>{{ guardia.correo }}</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>Teléfono</span>
-                    <strong>{{ guardia.telefono }}</strong>
-                </div>
-
-                <div class="info-item">
-
-                    <span>Turno asignado</span>
-
-                    {% if guardia.turno == "matutino" %}
-
-                        <strong class="turno-matutino">
-                            Matutino
-                        </strong>
-
-                    {% elif guardia.turno == "vespertino" %}
-
-                        <strong class="turno-vespertino">
-                            Vespertino
-                        </strong>
-
-                    {% elif guardia.turno == "nocturno" %}
-
-                        <strong class="turno-nocturno">
-                            Nocturno
-                        </strong>
-
-                    {% else %}
-
-                        <strong>
-                            {{ guardia.turno }}
-                        </strong>
-
-                    {% endif %}
-
-                </div>
-
-                <div class="info-item">
-                    <span>Rol dentro del sistema</span>
-                    <strong>Guardia de seguridad</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>Estado operativo</span>
-
-                    {% if guardia.estado == "activo" %}
-
-                        <strong class="estado-activo">
-                            Activo
-                        </strong>
-
-                    {% else %}
-
-                        <strong class="estado-inactivo">
-                            Inactivo
-                        </strong>
-
-                    {% endif %}
-
-                </div>
-
-                <div class="info-item">
-                    <span>ID de guardia</span>
-                    <strong>{{ guardia._id }}</strong>
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- ACCIONES -->
-        <div class="card">
-
-            <h2>Acciones rápidas</h2>
-
-            <div class="action-buttons">
-
-                <a href="{{ url_for('admin.desactivar_guardia', id=guardia._id) }}"
-                   class="btn danger-btn"
-                   onclick="return confirm('¿Deseas desactivar este guardia?')">
-                    Desactivar guardia
-                </a>
-
-                <a href="{{ url_for('admin.guardias') }}"
-                   class="btn secondary">
-                    Volver al listado
-                </a>
-
-            </div>
-
-        </div>
-
-    </div>
-
+    <footer class="app-foot">
+      <div>© 2026 <b>AccessQR</b> · Sistema de control de acceso residencial</div>
+      <div>Última actualización <span class="mono" id="syncTime">—</span></div>
+    </footer>
+  </div>
 </div>
 
-{% endblock %}
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h3>Confirmar desactivación</h3>
+    <p id="modalMsg">¿Estás seguro?</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="modalCancel">Cancelar</button>
+      <a href="#" class="btn btn-danger" id="modalConfirm">Sí, desactivar</a>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="fa-solid fa-check"></i> <span id="toastText"></span></div>
+
+<script>
+(function(){
+  function tick(){
+    const now=new Date();
+    const clk=document.getElementById('clk'),dte=document.getElementById('dte'),sy=document.getElementById('syncTime');
+    if(clk)clk.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if(dte)dte.textContent=now.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'}).replace('.','');
+    if(sy)sy.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  }
+  tick(); setInterval(tick,1000);
+  document.getElementById('burger')?.addEventListener('click',()=>document.getElementById('rail').classList.toggle('open'));
+
+  let toastTimer;
+  function toast(msg){
+    const t=document.getElementById('toast'),s=document.getElementById('toastText');
+    if(!t)return; s.textContent=msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+  }
+  document.querySelectorAll('[data-copy]').forEach(btn=>{
+    btn.addEventListener('click',()=>{ navigator.clipboard?.writeText(btn.dataset.copy||''); toast('Copiado al portapapeles'); });
+  });
+
+  // Modal desactivar
+  const overlay=document.getElementById('modalOverlay');
+  const modalMsg=document.getElementById('modalMsg');
+  const modalConfirm=document.getElementById('modalConfirm');
+  document.querySelectorAll('[data-confirm]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      modalMsg.textContent=btn.dataset.confirm||'¿Estás seguro?';
+      modalConfirm.href=btn.dataset.href||'#';
+      overlay.classList.add('open');
+    });
+  });
+  function cerrar(){ overlay.classList.remove('open'); }
+  document.getElementById('modalCancel')?.addEventListener('click',cerrar);
+  overlay?.addEventListener('click',e=>{ if(e.target===overlay)cerrar(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape')cerrar(); });
+})();
+</script>
+
+</body>
+</html>

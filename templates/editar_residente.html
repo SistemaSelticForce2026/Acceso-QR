@@ -1,71 +1,175 @@
 {% extends 'layout.html' %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/editar_residente.css') }}">
+<style>
+/* ============================================================
+   EDITAR RESIDENTE — mismo lenguaje visual que admin/residentes
+   ============================================================ */
+:root{
+  --bg:#eef0f4; --panel:#fff; --panel-2:#f7f8fb;
+  --ink-900:#0c1322; --ink-700:#243049; --ink-600:#475569;
+  --ink-500:#5b6678; --ink-400:#8a93a6; --ink-300:#aab2c2;
+  --line:#e4e7ef; --line-soft:#eef0f5;
+  --pri-50:#eff4ff; --pri-100:#dbe6ff; --pri-200:#c2d3fb;
+  --pri-500:#3b6ef5; --pri-600:#2563eb; --pri-700:#1d4ed8;
+  --ok:#16a34a; --ok-bg:#e8f6ee; --ok-bd:#c2e6cf;
+  --bad:#d6342c; --bad-bg:#fdeceb; --bad-bd:#f5c8c5;
+  --rad:12px; --rad-sm:9px;
+  --sh-1:0 1px 2px rgba(16,24,40,.05);
+  --sh-2:0 2px 8px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink-700);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ===== Shell ===== */
+.er-page{display:flex;flex-direction:column;gap:20px;max-width:860px;width:100%;margin:0 auto;padding:24px 26px 40px}
+
+/* ===== Back ===== */
+.er-back{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-500);text-decoration:none;transition:.15s}
+.er-back i{font-size:11px}
+.er-back:hover{color:var(--pri-600)}
+
+/* ===== Page head ===== */
+.page-head{display:flex;align-items:flex-start;gap:15px}
+.ph-badge{width:50px;height:50px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;font-size:19px;color:#fff;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));box-shadow:0 8px 18px rgba(37,99,235,.32)}
+.ph-eyebrow{font-size:11px;font-weight:700;color:var(--pri-600);text-transform:uppercase;letter-spacing:.08em;margin:0 0 3px}
+.ph-title{font-size:22px;font-weight:800;color:var(--ink-900);letter-spacing:-.5px;line-height:1.15}
+.ph-sub{font-size:13px;color:var(--ink-500);margin-top:5px;line-height:1.55}
+.ph-name-tag{display:inline-flex;align-items:center;gap:7px;margin-top:8px;background:var(--pri-50);border:1px solid var(--pri-200);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;color:var(--pri-700)}
+.ph-name-tag i{font-size:11px}
+
+/* ===== Formulario card ===== */
+.ad-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:22px 24px;box-shadow:var(--sh-2)}
+.section-title{font-size:14px;font-weight:700;color:var(--ink-900);margin:0 0 18px;display:flex;align-items:center;gap:9px;letter-spacing:-.2px}
+.section-title i{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600);flex-shrink:0}
+
+/* ===== Grid de campos ===== */
+.er-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.er-field{display:flex;flex-direction:column;gap:6px}
+.er-field.full{grid-column:1/-1}
+.er-field label{font-size:12px;font-weight:700;color:var(--ink-600);text-transform:uppercase;letter-spacing:.05em}
+.er-field input,.er-field select,.er-field textarea{width:100%;height:44px;border:1.5px solid var(--line);border-radius:var(--rad-sm);background:var(--panel-2);padding:0 14px;font-size:13.5px;color:var(--ink-900);font-family:inherit;outline:none;transition:.16s var(--ease)}
+.er-field input:focus,.er-field select:focus{background:#fff;border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
+.er-field input::placeholder{color:var(--ink-300)}
+.er-field .field-hint{font-size:11.5px;color:var(--ink-400);line-height:1.5;margin-top:2px}
+
+/* Separador de secciones dentro del form */
+.form-divider{grid-column:1/-1;height:1px;background:var(--line-soft);margin:4px 0}
+.form-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--ink-400);text-transform:uppercase;letter-spacing:.1em;padding-top:4px}
+
+/* ===== Acciones del form ===== */
+.er-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line-soft);flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 18px;border-radius:var(--rad-sm);font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink-700);transition:.16s var(--ease);box-shadow:var(--sh-1);text-decoration:none;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
+.btn i{font-size:12px}
+.btn-save{background:var(--pri-600);border-color:var(--pri-600);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.btn-save:hover{background:var(--pri-700);border-color:var(--pri-700);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.4)}
+
+/* ===== Aviso ===== */
+.er-notice{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-radius:var(--rad-sm);border:1px solid var(--pri-200);background:var(--pri-50);font-size:12.5px;color:var(--ink-600);line-height:1.55}
+.er-notice i{color:var(--pri-500);margin-top:1px;flex-shrink:0;font-size:13px}
+
+/* ===== Responsive ===== */
+@media(max-width:680px){
+  .er-page{padding:16px 14px 32px}
+  .er-grid{grid-template-columns:1fr}
+  .er-field.full{grid-column:auto}
+  .er-actions{justify-content:stretch}
+  .btn{flex:1;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
 {% endblock %}
 
 {% block content %}
 
-<div class="er-wrap">
+<div class="er-page">
 
-    <a href="{{ url_for('admin.residentes') }}" class="er-back">
-        <i class="fa-solid fa-arrow-left"></i> Volver al directorio
-    </a>
+  <!-- Back -->
+  <a href="{{ url_for('admin.residentes') }}" class="er-back">
+    <i class="fa-solid fa-arrow-left"></i> Volver al directorio
+  </a>
 
-    <div class="er-card">
+  <!-- Page head -->
+  <div class="page-head">
+    <div class="ph-badge"><i class="fa-solid fa-user-pen"></i></div>
+    <div>
+      <p class="ph-eyebrow">Administración</p>
+      <h1 class="ph-title">Editar residente</h1>
+      <p class="ph-sub">Actualiza la información del residente en el sistema.</p>
+      <div class="ph-name-tag"><i class="fa-solid fa-user"></i> {{ usuario.nombre }}</div>
+    </div>
+  </div>
 
-        <div class="er-head">
-            <div class="er-head-icon"><i class="fa-solid fa-user-pen"></i></div>
-            <div>
-                <h1 class="er-title">Editar residente</h1>
-                <p class="er-sub">Actualiza la información del residente.</p>
-            </div>
+  <!-- Aviso informativo -->
+  <div class="er-notice">
+    <i class="fa-solid fa-circle-info"></i>
+    <span>Los cambios se aplican de inmediato. El correo electrónico se usa para el inicio de sesión del residente en la aplicación móvil.</span>
+  </div>
+
+  <!-- Formulario -->
+  <div class="ad-card">
+    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Datos del residente</h2>
+
+    <form method="POST">
+
+      <div class="er-grid">
+
+        <!-- Datos personales -->
+        <div class="form-section-label">Datos personales</div>
+
+        <div class="er-field full">
+          <label for="nombre">Nombre completo</label>
+          <input type="text" id="nombre" name="nombre" value="{{ usuario.nombre }}" required placeholder="Nombre completo del residente">
         </div>
 
-        <form method="POST">
-            <div class="er-grid">
+        <div class="er-field">
+          <label for="correo">Correo electrónico</label>
+          <input type="email" id="correo" name="correo" value="{{ usuario.correo }}" required placeholder="correo@ejemplo.com">
+          <span class="field-hint">Se usa para iniciar sesión en la app móvil.</span>
+        </div>
 
-                <div class="er-field full">
-                    <label>Nombre completo</label>
-                    <input type="text" name="nombre" value="{{ usuario.nombre }}" required>
-                </div>
+        <div class="er-field">
+          <label for="telefono">Teléfono</label>
+          <input type="text" id="telefono" name="telefono" value="{{ usuario.telefono }}" required placeholder="10 dígitos">
+        </div>
 
-                <div class="er-field">
-                    <label>Correo electrónico</label>
-                    <input type="email" name="correo" value="{{ usuario.correo }}" required>
-                </div>
+        <div class="form-divider"></div>
 
-                <div class="er-field">
-                    <label>Teléfono</label>
-                    <input type="text" name="telefono" value="{{ usuario.telefono }}" required>
-                </div>
+        <!-- Domicilio -->
+        <div class="form-section-label">Domicilio</div>
 
-                <div class="er-field">
-                    <label>Fraccionamiento</label>
-                    <input type="text" name="fraccionamiento" value="{{ usuario.fraccionamiento }}" required>
-                </div>
+        <div class="er-field full">
+          <label for="fraccionamiento">Fraccionamiento</label>
+          <input type="text" id="fraccionamiento" name="fraccionamiento" value="{{ usuario.fraccionamiento }}" required placeholder="Nombre del fraccionamiento">
+        </div>
 
-                <div class="er-field">
-                    <label>Privada</label>
-                    <input type="text" name="privada" value="{{ usuario.privada }}" required>
-                </div>
+        <div class="er-field">
+          <label for="privada">Privada</label>
+          <input type="text" id="privada" name="privada" value="{{ usuario.privada }}" required placeholder="Nombre de la privada">
+        </div>
 
-                <div class="er-field">
-                    <label>Número de casa</label>
-                    <input type="text" name="numero_casa" value="{{ usuario.numero_casa }}" required>
-                </div>
+        <div class="er-field">
+          <label for="numero_casa">Número de casa</label>
+          <input type="text" id="numero_casa" name="numero_casa" value="{{ usuario.numero_casa }}" required placeholder="Ej. 14">
+        </div>
 
-            </div>
+      </div>
 
-            <div class="er-actions">
-                <a href="{{ url_for('admin.residentes') }}" class="er-btn er-cancel">Cancelar</a>
-                <button type="submit" class="er-btn er-save">
-                    <i class="fa-solid fa-check"></i> Guardar cambios
-                </button>
-            </div>
-        </form>
+      <!-- Botones -->
+      <div class="er-actions">
+        <a href="{{ url_for('admin.residentes') }}" class="btn">
+          <i class="fa-solid fa-xmark"></i> Cancelar
+        </a>
+        <button type="submit" class="btn btn-save">
+          <i class="fa-solid fa-check"></i> Guardar cambios
+        </button>
+      </div>
 
-    </div>
+    </form>
+  </div>
+
 </div>
 
 {% endblock %}
