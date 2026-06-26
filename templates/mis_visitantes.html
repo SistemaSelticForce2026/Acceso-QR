@@ -82,21 +82,34 @@
     {%- if visita.qr_estado == 'cancelado' -%}
         {%- set badge_cls = 'badge-danger' -%}
         {%- set badge_label = 'QR cancelado' -%}
+
     {%- elif visita.qr_estado == 'vencido' -%}
         {%- set badge_cls = 'badge-danger' -%}
         {%- set badge_label = 'QR vencido' -%}
+
+    {%- elif visita.qr_estado == 'rechazado' or visita.estado == 'rechazado' -%}
+        {%- set badge_cls = 'badge-danger' -%}
+        {%- set badge_label = 'Rechazado' -%}
+
     {%- elif visita.estado == 'dentro' -%}
         {%- set badge_cls = 'badge-success' -%}
         {%- set badge_label = 'Dentro' -%}
+
     {%- elif visita.estado == 'activo' -%}
         {%- set badge_cls = 'badge-blue' -%}
         {%- set badge_label = 'Vigente' -%}
+
     {%- elif visita.estado == 'salida_registrada' -%}
         {%- set badge_cls = 'badge-violet' -%}
         {%- set badge_label = 'Finalizada' -%}
-    {%- else -%}
+
+    {%- elif visita.estado == 'pendiente_autorizacion' -%}
         {%- set badge_cls = 'badge-warning' -%}
         {%- set badge_label = 'Pendiente' -%}
+
+    {%- else -%}
+        {%- set badge_cls = 'badge-secondary' -%}
+        {%- set badge_label = visita.estado|title -%}
     {%- endif -%}
 
     {%- set acciones_bloqueadas =
