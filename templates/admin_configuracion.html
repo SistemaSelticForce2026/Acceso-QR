@@ -47,14 +47,19 @@
         role="tab">
 
             <i class="fa-solid fa-location-dot"></i>
-            <span>{{ f }}</span>
+            
+            {# 1. CORRECCIÓN AQUÍ: Formateamos el texto del botón #}
+            {% set f_formateado = f | title | replace(' Del ', ' del ') | replace(' Ii', ' II') | replace(' Iiii', ' III') %}
+            <span>{{ f_formateado }}</span>
+            
             <b>{{ conteos.get(f, 0) }}</b>
 
         </a>
 
         <form method="POST"
             action="{{ url_for('admin.eliminar_fraccionamiento') }}"
-            onsubmit="return confirm('¿Eliminar el fraccionamiento {{ f }}? Esta acción borrará residentes, visitas y configuración.');">
+            {# 2. CORRECCIÓN AQUÍ: También formateamos el nombre en el cartel de confirmación al eliminar #}
+            onsubmit="return confirm('¿Eliminar el fraccionamiento {{ f_formateado }}? Esta acción borrará residentes, visitas y configuración.');">
 
         <input type="hidden"
             name="fraccionamiento"
@@ -79,7 +84,9 @@
 {# Aviso del fraccionamiento que se está editando #}
 <div class="frac-context">
     <i class="fa-solid fa-circle-info"></i>
-    Editando la configuración de <strong>{{ frac_sel }}</strong>.
+    {# 3. CORRECCIÓN AQUÍ: Formateamos el aviso contextual de abajo #}
+    {% set frac_sel_formateado = frac_sel | title | replace(' Del ', ' del ') | replace(' Ii', ' II') | replace(' Iiii', ' III') %}
+    Editando la configuración de <strong>{{ frac_sel_formateado }}</strong>.
     Los cambios solo aplican a este fraccionamiento.
 </div>
 

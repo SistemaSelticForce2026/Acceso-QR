@@ -149,7 +149,9 @@ filename='css/paginas/registrar_guardia.css') }}">
                                 Selecciona un fraccionamiento…
                             </option>
                             {% for f in fraccionamientos %}
-                            <option value="{{ f }}">{{ f }}</option>
+                            {# Aplicamos el formateo estético manteniendo la variable original 'f' en el value #}
+                            {% set f_formateado = f | title | replace(' Del ', ' del ') | replace(' Ii', ' II') | replace(' Iiii', ' III') %}
+                            <option value="{{ f }}">{{ f_formateado }}</option>
                             {% endfor %}
                         </select>
 

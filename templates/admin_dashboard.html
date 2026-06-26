@@ -527,7 +527,17 @@ footer.app-foot b{color:var(--ink-600)}
             <div class="df-icon"><i class="fa-solid fa-city"></i></div>
             <div>
               <h3>Fraccionamiento</h3>
-              <p>{% if frac_sel %}Mostrando información de <strong>{{ frac_sel|title }}</strong>{% else %}Mostrando información consolidada de todos los fraccionamientos{% endif %}</p>
+              
+              {# 1. CORRECCIÓN AQUÍ: Limpieza del texto informativo cuando hay un fraccionamiento seleccionado #}
+              <p>
+                {% if frac_sel %}
+                  {% set frac_sel_formateado = frac_sel | title | replace(' Del ', ' del ') | replace(' Ii', ' II') | replace(' Iiii', ' III') %}
+                  Mostrando información de <strong>{{ frac_sel_formateado }}</strong>
+                {% else %}
+                  Mostrando información consolidada de todos los fraccionamientos
+                {% endif %}
+              </p>
+
             </div>
           </div>
           <form method="GET" id="fraccionamientoForm">
@@ -535,11 +545,18 @@ footer.app-foot b{color:var(--ink-600)}
             <input type="hidden" name="dia" value="{{ dia_sel }}">
             <input type="hidden" name="semana" value="{{ semana_sel }}">
             <input type="hidden" name="mes" value="{{ mes_sel }}">
+            
             <select name="fraccionamiento" class="dashboard-select" onchange="this.form.submit()">
               <option value="">Todos los fraccionamientos</option>
+              
               {% for f in fraccionamientos %}
-              <option value="{{ f }}" {% if frac_sel == f|lower %}selected{% endif %}>{{ f|title }}</option>
+              {# 2. CORRECCIÓN AQUÍ: Definimos el formato visual idéntico para cada opción del selector #}
+              {% set f_formateado = f | title | replace(' Del ', ' del ') | replace(' Ii', ' II') | replace(' Iiii', ' III') %}
+              <option value="{{ f }}" {% if frac_sel == f|lower %}selected{% endif %}>
+                {{ f_formateado }}
+              </option>
               {% endfor %}
+
             </select>
           </form>
         </div>

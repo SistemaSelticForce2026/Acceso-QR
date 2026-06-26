@@ -957,13 +957,15 @@ def residentes():
     pagina = int(request.args.get("page", 1))
     por_pagina = 10
 
-    # Fraccionamiento seleccionado (viene como "Foresta Dream Lagons", etc.)
+    # Fraccionamiento seleccionado (viene como "El Porvenir", "Cedro Zinacantepec", etc.)
     frac_sel = request.args.get("fraccionamiento", "").strip()
 
     filtro = {"rol": "residente"}
     if frac_sel:
-        filtro["fraccionamiento"] = frac_sel.lower()  # se guarda en minúsculas
+        # Buscamos ignorando mayúsculas y minúsculas de forma segura
+        filtro["fraccionamiento"] = {"$regex": f"^{frac_sel}$", "$options": "i"}
 
+    # Usamos tus funciones helper de fraccionamientos.py que ya manejan la agregación de colecciones
     total = contar_residentes(mongo.db, filtro)
     total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
 
@@ -975,21 +977,28 @@ def residentes():
         limit=por_pagina,
     )
 
-    # Conteo por fraccionamiento (para los chips de filtro)
-    conteos = {
-        f: contar_residentes(
-            mongo.db, {"rol": "residente", "fraccionamiento": f.lower()}
+    # 2. CORRECCIÓN CLAVE: Usamos tu helper nativo para obtener la lista real y completa
+    lista_fracs = obtener_fraccionamientos(mongo.db)
+
+    # 3. Generamos los conteos de forma segura para cada fraccionamiento de la lista dinámica
+    conteos = {}
+    for f in lista_fracs:
+        conteos[f] = contar_residentes(
+            mongo.db,
+            {
+                "rol": "residente",
+                "fraccionamiento": {"$regex": f"^{f}$", "$options": "i"},
+            },
         )
-        for f in FRACCIONAMIENTOS
-    }
-    total_global = sum(conteos.values())
+
+    total_global = contar_residentes(mongo.db, {"rol": "residente"})
 
     return render_template(
         "admin_residentes.html",
         usuarios=usuarios,
         pagina=pagina,
         total_paginas=total_paginas,
-        fraccionamientos=FRACCIONAMIENTOS,
+        fraccionamientos=lista_fracs,  # Enviamos la lista unificada
         frac_sel=frac_sel,
         conteos=conteos,
         total=total,
