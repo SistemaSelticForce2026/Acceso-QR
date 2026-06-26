@@ -534,6 +534,20 @@ def scan_entrada():
                 "mensaje": "QR no encontrado. Incidencia registrada automáticamente.",
             }
 
+        elif (
+            visita.get("qr_estado") == "rechazado"
+            or visita.get("estado") == "rechazado"
+        ):
+            # Ya fue rechazado antes: NO registramos otra incidencia,
+            # solo informamos que el pase quedó rechazado.
+            resultado = {
+                "estado": "rechazado",
+                "razon": "qr_rechazado",
+                "mensaje": "Este QR fue rechazado por el guardia y ya no puede utilizarse.",
+                "visita": visita,
+                "fecha_visita": visita.get("fecha_visita"),
+            }
+
         elif visita.get("qr_estado") in ["vencido", "cancelado", "finalizado"]:
             _registrar_incidencia_qr(
                 session,
@@ -690,6 +704,38 @@ def incidencia_manual():
         descripcion,
         visita=visita,
     )
+
+    if visita:
+        ahora = datetime.now()
+        update_rechazo = {
+            "estado": "rechazado",
+            "qr_estado": "rechazado",
+            "motivo_rechazo": tipo_incidencia,
+            "detalle_rechazo": detalle,
+            "fecha_rechazo": ahora,
+            "rechazado_por": session.get("nombre"),
+        }
+        _col_visita(visita).update_one({"_id": visita["_id"]}, {"$set": update_rechazo})
+        visita.update(update_rechazo)
+
+        # Bitácora de accesos (para que el dashboard admin lo cuente
+        # como "rechazado": logs con resultado == "rechazado").
+        mongo.db.access_logs.insert_one(
+            {
+                "visita_id": str(visita["_id"]),
+                "guardia_id": session["user_id"],
+                "guardia_nombre": session["nombre"],
+                "accion": "rechazo",
+                "fecha_hora": ahora,
+                "resultado": "rechazado",
+                "observaciones": descripcion,
+            }
+        )
+
+        # Avisar a admin y al residente dueño del pase.
+        socketio.emit("actualizar_dashboard", to="rol:admin")
+        if visita.get("residente_id"):
+            socketio.emit("actualizar_dashboard", to=f"user:{visita['residente_id']}")
 
     resultado = {
         "estado": "incidencia",

@@ -99,7 +99,7 @@
         {%- set nombre = visita.nombre_visitante | default('Visitante') -%}
         {%- set iniciales = (nombre.split(' ') | map('first') | list)[:2] | join('') | upper -%}
 
-        {%- if visita.qr_estado in ['cancelado','vencido'] or visita.estado in ['cancelado','salida_registrada'] -%}
+        {%- if visita.qr_estado in ['cancelado','vencido'] or visita.estado in ['cancelado','salida_registrada','rechazado'] -%}
             {%- set av_color = '#46464c' -%}
         {%- elif visita.estado == 'dentro' -%}
             {%- set av_color = '#1a1c2e' -%}
@@ -110,6 +110,9 @@
         {%- if visita.qr_estado == 'cancelado' or visita.estado == 'cancelado' -%}
             {%- set badge_cls = 'badge-danger' -%}
             {%- set badge_label = 'Cancelada' -%}
+        {%- elif visita.estado == 'rechazado' or visita.qr_estado == 'rechazado' -%}
+            {%- set badge_cls = 'badge-danger' -%}
+            {%- set badge_label = 'Rechazada' -%}
         {%- elif visita.qr_estado == 'vencido' -%}
             {%- set badge_cls = 'badge-danger' -%}
             {%- set badge_label = 'Vencida' -%}

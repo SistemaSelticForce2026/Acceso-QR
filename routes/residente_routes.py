@@ -212,7 +212,8 @@ def cancelar_qr(token):
         "pendiente_autorizacion",
         "dentro",
         "salida_registrada",
-    ] or visita.get("qr_estado") in ["cancelado", "vencido"]:
+        "rechazado",
+    ] or visita.get("qr_estado") in ["cancelado", "vencido", "rechazado"]:
         return (
             jsonify({"success": False, "message": "Este QR ya no puede cancelarse."}),
             409,
