@@ -22,6 +22,14 @@ import cloudinary.uploader
 resident_bp = Blueprint("resident", __name__, url_prefix="/resident")
 
 
+@resident_bp.after_request
+def no_cache(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 # =====================================================
 # HELPERS DE COLECCIÓN (según el fraccionamiento del residente logueado)
 # =====================================================
