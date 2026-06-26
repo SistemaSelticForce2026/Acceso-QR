@@ -203,6 +203,22 @@
 
 {% block extra_js %}
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+(function () {
+    const socket = io();
+
+    // Unirse a la sala personal del residente
+    socket.emit("join", { room: "user:{{ session['user_id'] }}" });
+
+    // Cuando el guardia actualiza una visita, recargar
+    socket.on("actualizar_dashboard", function () {
+        location.reload();
+    });
+})();
+</script>
+
+
 <script>
 
 document.getElementById("heroDate").textContent =

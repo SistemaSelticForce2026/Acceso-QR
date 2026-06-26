@@ -734,7 +734,6 @@ def incidencia_manual():
 
         # Avisar a admin y al residente dueño del pase.
         socketio.emit("actualizar_dashboard", to="rol:admin")
-        socketio.emit("actualizar_dashboard", to="rol:residente")  # ← agregar
         if visita.get("residente_id"):
             socketio.emit("actualizar_dashboard", to=f"user:{visita['residente_id']}")
 

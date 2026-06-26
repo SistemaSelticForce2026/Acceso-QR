@@ -480,7 +480,20 @@ photoModal.addEventListener("click", function(){
 
 });
 
+</script>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+(function () {
+    const socket = io();
+    socket.emit("join", { room: "user:{{ session['user_id'] }}" });
+    socket.on("actualizar_dashboard", function () {
+        location.reload();
+    });
+})();
+</script>
+
+<script>
 /* ─── Auto abrir QR recién generado ───────────────────────────────── */
 {% if auto_qr %}
 window.addEventListener("load", () => {
