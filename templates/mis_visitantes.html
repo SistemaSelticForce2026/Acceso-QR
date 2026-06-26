@@ -555,10 +555,15 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
         const fecha     = card.dataset.fecha;            // YYYY-MM-DD
         const hora      = card.dataset.hora || '23:59';  // HH:MM
 
-        // Solo temporales que nunca entraron ni se finalizaron/cancelaron
+        // Solo marcar como "No se presentó" si NUNCA fue escaneado
         if (modalidad === 'recurrente') return;
-        if (['dentro', 'salida_registrada'].includes(estado)) return;
-        if (['cancelado', 'vencido'].includes(qr)) return;
+
+        // Ya fue atendido por caseta
+        if (['dentro', 'salida_registrada', 'rechazado'].includes(estado)) return;
+
+        // Estados del QR que ya no deben cambiar
+        if (['cancelado', 'vencido', 'rechazado'].includes(qr)) return;
+
         if (!fecha) return;
 
         const [y, m, d]  = fecha.split('-').map(Number);
