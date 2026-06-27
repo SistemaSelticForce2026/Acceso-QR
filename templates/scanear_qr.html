@@ -777,7 +777,7 @@ window.addEventListener("pageshow", function (e) {
 <script>
 (function () {
     const KEY = 'grdPendingScan';
-    const TOL_MS = 5 * 60 * 1000;
+    const TOL_MS = 2 * 60 * 1000;
 
     {% if resultado and resultado.estado == 'permitido' and resultado.visita %}
         // QR escaneado y a la espera de autorización: lo guardamos por si la
