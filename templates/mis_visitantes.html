@@ -501,19 +501,33 @@ photoModal.addEventListener("click", function(){
     const socket = io();
     socket.emit("join", { room: "user:{{ session['user_id'] }}" });
     socket.on("actualizar_dashboard", function () {
-        location.reload();
+        const u = new URL(window.location.href);
+        u.searchParams.delete("auto_qr");
+        window.location.replace(u.pathname + u.search + u.hash);
     });
 })();
 </script>
 
 <script>
 /* ─── Auto abrir QR recién generado ───────────────────────────────── */
+
 {% if auto_qr %}
 window.addEventListener("load", () => {
+
     const el = document.querySelector('[data-qr-token="{{ auto_qr }}"]');
-    if (el) el.click();
+
+    if (el) {
+        el.click();
+
+        // Elimina ?auto_qr=... de la URL para que nunca vuelva a abrirse
+        const url = new URL(window.location);
+        url.searchParams.delete("auto_qr");
+        window.history.replaceState({}, "", url);
+    }
+
 });
 {% endif %}
+
 </script>
 
 <!-- BUSCADOR TABLA -->
