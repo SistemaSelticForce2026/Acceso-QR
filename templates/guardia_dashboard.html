@@ -227,6 +227,8 @@
                                 <span class="grd-badge info">Vigente</span>
                             {% elif visita.estado == "salida_registrada" %}
                                 <span class="grd-badge neutral">Finalizada</span>
+                            {% elif visita.estado == "no_presento" %}
+                                <span class="grd-badge danger">No se presentó</span>
                             {% elif visita.estado in ["vencido", "cancelado"] %}
                                 <span class="grd-badge danger">{{ visita.estado | capitalize }}</span>
                             {% else %}

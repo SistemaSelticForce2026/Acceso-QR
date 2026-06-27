@@ -771,6 +771,61 @@ window.addEventListener("pageshow", function (e) {
 
 
 <!-- ===================================================== -->
+<!-- TOLERANCIA 5 MIN: recuperar pase tras refresco         -->
+<!-- ===================================================== -->
+{% if modo != 'salida' %}
+<script>
+(function () {
+    const KEY = 'grdPendingScan';
+    const TOL_MS = 5 * 60 * 1000;
+
+    {% if resultado and resultado.estado == 'permitido' and resultado.visita %}
+        // QR escaneado y a la espera de autorización: lo guardamos por si la
+        // pantalla se refresca por error.
+        sessionStorage.setItem(KEY, JSON.stringify({
+            token: "{{ resultado.visita.qr_token }}",
+            ts: Date.now()
+        }));
+        return;
+    {% elif resultado %}
+        // El pase ya se resolvió (autorizado, rechazado o inválido).
+        sessionStorage.removeItem(KEY);
+        return;
+    {% endif %}
+
+    // ---- Escáner vacío (sin resultado) ----
+    let raw = sessionStorage.getItem(KEY);
+    if (!raw) return;
+
+    let p;
+    try { p = JSON.parse(raw); } catch (e) { sessionStorage.removeItem(KEY); return; }
+    if (!p || !p.token || !p.ts || (Date.now() - p.ts) > TOL_MS) {
+        // Se acabó la tolerancia: el servidor ya lo marcó como "No se presentó".
+        sessionStorage.removeItem(KEY);
+        return;
+    }
+
+    // Solo recuperamos cuando la página se RECARGÓ (refresco), no cuando el
+    // guardia entró al escáner deliberadamente para otra persona.
+    let recargada = false;
+    try {
+        const nav = performance.getEntriesByType('navigation')[0];
+        recargada = nav ? nav.type === 'reload'
+                        : (performance.navigation && performance.navigation.type === 1);
+    } catch (e) {}
+    if (!recargada) return;
+
+    window.addEventListener('DOMContentLoaded', function () {
+        const form  = document.getElementById('qrForm');
+        const input = document.getElementById('qr_token');
+        if (form && input) { input.value = p.token; form.submit(); }
+    });
+})();
+</script>
+{% endif %}
+
+
+<!-- ===================================================== -->
 <!-- SCRIPT                                                -->
 <!-- ===================================================== -->
 

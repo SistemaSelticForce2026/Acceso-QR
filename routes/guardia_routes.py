@@ -57,6 +57,10 @@ def _ahora_local():
 VISITAS_POR_PAGINA = 20
 ESTADOS_VALIDOS = {"activo", "dentro", "salida_registrada"}
 
+# Tiempo que el guardia tiene para autorizar (o re-escanear) un QR ya escaneado
+# antes de que el pase se marque automáticamente como "No se presentó".
+TOLERANCIA_AUTORIZACION = timedelta(minutes=5)
+
 
 # ---------------------------------------------------------------------------
 # Helpers de visitas / QR
@@ -397,6 +401,33 @@ def _conteos_estado_actual(col, inicio_hoy):
 
 
 # ---------------------------------------------------------------------------
+# Tolerancia 5 minutos
+# ---------------------------------------------------------------------------
+
+
+def _marcar_no_presentados(col):
+    """Marca como 'no_presento' las visitas escaneadas (pendientes de
+    autorización) que superaron TOLERANCIA_AUTORIZACION sin ser autorizadas
+    ni rechazadas. Los pases recurrentes NO se invalidan: solo se libera el
+    estado pendiente y vuelven a quedar 'activo' para un próximo intento."""
+    if col is None:
+        return
+    limite = datetime.now() - TOLERANCIA_AUTORIZACION
+    base = {"estado": "pendiente_autorizacion", "fecha_escaneo": {"$lt": limite}}
+    try:
+        col.update_many(
+            {**base, "modalidad_visita": {"$ne": "recurrente"}},
+            {"$set": {"estado": "no_presento", "qr_estado": "no_presentado"}},
+        )
+        col.update_many(
+            {**base, "modalidad_visita": "recurrente"},
+            {"$set": {"estado": "activo"}},
+        )
+    except PyMongoError:
+        pass
+
+
+# ---------------------------------------------------------------------------
 # DASHBOARD
 # ---------------------------------------------------------------------------
 
@@ -410,6 +441,9 @@ def dashboard():
     frac = session.get("fraccionamiento")
     col = coleccion_visitas(mongo.db, frac)
     ahora = datetime.now()
+
+    # Cierra pendientes vencidos (escaneados pero nunca autorizados).
+    _marcar_no_presentados(col)
 
     # --- Parámetros de la petición (validados) ----------------------------
     pagina = _entero_en_rango(request.args.get("page"), por_defecto=1, minimo=1)
@@ -524,6 +558,8 @@ def scan_entrada():
 
     resultado = None
 
+    _marcar_no_presentados(coleccion_visitas(mongo.db, session.get("fraccionamiento")))
+
     if request.method == "POST":
         token = request.form["qr_token"].strip()
         visita = _buscar_visita(token)
@@ -583,6 +619,18 @@ def scan_entrada():
                 "visita": visita,
             }
 
+        elif (
+            visita.get("estado") == "no_presento"
+            or visita.get("qr_estado") == "no_presentado"
+        ):
+            resultado = {
+                "estado": "rechazado",
+                "razon": "qr_no_valido",
+                "mensaje": "Este pase se marcó como “No se presentó” por superar el tiempo de tolerancia y ya no es válido.",
+                "visita": visita,
+                "fecha_visita": visita.get("fecha_visita"),
+            }
+
         else:
             actualizar_qr_vencido_si_aplica(visita["_id"], visita)
             visita = _buscar_visita(token)
@@ -606,10 +654,27 @@ def scan_entrada():
                 }
 
             else:
-                # ESCANEO = SOLO LECTURA. No se modifica la base de datos.
-                # El estado solo cambia al presionar "Autorizar acceso".
+                # El QR es válido. Persistimos "pendiente de autorización" junto
+                # con la hora del escaneo. Así, si la pantalla se refresca por
+                # error, el guardia tiene TOLERANCIA_AUTORIZACION (5 min) para
+                # volver a escanear el mismo QR. Pasado ese tiempo sin autorizar,
+                # _marcar_no_presentados() lo marca como "no_presento".
+                # No se consume el pase: 'entrada_consumida' sigue en False y el
+                # estado real solo pasa a "dentro" al pulsar "Autorizar acceso".
+                ahora = datetime.now()
+                _col_visita(visita).update_one(
+                    {"_id": visita["_id"]},
+                    {
+                        "$set": {
+                            "estado": "pendiente_autorizacion",
+                            "hora_escaneo": ahora.strftime("%H:%M:%S"),
+                            "fecha_escaneo": ahora,
+                        }
+                    },
+                )
                 visita["estado"] = "pendiente_autorizacion"
-                visita["hora_escaneo"] = datetime.now().strftime("%H:%M:%S")
+                visita["hora_escaneo"] = ahora.strftime("%H:%M:%S")
+                visita["fecha_escaneo"] = ahora
 
                 resultado = {
                     "estado": "permitido",

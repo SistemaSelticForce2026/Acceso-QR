@@ -107,18 +107,22 @@
         {%- set badge_cls = 'badge-warning' -%}
         {%- set badge_label = 'Pendiente' -%}
 
+    {%- elif visita.estado == 'no_presento' or visita.qr_estado == 'no_presentado' -%}
+        {%- set badge_cls = 'badge-danger' -%}
+        {%- set badge_label = 'No se presentó' -%}
+
     {%- else -%}
         {%- set badge_cls = 'badge-secondary' -%}
         {%- set badge_label = visita.estado|title -%}
     {%- endif -%}
 
     {%- set qr_bloqueado =
-        visita.qr_estado in ['cancelado', 'vencido', 'rechazado']
-        or visita.estado == 'rechazado' -%}
+        visita.qr_estado in ['cancelado', 'vencido', 'rechazado', 'no_presentado']
+        or visita.estado in ['rechazado', 'no_presento'] -%}
 
     {%- set acciones_bloqueadas =
-        visita.estado in ['pendiente_autorizacion', 'dentro', 'salida_registrada', 'rechazado']
-        or visita.qr_estado in ['cancelado', 'vencido', 'rechazado'] -%}
+        visita.estado in ['pendiente_autorizacion', 'dentro', 'salida_registrada', 'rechazado', 'no_presento']
+        or visita.qr_estado in ['cancelado', 'vencido', 'rechazado', 'no_presentado'] -%}
 
     <div class="res-visit-card"
          data-modalidad="{{ visita.modalidad_visita }}"
@@ -577,10 +581,10 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
         if (modalidad === 'recurrente') return;
 
         // Ya fue atendido por caseta
-        if (['dentro', 'salida_registrada', 'rechazado'].includes(estado)) return;
+        if (['dentro', 'salida_registrada', 'rechazado', 'no_presento'].includes(estado)) return;
 
         // Estados del QR que ya no deben cambiar
-        if (['cancelado', 'vencido', 'rechazado'].includes(qr)) return;
+        if (['cancelado', 'vencido', 'rechazado', 'no_presentado'].includes(qr)) return;
 
         if (!fecha) return;
 
