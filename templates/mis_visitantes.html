@@ -112,9 +112,13 @@
         {%- set badge_label = visita.estado|title -%}
     {%- endif -%}
 
+    {%- set qr_bloqueado =
+        visita.qr_estado in ['cancelado', 'vencido', 'rechazado']
+        or visita.estado == 'rechazado' -%}
+
     {%- set acciones_bloqueadas =
-        visita.estado in ['pendiente_autorizacion', 'dentro', 'salida_registrada']
-        or visita.qr_estado in ['cancelado', 'vencido'] -%}
+        visita.estado in ['pendiente_autorizacion', 'dentro', 'salida_registrada', 'rechazado']
+        or visita.qr_estado in ['cancelado', 'vencido', 'rechazado'] -%}
 
     <div class="res-visit-card"
          data-modalidad="{{ visita.modalidad_visita }}"
@@ -203,12 +207,12 @@
                 <div class="res-visit-qrwrap">
                     <img
                         src="{{ visita.qr_path }}"
-                        class="res-qr-thumb {% if visita.qr_estado == 'cancelado' %}qr-cancelado{% else %}qr-clickable{% endif %}"
+                        class="res-qr-thumb {% if qr_bloqueado %}qr-cancelado{% else %}qr-clickable{% endif %}"
                         data-qr-path="{{ visita.qr_path }}"
                         data-qr-token="{{ visita.qr_token }}"
                         data-visitante="{{ visita.nombre_visitante }}"
                         alt="QR">
-                    {% if visita.qr_estado != 'cancelado' %}
+                    {% if not qr_bloqueado %}
                     <button type="button" class="res-verpase qr-clickable"
                             data-qr-path="{{ visita.qr_path }}"
                             data-qr-token="{{ visita.qr_token }}"
