@@ -316,7 +316,14 @@ def _listar_visitas(col, filtro, *, modo_orden, hoy_str, skip, limit):
                     }
                 }
             },
-            {"$sort": {"_grupo_orden": 1, "fecha_visita": 1, "hora_inicio": 1}},
+            {
+                "$sort": {
+                    "_grupo_orden": 1,
+                    "created_at": -1,
+                    "fecha_visita": 1,
+                    "hora_inicio": 1,
+                }
+            },
             {"$project": {"_grupo_orden": 0}},
         ]
     elif modo_orden == "historial":
