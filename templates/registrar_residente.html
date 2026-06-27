@@ -286,6 +286,50 @@ footer.app-foot b{color:var(--ink-600)}
         </form>
       </div>
 
+      {# ── Carga masiva por Excel ──────────────────────────────── #}
+      <div class="form-card" style="margin-top:20px">
+        <div class="form-sec-title"><i class="fa-solid fa-file-excel"></i> Carga masiva (Excel)</div>
+
+        <p style="font-size:13px;color:var(--ink-500);line-height:1.6;margin-bottom:16px">
+          Para registrar muchos residentes a la vez (cientos o miles), sube un archivo
+          Excel (<code style="font-family:'JetBrains Mono',monospace;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:11px">.xlsx</code>)
+          con las columnas requeridas. Cada fila se dará de alta como un residente.
+        </p>
+
+        <div class="form-note" style="background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn)">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>
+            El archivo debe tener encabezados en la primera fila con estas columnas exactas:
+            <code>nombre</code>, <code>correo</code>, <code>telefono</code>,
+            <code>fraccionamiento</code>, <code>privada</code>, <code>numero_casa</code>.
+            Las filas con datos faltantes o correos duplicados se omitirán y se te informará.
+          </span>
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('admin.carga_masiva_residentes') }}"
+              enctype="multipart/form-data">
+
+          <div class="form-grid" style="margin-top:18px">
+            <div class="field col-2">
+              <label><i class="fa-solid fa-file-arrow-up"></i> Archivo Excel <span class="req">*</span></label>
+              <input type="file" name="archivo" accept=".xlsx,.xls" required
+                     style="padding:9px 13px;height:auto">
+              <span class="hint">Formatos aceptados: .xlsx, .xls</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <a href="{{ url_for('admin.descargar_plantilla_residentes') }}" class="btn">
+              <i class="fa-solid fa-download"></i> Descargar plantilla
+            </a>
+            <button type="submit" class="btn btn-pri">
+              <i class="fa-solid fa-upload"></i> Subir y registrar
+            </button>
+          </div>
+        </form>
+      </div>
+
     </div>
 
     <footer class="app-foot">

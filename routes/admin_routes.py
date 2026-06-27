@@ -48,6 +48,8 @@ from utils.fraccionamientos import obtener_fraccionamientos
 
 import pandas as pd
 
+from openpyxl import load_workbook, Workbook
+
 # =========================================================
 # REPORTLAB PDF
 # =========================================================
@@ -1099,6 +1101,180 @@ def registrar_residente():
         "registrar_residente.html",
         fraccionamientos=_fraccionamientos_disponibles(),
     )
+
+
+# =========================================
+# CARGA MASIVA DE RESIDENTES (EXCEL)
+# =========================================
+
+COLUMNAS_RESIDENTE = [
+    "nombre",
+    "correo",
+    "telefono",
+    "fraccionamiento",
+    "privada",
+    "numero_casa",
+]
+
+
+@admin_bp.route("/residentes/plantilla")
+@login_required
+@role_required("admin")
+def descargar_plantilla_residentes():
+    """Genera y descarga una plantilla .xlsx con los encabezados correctos."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Residentes"
+    ws.append(COLUMNAS_RESIDENTE)
+    ws.append(
+        [
+            "Mariana Ríos López",
+            "mariana@ejemplo.com",
+            "555-123-4567",
+            "El Porvenir",
+            "Privada Los Robles",
+            "A-14",
+        ]
+    )
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="plantilla_residentes.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+@admin_bp.route("/residentes/carga-masiva", methods=["POST"])
+@login_required
+@role_required("admin")
+def carga_masiva_residentes():
+    """Procesa un Excel y da de alta los residentes fila por fila."""
+    from utils.fraccionamientos import correo_ya_existe
+
+    archivo = request.files.get("archivo")
+    if not archivo or not archivo.filename.lower().endswith((".xlsx", ".xls")):
+        flash("Sube un archivo Excel válido (.xlsx).", "danger")
+        return redirect(url_for("admin.registrar_residente"))
+
+    try:
+        wb = load_workbook(archivo, read_only=True, data_only=True)
+        ws = wb.active
+    except Exception:
+        flash("No se pudo leer el archivo. Verifica que sea un Excel válido.", "danger")
+        return redirect(url_for("admin.registrar_residente"))
+
+    filas = list(ws.iter_rows(values_only=True))
+    if not filas:
+        flash("El archivo está vacío.", "warning")
+        return redirect(url_for("admin.registrar_residente"))
+
+    # Mapear encabezados (primera fila) a índices, sin importar el orden
+    encabezados = [str(c).strip().lower() if c is not None else "" for c in filas[0]]
+    faltantes = [c for c in COLUMNAS_RESIDENTE if c not in encabezados]
+    if faltantes:
+        flash(f"Faltan columnas en el archivo: {', '.join(faltantes)}.", "danger")
+        return redirect(url_for("admin.registrar_residente"))
+
+    idx = {col: encabezados.index(col) for col in COLUMNAS_RESIDENTE}
+
+    password_temporal = generate_password_hash("Residente123*")
+
+    creados = 0
+    omitidos = 0
+    errores = []
+
+    for n, fila in enumerate(filas[1:], start=2):  # fila 1 = encabezados
+
+        def val(col):
+            v = fila[idx[col]] if idx[col] < len(fila) else None
+            return str(v).strip() if v is not None else ""
+
+        nombre = val("nombre")
+        correo = val("correo").lower()
+        telefono = val("telefono")
+        # Mismas normalizaciones que el alta individual: minúsculas
+        fraccionamiento = val("fraccionamiento").lower()
+        privada = val("privada").lower()
+        numero_casa = val("numero_casa").lower()
+
+        # Validación mínima
+        if not all([nombre, correo, telefono, fraccionamiento, privada, numero_casa]):
+            omitidos += 1
+            errores.append(f"Fila {n}: datos incompletos.")
+            continue
+
+        # Fraccionamiento válido (mismo criterio que el alta individual)
+        if not es_fraccionamiento_valido(fraccionamiento):
+            omitidos += 1
+            errores.append(f"Fila {n}: fraccionamiento '{fraccionamiento}' no válido.")
+            continue
+
+        col_res = coleccion_residentes(mongo.db, fraccionamiento)
+        if col_res is None:
+            omitidos += 1
+            errores.append(f"Fila {n}: fraccionamiento '{fraccionamiento}' no existe.")
+            continue
+
+        # Correo duplicado (revisa users + todas las colecciones)
+        if correo_ya_existe(mongo.db, correo):
+            omitidos += 1
+            errores.append(f"Fila {n}: el correo {correo} ya está registrado.")
+            continue
+
+        # Casa duplicada dentro del fraccionamiento
+        if col_res.find_one(
+            {
+                "rol": "residente",
+                "fraccionamiento": fraccionamiento,
+                "privada": privada,
+                "numero_casa": numero_casa,
+            }
+        ):
+            omitidos += 1
+            errores.append(
+                f"Fila {n}: la casa {numero_casa.upper()} ya existe en {privada.title()}."
+            )
+            continue
+
+        col_res.insert_one(
+            {
+                "nombre": nombre,
+                "correo": correo,
+                "password": password_temporal,
+                "telefono": telefono,
+                "fraccionamiento": fraccionamiento,
+                "privada": privada,
+                "numero_casa": numero_casa,
+                "estado": "activo",
+                "rol": "residente",
+                "created_at": datetime.now(),
+                "ultimo_acceso": None,
+                "intentos_fallidos": 0,
+                "bloqueado_hasta": None,
+            }
+        )
+        creados += 1
+
+    # Avisar a los dashboards igual que el alta individual
+    if creados:
+        socketio.emit("actualizar_residentes", to="rol:admin")
+        socketio.emit("actualizar_dashboard", to="rol:admin")
+
+    # Resumen al admin
+    if creados:
+        flash(f"{creados} residente(s) registrados correctamente.", "success")
+    if omitidos:
+        detalle = " ".join(errores[:8])
+        extra = f" (+{len(errores) - 8} más)" if len(errores) > 8 else ""
+        flash(f"{omitidos} fila(s) omitidas. {detalle}{extra}", "warning")
+    if not creados and not omitidos:
+        flash("No se procesó ninguna fila.", "warning")
+
+    return redirect(url_for("admin.registrar_residente"))
 
 
 # =========================================
