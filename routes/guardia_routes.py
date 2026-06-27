@@ -59,7 +59,7 @@ ESTADOS_VALIDOS = {"activo", "dentro", "salida_registrada"}
 
 # Tiempo que el guardia tiene para autorizar (o re-escanear) un QR ya escaneado
 # antes de que el pase se marque automáticamente como "No se presentó".
-TOLERANCIA_AUTORIZACION = timedelta(minutes=5)
+TOLERANCIA_AUTORIZACION = timedelta(minutes=2)
 
 
 # ---------------------------------------------------------------------------
