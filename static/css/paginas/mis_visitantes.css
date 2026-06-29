@@ -525,53 +525,133 @@
 }
 
 /* ---------- responsive ---------- */
-@media (max-width: 680px) {
-    .res-page-heading { font-size: 26px; }
 
-    /* filtro: campos apilados y botones a todo el ancho (50/50, centrados) */
-    .res-filter-field,
-    .res-filter-field--grow {
-        flex: 1 1 100%;
-        min-width: 0;
-    }
-
-    .res-filter-btns { width: 100%; }
-
-    .res-filter-btns .res-filter-btn,
-    .res-filter-btns .res-filter-clear {
-        flex: 1;
-        justify-content: center;
-    }
-
-    /* card: stack vertical — avatar+info arriba, QR centrado, acciones full-width */
+@media (max-width: 920px) {
     .res-visit-body {
         flex-wrap: wrap;
-        align-items: flex-start;
-        gap: 14px;
+        column-gap: 20px;
+        row-gap: 18px;
     }
-
-    .res-visit-info { flex: 1; min-width: 0; }
-
-    /* motivo + meta a ras del borde izquierdo (bajo el avatar):
-       el avatar (56px) solo acompaña al nombre; el resto se alinea al borde
-       desplazándose el ancho del avatar + gap (56 + 14 = 70px). */
-    .res-visit-motive,
-    .res-visit-info .res-visit-meta {
-        margin-left: -70px;
-    }
-
     .res-visit-right {
         flex: 1 1 100%;
         width: 100%;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        margin-top: 4px;
+        justify-content: space-between;
         padding-top: 18px;
         border-top: 1px solid #eef0f4;
     }
+}
 
-    .res-visit-qrwrap { align-items: center; }
+/* ---- Teléfonos (Android / iOS) ---- */
+@media (max-width: 600px) {
 
+    .res-visits-section { padding-bottom: 28px; }
+
+    /* Header */
+    .res-page-header {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+    .res-page-heading { font-size: 25px; }
+    .res-page-sub     { font-size: 14px; }
+    .res-btn-new {
+        width: 100%;
+        justify-content: center;
+        padding: 14px 20px;
+    }
+
+    /* Filtro */
+    .res-filter-card { padding: 16px; border-radius: 16px; }
+    .res-filter-row  { flex-direction: column; gap: 12px; }
+    .res-filter-field,
+    .res-filter-field--grow {
+        width: 100%;
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+    .res-filter-input {
+        padding: 13px 14px;
+        font-size: 16px;            /* evita el zoom automático en iOS */
+    }
+    .res-filter-btns { width: 100%; gap: 10px; }
+    .res-filter-btn,
+    .res-filter-clear {
+        flex: 1;
+        justify-content: center;
+        min-height: 46px;
+        padding: 13px 16px;
+    }
+
+    /* Tarjeta de visita */
+    .res-visit-card { padding: 18px; border-radius: 18px; }
+    .res-visit-card:hover { transform: none; }   /* sin hover en táctil */
+
+    /* Avatar + info lado a lado (sin hacks de margen negativo) */
+    .res-visit-body {
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 14px;
+    }
+    .res-avatar,
+    .res-avatar-photo {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        flex: none;
+    }
+    .res-avatar { font-size: 16px; }
+
+    .res-visit-info { flex: 1; min-width: 0; }
+    .res-visit-name {
+        font-size: 17px;
+        word-break: break-word;
+    }
+    .res-visit-namerow { gap: 8px; }
+    .res-accesschip,
+    .res-badge { font-size: 11px; padding: 4px 9px; }
+    .res-visit-motive { font-size: 13.5px; }
+
+    .res-visit-meta { gap: 8px 16px; margin-top: 10px; }
+    .res-visit-meta-item { font-size: 13.5px; min-width: 0; }
+
+    /* Zona derecha: QR a la izquierda, acciones a la derecha */
+    .res-visit-right {
+        flex: 1 1 100%;
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 16px;
+        margin-top: 4px;
+        padding-top: 16px;
+        border-top: 1px solid #eef0f4;
+    }
+    .res-visit-qrwrap { flex: none; }
+    .res-qr-thumb { width: 92px; height: 92px; }
+
+    .res-visit-actions { flex: 1; width: auto; min-width: 0; }
+    .res-btn-cancel { min-height: 46px; font-size: 13.5px; }
+    .res-iconact { height: 46px; }
+}
+
+/* ---- Teléfonos compactos (≤360px: SE, Android pequeños) ---- */
+@media (max-width: 380px) {
+
+    .res-visit-card { padding: 16px 14px; }
+    .res-visit-body { gap: 12px; }
+
+    .res-avatar,
+    .res-avatar-photo { width: 44px; height: 44px; }
+
+    /* QR + acciones se apilan para que nada se comprima */
+    .res-visit-right {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+    .res-visit-qrwrap { align-self: center; }
     .res-visit-actions { width: 100%; }
+
+    .res-page-heading { font-size: 23px; }
 }

@@ -1153,7 +1153,9 @@ form.addEventListener("submit", function (e) {
 /* ═══════════════════════════════════════════════════════════════════ */
 /* CAPITALIZAR / SANEAR                                               */
 /* ═══════════════════════════════════════════════════════════════════ */
-function cap(v) { return v.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); }
+function cap(v) {
+    return v.toLowerCase().replace(/(^|\s)\p{L}/gu, m => m.toUpperCase());
+}
 
 $("nombre_visitante").addEventListener("input", function () {
     this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, "");
