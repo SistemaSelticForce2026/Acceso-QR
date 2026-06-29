@@ -22,6 +22,9 @@ from datetime import datetime
 
 from flask_socketio import join_room
 
+# Importamos el diccionario de fraccionamientos para automatizar los índices
+from utils.fraccionamientos import visitas_colecciones
+
 # ======================
 # FILTRO HORA AM / PM
 # ======================
@@ -70,16 +73,21 @@ def crear_indices():
                 f"AVISO: índice {args} en '{coll.name}' ya existe o no se pudo crear: {e}"
             )
 
-    # --- Índices de rendimiento ---
+    # --- Índices de rendimiento fijos ---
     _idx(mongo.db.users, "rol")
-    _idx(mongo.db.visits, "qr_token", unique=True)
-    _idx(mongo.db.visits, "residente_id")
-    _idx(mongo.db.visits, "estado")
-    _idx(mongo.db.visits, "created_at")
-    _idx(mongo.db.visits, "fecha_visita")
     _idx(mongo.db.access_logs, "fecha_hora")
     _idx(mongo.db.incidencias, "fecha_hora")
     _idx(mongo.db.reportes, "fecha")
+
+    # --- Índices dinámicos para cada fraccionamiento ---
+    # Le pasamos mongo.db como argumento a la función
+    for col_name in visitas_colecciones(mongo.db).values():
+        coleccion_dinamica = mongo.db[col_name]
+        _idx(coleccion_dinamica, "qr_token", unique=True)
+        _idx(coleccion_dinamica, "residente_id")
+        _idx(coleccion_dinamica, "estado")
+        _idx(coleccion_dinamica, "created_at")
+        _idx(coleccion_dinamica, "fecha_visita")
 
     # --- Índice único de correo (puede fallar si ya hay correos duplicados) ---
     try:

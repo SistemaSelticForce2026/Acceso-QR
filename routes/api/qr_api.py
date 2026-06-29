@@ -1,16 +1,20 @@
 from flask import Blueprint, jsonify
 from extensions import mongo
+from utils.fraccionamientos import visitas_colecciones
 
 qr_api = Blueprint("qr_api", __name__)
 
 
 @qr_api.route("/api/qr/<token>")
 def obtener_qr(token):
+    visita = None
 
-    visita = mongo.db.visits.find_one({"qr_token": token})
+    for col_name in visitas_colecciones.values():
+        visita = mongo.db[col_name].find_one({"qr_token": token})
+        if visita:
+            break
 
     if not visita:
-
         return jsonify({"success": False, "mensaje": "QR no encontrado"})
 
     return jsonify(
