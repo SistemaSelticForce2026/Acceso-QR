@@ -1245,6 +1245,7 @@ def carga_masiva_residentes():
             "privada": r["privada"], "numero_casa": r["numero_casa"],
             "estado": "activo", "rol": "residente", "created_at": ahora,
             "ultimo_acceso": None, "intentos_fallidos": 0, "bloqueado_hasta": None,
+            "origen": "carga_masiva",   # <-- agrega esta línea
         })
         correos_archivo.add(correo)
         casas_archivo[slug].add(casa_key)
@@ -1300,6 +1301,30 @@ def carga_masiva_residentes():
         detalle = "  ".join(errores[:6])
         extra = f"  (+{len(errores) - 6} más)" if len(errores) > 6 else ""
         flash(f"Detalle: {detalle}{extra}", "warning")
+
+    return redirect(url_for("admin.registrar_residente"))
+
+# =========================================
+# ELIMINAR RESIDENTES DE CARGA MASIVA
+# =========================================
+
+@admin_bp.route("/residentes/eliminar-carga-masiva", methods=["POST"])
+@login_required
+@role_required("admin")
+def eliminar_carga_masiva_residentes():
+    eliminados = 0
+    try:
+        for col_name in mongo.db.list_collection_names():
+            if col_name.startswith("residentes_"):
+                resultado = mongo.db[col_name].delete_many({"origen": "carga_masiva"})
+                eliminados += resultado.deleted_count
+
+        _invalidar_cache_conteos()
+        socketio.emit("actualizar_residentes", to="rol:admin")
+        socketio.emit("actualizar_dashboard", to="rol:admin")
+        flash(f"Se eliminaron {eliminados} residente(s) de carga masiva.", "success")
+    except Exception as e:
+        flash(f"Error al eliminar: {str(e)}", "danger")
 
     return redirect(url_for("admin.registrar_residente"))
 
