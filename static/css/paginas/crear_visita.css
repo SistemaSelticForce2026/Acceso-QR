@@ -259,6 +259,7 @@
     color: #2f3340;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    min-width: 0;
     box-sizing: border-box;
     box-shadow: none;
 }
@@ -268,6 +269,17 @@
     background: #fff;
 }
 .cv-input::placeholder { color: #9aa3b5; }
+
+/* Neutraliza el ancho nativo de date/time/datetime en iOS/Safari
+   (evita que el campo se salga del contenedor) */
+.cv-input[type="date"],
+.cv-input[type="time"],
+.cv-input[type="datetime-local"],
+.cv-input[type="month"],
+.cv-input[type="week"] {
+    -webkit-appearance: none;
+    appearance: none;
+}
 
 /* neutraliza el fondo azul-grisáceo del autocompletado del navegador */
 .cv-input:-webkit-autofill,
@@ -336,6 +348,7 @@ input[type="file"].cv-input::file-selector-button:hover {
     color: #2f3340;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    min-width: 0;
     box-sizing: border-box;
     box-shadow: none;
     cursor: pointer;
@@ -751,3 +764,12 @@ input[type="file"].cv-input::file-selector-button:hover {
 .cv-rec-horario-btn:hover { border-color: #cfd7e6; }
 .cv-rec-horario-btn.selected { border-color: #2e5bff; background: #2e5bff; color: #fff; }
 .cv-rec-horario-btn.selected span { color: rgba(255, 255, 255, 0.70); }
+
+/* ============================================================ */
+/* RESPONSIVE — refuerzo móvil para inputs date/time            */
+/* ============================================================ */
+@media (max-width: 560px) {
+    /* el font-size de 16px evita el zoom automático de iOS al enfocar */
+    .cv-input,
+    .cv-select { font-size: 16px; }
+}
