@@ -124,7 +124,7 @@ def create_app():
     # Guardias y Residentes verán la página
     # mantenimiento.html
 
-    MODO_MANTENIMIENTO = False
+    MODO_MANTENIMIENTO = True
 
     @app.before_request
     def mantenimiento():
