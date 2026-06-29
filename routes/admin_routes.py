@@ -1114,7 +1114,8 @@ def descargar_plantilla_residentes():
 @role_required("admin")
 def carga_masiva_residentes():
     import traceback
-    from utils.fraccionamientos import correo_ya_existe
+    from collections import defaultdict
+    from pymongo.errors import BulkWriteError
 
     archivo = request.files.get("archivo")
     if not archivo or not archivo.filename.lower().endswith((".xlsx", ".xls")):
@@ -1124,11 +1125,12 @@ def carga_masiva_residentes():
     try:
         wb = load_workbook(archivo, read_only=True, data_only=True)
         ws = wb.active
+        filas = list(ws.iter_rows(values_only=True))
+        wb.close()
     except Exception:
         flash("No se pudo leer el archivo.", "danger")
         return redirect(url_for("admin.registrar_residente"))
 
-    filas = list(ws.iter_rows(values_only=True))
     if not filas:
         flash("El archivo está vacío.", "warning")
         return redirect(url_for("admin.registrar_residente"))
@@ -1143,111 +1145,163 @@ def carga_masiva_residentes():
     password_temporal = generate_password_hash("Residente123*")
     disponibles_norm = {f.strip().lower() for f in _fraccionamientos_disponibles()}
 
-    creados = 0
+    # Desglose por fraccionamiento  → {frac: {"creados": n, "omitidos": n}}
+    stats = defaultdict(lambda: {"creados": 0, "omitidos": 0})
     omitidos = 0
     errores = []
-    correos_archivo = set()
 
+    # ── PASO 1 · Parsear y validar EN MEMORIA ────────────────────────
+    def val(fila, col):
+        i = idx[col]
+        v = fila[i] if i < len(fila) else None
+        return str(v).strip() if v is not None else ""
+
+    registros = []
     for n, fila in enumerate(filas[1:], start=2):
-        try:
+        nombre = val(fila, "nombre")
+        correo = val(fila, "correo").lower()
+        telefono = val(fila, "telefono")
+        fraccionamiento = val(fila, "fraccionamiento").lower()
+        privada = val(fila, "privada").lower()
+        numero_casa = val(fila, "numero_casa").lower()
 
-            def val(col):
-                v = fila[idx[col]] if idx[col] < len(fila) else None
-                return str(v).strip() if v is not None else ""
-
-            nombre = val("nombre")
-            correo = val("correo").lower()
-            telefono = val("telefono")
-            fraccionamiento = val("fraccionamiento").lower()
-            privada = val("privada").lower()
-            numero_casa = val("numero_casa").lower()
-
-            if not all(
-                [nombre, correo, telefono, fraccionamiento, privada, numero_casa]
-            ):
-                omitidos += 1
-                errores.append(f"Fila {n}: datos incompletos.")
-                continue
-
-            if fraccionamiento not in disponibles_norm:
-                omitidos += 1
-                errores.append(
-                    f"Fila {n}: fraccionamiento '{fraccionamiento}' no válido."
-                )
-                continue
-
-            slug = _slug_fraccionamiento(fraccionamiento)
-            col_res = mongo.db[f"residentes_{slug}"]
-
-            if correo in correos_archivo:
-                omitidos += 1
-                errores.append(f"Fila {n}: correo {correo} repetido en el archivo.")
-                continue
-
-            try:
-                if correo_ya_existe(mongo.db, correo):
-                    omitidos += 1
-                    errores.append(f"Fila {n}: correo {correo} ya registrado.")
-                    continue
-            except Exception:
-                if col_res.find_one({"correo": correo}):
-                    omitidos += 1
-                    errores.append(f"Fila {n}: correo {correo} ya registrado.")
-                    continue
-
-            if col_res.find_one(
-                {
-                    "rol": "residente",
-                    "fraccionamiento": fraccionamiento,
-                    "privada": privada,
-                    "numero_casa": numero_casa,
-                }
-            ):
-                omitidos += 1
-                errores.append(f"Fila {n}: casa {numero_casa.upper()} ya existe.")
-                continue
-
-            col_res.insert_one(
-                {
-                    "nombre": nombre,
-                    "correo": correo,
-                    "password": password_temporal,
-                    "telefono": telefono,
-                    "fraccionamiento": fraccionamiento,
-                    "privada": privada,
-                    "numero_casa": numero_casa,
-                    "estado": "activo",
-                    "rol": "residente",
-                    "created_at": datetime.now(),
-                    "ultimo_acceso": None,
-                    "intentos_fallidos": 0,
-                    "bloqueado_hasta": None,
-                }
-            )
-            correos_archivo.add(correo)
-            creados += 1
-
-        except Exception as e:
+        if not all([nombre, correo, telefono, fraccionamiento, privada, numero_casa]):
+            clave = fraccionamiento or "(sin fraccionamiento)"
             omitidos += 1
-            errores.append(f"Fila {n}: error inesperado ({type(e).__name__}).")
-            traceback.print_exc()
+            stats[clave]["omitidos"] += 1
+            errores.append(f"Fila {n}: datos incompletos.")
             continue
 
+        if fraccionamiento not in disponibles_norm:
+            omitidos += 1
+            stats[fraccionamiento]["omitidos"] += 1
+            errores.append(f"Fila {n}: fraccionamiento '{fraccionamiento}' no válido.")
+            continue
+
+        registros.append({
+            "fila": n, "nombre": nombre, "correo": correo, "telefono": telefono,
+            "fraccionamiento": fraccionamiento, "privada": privada,
+            "numero_casa": numero_casa, "slug": _slug_fraccionamiento(fraccionamiento),
+        })
+
+    slugs = {r["slug"] for r in registros}
+
+    # ── PASO 2 · Precargar lo existente (pocas consultas) ────────────
+    try:
+        nombres_coll = mongo.db.list_collection_names()
+    except Exception:
+        nombres_coll = []
+
+    fuentes_correo = [c for c in nombres_coll if c.startswith("residentes_")]
+    if "users" in nombres_coll:
+        fuentes_correo.append("users")
+
+    correos_existentes = set()
+    for cname in fuentes_correo:
+        for doc in mongo.db[cname].find({}, {"correo": 1, "_id": 0}):
+            c = doc.get("correo")
+            if c:
+                correos_existentes.add(str(c).strip().lower())
+
+    casas_existentes = defaultdict(set)
+    for slug in slugs:
+        for doc in mongo.db[f"residentes_{slug}"].find(
+            {"rol": "residente"},
+            {"fraccionamiento": 1, "privada": 1, "numero_casa": 1, "_id": 0},
+        ):
+            casas_existentes[slug].add((
+                str(doc.get("fraccionamiento", "")).strip().lower(),
+                str(doc.get("privada", "")).strip().lower(),
+                str(doc.get("numero_casa", "")).strip().lower(),
+            ))
+
+    # ── PASO 3 · Validar duplicados y armar lotes por fraccionamiento ─
+    correos_archivo = set()
+    casas_archivo = defaultdict(set)
+    ops = {}   # frac -> {"coll": nombre_coleccion, "docs": [...]}
+    ahora = datetime.now()
+
+    for r in registros:
+        n, correo, slug, frac = r["fila"], r["correo"], r["slug"], r["fraccionamiento"]
+        casa_key = (r["fraccionamiento"], r["privada"], r["numero_casa"])
+
+        if correo in correos_archivo:
+            omitidos += 1; stats[frac]["omitidos"] += 1
+            errores.append(f"Fila {n}: correo {correo} repetido en el archivo.")
+            continue
+        if correo in correos_existentes:
+            omitidos += 1; stats[frac]["omitidos"] += 1
+            errores.append(f"Fila {n}: correo {correo} ya registrado.")
+            continue
+        if casa_key in casas_archivo[slug] or casa_key in casas_existentes[slug]:
+            omitidos += 1; stats[frac]["omitidos"] += 1
+            errores.append(f"Fila {n}: casa {r['numero_casa'].upper()} ya existe.")
+            continue
+
+        ops.setdefault(frac, {"coll": f"residentes_{slug}", "docs": []})
+        ops[frac]["docs"].append({
+            "nombre": r["nombre"], "correo": correo, "password": password_temporal,
+            "telefono": r["telefono"], "fraccionamiento": r["fraccionamiento"],
+            "privada": r["privada"], "numero_casa": r["numero_casa"],
+            "estado": "activo", "rol": "residente", "created_at": ahora,
+            "ultimo_acceso": None, "intentos_fallidos": 0, "bloqueado_hasta": None,
+        })
+        correos_archivo.add(correo)
+        casas_archivo[slug].add(casa_key)
+
+    # ── PASO 4 · Inserción masiva por fraccionamiento ────────────────
+    BATCH = 1000
+    creados = 0
+    for frac, info in ops.items():
+        coll = mongo.db[info["coll"]]
+        docs = info["docs"]
+        for i in range(0, len(docs), BATCH):
+            lote = docs[i:i + BATCH]
+            try:
+                res = coll.insert_many(lote, ordered=False)
+                n_ok = len(res.inserted_ids)
+            except BulkWriteError as bwe:
+                n_ok = bwe.details.get("nInserted", 0)
+                errores.append(f"{frac}: {len(lote) - n_ok} fila(s) con conflicto de índice.")
+            except Exception as e:
+                n_ok = 0
+                errores.append(f"{frac}: error insertando lote ({type(e).__name__}).")
+                traceback.print_exc()
+
+            creados += n_ok
+            stats[frac]["creados"] += n_ok
+            fallidos = len(lote) - n_ok
+            if fallidos:
+                omitidos += fallidos
+                stats[frac]["omitidos"] += fallidos
+
+    # ── RESULTADO · resumen general + desglose por fraccionamiento ───
     if creados:
         _invalidar_cache_conteos()
-
         socketio.emit("actualizar_residentes", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
-        flash(f"{creados} residente(s) registrados correctamente.", "success")
-    if omitidos:
-        detalle = " ".join(errores[:8])
-        extra = f" (+{len(errores) - 8} más)" if len(errores) > 8 else ""
-        flash(f"{omitidos} fila(s) omitidas. {detalle}{extra}", "warning")
-    if not creados and not omitidos:
+        flash(f"Carga completada: {creados} registrado(s), {omitidos} omitido(s).", "success")
+    elif omitidos:
+        flash(f"No se registró ningún residente. {omitidos} fila(s) omitidas.", "warning")
+    else:
         flash("No se procesó ninguna fila.", "warning")
 
-    return redirect(url_for("admin.registrar_residente"))
+    # Una línea por fraccionamiento (se pintan como tarjetas individuales)
+    for frac in sorted(stats):
+        s = stats[frac]
+        if s["creados"] or s["omitidos"]:
+            nombre_frac = frac.title() if frac != "(sin fraccionamiento)" else frac
+            flash(
+                f"{nombre_frac}  —  {s['creados']} registrado(s) · {s['omitidos']} omitido(s).",
+                "info",
+            )
 
+    if errores:
+        detalle = "  ".join(errores[:6])
+        extra = f"  (+{len(errores) - 6} más)" if len(errores) > 6 else ""
+        flash(f"Detalle: {detalle}{extra}", "warning")
+
+    return redirect(url_for("admin.registrar_residente"))
 
 # =========================================
 # VER / EDITAR / BLOQUEAR / ELIMINAR / DESBLOQUEAR RESIDENTE
