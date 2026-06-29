@@ -119,9 +119,15 @@
         {%- elif visita.estado == 'dentro' -%}
             {%- set badge_cls = 'badge-success' -%}
             {%- set badge_label = 'Dentro' -%}
+
+        {%- elif visita.estado == 'no_se_presento' -%}
+            {%- set badge_cls = 'badge-danger' -%}
+            {%- set badge_label = 'No se presentó' -%}
+
         {%- elif visita.estado == 'activo' -%}
             {%- set badge_cls = 'badge-blue' -%}
             {%- set badge_label = 'Vigente' -%}
+
         {%- elif visita.estado == 'salida_registrada' -%}
             {%- set badge_cls = 'badge-neutral' -%}
             {%- set badge_label = 'Finalizada' -%}
@@ -250,5 +256,35 @@ photoModal.addEventListener("click", function(){
 
 });
 
+</script>
+
+<script>
+(function () {
+    const ahora = new Date();
+
+    document.querySelectorAll('.res-recent-row').forEach(row => {
+
+        const badge = row.querySelector('.res-badge');
+        if (!badge) return;
+
+        // Solo cambiar las que todavía dicen "Vigente"
+        if (!badge.textContent.includes("Vigente")) return;
+
+        const fechaEl = row.querySelector('.res-recent-date');
+        if (!fechaEl) return;
+
+        // Ajusta este formato si tu fecha no viene como YYYY-MM-DD
+        const fecha = new Date(fechaEl.textContent);
+
+        if (ahora > fecha) {
+            badge.className = "res-badge badge-danger";
+            badge.innerHTML =
+                '<span class="res-badge-dot"></span> No se presentó';
+
+            row.style.opacity = "0.75";
+        }
+
+    });
+})();
 </script>
 {% endblock %}
