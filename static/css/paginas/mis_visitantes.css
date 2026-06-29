@@ -114,7 +114,14 @@
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
     width: 100%;
+    min-width: 0;
     box-sizing: border-box;
+}
+
+/* Neutraliza el ancho nativo del date picker en iOS/Safari */
+.res-filter-input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .res-filter-input:focus {
@@ -943,7 +950,11 @@
     }
 
     /* Filtros: apilados */
-    .res-filter-card { padding: 14px 12px; border-radius: 16px; }
+    .res-filter-card {
+        padding: 14px 12px;
+        border-radius: 16px;
+        overflow: hidden; /* red de seguridad: nada se desborda de la tarjeta */
+    }
     .res-filter-row  { flex-direction: column; gap: 8px; }
     .res-filter-field,
     .res-filter-field--grow { width: 100%; flex: 1 1 100%; min-width: 0; }
