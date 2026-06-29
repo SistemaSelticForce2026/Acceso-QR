@@ -370,11 +370,26 @@ def _conteos_por_estado(col, filtro_base):
                     {"$match": {"estado": "salida_registrada"}},
                     {"$count": "n"},
                 ],
+                "no_presento": [{"$match": {"estado": "no_presento"}}, {"$count": "n"}],
+                "pendiente_autorizacion": [
+                    {"$match": {"estado": "pendiente_autorizacion"}},
+                    {"$count": "n"},
+                ],
             }
         },
     ]
+
     return _extraer_conteos(
-        col, pipeline, ("todas", "activo", "dentro", "salida_registrada")
+        col,
+        pipeline,
+        (
+            "todas",
+            "activo",
+            "dentro",
+            "salida_registrada",
+            "no_presento",
+            "pendiente_autorizacion",
+        ),
     )
 
 
@@ -425,6 +440,40 @@ def _marcar_no_presentados(col):
         )
     except PyMongoError:
         pass
+
+
+def _marcar_no_presentado_visual(visitas, ahora):
+    """Marca visualmente (sin tocar la BD) las visitas temporales cuya
+    fecha/hora ya pasó y que nunca fueron escaneadas, para que la tarjeta
+    muestre 'No se presentó' en vez de 'Vigente'."""
+    estados_resueltos = {"dentro", "salida_registrada", "rechazado", "no_presento"}
+    qr_terminales = {"cancelado", "vencido", "rechazado", "no_presentado"}
+
+    for v in visitas:
+        v["es_no_presentado"] = False
+
+        if v.get("modalidad_visita") == "recurrente":
+            continue
+        if v.get("estado") in estados_resueltos:
+            continue
+        if v.get("qr_estado") in qr_terminales:
+            continue
+
+        fecha = v.get("fecha_visita")
+        if not fecha:
+            continue
+
+        hora = str(v.get("hora_inicio") or "23:59").split(":")
+        try:
+            y, m, d = map(int, str(fecha).split("-"))
+            hh = int(hora[0])
+            mm = int(hora[1]) if len(hora) > 1 else 0
+            programada = datetime(y, m, d, hh, mm)
+        except (ValueError, IndexError):
+            continue
+
+        if ahora > programada:
+            v["es_no_presentado"] = True
 
 
 # ---------------------------------------------------------------------------
@@ -512,6 +561,8 @@ def dashboard():
         skip=(pagina - 1) * VISITAS_POR_PAGINA,
         limit=VISITAS_POR_PAGINA,
     )
+
+    _marcar_no_presentado_visual(visitas, _ahora_local())
 
     # --- KPIs operativos (estado actual del fraccionamiento) --------------
     inicio_hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)

@@ -216,24 +216,39 @@
                         <div class="grd-visit-name-row">
                             <p class="grd-visit-name">{{ visita.nombre_visitante }}</p>
                             <span class="grd-visit-badges">
-                            {% if visita.fecha_visita == hoy %}
-                                <span class="grd-badge today">Hoy</span>
-                            {% endif %}
-                            {% if visita.estado == "dentro" %}
-                                <span class="grd-badge success">Dentro</span>
-                            {% elif visita.estado == "pendiente_autorizacion" %}
-                                <span class="grd-badge warning">Pendiente</span>
-                            {% elif visita.estado == "activo" %}
-                                <span class="grd-badge info">Vigente</span>
-                            {% elif visita.estado == "salida_registrada" %}
-                                <span class="grd-badge neutral">Finalizada</span>
-                            {% elif visita.estado == "no_presento" %}
-                                <span class="grd-badge danger">No se presentó</span>
-                            {% elif visita.estado in ["vencido", "cancelado"] %}
-                                <span class="grd-badge danger">{{ visita.estado | capitalize }}</span>
-                            {% else %}
-                                <span class="grd-badge neutral">{{ visita.estado | capitalize }}</span>
-                            {% endif %}
+
+                                {% if visita.fecha_visita == hoy %}
+                                    <span class="grd-badge today">Hoy</span>
+                                {% endif %}
+
+                                {% if visita.es_no_presentado or visita.qr_estado == "no_presentado" or visita.estado == "no_presento" %}
+                                    <span class="grd-badge danger">No se presentó</span>
+
+                                {% elif visita.qr_estado == "vencido" %}
+                                    <span class="grd-badge danger">QR vencido</span>
+
+                                {% elif visita.qr_estado == "cancelado" %}
+                                    <span class="grd-badge danger">QR cancelado</span>
+
+                                {% elif visita.qr_estado == "rechazado" or visita.estado == "rechazado" %}
+                                    <span class="grd-badge danger">Rechazado</span>
+
+                                {% elif visita.estado == "dentro" %}
+                                    <span class="grd-badge success">Dentro</span>
+
+                                {% elif visita.estado == "pendiente_autorizacion" %}
+                                    <span class="grd-badge warning">Pendiente</span>
+
+                                {% elif visita.estado == "activo" %}
+                                    <span class="grd-badge info">Vigente</span>
+
+                                {% elif visita.estado == "salida_registrada" %}
+                                    <span class="grd-badge neutral">Finalizada</span>
+
+                                {% else %}
+                                    <span class="grd-badge neutral">{{ visita.estado | capitalize }}</span>
+                                {% endif %}
+
                             </span>
                         </div>
                         <p class="grd-visit-phone">
