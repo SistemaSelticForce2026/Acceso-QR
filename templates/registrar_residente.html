@@ -254,7 +254,8 @@ footer.app-foot b{color:var(--ink-600)}
               <select name="fraccionamiento" required>
                 <option value="" disabled selected>Selecciona un fraccionamiento…</option>
                 {% for frac in fraccionamientos %}
-                <option value="{{ frac }}">{{ frac }}</option>
+                {% set frac_fmt = frac | title | replace(' Del ', ' del ') | replace(' De ', ' de ') | replace(' Los ', ' los ') | replace(' Las ', ' las ') | replace(' Ii', ' II') | replace(' Iii', ' III') | replace(' Iv', ' IV') %}
+                <option value="{{ frac }}">{{ frac_fmt }}</option>
                 {% endfor %}
               </select>
               {% if not fraccionamientos %}

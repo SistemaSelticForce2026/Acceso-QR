@@ -320,7 +320,8 @@ footer.app-foot b{color:var(--ink-600)}
                 <select name="fraccionamiento" required>
                   <option value="">Selecciona un fraccionamiento…</option>
                   {% for f in fraccionamientos %}
-                  <option value="{{ f }}" {% if (guardia.fraccionamiento or '')|lower == f|lower %}selected{% endif %}>{{ f }}</option>
+                  {% set f_formateado = f | title | replace(' Del ', ' del ') | replace(' Ii', ' II') | replace(' Iii', ' III') %}
+                  <option value="{{ f }}" {% if (guardia.fraccionamiento or '')|lower == f|lower %}selected{% endif %}>{{ f_formateado }}</option>
                   {% endfor %}
                 </select>
               </div>

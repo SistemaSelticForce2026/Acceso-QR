@@ -148,21 +148,29 @@ footer.app-foot b{color:var(--ink-600)}
 @keyframes ring{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
 
 /* Selector de fraccionamientos */
-.frac-bar{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:14px 16px;box-shadow:var(--sh-1)}
-.frac-bar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+.frac-bar{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:18px 18px 16px;box-shadow:var(--sh-1)}
+.frac-bar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
 .frac-bar-head h2{font-size:13px;font-weight:700;color:var(--ink-900);margin:0;display:flex;align-items:center;gap:8px}
 .frac-bar-head h2 i{color:var(--pri-600)}
-.frac-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.frac-chip-wrap{display:flex;align-items:center;gap:3px}
-.frac-chip{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);font-size:12.5px;font-weight:600;color:var(--ink-600);transition:.16s var(--ease)}
-.frac-chip:hover{border-color:var(--pri-200);color:var(--pri-600);background:var(--pri-50)}
-.frac-chip.active{background:var(--pri-600);border-color:var(--pri-600);color:#fff}
-.frac-chip i{font-size:11px}
-.frac-chip b{font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(255,255,255,.22);padding:1px 6px;border-radius:999px}
-.frac-chip:not(.active) b{background:var(--line);color:var(--ink-500)}
-.btn-del-frac{width:28px;height:28px;border:1px solid var(--bad-bd);background:var(--bad-bg);color:var(--bad);border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;transition:.15s;flex-shrink:0}
-.btn-del-frac:hover{background:var(--bad);color:#fff}
-.frac-context-bar{display:flex;align-items:center;gap:9px;padding:9px 14px;background:var(--pri-50);border:1px solid var(--pri-200);border-radius:var(--rad-sm);font-size:12.5px;color:var(--pri-700);font-weight:500;margin-top:11px}
+
+.frac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.frac-card{position:relative;display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:var(--rad-sm);border:1px solid var(--line);background:var(--panel-2);transition:.16s var(--ease);overflow:hidden}
+.frac-card:hover{border-color:var(--pri-200);background:#fff;box-shadow:var(--sh-2);transform:translateY(-1px)}
+.frac-card.active{border-color:var(--pri-600);background:linear-gradient(155deg,#fff,var(--pri-50));box-shadow:0 2px 10px rgba(37,99,235,.14)}
+.frac-card.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pri-600)}
+.frac-card__link{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
+.frac-card__ic{width:36px;height:36px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:14px;background:var(--pri-50);color:var(--pri-600);transition:.16s}
+.frac-card.active .frac-card__ic{background:var(--pri-600);color:#fff;box-shadow:0 4px 10px rgba(37,99,235,.3)}
+.frac-card__body{min-width:0;flex:1}
+.frac-card__name{font-size:12.5px;font-weight:600;color:var(--ink-900);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.frac-card__meta{font-size:10.5px;color:var(--ink-400);font-weight:600;margin-top:2px;display:flex;align-items:center;gap:5px}
+.frac-card__count{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink-600)}
+.frac-card.active .frac-card__count{color:var(--pri-700)}
+.frac-card__del{position:relative;z-index:2;width:28px;height:28px;flex-shrink:0;border:none;background:transparent;color:var(--ink-400);border-radius:7px;display:grid;place-items:center;font-size:11px;cursor:pointer;opacity:.55;transition:.15s}
+.frac-card:hover .frac-card__del{opacity:1}
+.frac-card__del:hover{background:var(--bad-bg);color:var(--bad)}
+
+.frac-context-bar{display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--pri-50);border:1px solid var(--pri-200);border-radius:var(--rad-sm);font-size:12.5px;color:var(--pri-700);font-weight:500;margin-top:14px}
 .frac-context-bar i{color:var(--pri-500);flex-shrink:0}
 
 /* Grid de dos columnas */
@@ -250,6 +258,26 @@ footer.app-foot b{color:var(--ink-600)}
 .frac-modal__actions{display:flex;gap:10px;margin-top:20px}
 .frac-modal__actions .btn{flex:1;justify-content:center}
 
+
+/* ── Modal de confirmación (eliminar) ── */
+.confirm-modal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
+.confirm-modal.open{opacity:1;pointer-events:auto}
+.confirm-modal__backdrop{position:absolute;inset:0;background:rgba(9,14,26,.72);backdrop-filter:blur(6px)}
+.confirm-modal__card{position:relative;background:#fff;border-radius:var(--rad-lg);max-width:430px;width:100%;box-shadow:var(--sh-3);transform:translateY(12px) scale(.98);transition:transform .22s var(--ease);overflow:hidden}
+.confirm-modal.open .confirm-modal__card{transform:none}
+.confirm-modal__body{padding:26px 24px 20px;text-align:center}
+.confirm-modal__icon{width:58px;height:58px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;font-size:24px;background:var(--bad-bg);color:var(--bad);border:5px solid #fdf3f2}
+.confirm-modal__title{font-size:18px;font-weight:700;color:var(--ink-900);margin:0 0 8px;letter-spacing:-.3px}
+.confirm-modal__text{font-size:13px;color:var(--ink-500);line-height:1.6;margin:0}
+.confirm-modal__text b{color:var(--ink-900)}
+.confirm-modal__warn{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:14px;padding:9px 13px;background:var(--bad-bg);border:1px solid var(--bad-bd);border-radius:var(--rad-sm);font-size:11.5px;font-weight:600;color:#a8261f}
+.confirm-modal__warn i{font-size:11px}
+.confirm-modal__actions{display:flex;gap:10px;padding:0 24px 24px}
+.confirm-modal__actions .btn{flex:1;justify-content:center;height:42px}
+.confirm-modal__actions .btn-danger{background:var(--bad);border-color:var(--bad);color:#fff;box-shadow:0 2px 8px rgba(214,52,44,.3)}
+.confirm-modal__actions .btn-danger:hover{background:#b91c1c;border-color:#b91c1c;color:#fff}
+
+
 /* ════════ RESPONSIVE ════════ */
 @media(max-width:1280px){.cfg-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:1100px){.two-col{grid-template-columns:1fr}}
@@ -271,7 +299,7 @@ footer.app-foot b{color:var(--ink-600)}
 @media(prefers-reduced-motion:reduce){*,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
-<body>
+<body data-frac="{{ frac_sel }}">
 
 <div class="app">
 
@@ -388,20 +416,24 @@ footer.app-foot b{color:var(--ink-600)}
             <h2><i class="fa-solid fa-city"></i> Fraccionamientos</h2>
             <span class="badge b-success">{{ fraccionamientos | length }} registrado{{ 's' if fraccionamientos | length != 1 else '' }}</span>
           </div>
-          <div class="frac-chips">
+          <div class="frac-grid">
             {% for f in fraccionamientos %}
             {% set f_fmt = f | title | replace(' Del ', ' del ') | replace(' Ii', ' II') | replace(' Iiii', ' III') %}
-            <div class="frac-chip-wrap">
-              <a href="{{ url_for('admin.configuracion', fraccionamiento=f) }}"
-                 class="frac-chip {{ 'active' if f == frac_sel }}">
-                <i class="fa-solid fa-location-dot"></i>
-                <span>{{ f_fmt }}</span>
-                <b>{{ conteos.get(f, 0) }}</b>
+            <div class="frac-card {{ 'active' if f == frac_sel }}">
+              <a href="{{ url_for('admin.configuracion', fraccionamiento=f) }}" class="frac-card__link" title="{{ f_fmt }}">
+                <div class="frac-card__ic"><i class="fa-solid fa-location-dot"></i></div>
+                <div class="frac-card__body">
+                  <span class="frac-card__name">{{ f_fmt }}</span>
+                  <span class="frac-card__meta">
+                    <i class="fa-solid fa-users" style="font-size:9px"></i>
+                    <span class="frac-card__count">{{ conteos.get(f, 0) }}</span> residentes
+                  </span>
+                </div>
               </a>
-              <form method="POST" action="{{ url_for('admin.eliminar_fraccionamiento') }}"
-                    onsubmit="return confirm('¿Eliminar {{ f_fmt }}? Se borrarán residentes, visitas y configuración.');">
+              <form method="POST" action="{{ url_for('admin.eliminar_fraccionamiento') }}" class="frac-del-form" style="position:relative;z-index:2">
                 <input type="hidden" name="fraccionamiento" value="{{ f }}">
-                <button type="submit" class="btn-del-frac" title="Eliminar fraccionamiento">
+                <button type="button" class="frac-card__del" title="Eliminar fraccionamiento"
+                        data-nombre="{{ f_fmt }}" onclick="pedirEliminar(this)">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </form>
@@ -654,6 +686,32 @@ footer.app-foot b{color:var(--ink-600)}
   </div>
 </div>
 
+
+<!-- ════════ MODAL: CONFIRMAR ELIMINACIÓN ════════ -->
+<div class="confirm-modal" id="confirmModal" aria-hidden="true">
+  <div class="confirm-modal__backdrop" onclick="cerrarConfirm()"></div>
+  <div class="confirm-modal__card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="confirm-modal__body">
+      <div class="confirm-modal__icon"><i class="fa-solid fa-trash-can"></i></div>
+      <h3 class="confirm-modal__title" id="confirmTitle">Eliminar fraccionamiento</h3>
+      <p class="confirm-modal__text">
+        Estás a punto de eliminar <b id="confirmNombre">—</b>. Esta acción es permanente.
+      </p>
+      <div class="confirm-modal__warn">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Se borrarán residentes, visitas y configuración
+      </div>
+    </div>
+    <div class="confirm-modal__actions">
+      <button type="button" class="btn btn-ghost" onclick="cerrarConfirm()">Cancelar</button>
+      <button type="button" class="btn btn-danger" id="confirmOk" onclick="confirmarEliminar()">
+        <i class="fa-solid fa-trash"></i> Sí, eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <!-- ════════ SCRIPTS ════════ -->
 <script>
 (function(){
@@ -682,18 +740,53 @@ footer.app-foot b{color:var(--ink-600)}
     form.addEventListener('submit',()=>{ btn.disabled=true; });
   });
 
+  /* Auto-cierre de las notificaciones flash */
+  document.querySelectorAll('.flash').forEach(function(el){
+    setTimeout(function(){
+      el.style.transition='opacity .4s ease, transform .4s ease';
+      el.style.opacity='0';
+      el.style.transform='translateY(-8px)';
+      setTimeout(function(){ el.remove(); }, 400);
+    }, 4000); // 4 segundos visible
+  });
+
   /* Última actualización polling */
+  const FRAC_ACTUAL = document.body.getAttribute('data-frac') || '';
   async function refrescarActualizacion(){
+    if(!FRAC_ACTUAL) return;
     try{
-      const res=await fetch('/admin/configuracion/ultima-actualizacion');
+      const res=await fetch('/admin/configuracion/ultima-actualizacion/'+encodeURIComponent(FRAC_ACTUAL));
+      if(!res.ok) return;
       const data=await res.json();
       const el=document.getElementById('ultima-actualizacion');
       if(el&&data.hora)el.textContent=data.hora;
     }catch(e){}
   }
-  setInterval(refrescarActualizacion,5000);
+  setInterval(refrescarActualizacion,30000);
   refrescarActualizacion();
 })();
+
+
+/* Modal de confirmación de eliminación */
+let _formEliminar = null;
+function pedirEliminar(btn){
+  var nombre = btn.getAttribute('data-nombre') || '';
+  _formEliminar = btn.closest('.frac-del-form');
+  document.getElementById('confirmNombre').textContent = nombre;
+  const m=document.getElementById('confirmModal');
+  m.classList.add('open'); m.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+function cerrarConfirm(){
+  const m=document.getElementById('confirmModal');
+  m.classList.remove('open'); m.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+  _formEliminar=null;
+}
+function confirmarEliminar(){
+  if(_formEliminar) _formEliminar.submit();
+}
+
 
 /* Modal fraccionamiento */
 function abrirModalFrac(){
@@ -712,7 +805,7 @@ function previewSlug(v){
   document.getElementById('slugPreview').textContent='residentes_'+s;
   document.getElementById('slugPreview2').textContent='visitas_'+s;
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape')cerrarModalFrac(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ cerrarModalFrac(); cerrarConfirm(); } });
 </script>
 
 </body>

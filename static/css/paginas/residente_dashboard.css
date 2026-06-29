@@ -1,5 +1,5 @@
 /* ============================================================ */
-/* RESIDENTE DASHBOARD + MIS VISITANTES (estilos compartidos) */
+/* RESIDENTE DASHBOARD + MIS VISITANTES (estilos compartidos)  */
 /* ============================================================ */
 
 /* ---- Page header (Mis Visitantes) ------------------------- */
@@ -84,7 +84,6 @@
 }
 
 .res-recent-row:last-child { border-bottom: none; }
-
 .res-recent-row:hover { background: #eceef0; }
 
 .res-recent-avatar {
@@ -100,29 +99,27 @@
     flex-shrink: 0;
 }
 
-.res-avatar-photo{
-    width:60px;
-    height:60px;
-    border-radius:14px;
-    overflow:hidden;
-    flex-shrink:0;
-    border:2px solid #fff;
-    box-shadow:0 6px 18px rgba(0,0,0,.12);
-    background:#f8fafc;
+.res-avatar-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
+    background: #f8fafc;
 }
 
-.res-avatar-img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-    cursor:pointer;
-    transition:.3s;
+.res-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    transition: .3s;
 }
 
-.res-avatar-img:hover{
-    transform:scale(1.05);
-}
+.res-avatar-img:hover { transform: scale(1.05); }
 
 .res-recent-info {
     flex: 1;
@@ -218,9 +215,7 @@
     box-sizing: border-box;
 }
 
-.res-cta-card:hover {
-    background: #252842;
-}
+.res-cta-card:hover { background: #252842; }
 
 .res-cta-orb {
     position: absolute;
@@ -322,9 +317,9 @@
     flex-shrink: 0;
 }
 
-.res-icon-blue    { background: rgba(46, 91, 255, 0.10);  color: #2e5bff; }
-.res-icon-green   { background: rgba(0, 152, 105, 0.10);  color: #009869; }
-.res-icon-neutral { background: #eceef0;                   color: #46464c; }
+.res-icon-blue    { background: rgba(46, 91, 255, 0.10); color: #2e5bff; }
+.res-icon-green   { background: rgba(0, 152, 105, 0.10); color: #009869; }
+.res-icon-neutral { background: #eceef0;                  color: #46464c; }
 .res-icon-amber   { background: rgba(217, 119, 6, 0.10);  color: #d97706; }
 
 .res-stat-num {
@@ -348,7 +343,6 @@
 }
 
 /* ---- Visits section --------------------------------------- */
-
 .res-section-head {
     display: flex;
     align-items: center;
@@ -439,9 +433,7 @@
     margin-top: 0;
 }
 
-.res-filter-btn:hover {
-    background: #252842;
-}
+.res-filter-btn:hover { background: #252842; }
 
 .res-filter-clear {
     height: 40px;
@@ -463,9 +455,7 @@
     margin-top: 0;
 }
 
-.res-filter-clear:hover {
-    background: #eceef0;
-}
+.res-filter-clear:hover { background: #eceef0; }
 
 /* ---- Visit card ------------------------------------------- */
 .res-visit-card {
@@ -504,7 +494,6 @@
     flex-shrink: 0;
     text-transform: uppercase;
 }
-
 
 .res-visit-info {
     flex: 1;
@@ -571,19 +560,19 @@
     border-radius: 50%;
 }
 
-.badge-success { background: rgba(0,152,105,0.12); color: #009869; }
+.badge-success { background: rgba(0, 152, 105, 0.12); color: #009869; }
 .badge-success .res-badge-dot { background: #009869; }
 
-.badge-warning { background: rgba(217,119,6,0.12); color: #d97706; }
+.badge-warning { background: rgba(217, 119, 6, 0.12); color: #d97706; }
 .badge-warning .res-badge-dot { background: #d97706; }
 
-.badge-danger  { background: rgba(186,26,26,0.10); color: #ba1a1a; }
+.badge-danger  { background: rgba(186, 26, 26, 0.10); color: #ba1a1a; }
 .badge-danger  .res-badge-dot { background: #ba1a1a; }
 
 .badge-neutral { background: #eceef0; color: #46464c; }
 .badge-neutral .res-badge-dot { background: #77767d; }
 
-.badge-blue    { background: rgba(46,91,255,0.10); color: #2e5bff; }
+.badge-blue    { background: rgba(46, 91, 255, 0.10); color: #2e5bff; }
 .badge-blue .res-badge-dot { background: #2e5bff; }
 
 /* ---- QR thumbnail ----------------------------------------- */
@@ -611,7 +600,7 @@
     pointer-events: none;
 }
 
-/* ---- Cancel button ---------------------------------------- */
+/* ---- Buttons ---------------------------------------------- */
 .res-btn-cancel {
     border: 1.5px solid rgba(186, 26, 26, 0.30);
     background: transparent;
@@ -634,100 +623,62 @@
     border-color: #ba1a1a;
 }
 
-.res-btn-delete{
-    border:1.5px solid rgba(220,38,38,.30);
-    background:#dc2626;
-    color:#fff;
-    border-radius:10px;
-    padding:5px 10px;
-    font-size:11px;
-    font-weight:600;
-    font-family:'Inter',sans-serif;
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:4px;
-    transition:.2s;
-    width:100%;
+.res-btn-delete {
+    border: 1.5px solid rgba(220, 38, 38, .30);
+    background: #dc2626;
+    color: #fff;
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: .2s;
+    width: 100%;
 }
 
-.res-btn-edit{
+.res-btn-delete:hover { background: #b91c1c; }
 
-    border:1.5px solid rgba(37,99,235,.30);
-
-    background:#2563eb;
-
-    color:#fff;
-
-    border-radius:10px;
-
-    padding:5px 10px;
-
-    font-size:11px;
-
-    font-weight:600;
-
-    font-family:'Inter',sans-serif;
-
-    cursor:pointer;
-
-    display:inline-flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:4px;
-
-    transition:.2s;
-
-    width:100%;
-
-    text-decoration:none;
-
+.res-btn-edit {
+    border: 1.5px solid rgba(37, 99, 235, .30);
+    background: #2563eb;
+    color: #fff;
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: .2s;
+    width: 100%;
+    text-decoration: none;
 }
 
-.res-btn-edit:hover{
+.res-btn-edit:hover { background: #1d4ed8; }
 
-    background:#1d4ed8;
-
-}
-
-.res-btn-edit-disabled{
-
-    border:1.5px solid #cbd5e1;
-
-    background:#e2e8f0;
-
-    color:#64748b;
-
-    border-radius:10px;
-
-    padding:5px 10px;
-
-    font-size:11px;
-
-    font-weight:600;
-
-    font-family:'Inter',sans-serif;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:4px;
-
-    width:100%;
-
-    cursor:not-allowed;
-
-}
-
-.res-btn-delete:hover{
-    background:#b91c1c;
+.res-btn-edit-disabled {
+    border: 1.5px solid #cbd5e1;
+    background: #e2e8f0;
+    color: #64748b;
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    cursor: not-allowed;
 }
 
 .res-visit-right .res-btn-cancel {
@@ -782,8 +733,8 @@
 }
 
 .res-page-btn {
-    min-width: 40px;
-    height: 40px;
+    min-width: 44px;
+    height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -809,7 +760,7 @@
     border-color: #1a1c2e;
 }
 
-/* ---- QR Modal (nuevo diseño) ------------------------------ */
+/* ---- QR Modal --------------------------------------------- */
 .res-qr-modal {
     display: none;
     position: fixed;
@@ -853,9 +804,7 @@
     margin-top: 0;
 }
 
-.res-qr-close:hover {
-    background: #eceef0;
-}
+.res-qr-close:hover { background: #eceef0; }
 
 .res-qr-modal-title {
     font-size: 18px;
@@ -921,9 +870,7 @@
     margin-top: 0;
 }
 
-.res-token-copy:hover {
-    background: #eceef0;
-}
+.res-token-copy:hover { background: #eceef0; }
 
 .res-qr-actions {
     display: grid;
@@ -951,13 +898,8 @@
     margin-top: 0;
 }
 
-.res-qr-action-btn:hover {
-    background: #f7f9fb;
-}
-
-.res-qr-action-btn i {
-    font-size: 15px;
-}
+.res-qr-action-btn:hover { background: #f7f9fb; }
+.res-qr-action-btn i { font-size: 15px; }
 
 .res-qr-share-hint {
     font-size: 11px;
@@ -991,7 +933,7 @@
     transform: translateY(-1px);
 }
 
-/* ---- "Nueva visita" dashed button inside list ------------- */
+/* ---- Dashed "ver todas" button ---------------------------- */
 .res-add-dashed {
     width: 100%;
     height: 44px;
@@ -1017,221 +959,369 @@
     border-style: solid;
 }
 
-/* ==========================================
-   MODAL FOTO VISITANTE PREMIUM
-========================================== */
-
-.res-photo-modal{
-    display:none;
-    position:fixed;
-    inset:0;
-    z-index:99999;
-    background:rgba(15,23,42,.85);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    justify-content:center;
-    align-items:center;
-    padding:30px;
-    cursor:pointer;
+/* ---- Modal foto visitante --------------------------------- */
+.res-photo-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(15, 23, 42, .85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    cursor: pointer;
 }
 
-.res-photo-zoom{
-    max-width:90vw;
-    max-height:90vh;
-    border-radius:24px;
-    object-fit:contain;
-    background:#fff;
-    padding:10px;
-    box-shadow:
-        0 25px 80px rgba(0,0,0,.45),
-        0 10px 30px rgba(0,0,0,.25);
-    animation:photoZoom .25s ease;
+.res-photo-zoom {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 24px;
+    object-fit: contain;
+    background: #fff;
+    padding: 10px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, .45),
+                0 10px 30px rgba(0, 0, 0, .25);
+    animation: photoZoom .25s ease;
 }
 
-@keyframes photoZoom{
-
-    from{
-        opacity:0;
-        transform:scale(.85);
-    }
-
-    to{
-        opacity:1;
-        transform:scale(1);
-    }
+@keyframes photoZoom {
+    from { opacity: 0; transform: scale(.85); }
+    to   { opacity: 1; transform: scale(1);   }
 }
 
-/* =========================================================
-   TABLA MIS VISITANTES
-========================================================= */
-
-.res-table-wrapper{
-
-    background:#fff;
-
-    border-radius:24px;
-
-    padding:20px;
-
-    border:1px solid #e5e7eb;
-
-    box-shadow:0 10px 35px rgba(15,23,42,.06);
-
-    overflow-x:auto;
-
+/* ---- Tabla Mis Visitantes --------------------------------- */
+.res-table-wrapper {
+    background: #fff;
+    border-radius: 24px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 35px rgba(15, 23, 42, .06);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-.res-table{
-
-    width:100%;
-
-    min-width:1200px;
-
-    border-collapse:collapse;
-
+.res-table {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: collapse;
 }
 
-.res-table thead th{
-
-    padding:18px 16px;
-
-    text-align:left;
-
-    font-size:12px;
-
-    font-weight:700;
-
-    text-transform:uppercase;
-
-    letter-spacing:.08em;
-
-    color:#64748b;
-
-    border-bottom:2px solid #f1f5f9;
-
-    background:#fafbfc;
-
+.res-table thead th {
+    padding: 18px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #64748b;
+    border-bottom: 2px solid #f1f5f9;
+    background: #fafbfc;
 }
 
 .res-table th:last-child,
-.res-table td:last-child{
+.res-table td:last-child { min-width: 180px; }
 
-    min-width:180px;
-
+.res-table tbody td {
+    padding: 18px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
 }
 
-.res-table tbody td{
+.res-table tbody tr { transition: .25s; }
+.res-table tbody tr:hover { background: #f8fafc; }
 
-    padding:18px 16px;
-
-    border-bottom:1px solid #f1f5f9;
-
-    vertical-align:middle;
-
+.res-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 240px;
 }
 
-.res-table tbody tr{
-
-    transition:.25s;
-
+.res-user-photo {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 14px;
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .12);
 }
 
-.res-table tbody tr:hover{
-
-    background:#f8fafc;
-
+.res-small {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
 }
 
-.res-user-cell{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:14px;
-
-    min-width:240px;
-
+.res-table-qr {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    border-radius: 12px;
+    padding: 4px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: .25s;
 }
 
-.res-user-photo{
+.res-table-qr:hover { transform: scale(1.08); }
 
-    width:65px;
-
-    height:65px;
-
-    object-fit:cover;
-
-    border-radius:14px;
-
-    cursor:pointer;
-
-    border:3px solid #fff;
-
-    box-shadow:0 8px 20px rgba(0,0,0,.12);
-
+.res-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 140px;
 }
 
-.res-small{
+.res-actions button { width: 100%; }
+.res-table strong { color: #0f172a; font-weight: 700; }
 
-    font-size:12px;
+/* ============================================================
+   RESPONSIVE — MÓVIL (iOS & Android)
+   Breakpoints:
+     ≤ 600px  → teléfono pequeño / Android compacto
+     ≤ 480px  → iPhone SE / teléfonos estándar
+   ============================================================ */
 
-    color:#64748b;
+@media (max-width: 600px) {
 
-    margin-top:4px;
+    /* Hero compacto */
+    .res-hero {
+        padding: 0;
+        margin-bottom: 2px;
+    }
 
+    .res-hero h1 {
+        font-size: 22px;
+        letter-spacing: -0.02em;
+    }
+
+    .res-hero-date {
+        font-size: 13px;
+    }
+
+    /* Top row: apilar en columna única, más espacio */
+    .res-top-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    /* CTA card horizontal → más usable con una mano */
+    .res-cta-card {
+        flex-direction: row;
+        align-items: center;
+        padding: 16px 18px;
+        border-radius: 18px;
+        gap: 14px;
+        min-height: 80px;
+    }
+
+    .res-cta-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        font-size: 17px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .res-cta-title { font-size: 15px; }
+    .res-cta-sub   { font-size: 12px; }
+
+    .res-cta-link {
+        padding-top: 4px;
+        font-size: 11px;
+    }
+
+    /* Stat cards: mantener 2×2 pero más compactas */
+    .res-stat-grid {
+        gap: 8px;
+    }
+
+    .res-stat-card {
+        padding: 11px 12px;
+        border-radius: 14px;
+    }
+
+    .res-stat-lbl  { font-size: 10px; }
+    .res-stat-num  { font-size: 21px; }
+    .res-stat-sub  { font-size: 10px; }
+
+    .res-stat-icon {
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
+        border-radius: 7px;
+    }
+
+    /* Visitas recientes */
+    .res-recent-card {
+        padding: 16px 14px;
+        border-radius: 18px;
+        margin-top: 4px;
+    }
+
+    .res-recent-head { margin-bottom: 14px; }
+
+    .res-recent-rows { border-radius: 12px; }
+
+    .res-recent-row {
+        padding: 11px 12px;
+        gap: 10px;
+    }
+
+    .res-recent-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 11px;
+    }
+
+    .res-avatar-photo {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }
+
+    .res-recent-name { font-size: 13px; }
+    .res-recent-sub  { font-size: 11px; }
+    .res-recent-date { font-size: 10px; }
+
+    .res-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .res-badge-dot {
+        width: 5px;
+        height: 5px;
+    }
+
+    /* Botón dashed */
+    .res-add-dashed {
+        height: 42px;
+        font-size: 12px;
+        border-radius: 12px;
+    }
+
+    /* Filtros: apilados en columna */
+    .res-filter-card { padding: 14px 12px; }
+
+    .res-filter-row { flex-direction: column; gap: 8px; }
+
+    .res-filter-field { min-width: unset; width: 100%; }
+
+    .res-filter-btn,
+    .res-filter-clear {
+        width: 100%;
+        justify-content: center;
+        height: 44px;
+    }
+
+    /* Visit cards (Mis Visitantes) */
+    .res-visit-card {
+        padding: 14px 14px;
+        border-radius: 16px;
+    }
+
+    .res-visit-body { gap: 12px; }
+
+    .res-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 12px;
+    }
+
+    .res-visit-name { font-size: 13px; }
+    .res-visit-meta { font-size: 11px; gap: 6px; }
+
+    /* QR thumb más pequeño */
+    .res-qr-thumb {
+        width: 52px;
+        height: 52px;
+    }
+
+    /* Botones de acción: targets táctiles mínimo 44px */
+    .res-btn-cancel,
+    .res-btn-delete,
+    .res-btn-edit,
+    .res-btn-edit-disabled {
+        padding: 8px 10px;
+        font-size: 12px;
+        min-height: 36px;
+    }
+
+    /* Paginación */
+    .res-page-btn {
+        min-width: 44px;
+        height: 44px;
+    }
+
+    /* Modal QR */
+    .res-qr-panel {
+        padding: 24px 18px;
+        border-radius: 20px;
+    }
+
+    .res-qr-modal-title { font-size: 16px; }
+    .res-qr-modal-sub   { font-size: 12px; }
+
+    .res-qr-image-wrap { padding: 14px; }
+    .res-qr-modal-image { width: 160px; }
+
+    .res-qr-action-btn {
+        height: 50px;
+        border-radius: 12px;
+    }
+
+    /* Empty state */
+    .res-empty { padding: 36px 16px; }
+
+    /* Page heading (Mis Visitantes) */
+    .res-page-heading { font-size: 20px; }
+    .res-page-sub     { font-size: 13px; }
+
+    /* Padding inferior: espacio para la barra de navegación nativa */
+    .gd-page,
+    .res-gd-page {
+        padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Tabla: scroll horizontal con inercia táctil */
+    .res-table-wrapper {
+        border-radius: 16px;
+        padding: 0;
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
-.res-table-qr{
+/* Ajuste fino para pantallas muy pequeñas (≤ 360px – Android compacto) */
+@media (max-width: 360px) {
 
-    width:70px;
+    .res-hero h1  { font-size: 20px; }
 
-    height:70px;
+    .res-stat-num { font-size: 19px; }
 
-    object-fit:contain;
+    .res-cta-title { font-size: 14px; }
+    .res-cta-sub   { font-size: 11px; }
 
-    border-radius:12px;
+    .res-stat-card { padding: 10px 10px; }
 
-    padding:4px;
-
-    background:#fff;
-
-    border:1px solid #e2e8f0;
-
-    cursor:pointer;
-
-    transition:.25s;
-
+    .res-recent-card { padding: 14px 12px; }
 }
 
-.res-table-qr:hover{
+/* Safe-area para notch / Dynamic Island / barra de gestos Android */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .res-qr-modal {
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
 
-    transform:scale(1.08);
-
-}
-
-.res-actions{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:8px;
-
-    min-width:140px;
-
-}
-
-.res-actions button{
-
-    width:100%;
-
-}
-
-.res-table strong{
-
-    color:#0f172a;
-
-    font-weight:700;
-
+    .res-photo-modal {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
 }

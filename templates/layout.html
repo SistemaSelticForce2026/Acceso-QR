@@ -99,6 +99,34 @@
                         </div>
                     {% endfor %}
                 </div>
+
+                <script>
+                    (function () {
+                        window.dismissToast = function (toast) {
+                            if (!toast || toast.classList.contains("flash-out")) return;
+                            toast.classList.add("flash-out");
+                            toast.style.transition = "opacity 0.35s ease, transform 0.35s ease";
+                            toast.style.opacity = "0";
+                            toast.style.transform = "translateX(40px)";
+                            setTimeout(function () { toast.remove(); }, 350);
+                        };
+
+                        var DURACION = 4000; // ms visible antes de cerrarse solo
+
+                        document.querySelectorAll(".flash-toast").forEach(function (toast) {
+                            var barra = toast.querySelector(".flash-progress");
+                            if (barra) {
+                                barra.style.transition = "width " + DURACION + "ms linear";
+                                barra.style.width = "100%";
+                                requestAnimationFrame(function () {
+                                    requestAnimationFrame(function () { barra.style.width = "0%"; });
+                                });
+                            }
+                            setTimeout(function () { window.dismissToast(toast); }, DURACION);
+                        });
+                    })();
+                </script>
+
             {% endif %}
         {% endwith %}
 
@@ -168,6 +196,46 @@
             });
 
         }
+
+    </script>
+
+    <!-- ===================================================== -->
+    <!-- FLASH TOASTS -->
+    <!-- ===================================================== -->
+
+    <script>
+
+        function dismissToast(toast) {
+            if (!toast || toast.classList.contains("flash-out")) return;
+            toast.classList.add("flash-out");
+            toast.style.transition = "opacity 0.35s ease, transform 0.35s ease";
+            toast.style.opacity = "0";
+            toast.style.transform = "translateX(40px)";
+            setTimeout(function () { toast.remove(); }, 350);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            var DURACION = 4000; // ms visible antes de cerrarse solo
+
+            document.querySelectorAll(".flash-toast").forEach(function (toast) {
+
+                // Anima la barra de progreso si existe
+                var barra = toast.querySelector(".flash-progress");
+                if (barra) {
+                    barra.style.transition = "width " + DURACION + "ms linear";
+                    barra.style.width = "100%";
+                    requestAnimationFrame(function () {
+                        requestAnimationFrame(function () { barra.style.width = "0%"; });
+                    });
+                }
+
+                // Cierre automático
+                setTimeout(function () { dismissToast(toast); }, DURACION);
+
+            });
+
+        });
 
     </script>
 

@@ -563,15 +563,88 @@ footer.app-foot b{color:var(--ink-600)}
 
         <!-- ══ KPIs ══ -->
         <div class="ad-stats">
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Total visitas</p><div class="ast-ico ico-blue"><i class="fa-solid fa-users"></i></div></div><p class="ast-num">{{ total_visitas or 0 }}</p><p class="ast-sub">Registros generales</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Visitas pendientes</p><div class="ast-ico ico-amber"><i class="fa-solid fa-user-clock"></i></div></div><p class="ast-num">{{ activas or 0 }}</p><p class="ast-sub">Aún no han ingresado</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Personas dentro</p><div class="ast-ico ico-green"><i class="fa-solid fa-building-shield"></i></div></div><p class="ast-num">{{ dentro or 0 }}</p><p class="ast-sub">Dentro del residencial</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Salidas registradas</p><div class="ast-ico ico-purple"><i class="fa-solid fa-door-open"></i></div></div><p class="ast-num">{{ salidas or 0 }}</p><p class="ast-sub">Visitas finalizadas</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Residentes</p><div class="ast-ico ico-blue"><i class="fa-solid fa-house"></i></div></div><p class="ast-num">{{ total_residentes or 0 }}</p><p class="ast-sub">Usuarios registrados</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Guardias</p><div class="ast-ico ico-green"><i class="fa-solid fa-shield-halved"></i></div></div><p class="ast-num">{{ total_guardias or 0 }}</p><p class="ast-sub">Personal activo</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Incidencias</p><div class="ast-ico ico-red"><i class="fa-solid fa-triangle-exclamation"></i></div></div><p class="ast-num">{{ total_incidencias or 0 }}</p><p class="ast-sub">Eventos registrados</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">QR rechazados</p><div class="ast-ico ico-red"><i class="fa-solid fa-ban"></i></div></div><p class="ast-num">{{ rechazados or 0 }}</p><p class="ast-sub">Accesos inválidos</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Promedio diario</p><div class="ast-ico ico-purple"><i class="fa-solid fa-chart-line"></i></div></div><p class="ast-num">{{ promedio or 0 }}</p><p class="ast-sub">Visitas por día</p></div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">Total visitas</p>
+              <div class="ast-ico ico-blue"><i class="fa-solid fa-users"></i></div>
+            </div>
+            <p class="ast-num kpi-total-visitas">0</p>
+            <p class="ast-sub">Registros generales</p>
+          </div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">Visitas pendientes</p>
+              <div class="ast-ico ico-amber"><i class="fa-solid fa-user-clock"></i></div>
+            </div>
+            <p class="ast-num kpi-activas">0</p>
+            <p class="ast-sub">Aún no han ingresado</p>
+          </div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">Personas dentro</p>
+              <div class="ast-ico ico-green"><i class="fa-solid fa-building-shield"></i></div>
+            </div>
+            <p class="ast-num kpi-dentro">0</p>
+            <p class="ast-sub">Dentro del residencial</p>
+          </div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">Salidas registradas</p>
+              <div class="ast-ico ico-purple"><i class="fa-solid fa-door-open"></i></div>
+            </div>
+            <p class="ast-num kpi-salidas">0</p>
+            <p class="ast-sub">Visitas finalizadas</p>
+          </div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">Residentes</p>
+              <div class="ast-ico ico-blue"><i class="fa-solid fa-house"></i></div>
+            </div>
+            <p class="ast-num kpi-residentes">0</p>
+            <p class="ast-sub">Usuarios registrados</p>
+          </div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">Guardias</p>
+              <div class="ast-ico ico-green"><i class="fa-solid fa-shield-halved"></i></div>
+            </div>
+            <p class="ast-num kpi-guardias">0</p>
+            <p class="ast-sub">Personal activo</p>
+          </div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">Incidencias</p>
+              <div class="ast-ico ico-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            </div>
+            <p class="ast-num kpi-incidencias">0</p>
+            <p class="ast-sub">Eventos registrados</p>
+          </div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">QR rechazados</p>
+              <div class="ast-ico ico-red"><i class="fa-solid fa-ban"></i></div>
+            </div>
+            <p class="ast-num kpi-rechazados">0</p>
+            <p class="ast-sub">Accesos inválidos</p>
+          </div>
+
+          <div class="ad-stat">
+            <div class="ast-top">
+              <p class="ast-label">Promedio diario</p>
+              <div class="ast-ico ico-purple"><i class="fa-solid fa-chart-line"></i></div>
+            </div>
+            <p class="ast-num kpi-promedio">0</p>
+            <p class="ast-sub">Visitas por día</p>
+          </div>
+
         </div>
 
         <!-- ══ FILTRO PERÍODO ══ -->
@@ -800,11 +873,14 @@ footer.app-foot b{color:var(--ink-600)}
             </div>
           </div>
 
-          <!-- Tabla + paginación (mismo parcial que usa el AJAX) -->
+          <!-- Tabla + paginación — carga lazy vía AJAX -->
           <div id="tablaVisitasWrap">
-            {% include 'partials/_visitas_tabla.html' %}
+            <!-- skeleton mientras carga -->
+            <div id="tablaSkeleton" style="padding:32px;text-align:center;color:var(--ink-400)">
+              <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;margin-bottom:10px;display:block;color:var(--pri-500)"></i>
+              <p style="font-size:13px;font-weight:600">Cargando historial de visitas…</p>
+            </div>
           </div>
-        </div>
 
       </div>
     </div>
@@ -975,7 +1051,7 @@ footer.app-foot b{color:var(--ink-600)}
   const dsDias=[{label:'Accesos',data:diasData,borderColor:'#2563eb',backgroundColor:gArea,fill:true,tension:.4,borderWidth:2.6,pointRadius:3,pointHoverRadius:7,pointBackgroundColor:'#fff',pointBorderColor:'#2563eb',pointBorderWidth:2}];
   const haySalidas=Array.isArray(salidasData)&&salidasData.length===diasData.length&&salidasData.some(x=>Number(x)>0);
   if(haySalidas){ dsDias.push({label:'Salidas',data:salidasData,borderColor:'#16a34a',backgroundColor:'transparent',fill:false,tension:.4,borderWidth:2.4,borderDash:[5,4],pointRadius:0,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#16a34a',pointBorderWidth:2}); }
-  new Chart(ctxLine,{type:'line',
+  window._chartDias = new Chart(ctxLine,{type:'line',
     data:{labels:{{ dias_labels | tojson }},datasets:dsDias},
     options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},
       plugins:{legend:{display:haySalidas,position:'bottom'},
@@ -986,12 +1062,12 @@ footer.app-foot b{color:var(--ink-600)}
       scales:{x:{grid:{display:false},border:{display:false},ticks:{color:'#5b6678',font:{weight:'600'}}},y:{beginAtZero:true,ticks:{color:'#8a93a6',precision:0},grid:{color:'#eef0f5'},border:{display:false}}}}});
 
   // ───── Estado operativo (dona) ─────
-  new Chart(document.getElementById('estadoChart'),{type:'doughnut',
+  window._chartEstado = new Chart(document.getElementById('estadoChart'),{type:'doughnut',
     data:{labels:['Pendientes','Dentro','Finalizadas'],datasets:[{data:[{{ activas or 0 }},{{ dentro or 0 }},{{ salidas or 0 }}],backgroundColor:['#c2820a','#16a34a','#2563eb'],borderColor:'#fff',borderWidth:3,hoverOffset:10,spacing:2}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'},tooltip:mkPctTip()}}});
 
   // ───── Resumen general (barras) ─────
-  new Chart(document.getElementById('actividadChart'),{type:'bar',
+  window._chartActividad = new Chart(document.getElementById('actividadChart'),{type:'bar',
     data:{labels:['Total','Pendientes','Dentro','Salidas','Rechazados'],datasets:[{data:[{{ total_visitas or 0 }},{{ activas or 0 }},{{ dentro or 0 }},{{ salidas or 0 }},{{ rechazados or 0 }}],backgroundColor:['#2563eb','#c2820a','#16a34a','#7c3aed','#d6342c'],borderRadius:8,maxBarThickness:46}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},
@@ -1002,7 +1078,7 @@ footer.app-foot b{color:var(--ink-600)}
       scales:{x:{grid:{display:false},border:{display:false},ticks:{color:'#5b6678',font:{weight:'600'}}},y:{beginAtZero:true,ticks:{color:'#8a93a6',precision:0},grid:{color:'#eef0f5'},border:{display:false}}}}});
 
   // ───── Modalidades de visita (dona) ─────
-  new Chart(document.getElementById('tiposChart'),{type:'doughnut',
+  window._chartTipos = new Chart(document.getElementById('tiposChart'),{type:'doughnut',
     data:{labels:{{ tipo_labels | tojson }},datasets:[{data:{{ tipo_data | tojson }},backgroundColor:['#2563eb','#38bdf8','#16a34a','#c2820a','#d6342c','#7c3aed'],borderColor:'#fff',borderWidth:3,hoverOffset:10,spacing:2}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'},tooltip:mkPctTip()}}});
 </script>
@@ -1068,27 +1144,143 @@ footer.app-foot b{color:var(--ink-600)}
 
 <script>
   // Mantener scroll + barra de carga superior
-  (function(){
-    if('scrollRestoration' in history) history.scrollRestoration='manual';
-    if(sessionStorage.getItem('adKeep')==='1'){ const y=sessionStorage.getItem('adScroll'); if(y!==null) window.scrollTo(0,parseInt(y,10)); }
-    sessionStorage.removeItem('adKeep');
-    const marcar=()=>sessionStorage.setItem('adKeep','1');
-    document.querySelectorAll('#periodForm, .hist-filter').forEach(f=>f.addEventListener('submit',marcar));
-    document.querySelectorAll('.pf-input').forEach(i=>i.addEventListener('change',marcar));
-    document.querySelectorAll('.pf-tab').forEach(t=>t.addEventListener('click',marcar));
-    document.querySelectorAll('.btn-clear').forEach(a=>a.addEventListener('click',marcar));
-    window.addEventListener('beforeunload',()=>{ sessionStorage.setItem('adScroll',window.scrollY); });
+  (function() {
+    const params = new URLSearchParams(window.location.search);
 
-    const bar=document.getElementById('topLoader'); let _w=0,_t=null;
-    function iniciarCarga(){ if(!bar)return; bar.classList.add('active'); _w=10; bar.style.width=_w+'%'; clearInterval(_t);
-      _t=setInterval(()=>{ _w=Math.min(_w+Math.random()*12,90); bar.style.width=_w+'%'; },180); }
-    const formFiltro=document.querySelector('.hist-filter');
-    if(formFiltro) formFiltro.addEventListener('submit',()=>{ const b=formFiltro.querySelector('.btn-filter'); if(b)b.classList.add('is-loading'); });
-    document.querySelectorAll('#periodForm, #fraccionamientoForm, .hist-filter').forEach(f=>f.addEventListener('submit',iniciarCarga));
-    document.querySelectorAll('.btn-filter, .btn-clear, .pf-tab').forEach(el=>el.addEventListener('click',iniciarCarga));
-    document.querySelectorAll('.dashboard-select, .pf-input').forEach(el=>el.addEventListener('change',iniciarCarga));
-    window.addEventListener('pageshow',()=>{ if(!bar)return; clearInterval(_t); bar.style.width='100%'; setTimeout(()=>{ bar.classList.remove('active'); bar.style.width='0'; },250); });
-  })();
+    function animarNumero(el, final) {
+      if (!el) return;
+      const dur = 700, ini = performance.now();
+      function frame(now) {
+        const p = Math.min((now - ini) / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(final * eased).toLocaleString('es-MX');
+        if (p < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    fetch('/admin/dashboard/kpis?' + params.toString())
+      .then(r => r.json())
+      .then(d => {
+        const ids = {
+          '.kpi-total-visitas': d.total_visitas,
+          '.kpi-dentro':        d.dentro,
+          '.kpi-activas':       d.activas,
+          '.kpi-salidas':       d.salidas,
+          '.kpi-residentes':    d.total_residentes,
+          '.kpi-guardias':      d.total_guardias,
+          '.kpi-incidencias':   d.total_incidencias,
+          '.kpi-rechazados':    d.rechazados,
+          '.kpi-promedio':      d.promedio,
+        };
+        Object.entries(ids).forEach(([sel, val]) => {
+          document.querySelectorAll(sel).forEach(el => animarNumero(el, val));
+        });
+
+        if (window._chartDias) {
+          window._chartDias.data.labels = d.dias_labels;
+          window._chartDias.data.datasets[0].data = d.dias_data;
+          if (window._chartDias.data.datasets[1]) window._chartDias.data.datasets[1].data = d.salidas_data;
+          window._chartDias.update();
+        }
+        if (window._chartEstado) {
+          window._chartEstado.data.datasets[0].data = [d.activas, d.dentro, d.salidas];
+          window._chartEstado.update();
+        }
+        if (window._chartTipos) {
+          window._chartTipos.data.labels = d.tipo_labels;
+          window._chartTipos.data.datasets[0].data = d.tipo_data;
+          window._chartTipos.update();
+        }
+        if (window._chartActividad) {
+          window._chartActividad.data.datasets[0].data = [d.total_visitas, d.activas, d.dentro, d.salidas, d.rechazados];
+          window._chartActividad.update();
+        }
+
+        const rankList = document.querySelector('.rank-list');
+        if (rankList && d.top_residentes.length) {
+          const medallas = ['🥇','🥈','🥉'];
+          const max = d.top_residentes[0]?.[1] || 1;
+          rankList.innerHTML = d.top_residentes.map(([nombre, total], i) => `
+            <div class="rank-item">
+              <div class="rank-left">
+                <div class="rank-av">${nombre[0].toUpperCase()}</div>
+                <div>
+                  <p class="rank-name">${medallas[i] || ''} ${nombre}</p>
+                  <div class="rank-bar"><div class="rank-fill" style="width:${Math.round(total/max*100)}%"></div></div>
+                  <p class="rank-desc">Residente activo</p>
+                </div>
+              </div>
+              <div class="rank-count">
+                <span class="rank-num">${total}</span>
+                <small>visita${total !== 1 ? 's' : ''}</small>
+              </div>
+            </div>`).join('');
+        }
+
+        const alertList = document.querySelector('.alert-list');
+        if (alertList) {
+          let html = '';
+          if (d.dentro > 0)
+            html += `<div class="alert-item a-warning"><i class="fa-solid fa-triangle-exclamation"></i><p>${d.dentro} visita${d.dentro!==1?'s':''} dentro del fraccionamiento.</p></div>`;
+          if (d.rechazados > 0)
+            html += `<div class="alert-item a-danger"><i class="fa-solid fa-ban"></i><p>${d.rechazados} acceso${d.rechazados!==1?'s':''} rechazado${d.rechazados!==1?'s':''}.</p></div>`;
+          html += `<div class="alert-item a-info"><i class="fa-solid fa-circle-info"></i><p>Verificar placas y fotografía del visitante antes de permitir el acceso.</p></div>`;
+          if (d.total_incidencias > 0)
+            html += `<div class="alert-item a-danger"><i class="fa-solid fa-shield-halved"></i><p>Hay ${d.total_incidencias} incidencia${d.total_incidencias!==1?'s':''} registrada${d.total_incidencias!==1?'s':''}.</p></div>`;
+          alertList.innerHTML = html;
+        }
+
+        const monitorNums = document.querySelectorAll('.monitor-num');
+        if (monitorNums.length >= 4) {
+          const efect = d.total_visitas > 0
+            ? Math.round(((d.salidas + d.dentro) / d.total_visitas) * 100) + '%' : '—';
+          monitorNums[0].textContent = efect;
+          monitorNums[2].textContent = d.activas;
+          monitorNums[3].textContent = d.rechazados;
+        }
+      })
+      .catch(() => {});  // ← KPIs terminan aquí
+
+    // ════ TABLA DE VISITAS (lazy, independiente de los KPIs) ════
+    const wrapTabla = document.getElementById('tablaVisitasWrap');
+    if (wrapTabla) {
+      const tParams = new URLSearchParams(window.location.search);
+      fetch('{{ url_for("admin.buscar_visitas_tabla") }}?' + tParams.toString(), {
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(r => r.text())
+      .then(html => {
+        wrapTabla.innerHTML = html;
+        const m = document.getElementById('imgModal');
+        const mi = document.getElementById('modalImg');
+        if (m && mi) {
+          wrapTabla.querySelectorAll('.zoomable-image').forEach(img => {
+            img.addEventListener('click', () => { mi.src = img.src; m.classList.add('open'); });
+          });
+        }
+        wrapTabla.addEventListener('click', e => {
+          const link = e.target.closest('.pagination a[href]');
+          if (!link || link.classList.contains('disabled')) return;
+          e.preventDefault();
+          const page = new URL(link.href, location.origin).searchParams.get('page') || 1;
+          const p2 = new URLSearchParams(window.location.search);
+          p2.set('page', page);
+          wrapTabla.style.opacity = '.5';
+          fetch('{{ url_for("admin.buscar_visitas_tabla") }}?' + p2.toString(), {
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+          }).then(r => r.text()).then(h => {
+            wrapTabla.innerHTML = h;
+            wrapTabla.style.opacity = '1';
+          });
+        });
+      })
+      .catch(() => {
+        wrapTabla.innerHTML = '<div class="tbl-empty"><i class="fa-solid fa-triangle-exclamation"></i><p>No se pudo cargar el historial.</p></div>';
+      });
+    }
+
+  })(); 
 </script>
 
 </body>
