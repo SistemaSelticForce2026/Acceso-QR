@@ -979,9 +979,15 @@
     .res-visit-card:hover { transform: none; } /* sin hover en táctil */
 
     .res-visit-body {
-        flex-wrap: nowrap;
+        flex-wrap: wrap;          /* permite que la zona QR+acciones baje a 2ª fila */
         align-items: flex-start;
         gap: 12px;
+    }
+
+    /* fila 1: avatar + info ocupan el ancho; la zona derecha (basis 100%) salta abajo */
+    .res-visit-info {
+        flex: 1 1 0;
+        min-width: 0;
     }
 
     .res-avatar {
