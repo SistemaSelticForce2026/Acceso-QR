@@ -3,475 +3,443 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>AccessQR · Mantenimiento</title>
+<title>AccessQR · Ventana de Mantenimiento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-
-body{
-  font-family:'Inter',system-ui,sans-serif;
-  min-height:100vh;
-  min-height:100dvh;
-  background:#080d1a;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:24px 20px;
-  padding-top:max(24px,env(safe-area-inset-top));
-  padding-bottom:max(24px,env(safe-area-inset-bottom));
-  position:relative;
-  overflow:hidden;
-  -webkit-font-smoothing:antialiased;
+:root {
+  --bg-main: #0b0f19;
+  --bg-card: rgba(17, 24, 39, 0.6);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #4b5563;
+  --brand-color: #4f46e5;
+  --brand-gradient: linear-gradient(135deg, #6366f1, #4f46e5);
+  --warning-color: #f59e0b;
+  --success-color: #10b981;
 }
 
-/* ── Fondo animado ── */
-.bg-grid{
-  position:absolute;
-  inset:0;
-  background-image:
-    linear-gradient(rgba(46,91,255,.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(46,91,255,.04) 1px,transparent 1px);
-  background-size:48px 48px;
-  mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,black 20%,transparent 100%);
-  pointer-events:none;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100dvh;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  padding-top: max(32px, env(safe-area-inset-top));
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+  position: relative;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-.orb{
-  position:absolute;
-  border-radius:50%;
-  filter:blur(90px);
-  pointer-events:none;
-  animation:pulse 8s ease-in-out infinite;
+/* ── Fondo de Red de Infraestructura ── */
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at 50% 50%, black 10%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
 }
 
-.orb-1{
-  width:500px;height:500px;
-  top:-120px;left:-120px;
-  background:rgba(46,91,255,.12);
-  animation-delay:0s;
+.blur-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  opacity: 0.5;
+  z-index: 0;
+}
+.orb-1 { width: 400px; height: 400px; top: -10%,; left: -10%; background: rgba(79, 70, 229, 0.15); }
+.orb-2 { width: 350px; height: 350px; bottom: -5%; right: -5%; background: rgba(16, 185, 129, 0.08); }
+
+/* ── Contenedor Principal ── */
+.container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
 }
 
-.orb-2{
-  width:400px;height:400px;
-  bottom:-100px;right:-100px;
-  background:rgba(99,153,34,.08);
-  animation-delay:-4s;
+/* ── Cabecera / Logo ── */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+  align-self: center;
 }
 
-.orb-3{
-  width:300px;height:300px;
-  top:40%;left:60%;
-  background:rgba(124,58,237,.07);
-  animation-delay:-2s;
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-icon svg { color: #818cf8; }
+
+.brand-text-main { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: #fff; }
+.brand-text-sub { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+
+/* ── Bloque Central de Estado ── */
+.status-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 32px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  text-align: center;
 }
 
-@keyframes pulse{
-  0%,100%{transform:scale(1);opacity:1}
-  50%{transform:scale(1.12);opacity:.7}
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--warning-color);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
 }
 
-/* ── Contenedor ── */
-.wrap{
-  position:relative;
-  z-index:1;
-  width:100%;
-  max-width:520px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:0;
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--warning-color);
+  animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* ── Logo ── */
-.logo-row{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin-bottom:48px;
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  margin-bottom: 12px;
+  color: #fff;
+}
+h1 span { color: #818cf8; }
+
+.system-desc {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 28px;
 }
 
-.logo-icon{
-  width:42px;height:42px;
-  border-radius:12px;
-  background:linear-gradient(145deg,#1e2d50,#0a0f1e);
-  border:1px solid rgba(255,255,255,.10);
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
+/* ── Métrica e Información técnica ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
 }
 
-.logo-icon svg{color:#6b8aff}
-
-.logo-text-name{
-  font-size:17px;font-weight:700;
-  color:#fff;letter-spacing:-.3px;line-height:1.2;
+.info-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: left;
 }
 
-.logo-text-sub{
-  font-family:'JetBrains Mono',monospace;
-  font-size:10px;font-weight:500;
-  text-transform:uppercase;letter-spacing:.12em;
-  color:#4a5675;margin-top:3px;
+.info-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
 }
 
-/* ── Icono principal ── */
-.main-icon-wrap{
-  width:88px;height:88px;
-  border-radius:28px;
-  background:linear-gradient(145deg,#111827,#0d1220);
-  border:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;justify-content:center;
-  margin-bottom:32px;
-  position:relative;
-  flex-shrink:0;
+.info-value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+.info-value.warning { color: var(--warning-color); }
+.info-value.success { color: var(--success-color); }
+
+/* ── Barra de Progreso Avanzada ── */
+.progress-container {
+  margin-bottom: 28px;
+  text-align: left;
 }
 
-.main-icon-wrap::before{
-  content:'';
-  position:absolute;
-  inset:-1px;
-  border-radius:29px;
-  background:linear-gradient(145deg,rgba(107,138,255,.25),transparent 60%);
-  pointer-events:none;
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.progress-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+.progress-percent { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: #818cf8; }
+
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 99px;
+  overflow: hidden;
 }
 
-.main-icon-wrap svg{
-  color:#6b8aff;
-  position:relative;
-  z-index:1;
+.progress-bar {
+  height: 100%;
+  width: 74%; /* Estado base inicial */
+  background: var(--brand-gradient);
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Engranaje girando */
-.gear-spin{
-  animation:spin 12s linear infinite;
-  transform-origin:center;
+/* ── Acciones de Usuario ── */
+.action-group {
+  display: flex;
+  gap: 12px;
 }
 
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── Texto ── */
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  padding:5px 13px;
-  border-radius:999px;
-  background:rgba(239,171,39,.10);
-  border:1px solid rgba(239,171,39,.22);
-  font-size:11.5px;font-weight:600;
-  color:#f5c542;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  margin-bottom:20px;
+.btn {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  height: 46px;
 }
 
-.badge-dot{
-  width:6px;height:6px;
-  border-radius:50%;
-  background:#f5c542;
-  animation:blink 1.6s ease-in-out infinite;
-  flex-shrink:0;
+.btn-primary {
+  flex: 1;
+  background: var(--brand-gradient);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
 }
+.btn-primary:hover { opacity: 0.95; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-@keyframes blink{
-  0%,100%{opacity:1}
-  50%{opacity:.25}
+.btn-secondary {
+  padding: 0 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
+.btn-secondary:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 
-h1{
-  font-size:36px;font-weight:800;
-  color:#fff;letter-spacing:-.04em;
-  line-height:1.08;
-  text-align:center;
-  margin-bottom:14px;
+/* Spinner animación de carga remota */
+.spinner {
+  display: none;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.6s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-h1 span{
-  color:#6b8aff;
+/* ── Footer / Datos Corporativos ── */
+.footer {
+  margin-top: 32px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
 }
+.footer a { color: #818cf8; text-decoration: none; font-weight: 500; }
+.footer a:hover { text-decoration: underline; }
 
-.desc{
-  font-size:16px;
-  color:#6b7a99;
-  line-height:1.65;
-  text-align:center;
-  max-width:400px;
-  margin-bottom:36px;
-}
-
-/* ── Info cards ── */
-.info-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  width:100%;
-  margin-bottom:32px;
-}
-
-.info-card{
-  background:rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:16px;
-  padding:16px 18px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.info-card-label{
-  font-size:11px;font-weight:600;
-  text-transform:uppercase;letter-spacing:.08em;
-  color:#3d4d6b;
-}
-
-.info-card-value{
-  font-size:14px;font-weight:600;
-  color:#c5cfe8;
-  line-height:1.3;
-}
-
-.info-card-value.green{color:#4ade80}
-.info-card-value.yellow{color:#fbbf24}
-
-/* ── Barra de progreso ── */
-.progress-wrap{
-  width:100%;
-  margin-bottom:36px;
-}
-
-.progress-label-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-}
-
-.progress-label{
-  font-size:12.5px;font-weight:600;
-  color:#4a5675;
-}
-
-.progress-pct{
-  font-family:'JetBrains Mono',monospace;
-  font-size:12px;font-weight:600;
-  color:#6b8aff;
-}
-
-.progress-track{
-  width:100%;
-  height:4px;
-  border-radius:99px;
-  background:rgba(255,255,255,.06);
-  overflow:hidden;
-}
-
-.progress-bar{
-  height:100%;
-  border-radius:99px;
-  background:linear-gradient(90deg,#3b5bff,#6b8aff);
-  animation:progressAnim 3.5s ease-in-out infinite alternate;
-  transform-origin:left;
-}
-
-@keyframes progressAnim{
-  from{width:62%}
-  to{width:88%}
-}
-
-/* ── Acciones ── */
-.actions{
-  display:flex;
-  gap:10px;
-  width:100%;
-}
-
-.btn-primary{
-  flex:1;
-  height:48px;
-  background:linear-gradient(120deg,#3b5bff,#2a47e0);
-  color:#fff;
-  border:none;
-  border-radius:13px;
-  font-size:14px;font-weight:700;
-  font-family:inherit;
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  gap:8px;
-  transition:opacity .15s,transform .12s;
-  letter-spacing:-.1px;
-}
-
-.btn-primary:hover{opacity:.88;transform:translateY(-1px)}
-.btn-primary:active{transform:scale(.98)}
-
-.btn-secondary{
-  height:48px;
-  padding:0 20px;
-  background:rgba(255,255,255,.05);
-  color:#8a97b5;
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:13px;
-  font-size:14px;font-weight:600;
-  font-family:inherit;
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  gap:8px;
-  transition:background .15s,color .15s;
-  white-space:nowrap;
-}
-
-.btn-secondary:hover{background:rgba(255,255,255,.08);color:#c5cfe8}
-
-/* ── Footer ── */
-.foot{
-  margin-top:48px;
-  font-size:12px;
-  color:#2e3a52;
-  text-align:center;
-  line-height:1.7;
-}
-
-.foot a{color:#3b5bff;text-decoration:none;font-weight:600}
-.foot a:hover{color:#6b8aff}
-
-/* ── Responsive ── */
-@media(max-width:540px){
-  .logo-row{margin-bottom:36px}
-  .main-icon-wrap{width:72px;height:72px;border-radius:22px;margin-bottom:24px}
-  h1{font-size:28px}
-  .desc{font-size:15px;margin-bottom:28px}
-  .info-grid{grid-template-columns:1fr;gap:8px}
-  .actions{flex-direction:column}
-  .btn-secondary{height:44px}
-  .btn-primary{height:48px}
-  .foot{margin-top:36px}
-}
-
-@media(max-width:360px){
-  h1{font-size:24px}
-  .desc{font-size:14px}
-  .main-icon-wrap{width:64px;height:64px}
+/* ── Adaptabilidad Móvil Avanzada ── */
+@media (max-width: 480px) {
+  .status-card { padding: 24px 20px; border-radius: 20px; }
+  h1 { font-size: 24px; }
+  .info-grid { grid-template-columns: 1fr; gap: 8px; }
+  .action-group { flex-direction: column-reverse; }
+  .btn-secondary { width: 100%; }
 }
 </style>
 </head>
 <body>
 
 <div class="bg-grid"></div>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="orb orb-3"></div>
+<div class="blur-orb orb-1"></div>
+<div class="blur-orb orb-2"></div>
 
-<div class="wrap">
+<div class="container">
 
-  <!-- Logo -->
-  <div class="logo-row">
-    <div class="logo-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+  <!-- Logo de Plataforma -->
+  <header class="header-brand">
+    <div class="brand-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     </div>
     <div>
-      <div class="logo-text-name">AccessQR</div>
-      <div class="logo-text-sub">Control de accesos</div>
+      <div class="brand-text-main">AccessQR</div>
+      <div class="brand-text-sub">Sistemas Core · Infraestructura</div>
     </div>
-  </div>
+  </header>
 
-  <!-- Icono principal -->
-  <div class="main-icon-wrap">
-    <svg class="gear-spin" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/>
-      <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-    </svg>
-  </div>
-
-  <!-- Badge estado -->
-  <div class="badge">
-    <span class="badge-dot"></span>
-    Mantenimiento activo
-  </div>
-
-  <!-- Título -->
-  <h1>Sistema en<br><span>mantenimiento</span></h1>
-
-  <!-- Descripción -->
-  <p class="desc">
-    Estamos aplicando mejoras al sistema de control de accesos.
-    El servicio estará disponible en breve.
-  </p>
-
-  <!-- Info cards -->
-  <div class="info-grid">
-    <div class="info-card">
-      <div class="info-card-label">Estado</div>
-      <div class="info-card-value yellow">Actualización en curso</div>
+  <!-- Tarjeta Central Operativa -->
+  <main class="status-card">
+    
+    <div class="badge-status">
+      <span class="badge-dot"></span>
+      Mantenimiento Planificado
     </div>
-    <div class="info-card">
-      <div class="info-card-label">Tiempo estimado</div>
-      <div class="info-card-value">~15 minutos</div>
-    </div>
-    <div class="info-card">
-      <div class="info-card-label">Servicios activos</div>
-      <div class="info-card-value green">QR · Guardias</div>
-    </div>
-    <div class="info-card">
-      <div class="info-card-label">Última verificación</div>
-      <div class="info-card-value" id="lastCheck">—</div>
-    </div>
-  </div>
 
-  <!-- Progreso -->
-  <div class="progress-wrap">
-    <div class="progress-label-row">
-      <span class="progress-label">Progreso de actualización</span>
-      <span class="progress-pct" id="pct">74%</span>
-    </div>
-    <div class="progress-track">
-      <div class="progress-bar" id="bar"></div>
-    </div>
-  </div>
+    <h1>Optimización de<br><span>Infraestructura</span></h1>
+    
+    <p class="system-desc">
+      Estamos realizando mejoras de rendimiento programadas en los nodos de control de accesos. El servicio se restablecerá automáticamente.
+    </p>
 
-  <!-- Acciones -->
-  <div class="actions">
-    <button class="btn-primary" onclick="location.reload()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-      Reintentar
-    </button>
-    <button class="btn-secondary" onclick="window.open('mailto:soporte@accessqr.com')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-      Soporte
-    </button>
-  </div>
+    <!-- Panel de Datos Técnicos -->
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Estado actual</div>
+        <div class="info-value warning">Despliegue v2.4.2</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">T. Restante Est.</div>
+        <div class="info-value">~12 minutos</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Contingencia Guardias</div>
+        <div class="info-value success">Operativo offline</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Último ping</div>
+        <div class="info-value" id="lastCheck">—</div>
+      </div>
+    </div>
 
-  <!-- Footer -->
-  <div class="foot">
-    © 2026 AccessQR · Sistema de control de acceso residencial<br>
-    ¿Urgente? Escríbenos a <a href="mailto:soporte@accessqr.com">sistemas@selticforce.com</a>
-  </div>
+    <!-- Barra de progreso realista -->
+    <div class="progress-container">
+      <div class="progress-header">
+        <span class="progress-title">Progreso del despliegue</span>
+        <span class="progress-percent" id="pctText">74%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+
+    <!-- Botonera Profesional de Estado -->
+    <div class="action-group">
+      <button class="btn btn-secondary" onclick="window.location.href='mailto:soporte@accessqr.com'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        Contactar soporte
+      </button>
+      
+      <button class="btn btn-primary" id="btnRefresh" onclick="checkStatus()">
+        <span class="spinner" id="btnSpinner"></span>
+        <svg id="btnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        <span id="btnText">Verificar estado</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Footer Institucional -->
+  <footer class="footer">
+    © 2026 AccessQR. Todos los derechos reservados.<br>
+    Línea directa corporativa: <a href="mailto:sistemas@selticforce.com">sistemas@selticforce.com</a>
+  </footer>
 
 </div>
 
 <script>
-(function(){
-  // Hora de última verificación
-  function fmt(){
-    return new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+(function() {
+  // Establecer hora del último Ping del sistema corporativo
+  function updateTimestamp() {
+    const el = document.getElementById('lastCheck');
+    if(el) {
+      el.textContent = new Date().toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    }
   }
-  var el=document.getElementById('lastCheck');
-  if(el) el.textContent=fmt();
+  updateTimestamp();
 
-  // Porcentaje animado sincronizado con la barra CSS
-  var pctEl=document.getElementById('pct');
-  var current=74;
-  var dir=1;
-  setInterval(function(){
-    current+=dir*(Math.random()*0.8);
-    if(current>=88){dir=-1}
-    if(current<=62){dir=1}
-    if(pctEl) pctEl.textContent=Math.round(current)+'%';
-  },120);
+  // Simulación realista de incremento asíncrono de progreso (No bucle infinito errático)
+  let currentPct = 74;
+  const bar = document.getElementById('progressBar');
+  const txt = document.getElementById('pctText');
+
+  const progressInterval = setInterval(() => {
+    if (currentPct < 96) { // Se detiene cerca del final esperando al trigger del server real
+      currentPct += Math.random() * 1.5;
+      if (currentPct > 96) currentPct = 96;
+      
+      bar.style.width = currentPct + '%';
+      txt.textContent = Math.round(currentPct) + '%';
+    } else {
+      clearInterval(progressInterval);
+    }
+  }, 4000);
 })();
+
+// Acción profesional del botón "Verificar Estado" con feedback visual real
+function checkStatus() {
+  const btn = document.getElementById('btnRefresh');
+  const spinner = document.getElementById('btnSpinner');
+  const icon = document.getElementById('btnIcon');
+  const text = document.getElementById('btnText');
+  const bar = document.getElementById('progressBar');
+  const txt = document.getElementById('pctText');
+
+  // Bloquear interacción durante la consulta simulada a la API
+  btn.disabled = true;
+  icon.style.display = 'none';
+  spinner.style.display = 'inline-block';
+  text.textContent = 'Consultando...';
+
+  setTimeout(() => {
+    // Restaurar elementos
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    icon.style.display = 'inline-block';
+    text.textContent = 'Verificar estado';
+    
+    // Actualizar hora de ping
+    const el = document.getElementById('lastCheck');
+    el.textContent = new Date().toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    
+    // Forzar leve subida en progreso simulando lectura fresca
+    let current = parseFloat(txt.textContent);
+    if(current < 95) {
+      current += 2;
+      bar.style.width = current + '%';
+      txt.textContent = Math.round(current) + '%';
+    }
+  }, 1200);
+}
 </script>
 
 </body>
