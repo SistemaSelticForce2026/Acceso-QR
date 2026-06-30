@@ -340,6 +340,27 @@ footer.app-foot b{color:var(--ink-600)}
 .tbl-empty i{font-size:26px;display:block;margin-bottom:10px;opacity:.45}
 .tbl-empty p{margin:0;font-size:13px}
 
+/* ── Horario: mini-timeline de acceso ─────────────────────────── */
+.htl{display:grid;grid-template-columns:14px auto;column-gap:9px;align-items:center;min-width:140px;font-family:'JetBrains Mono',monospace;font-size:12.5px}
+.htl-dot{width:8px;height:8px;border-radius:50%;justify-self:center}
+.htl-in{background:var(--ok)}
+.htl-out{border:2px solid var(--info);background:#fff;box-sizing:border-box}
+.htl-deny{background:var(--bad)}
+.htl-miss{background:#8a7a55}
+.htl-prog{border:2px solid var(--ink-300);background:#fff;box-sizing:border-box}
+.htl-line{width:2px;height:18px;background:var(--line);justify-self:center;margin:2px 0}
+.htl-line-live{background:var(--ok);opacity:.4;height:16px}
+.htl-time{color:var(--ink-900)}
+.htl-tag{font-family:'Inter',sans-serif;font-size:10.5px;color:var(--ink-400)}
+.htl-dur{grid-column:2;display:inline-flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;font-size:11px;color:var(--ink-500)}
+.htl-live{grid-column:2;display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:var(--ok)}
+.htl-pulse{width:7px;height:7px;border-radius:50%;background:var(--ok);position:relative;flex-shrink:0}
+.htl-pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--ok);animation:ring 1.8s infinite}
+.htl-wait{grid-column:2;display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:var(--warn)}
+.htl-deny-tx{display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:var(--bad)}
+.htl-miss-tx{display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:#8a7a55}
+.htl-prog-tx{color:var(--ink-600)}
+
 /* Badges */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:.01em}
 .b-success{background:var(--ok-bg);color:var(--ok)}
@@ -351,6 +372,29 @@ footer.app-foot b{color:var(--ink-600)}
 .b-done{background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line)}
 .b-rec{background:var(--ok-bg);color:var(--ok)}
 .b-temp{background:var(--info-bg);color:var(--info)}
+
+/* ── Badges de estado: punto indicador + variantes nuevas ───────── */
+.badge .badge-dot{
+  width:6px;height:6px;border-radius:50%;flex-shrink:0;
+  background:currentColor;box-shadow:0 0 0 3px rgba(0,0,0,.04);
+}
+.badge i{font-size:10px}
+
+/* "Por autorizar" — ámbar con énfasis (acción pendiente del admin) */
+.b-authorize{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-bd)}
+
+/* "Vencida / No se presentó" — gris-rojizo, distinto a un rechazo activo */
+.b-expired{background:#f3f1ef;color:#8a7a55;border:1px solid #e7e0cf}
+
+/* Pequeño realce general de los badges de la tabla */
+.ad-table .badge{padding:4px 10px;border-radius:999px;line-height:1.1}
+
+/* Punto que late solo en "Dentro" (visita activa en el residencial) */
+.b-in .badge-dot{position:relative}
+.b-in .badge-dot::after{
+  content:'';position:absolute;inset:-3px;border-radius:50%;
+  border:1.5px solid var(--ok);animation:ring 1.8s infinite;
+}
 
 /* Paginación */
 .pgx{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft)}

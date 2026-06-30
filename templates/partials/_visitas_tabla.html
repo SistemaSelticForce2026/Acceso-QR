@@ -15,7 +15,47 @@
     </thead>
     <tbody>
       {% for visita in visitas_tabla %}
+
+      {# ── Resolución del estado en un solo lugar (clase + icono + etiqueta) ── #}
+      {%- set est = (visita.estado or '') | lower -%}
+      {%- set qrest = (visita.qr_estado or '') | lower -%}
+
+      {%- if est == 'dentro' -%}
+        {%- set badge_cls = 'b-in' -%}{%- set badge_ico = 'fa-arrow-right-to-bracket' -%}{%- set badge_lbl = 'Dentro' -%}
+      {%- elif est == 'salida_registrada' -%}
+        {%- set badge_cls = 'b-done' -%}{%- set badge_ico = 'fa-flag-checkered' -%}{%- set badge_lbl = 'Finalizada' -%}
+      {%- elif est in ['pendiente_autorizacion', 'pendiente'] -%}
+        {%- set badge_cls = 'b-authorize' -%}{%- set badge_ico = 'fa-user-shield' -%}{%- set badge_lbl = 'Por autorizar' -%}
+      {%- elif est == 'rechazado' or qrest == 'rechazado' -%}
+        {%- set badge_cls = 'b-danger' -%}{%- set badge_ico = 'fa-ban' -%}{%- set badge_lbl = 'Rechazada' -%}
+      {%- elif est == 'cancelado' or qrest == 'cancelado' -%}
+        {%- set badge_cls = 'b-danger' -%}{%- set badge_ico = 'fa-circle-xmark' -%}{%- set badge_lbl = 'Cancelada' -%}
+      {%- elif est in ['vencido', 'no_presento', 'no_se_presento'] or qrest == 'vencido' -%}
+        {%- set badge_cls = 'b-expired' -%}{%- set badge_ico = 'fa-clock-rotate-left' -%}
+        {%- set badge_lbl = 'No se presentó' if est in ['no_presento', 'no_se_presento'] else 'Vencida' -%}
+      {%- elif est == 'activo' -%}
+        {%- set badge_cls = 'b-pending' -%}{%- set badge_ico = 'fa-clock' -%}{%- set badge_lbl = 'Pendiente' -%}
+      {%- else -%}
+        {%- set badge_cls = 'b-done' -%}{%- set badge_ico = 'fa-circle-question' -%}
+        {%- set badge_lbl = (visita.estado or '—') | replace('_', ' ') | capitalize -%}
+      {%- endif -%}
+
+      {# ── Cálculo de duración del acceso (solo si hay entrada y salida "HH:MM") ── #}
+      {%- set hi = visita.hora_inicio -%}
+      {%- set hs = visita.hora_salida -%}
+      {%- set dur = '' -%}
+      {%- if hi and hs and ':' in hi and ':' in hs -%}
+        {%- set m_in = (hi.split(':')[0] | int) * 60 + (hi.split(':')[1] | int) -%}
+        {%- set m_out = (hs.split(':')[0] | int) * 60 + (hs.split(':')[1] | int) -%}
+        {%- set diff = m_out - m_in -%}
+        {%- if diff > 0 -%}
+          {%- set hh = diff // 60 -%}{%- set mm = diff % 60 -%}
+          {%- set dur = (hh ~ ' h ' ~ mm ~ ' min') if hh > 0 else (mm ~ ' min') -%}
+        {%- endif -%}
+      {%- endif -%}
+
       <tr>
+        {# ── Visitante ── #}
         <td>
           <div class="vis-cell">
             {% if visita.foto_visitante %}
@@ -23,66 +63,123 @@
                    alt="Foto de {{ visita.nombre_visitante }}"
                    width="46" height="46" loading="lazy" decoding="async" referrerpolicy="no-referrer">
             {% else %}
-              <div class="vis-av"><i class="fa-solid fa-user"></i></div>
+              <div class="vis-av">{{ (visita.nombre_visitante or '?')[0] | upper }}</div>
             {% endif %}
             <div>
-              <p class="vis-name">{{ visita.nombre_visitante }}</p>
-              <p class="vis-phone">{{ visita.telefono or '—' }}</p>
+              <p class="vis-name">{{ visita.nombre_visitante or 'Sin nombre' }}</p>
+              <p class="vis-phone"><i class="fa-solid fa-phone" style="font-size:9px;opacity:.6"></i> {{ visita.telefono or '—' }}</p>
             </div>
           </div>
         </td>
-        <td class="td-residente">{{ visita.residente_nombre or '—' }}</td>
+
+        {# ── Residente ── #}
+        <td class="td-residente">
+          <p class="td-strong">{{ visita.residente_nombre or '—' }}</p>
+        </td>
+
+        {# ── Fraccionamiento ── #}
         <td>
           {% if visita.fraccionamiento %}<span class="badge b-info">{{ visita.fraccionamiento | title }}</span>{% else %}<span class="td-muted">—</span>{% endif %}
         </td>
+
+        {# ── Destino ── #}
         <td>
           {% if visita.condominio %}<p class="td-strong">{{ visita.condominio | title }}</p>{% endif %}
-          <p class="td-muted">Casa {{ visita.residencia_destino or '—' }}</p>
+          <p class="td-muted"><i class="fa-solid fa-house-chimney" style="font-size:10px;opacity:.55"></i> Casa {{ visita.residencia_destino or '—' }}</p>
         </td>
+
+        {# ── Modalidad ── #}
         <td>
           {% if visita.modalidad_visita == "recurrente" %}
-            <span class="badge b-rec">Recurrente</span>
+            <span class="badge b-rec"><i class="fa-solid fa-rotate"></i> Recurrente</span>
             {% if visita.dia_semana %}<p class="td-muted">{{ visita.dia_semana | capitalize }}</p>{% endif %}
           {% elif visita.modalidad_visita == "temporal" %}
-            <span class="badge b-temp">Temporal</span>
+            <span class="badge b-temp"><i class="fa-solid fa-calendar-day"></i> Temporal</span>
           {% else %}
             <span class="td-muted">{{ visita.tipo_visita or "—" }}</span>
           {% endif %}
         </td>
+
+        {# ── Fecha ── #}
         <td class="td-fecha">
           {% if visita.fecha_visita %}{% set partes = visita.fecha_visita.split('-') %}{{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }}{% else %}—{% endif %}
         </td>
+
+        {# ── Horario: relato del acceso (entró / salió / duración / en curso) ── #}
         <td>
-          <div class="horario">
-            <p><span class="h-label">E</span> {{ visita.hora_inicio or '—' }}</p>
-            <p><span class="h-label">S</span>
-              {% if visita.hora_salida %}{{ visita.hora_salida }}
-              {% elif visita.estado == 'dentro' %}<span class="h-curso">en curso</span>
-              {% else %}—{% endif %}
-            </p>
+          {# ── Duración del acceso ── #}
+          {%- set hi = visita.hora_inicio -%}
+          {%- set hs = visita.hora_salida -%}
+          {%- set dur = '' -%}
+          {%- if hi and hs and ':' in hi and ':' in hs -%}
+            {%- set m_in = (hi.split(':')[0] | int) * 60 + (hi.split(':')[1] | int) -%}
+            {%- set m_out = (hs.split(':')[0] | int) * 60 + (hs.split(':')[1] | int) -%}
+            {%- set diff = m_out - m_in -%}
+            {%- if diff > 0 -%}
+              {%- set hh = diff // 60 -%}{%- set mm = diff % 60 -%}
+              {%- set dur = (hh ~ ' h ' ~ mm ~ ' min') if hh > 0 else (mm ~ ' min') -%}
+            {%- endif -%}
+          {%- endif -%}
+
+          <div class="htl">
+            {% if visita.hora_inicio %}
+              <span class="htl-dot htl-in"></span>
+              <span class="htl-time">{{ visita.hora_inicio }} <span class="htl-tag">entró</span></span>
+
+              {% if visita.hora_salida %}
+                <span class="htl-line"></span>
+                {% if dur %}<span class="htl-dur"><i class="fa-solid fa-clock"></i> {{ dur }}</span>{% else %}<span></span>{% endif %}
+                <span class="htl-dot htl-out"></span>
+                <span class="htl-time">{{ visita.hora_salida }} <span class="htl-tag">salió</span></span>
+              {% elif est == 'dentro' %}
+                <span class="htl-line htl-line-live"></span>
+                <span class="htl-live"><span class="htl-pulse"></span> dentro{% if dur %} · {{ dur }}{% endif %}</span>
+              {% else %}
+                <span class="htl-line"></span>
+                <span class="htl-wait"><i class="fa-solid fa-hourglass-half"></i> sin salida</span>
+              {% endif %}
+
+            {% elif est in ['rechazado', 'cancelado'] or qrest == 'rechazado' %}
+              <span class="htl-dot htl-deny"></span>
+              <span class="htl-deny-tx"><i class="fa-solid fa-ban"></i> acceso negado</span>
+            {% elif est in ['vencido', 'no_se_presento', 'no_presento'] %}
+              <span class="htl-dot htl-miss"></span>
+              <span class="htl-miss-tx"><i class="fa-solid fa-hourglass-end"></i> no se presentó</span>
+            {% else %}
+              <span class="htl-dot htl-prog"></span>
+              <span class="htl-prog-tx">{% if visita.fecha_visita %}{% set pz = visita.fecha_visita.split('-') %}{{ pz[2] }}/{{ pz[1] }}{% endif %} <span class="htl-tag">programada</span></span>
+              <span></span>
+              <span class="htl-wait"><i class="fa-solid fa-hourglass-half"></i> sin ingresar</span>
+            {% endif %}
           </div>
         </td>
+
+        {# ── Estado (badge unificado con punto + icono) ── #}
         <td>
-          {% if visita.estado == "activo" %}<span class="badge b-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>
-          {% elif visita.estado == "dentro" %}<span class="badge b-in"><i class="fa-solid fa-check"></i> Dentro</span>
-          {% elif visita.estado == "salida_registrada" %}<span class="badge b-done"><i class="fa-solid fa-flag-checkered"></i> Finalizada</span>
-          {% else %}<span class="badge b-danger">{{ visita.estado }}</span>{% endif %}
+          <span class="badge {{ badge_cls }}">
+            <span class="badge-dot"></span>
+            <i class="fa-solid {{ badge_ico }}"></i> {{ badge_lbl }}
+          </span>
         </td>
+
+        {# ── Vehículo ── #}
         <td>
-          {% if visita.vehiculo %}
+          {% if visita.vehiculo and visita.vehiculo.placa %}
             <span class="veh-plate">{{ visita.vehiculo.placa }}</span>
-            <p class="td-muted">{{ visita.vehiculo.marca | title }}{% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo }}{% endif %} · {{ visita.vehiculo.color | title }}</p>
+            <p class="td-muted">{{ visita.vehiculo.marca | title }}{% if visita.vehiculo.modelo %} {{ visita.vehiculo.modelo }}{% endif %}{% if visita.vehiculo.color %} · {{ visita.vehiculo.color | title }}{% endif %}</p>
           {% else %}
-            <span class="td-muted">Sin vehículo</span>
+            <span class="td-muted"><i class="fa-solid fa-person-walking" style="opacity:.55"></i> Sin vehículo</span>
           {% endif %}
         </td>
+
+        {# ── Foto placa ── #}
         <td>
           {% if visita.foto_placa %}
             <img src="{{ visita.foto_placa.url }}" class="placa-thumb zoomable-image"
                  alt="Placa {{ visita.vehiculo.placa if visita.vehiculo else '' }}"
                  width="118" height="66" loading="lazy" decoding="async" referrerpolicy="no-referrer">
           {% else %}
-            <span class="td-muted">Sin foto</span>
+            <span class="td-muted"><i class="fa-regular fa-image" style="opacity:.55"></i> Sin foto</span>
           {% endif %}
         </td>
       </tr>
