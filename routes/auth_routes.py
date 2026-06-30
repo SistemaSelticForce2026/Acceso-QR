@@ -179,7 +179,7 @@ def register():
 
         flash("¡Cuenta creada con éxito! Ya puedes iniciar sesión.", "success")
 
-        return redirect(url_for("auth.login"))
+        return redirect(url_for("auth.login", correo=correo))
 
     return render_template(
         "registro.html", fraccionamientos=obtener_fraccionamientos(mongo.db)
@@ -369,7 +369,7 @@ def login():
 
         return redirect(url_for("resident.dashboard"))
 
-    return render_template("login.html")
+    return render_template("login.html", correo_prefill=request.args.get("correo", ""))
 
 
 # =====================================

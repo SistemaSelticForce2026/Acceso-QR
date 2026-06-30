@@ -146,6 +146,8 @@
                                 placeholder="correo@ejemplo.com"
                                 required
                                 autocomplete="email"
+                                value="{{ correo_prefill }}"
+                                {% if correo_prefill %}readonly{% endif %}
                                 {% if bloqueo_activo %}disabled{% endif %}
                             >
                         </div>
@@ -293,6 +295,10 @@ if (loginForm) {
     });
 
 }
+
+{% if correo_prefill %}
+document.getElementById('password').focus();
+{% endif %}
 </script>
 
 {% endblock %}
