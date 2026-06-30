@@ -120,16 +120,52 @@
         visita.qr_estado in ['cancelado', 'vencido', 'rechazado', 'no_presentado']
         or visita.estado in ['rechazado', 'no_presento'] -%}
 
+    {# ── ¿Esta visita es un "no se presentó"? Estas SÍ pueden editarse
+         para reprogramar fecha/horario, aunque ya estén "concluidas". ── #}
+    {%- set es_no_presentado =
+        visita.estado == 'no_presento' or visita.qr_estado == 'no_presentado' -%}
+
+    {# ── Visita CONCLUIDA: ya entró, finalizó, fue rechazada o no se presentó.
+         El QR SÍ se mantiene visible (por si el visitante pierde su copia),
+         pero se ocultan Cancelar QR y Editar y se muestra el estado.
+         EXCEPCIÓN: "no se presentó" mantiene el botón de Editar para poder
+         cambiar el horario y reprogramar la visita. ── #}
+    {%- set visita_concluida =
+        visita.estado in ['dentro', 'salida_registrada', 'rechazado']
+        or visita.qr_estado in ['cancelado', 'vencido', 'rechazado']
+        or es_no_presentado -%}
+
+    {# Solo las visitas vigentes/pendientes pueden cancelarse o editarse,
+       salvo las "no se presentó" que sí pueden editarse. #}
     {%- set acciones_bloqueadas =
-        visita.estado in ['pendiente_autorizacion', 'dentro', 'salida_registrada', 'rechazado', 'no_presento']
-        or visita.qr_estado in ['cancelado', 'vencido', 'rechazado', 'no_presentado'] -%}
+        (visita_concluida and not es_no_presentado)
+        or visita.estado == 'pendiente_autorizacion' -%}
+
+    {# Texto + color del indicador para visitas concluidas #}
+    {%- if visita.estado == 'dentro' -%}
+        {%- set done_text = 'Acceso en curso' -%}{%- set done_color = '#009869' -%}
+    {%- elif visita.estado == 'salida_registrada' -%}
+        {%- set done_text = 'Visita finalizada' -%}{%- set done_color = '#7c3aed' -%}
+    {%- elif visita.estado == 'rechazado' or visita.qr_estado == 'rechazado' -%}
+        {%- set done_text = 'Acceso rechazado' -%}{%- set done_color = '#d6342c' -%}
+    {%- elif es_no_presentado -%}
+        {%- set done_text = 'No se presentó' -%}{%- set done_color = '#d6342c' -%}
+    {%- elif visita.qr_estado == 'cancelado' -%}
+        {%- set done_text = 'QR cancelado' -%}{%- set done_color = '#d6342c' -%}
+    {%- elif visita.qr_estado == 'vencido' -%}
+        {%- set done_text = 'QR vencido' -%}{%- set done_color = '#d6342c' -%}
+    {%- else -%}
+        {%- set done_text = 'Concluida' -%}{%- set done_color = '#8a93a6' -%}
+    {%- endif -%}
 
     <div class="res-visit-card"
          data-modalidad="{{ visita.modalidad_visita }}"
          data-estado="{{ visita.estado }}"
          data-qr="{{ visita.qr_estado }}"
          data-fecha="{{ visita.fecha_visita }}"
-         data-hora="{{ visita.hora_inicio }}">
+         data-hora="{{ visita.hora_inicio }}"
+         data-visita-id="{{ visita._id }}"
+         data-edit-url="{{ url_for('resident.editar_visita', visita_id=visita._id) }}">
 
         <div class="res-visit-body">
 
@@ -205,7 +241,14 @@
 
             </div>
 
-            {# ── Derecha: QR + acciones ─── #}
+            {# ══════════════════════════════════════════════════════════════
+               Derecha: el QR SIEMPRE se queda (por si el visitante pierde
+               su copia, por ejemplo justo al momento de salir). Solo cambian
+               las ACCIONES de abajo:
+                 · Visita vigente     → Cancelar QR + Editar
+                 · No se presentó     → Editar (para reprogramar horario)
+                 · Visita concluida   → etiqueta de estado (sin acciones)
+               ══════════════════════════════════════════════════════════════ #}
             <div class="res-visit-right">
 
                 <div class="res-visit-qrwrap">
@@ -227,6 +270,29 @@
                     {% endif %}
                 </div>
 
+                {% if visita_concluida %}
+                {# Concluida: el QR queda visible arriba, pero ya no se puede cancelar.
+                   Si fue "no se presentó", se agrega el botón de Editar para
+                   poder cambiar el horario y reprogramar la visita. #}
+                <div class="res-visit-actions res-visit-actions--done">
+                    <span class="res-done-chip"
+                          style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;color:{{ done_color }};background:{{ done_color }}14;white-space:nowrap;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                        {{ done_text }}
+                    </span>
+
+                    {% if es_no_presentado %}
+                    <div class="res-action-icons">
+                        <a href="{{ url_for('resident.editar_visita', visita_id=visita._id) }}"
+                           class="res-btn-edit res-iconact"
+                           title="Editar horario y reprogramar visita"
+                           aria-label="Editar horario y reprogramar visita">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
                 <div class="res-visit-actions">
 
                     <button class="res-btn-cancel btn-cancelar-qr{% if acciones_bloqueadas %} is-disabled{% endif %}"
@@ -248,6 +314,7 @@
                     </div>
 
                 </div>
+                {% endif %}
 
             </div>
 
@@ -564,7 +631,11 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
 </script>
 
 <script>
-/* ─── Marcar visitas no presentadas (fecha/hora vencida sin escanear) ─── */
+/* ─── Marcar visitas no presentadas (fecha/hora vencida sin escanear) ───
+   El QR de la tarjeta nunca se toca aquí: sigue visible siempre por si el
+   visitante necesita mostrarlo o el residente necesita compartirlo de
+   nuevo. Solo se reemplazan las acciones por el estado "No se presentó"
+   + un botón de Editar para poder reprogramar el horario. ─────────────── */
 (function () {
     const ahora = new Date();
 
@@ -574,6 +645,7 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
         const qr        = card.dataset.qr;
         const fecha     = card.dataset.fecha;            // YYYY-MM-DD
         const hora      = card.dataset.hora || '23:59';  // HH:MM
+        const editUrl   = card.dataset.editUrl;
 
         // Solo marcar como "No se presentó" si NUNCA fue escaneado
         if (modalidad === 'recurrente') return;
@@ -597,7 +669,28 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
                 estadoBadge.className = 'res-badge badge-danger';
                 estadoBadge.innerHTML = '<span class="res-badge-dot"></span> No se presentó';
             }
-            card.style.opacity = '0.75';
+
+            // ── El QR se queda; se reemplazan las acciones por el estado
+            //    "No se presentó" + un botón de Editar para reprogramar. ──
+            const actions = card.querySelector('.res-visit-actions');
+            if (actions) {
+                actions.classList.add('res-visit-actions--done');
+
+                const editBtn = editUrl
+                    ? `<div class="res-action-icons">
+                         <a href="${editUrl}" class="res-btn-edit res-iconact"
+                            title="Editar horario y reprogramar visita"
+                            aria-label="Editar horario y reprogramar visita">
+                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                         </a>
+                       </div>`
+                    : '';
+
+                actions.innerHTML =
+                    '<span class="res-done-chip" style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;color:#d6342c;background:#d6342c14;white-space:nowrap;">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>' +
+                    'No se presentó</span>' + editBtn;
+            }
         }
     });
 })();
