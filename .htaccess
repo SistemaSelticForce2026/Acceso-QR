@@ -1,3 +1,0 @@
-PassengerEnabled on
-PassengerAppType wsgi
-PassengerStartupFile passenger_wsgi.py
