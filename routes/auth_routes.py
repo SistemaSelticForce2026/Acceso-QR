@@ -1,27 +1,25 @@
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    session,
-    flash,
-)
+"""Rutas de autenticación: registro, login, recuperación de contraseña y logout."""
 
-from werkzeug.security import (
-    generate_password_hash,
-    check_password_hash,
-)
-
+import random
 from datetime import datetime, timedelta
 
-from extensions import mongo, socketio
+from flask import (
+    Blueprint,
+    flash,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.security import check_password_hash, generate_password_hash
 
+from extensions import mongo
 from utils.fraccionamientos import (
-    es_fraccionamiento_valido,
+    buscar_login,
     coleccion_residentes,
     correo_ya_existe,
-    buscar_login,
+    es_fraccionamiento_valido,
     obtener_fraccionamientos,
 )
 
@@ -38,6 +36,7 @@ auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/")
 def index():
+    """Redirige la raíz del sitio a la pantalla de login."""
 
     return redirect(url_for("auth.login"))
 
@@ -49,6 +48,7 @@ def index():
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
+    """Registra un nuevo residente validando correo, casa y fraccionamiento."""
 
     if request.method == "POST":
 
@@ -140,7 +140,8 @@ def register():
         if casa_existente:
 
             flash(
-                f"La casa {numero_casa} ya está registrada en {privada.title()} – {fraccionamiento.title()}.",
+                f"La casa {numero_casa} ya está registrada en "
+                f"{privada.title()} – {fraccionamiento.title()}.",
                 "danger",
             )
 
@@ -192,6 +193,7 @@ def register():
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    """Autentica al usuario, gestiona bloqueos por intentos y crea la sesión."""
 
     if request.method == "POST":
 
@@ -217,7 +219,8 @@ def login():
         if not usuario:
 
             flash(
-                "No encontramos una cuenta con ese correo. Verifica los datos o regístrate.",
+                "No encontramos una cuenta con ese correo. "
+                "Verifica los datos o regístrate.",
                 "danger",
             )
 
@@ -262,7 +265,8 @@ def login():
                 update_data["bloqueado_hasta"] = datetime.now() + timedelta(minutes=5)
 
                 flash(
-                    "Demasiados intentos fallidos. Cuenta bloqueada temporalmente por 5 minutos.",
+                    "Demasiados intentos fallidos. "
+                    "Cuenta bloqueada temporalmente por 5 minutos.",
                     "danger",
                 )
 
@@ -271,7 +275,8 @@ def login():
                 restantes = 5 - intentos
 
                 flash(
-                    f"Contraseña incorrecta. Te quedan {restantes} intentos antes del bloqueo.",
+                    f"Contraseña incorrecta. "
+                    f"Te quedan {restantes} intentos antes del bloqueo.",
                     "warning",
                 )
 
@@ -286,7 +291,8 @@ def login():
         if usuario.get("estado") != "activo":
 
             flash(
-                "Tu cuenta está inactiva. Contacta al administrador del fraccionamiento.",
+                "Tu cuenta está inactiva. "
+                "Contacta al administrador del fraccionamiento.",
                 "danger",
             )
 
@@ -357,13 +363,11 @@ def login():
 
             return redirect(url_for("admin.dashboard"))
 
-        elif usuario["rol"] == "guardia":
+        if usuario["rol"] == "guardia":
 
             return redirect(url_for("guard.scan_entrada"))
 
-        else:
-
-            return redirect(url_for("resident.dashboard"))
+        return redirect(url_for("resident.dashboard"))
 
     return render_template("login.html")
 
@@ -375,6 +379,7 @@ def login():
 
 @auth_bp.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
+    """Genera un código temporal de recuperación de contraseña para residentes."""
 
     if request.method == "GET":
 
@@ -403,8 +408,6 @@ def forgot_password():
 
         return redirect(url_for("auth.forgot_password"))
 
-    import random
-
     token = str(random.randint(100000, 999999))
 
     expiracion = datetime.now() + timedelta(minutes=5)
@@ -432,6 +435,7 @@ def forgot_password():
 
 @auth_bp.route("/verify-token", methods=["POST"])
 def verify_token():
+    """Verifica el código temporal y permite continuar al cambio de contraseña."""
 
     token_ingresado = request.form["token"]
 
@@ -456,6 +460,7 @@ def verify_token():
 
 @auth_bp.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
+    """Establece una nueva contraseña tras validar la sesión de recuperación."""
 
     correo = session.get("correo_recuperacion")
 
@@ -509,7 +514,8 @@ def reset_password():
     session.pop("correo_recuperacion", None)
 
     flash(
-        "¡Contraseña actualizada con éxito! Ya puedes iniciar sesión con tu nueva contraseña.",
+        "¡Contraseña actualizada con éxito! "
+        "Ya puedes iniciar sesión con tu nueva contraseña.",
         "success",
     )
 
@@ -518,6 +524,7 @@ def reset_password():
 
 @auth_bp.route("/cambiar-password", methods=["GET", "POST"])
 def cambiar_password():
+    """Permite a un usuario autenticado cambiar su contraseña."""
 
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
@@ -555,10 +562,9 @@ def cambiar_password():
         rol = session.get("rol")
         if rol == "admin":
             return redirect(url_for("admin.dashboard"))
-        elif rol == "guardia":
+        if rol == "guardia":
             return redirect(url_for("guard.scan_entrada"))
-        else:
-            return redirect(url_for("resident.dashboard"))
+        return redirect(url_for("resident.dashboard"))
 
     return render_template("cambiar_password.html")
 
@@ -570,6 +576,7 @@ def cambiar_password():
 
 @auth_bp.route("/logout")
 def logout():
+    """Cierra la sesión, finaliza el turno del guardia si aplica y registra el log."""
 
     if session.get("rol") == "guardia":
 

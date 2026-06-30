@@ -1,3 +1,17 @@
+"""Rutas del panel de administración: dashboard, residentes, guardias,
+accesos, incidencias, reportes (PDF/Excel) y configuración por fraccionamiento."""
+
+# Vista de rutas grande con patrones propios de Flask (vistas cortas, imports
+# perezosos, 'id' como parámetro de ruta, try/except amplios antes de un flash).
+# Se silencian esos avisos de estilo y se dejan los que detectan errores reales.
+# pylint: disable=missing-function-docstring, missing-class-docstring
+# pylint: disable=import-outside-toplevel, wrong-import-order, ungrouped-imports
+# pylint: disable=multiple-imports, reimported, too-many-lines, too-many-locals
+# pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
+# pylint: disable=redefined-builtin, redefined-outer-name, invalid-name
+# pylint: disable=broad-exception-caught, global-statement, fixme
+# pylint: disable=multiple-statements, abstract-method
+
 # =========================================================
 # IMPORTACIONES
 # =========================================================
@@ -12,48 +26,28 @@ from flask import (
     send_file,
     jsonify,
 )
-
 from extensions import mongo, socketio
 from utils.auth import login_required, role_required
-
 from utils.fraccionamientos import (
-    agg_visitas,
     find_visitas,
     contar_visitas,
     find_residentes,
     contar_residentes,
     coleccion_residentes,
-    residentes_colecciones,
     buscar_residente_por_id,
     es_fraccionamiento_valido,
     VISITAS_COLECCIONES,
     FRACCIONAMIENTOS,
 )
-
 from bson.objectid import ObjectId
-
 from io import BytesIO
-from datetime import datetime, timedelta
-import os
+from datetime import datetime, timedelta, timezone
 import time
 from werkzeug.security import generate_password_hash
-
 import secrets
 import string
-
-from utils.fraccionamientos import obtener_fraccionamientos
-
-# =========================================================
-# IMPORT EXCEL
-# =========================================================
-
 import pandas as pd
 from openpyxl import load_workbook, Workbook
-
-# =========================================================
-# REPORTLAB PDF
-# =========================================================
-
 from reportlab.platypus import (
     SimpleDocTemplate,
     Table,
@@ -61,19 +55,12 @@ from reportlab.platypus import (
     Paragraph,
     Spacer,
 )
-from reportlab.platypus.flowables import HRFlowable
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas as _canvas
 
-from flask import jsonify
-
-# =========================================================
-# ZONA HORARIA DEL NEGOCIO (Centro de México, UTC-6)
-# =========================================================
-from datetime import timezone
-
+# Zona horaria del negocio (Centro de México, UTC-6)
 TZ_LOCAL = timezone(timedelta(hours=-6))
 
 
@@ -387,7 +374,7 @@ def _make_canvas_class(titulo, subtitulo, pagesize):
             self.drawRightString(w - 40, h - 44, "Sistema Residencial")
 
         def _footer(self, pagina, total):
-            w, h = pagesize
+            w, _ = pagesize
             self.setStrokeColor(BRAND_GRID)
             self.setLineWidth(0.7)
             self.line(40, 40, w - 40, 40)
@@ -1007,7 +994,7 @@ def registrar_residente():
         privada = request.form["privada"].strip().lower()
         numero_casa = request.form["numero_casa"].strip().lower()
 
-        if not es_fraccionamiento_valido(fraccionamiento):
+        if not es_fraccionamiento_valido(mongo.db, fraccionamiento):
             flash("Selecciona un fraccionamiento válido.", "danger")
             return redirect(url_for("admin.registrar_residente"))
 
@@ -1178,11 +1165,18 @@ def carga_masiva_residentes():
             errores.append(f"Fila {n}: fraccionamiento '{fraccionamiento}' no válido.")
             continue
 
-        registros.append({
-            "fila": n, "nombre": nombre, "correo": correo, "telefono": telefono,
-            "fraccionamiento": fraccionamiento, "privada": privada,
-            "numero_casa": numero_casa, "slug": _slug_fraccionamiento(fraccionamiento),
-        })
+        registros.append(
+            {
+                "fila": n,
+                "nombre": nombre,
+                "correo": correo,
+                "telefono": telefono,
+                "fraccionamiento": fraccionamiento,
+                "privada": privada,
+                "numero_casa": numero_casa,
+                "slug": _slug_fraccionamiento(fraccionamiento),
+            }
+        )
 
     slugs = {r["slug"] for r in registros}
 
@@ -1209,16 +1203,18 @@ def carga_masiva_residentes():
             {"rol": "residente"},
             {"fraccionamiento": 1, "privada": 1, "numero_casa": 1, "_id": 0},
         ):
-            casas_existentes[slug].add((
-                str(doc.get("fraccionamiento", "")).strip().lower(),
-                str(doc.get("privada", "")).strip().lower(),
-                str(doc.get("numero_casa", "")).strip().lower(),
-            ))
+            casas_existentes[slug].add(
+                (
+                    str(doc.get("fraccionamiento", "")).strip().lower(),
+                    str(doc.get("privada", "")).strip().lower(),
+                    str(doc.get("numero_casa", "")).strip().lower(),
+                )
+            )
 
     # ── PASO 3 · Validar duplicados y armar lotes por fraccionamiento ─
     correos_archivo = set()
     casas_archivo = defaultdict(set)
-    ops = {}   # frac -> {"coll": nombre_coleccion, "docs": [...]}
+    ops = {}  # frac -> {"coll": nombre_coleccion, "docs": [...]}
     ahora = datetime.now()
 
     for r in registros:
@@ -1226,27 +1222,40 @@ def carga_masiva_residentes():
         casa_key = (r["fraccionamiento"], r["privada"], r["numero_casa"])
 
         if correo in correos_archivo:
-            omitidos += 1; stats[frac]["omitidos"] += 1
+            omitidos += 1
+            stats[frac]["omitidos"] += 1
             errores.append(f"Fila {n}: correo {correo} repetido en el archivo.")
             continue
         if correo in correos_existentes:
-            omitidos += 1; stats[frac]["omitidos"] += 1
+            omitidos += 1
+            stats[frac]["omitidos"] += 1
             errores.append(f"Fila {n}: correo {correo} ya registrado.")
             continue
         if casa_key in casas_archivo[slug] or casa_key in casas_existentes[slug]:
-            omitidos += 1; stats[frac]["omitidos"] += 1
+            omitidos += 1
+            stats[frac]["omitidos"] += 1
             errores.append(f"Fila {n}: casa {r['numero_casa'].upper()} ya existe.")
             continue
 
         ops.setdefault(frac, {"coll": f"residentes_{slug}", "docs": []})
-        ops[frac]["docs"].append({
-            "nombre": r["nombre"], "correo": correo, "password": password_temporal,
-            "telefono": r["telefono"], "fraccionamiento": r["fraccionamiento"],
-            "privada": r["privada"], "numero_casa": r["numero_casa"],
-            "estado": "activo", "rol": "residente", "created_at": ahora,
-            "ultimo_acceso": None, "intentos_fallidos": 0, "bloqueado_hasta": None,
-            "origen": "carga_masiva",   # <-- agrega esta línea
-        })
+        ops[frac]["docs"].append(
+            {
+                "nombre": r["nombre"],
+                "correo": correo,
+                "password": password_temporal,
+                "telefono": r["telefono"],
+                "fraccionamiento": r["fraccionamiento"],
+                "privada": r["privada"],
+                "numero_casa": r["numero_casa"],
+                "estado": "activo",
+                "rol": "residente",
+                "created_at": ahora,
+                "ultimo_acceso": None,
+                "intentos_fallidos": 0,
+                "bloqueado_hasta": None,
+                "origen": "carga_masiva",  # <-- agrega esta línea
+            }
+        )
         correos_archivo.add(correo)
         casas_archivo[slug].add(casa_key)
 
@@ -1257,13 +1266,15 @@ def carga_masiva_residentes():
         coll = mongo.db[info["coll"]]
         docs = info["docs"]
         for i in range(0, len(docs), BATCH):
-            lote = docs[i:i + BATCH]
+            lote = docs[i : i + BATCH]
             try:
                 res = coll.insert_many(lote, ordered=False)
                 n_ok = len(res.inserted_ids)
             except BulkWriteError as bwe:
                 n_ok = bwe.details.get("nInserted", 0)
-                errores.append(f"{frac}: {len(lote) - n_ok} fila(s) con conflicto de índice.")
+                errores.append(
+                    f"{frac}: {len(lote) - n_ok} fila(s) con conflicto de índice."
+                )
             except Exception as e:
                 n_ok = 0
                 errores.append(f"{frac}: error insertando lote ({type(e).__name__}).")
@@ -1281,9 +1292,14 @@ def carga_masiva_residentes():
         _invalidar_cache_conteos()
         socketio.emit("actualizar_residentes", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
-        flash(f"Carga completada: {creados} registrado(s), {omitidos} omitido(s).", "success")
+        flash(
+            f"Carga completada: {creados} registrado(s), {omitidos} omitido(s).",
+            "success",
+        )
     elif omitidos:
-        flash(f"No se registró ningún residente. {omitidos} fila(s) omitidas.", "warning")
+        flash(
+            f"No se registró ningún residente. {omitidos} fila(s) omitidas.", "warning"
+        )
     else:
         flash("No se procesó ninguna fila.", "warning")
 
@@ -1304,9 +1320,11 @@ def carga_masiva_residentes():
 
     return redirect(url_for("admin.registrar_residente"))
 
+
 # =========================================
 # ELIMINAR RESIDENTES DE CARGA MASIVA
 # =========================================
+
 
 @admin_bp.route("/residentes/eliminar-carga-masiva", methods=["POST"])
 @login_required
@@ -1327,6 +1345,7 @@ def eliminar_carga_masiva_residentes():
         flash(f"Error al eliminar: {str(e)}", "danger")
 
     return redirect(url_for("admin.registrar_residente"))
+
 
 # =========================================
 # VER / EDITAR / BLOQUEAR / ELIMINAR / DESBLOQUEAR RESIDENTE
@@ -2806,9 +2825,7 @@ def configuracion():
 
     config = _config_fraccionamiento(frac_sel)
 
-    _, total_g = _conteos_residentes_cacheados(disponibles)
-    conteos_cache, _ = _conteos_residentes_cacheados(disponibles)
-    conteos = conteos_cache
+    conteos, _ = _conteos_residentes_cacheados(disponibles)
 
     return render_template(
         "admin_configuracion.html",

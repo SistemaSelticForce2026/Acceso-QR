@@ -1,29 +1,32 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from datetime import datetime, timedelta
-import uuid
+"""Rutas del residente: dashboard, visitantes, creación y edición de visitas."""
 
-from bson.objectid import ObjectId
+import uuid
+from datetime import datetime, timedelta
+
+from bson import ObjectId
+from flask import (
+    Blueprint,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from extensions import mongo, socketio
-
 from utils.auth import login_required, role_required
+from utils.fraccionamientos import coleccion_residentes, coleccion_visitas
 from utils.qr_generator import generate_qr
 from utils.uploads import guardar_imagen
-from utils.visita_validacion import vigencia_recurrente_meses
-
-# >>> NUEVO: helpers de colecciones por fraccionamiento
-from utils.fraccionamientos import coleccion_visitas, coleccion_residentes
-
-from flask import jsonify
-from bson import ObjectId
-
-import cloudinary.uploader
 
 resident_bp = Blueprint("resident", __name__, url_prefix="/resident")
 
 
 @resident_bp.after_request
 def no_cache(response):
+    """Evita que el navegador cachee las páginas del residente."""
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
@@ -72,6 +75,7 @@ def _mi_residente_col():
 @login_required
 @role_required("residente")
 def dashboard():
+    """Panel del residente con sus visitas recientes y estadísticas."""
 
     residente_id = session["user_id"]
     visitas_col = _mis_visitas()
@@ -124,6 +128,7 @@ def dashboard():
 @login_required
 @role_required("residente")
 def visitors():
+    """Listado paginado de visitas del residente con filtros y búsqueda."""
 
     visitas_col = _mis_visitas()
 
@@ -205,6 +210,7 @@ def visitors():
 @login_required
 @role_required("residente")
 def cancelar_qr(token):
+    """Cancela el QR de una visita propia, si su estado aún lo permite."""
 
     visitas_col = _mis_visitas()
 
@@ -244,6 +250,7 @@ def cancelar_qr(token):
 @login_required
 @role_required("residente")
 def editar_visita(visita_id):
+    """Edita una visita propia (temporal o recurrente) si aún es modificable."""
 
     visitas_col = _mis_visitas()
 
@@ -348,6 +355,7 @@ def editar_visita(visita_id):
 @login_required
 @role_required("residente")
 def create_visit():
+    """Crea una visita temporal o recurrente y genera su token/QR de acceso."""
 
     # =============================================
     # OBTENER RESIDENTE (de la colección de su fraccionamiento)

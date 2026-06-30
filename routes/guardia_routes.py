@@ -1,32 +1,27 @@
+"""Rutas del guardia: dashboard de visitas, escaneo de QR, incidencias y accesos."""
+
+import ast
 import re
+from datetime import datetime, timedelta, timezone
 
 from flask import (
     Blueprint,
+    flash,
+    redirect,
     render_template,
     request,
     session,
-    redirect,
     url_for,
-    flash,
 )
-
-from datetime import datetime, timedelta
-
 from pymongo.errors import PyMongoError
 
 from extensions import mongo, socketio
-
 from utils.auth import login_required, role_required
-from utils.visita_validacion import validar_acceso_qr, actualizar_qr_vencido_si_aplica
-
-from utils.fraccionamientos import (
-    buscar_visita_por_token,
-    coleccion_visitas,
-    find_visitas,
-    contar_visitas,
+from utils.fraccionamientos import coleccion_visitas
+from utils.visita_validacion import (
+    actualizar_qr_vencido_si_aplica,
+    validar_acceso_qr,
 )
-
-import ast
 
 guard_bp = Blueprint("guard", __name__, url_prefix="/guard")
 
@@ -39,9 +34,7 @@ try:
     from zoneinfo import ZoneInfo
 
     TZ_LOCAL = ZoneInfo("America/Mexico_City")
-except Exception:
-    from datetime import timezone
-
+except (ImportError, KeyError):
     TZ_LOCAL = timezone(timedelta(hours=-6))
 
 
@@ -106,7 +99,7 @@ def _normalizar_fotos(visita):
         if isinstance(visita.get(campo), str):
             try:
                 visita[campo] = ast.literal_eval(visita[campo])
-            except Exception:
+            except (ValueError, SyntaxError):
                 pass
 
 
@@ -147,10 +140,11 @@ def _clasificar_razon(mensaje):
     return "qr_no_valido"
 
 
-def _registrar_incidencia_qr(session, tipo, descripcion, visita=None, token=None):
+def _registrar_incidencia_qr(sesion, tipo, descripcion, visita=None):
+    """Registra una incidencia de QR y notifica al panel de administración."""
     incidencia = {
-        "guardia_id": session["user_id"],
-        "guardia_nombre": session["nombre"],
+        "guardia_id": sesion["user_id"],
+        "guardia_nombre": sesion["nombre"],
         "tipo_incidencia": tipo,
         "descripcion": descripcion,
         "estado": "abierta",
@@ -164,14 +158,15 @@ def _registrar_incidencia_qr(session, tipo, descripcion, visita=None, token=None
     socketio.emit("actualizar_dashboard", to="rol:admin")
 
 
-def _registrar_salida(visita, session):
+def _registrar_salida(visita, sesion):
+    """Registra la salida de un visitante y actualiza su estado/bitácora."""
     ahora = datetime.now()
 
     mongo.db.access_logs.insert_one(
         {
             "visita_id": str(visita["_id"]),
-            "guardia_id": session["user_id"],
-            "guardia_nombre": session["nombre"],
+            "guardia_id": sesion["user_id"],
+            "guardia_nombre": sesion["nombre"],
             "accion": "salida",
             "fecha_hora": ahora,
             "resultado": "salida_registrada",
@@ -416,7 +411,7 @@ def _conteos_estado_actual(col, inicio_hoy):
 
 
 # ---------------------------------------------------------------------------
-# Tolerancia 5 minutos
+# Tolerancia
 # ---------------------------------------------------------------------------
 
 
@@ -594,6 +589,7 @@ def dashboard():
 @login_required
 @role_required("guardia")
 def scan():
+    """Redirige al escáner de entrada por defecto."""
     return redirect(url_for("guard.scan_entrada"))
 
 
@@ -606,6 +602,7 @@ def scan():
 @login_required
 @role_required("guardia")
 def scan_entrada():
+    """Valida un QR de entrada y lo deja pendiente de autorización del guardia."""
 
     resultado = None
 
@@ -637,7 +634,9 @@ def scan_entrada():
             resultado = {
                 "estado": "rechazado",
                 "razon": "qr_rechazado",
-                "mensaje": "Este QR fue rechazado por el guardia y ya no puede utilizarse.",
+                "mensaje": (
+                    "Este QR fue rechazado por el guardia y ya no puede utilizarse."
+                ),
                 "visita": visita,
                 "fecha_visita": visita.get("fecha_visita"),
             }
@@ -677,7 +676,10 @@ def scan_entrada():
             resultado = {
                 "estado": "rechazado",
                 "razon": "qr_no_valido",
-                "mensaje": "Este pase se marcó como “No se presentó” por superar el tiempo de tolerancia y ya no es válido.",
+                "mensaje": (
+                    "Este pase se marcó como “No se presentó” por superar el "
+                    "tiempo de tolerancia y ya no es válido."
+                ),
                 "visita": visita,
                 "fecha_visita": visita.get("fecha_visita"),
             }
@@ -707,8 +709,8 @@ def scan_entrada():
             else:
                 # El QR es válido. Persistimos "pendiente de autorización" junto
                 # con la hora del escaneo. Así, si la pantalla se refresca por
-                # error, el guardia tiene TOLERANCIA_AUTORIZACION (5 min) para
-                # volver a escanear el mismo QR. Pasado ese tiempo sin autorizar,
+                # error, el guardia tiene TOLERANCIA_AUTORIZACION para volver a
+                # escanear el mismo QR. Pasado ese tiempo sin autorizar,
                 # _marcar_no_presentados() lo marca como "no_presento".
                 # No se consume el pase: 'entrada_consumida' sigue en False y el
                 # estado real solo pasa a "dentro" al pulsar "Autorizar acceso".
@@ -729,7 +731,10 @@ def scan_entrada():
 
                 resultado = {
                     "estado": "permitido",
-                    "mensaje": "QR validado correctamente. Esperando autorización del guardia.",
+                    "mensaje": (
+                        "QR validado correctamente. Esperando autorización "
+                        "del guardia."
+                    ),
                     "visita": visita,
                 }
 
@@ -746,6 +751,7 @@ def scan_entrada():
 @login_required
 @role_required("guardia")
 def scan_salida():
+    """Valida un QR de salida y registra el egreso del visitante."""
 
     resultado = None
 
@@ -770,7 +776,10 @@ def scan_salida():
             resultado = {
                 "estado": "rechazado",
                 "razon": "no_dentro",
-                "mensaje": "Este visitante no está dentro del fraccionamiento. Use el escáner de entrada.",
+                "mensaje": (
+                    "Este visitante no está dentro del fraccionamiento. "
+                    "Use el escáner de entrada."
+                ),
                 "visita": visita,
             }
 
@@ -798,6 +807,7 @@ def scan_salida():
 @login_required
 @role_required("guardia")
 def incidencia_manual():
+    """Registra una incidencia manual y, si hay visita, la marca como rechazada."""
 
     token = request.form.get("qr_token", "").strip()
     modo = request.form.get("modo", "entrada")
@@ -810,7 +820,9 @@ def incidencia_manual():
         "placa_no_coincide": "La placa del vehículo no coincide con la registrada.",
         "persona_sospechosa": "Se detectó una persona con comportamiento sospechoso.",
         "visitante_agresivo": "El visitante presentó una actitud agresiva.",
-        "datos_no_coinciden": "Los datos del visitante no coinciden con la información registrada.",
+        "datos_no_coinciden": (
+            "Los datos del visitante no coinciden con la información registrada."
+        ),
         "sin_autorizacion": "La persona intenta ingresar sin autorización.",
     }
 
@@ -879,6 +891,7 @@ def incidencia_manual():
 @login_required
 @role_required("guardia")
 def confirm_access():
+    """Autoriza físicamente el acceso: marca la visita como 'dentro' y la registra."""
 
     token = request.form["qr_token"]
     visita = _buscar_visita(token)

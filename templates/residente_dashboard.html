@@ -151,7 +151,7 @@
 
             {% else %}
 
-            <div class="res-recent-avatar" style="background:{{ av_color }};">
+            <div class="res-recent-avatar" data-bg="{{ av_color }}">
                 {{ iniciales }}
             </div>
 
@@ -287,4 +287,11 @@ photoModal.addEventListener("click", function(){
     });
 })();
 </script>
+
+<script>
+document.querySelectorAll('.res-recent-avatar[data-bg]').forEach(function (el) {
+    el.style.backgroundColor = el.dataset.bg;
+});
+</script>
+
 {% endblock %}

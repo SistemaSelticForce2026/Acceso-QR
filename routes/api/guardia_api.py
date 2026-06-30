@@ -1,4 +1,9 @@
+"""Endpoints de API para el guardia (validación de códigos QR)."""
+
+# pylint: disable=missing-function-docstring
+
 from flask import Blueprint, request, jsonify
+
 from extensions import mongo
 from utils.fraccionamientos import visitas_colecciones
 
@@ -13,7 +18,7 @@ def validar_qr():
     token = request.json.get("token")
     visita = None
 
-    for col_name in visitas_colecciones.values():
+    for col_name in visitas_colecciones(mongo.db).values():
         visita = mongo.db[col_name].find_one({"qr_token": token})
         if visita:
             break

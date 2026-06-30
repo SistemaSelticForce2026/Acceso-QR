@@ -779,19 +779,21 @@ window.addEventListener("pageshow", function (e) {
     const KEY = 'grdPendingScan';
     const TOL_MS = 5 * 60 * 1000;
 
-    {% if resultado and resultado.estado == 'permitido' and resultado.visita %}
+    const resultadoData = {{ resultado|tojson|default('null') }};
+    
+    if (resultadoData && resultadoData.estado === 'permitido' && resultadoData.visita) {
         // QR escaneado y a la espera de autorización: lo guardamos por si la
         // pantalla se refresca por error.
         sessionStorage.setItem(KEY, JSON.stringify({
-            token: "{{ resultado.visita.qr_token }}",
+            token: resultadoData.visita.qr_token,
             ts: Date.now()
         }));
         return;
-    {% elif resultado %}
+    } else if (resultadoData) {
         // El pase ya se resolvió (autorizado, rechazado o inválido).
         sessionStorage.removeItem(KEY);
         return;
-    {% endif %}
+    }
 
     // ---- Escáner vacío (sin resultado) ----
     let raw = sessionStorage.getItem(KEY);
@@ -1019,19 +1021,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
 {% if resultado and resultado.visita and resultado.estado in ["permitido", "salida_registrada"] %}
 (function () {
-    const acts = JSON.parse(sessionStorage.getItem('grdRecentActivity') || '[]');
+    const dir   = '{{ "out" if modo == "salida" else "in" }}';
+    const name  = '{{ resultado.visita.nombre_visitante | e }}';
+    const place = '{{ resultado.visita.condominio | e }} · Casa {{ resultado.visita.residencia_destino | e }}';
+    const acts  = JSON.parse(sessionStorage.getItem('grdRecentActivity') || '[]');
     acts.unshift({
-        dir:   '{{ "out" if modo == "salida" else "in" }}',
-        name:  '{{ resultado.visita.nombre_visitante | e }}',
-        place: '{{ resultado.visita.condominio | e }} · Casa {{ resultado.visita.residencia_destino | e }}',
-        time:  new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+        dir:  dir,
+        name: name,
+        place: place,
+        time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
     });
     if (acts.length > 5) acts.length = 5;
     sessionStorage.setItem('grdRecentActivity', JSON.stringify(acts));
 })();
 {% endif %}
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('recentActivity');
     if (!el) return;
     const acts = JSON.parse(sessionStorage.getItem('grdRecentActivity') || '[]');

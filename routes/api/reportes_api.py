@@ -1,19 +1,19 @@
+"""Endpoints de la API de reportes."""
+
 from flask import Blueprint, jsonify
+
 from extensions import mongo
-from utils.fraccionamientos import visitas_colecciones
+from utils.fraccionamientos import contar_visitas
 
 reportes_api = Blueprint("reportes_api", __name__)
 
 
 @reportes_api.route("/api/reportes")
 def reportes():
-    total_visitas = 0
-    for col_name in visitas_colecciones.values():
-        total_visitas += mongo.db[col_name].count_documents({})
-
+    """Devuelve el total de visitas, accesos e incidencias registradas."""
     return jsonify(
         {
-            "visitas": total_visitas,
+            "visitas": contar_visitas(mongo.db),
             "accesos": mongo.db.access_logs.count_documents({}),
             "incidencias": mongo.db.incidencias.count_documents({}),
         }

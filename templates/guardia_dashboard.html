@@ -161,7 +161,7 @@
     <!-- Pestañas por estado + contador de resultados -->
     {% set _f = {'historial': 1 if ver_historial else None, 'fecha_inicio': fecha_inicio or None, 'fecha_fin': fecha_fin or None, 'busqueda': busqueda or None} %}
     <div class="grd-status-tabs">
-        <a href="{{ url_for('guard.dashboard', estado="", **_f) }}"               class="grd-stab {% if not estado_sel %}on{% endif %}">Todas <span>{{ conteo.todas }}</span></a>
+        <a href="{{ url_for('guard.dashboard', estado='', **_f) }}"               class="grd-stab {% if not estado_sel %}on{% endif %}">Todas <span>{{ conteo.todas }}</span></a>
         <a href="{{ url_for('guard.dashboard', estado='activo', **_f) }}"            class="grd-stab {% if estado_sel == 'activo' %}on{% endif %}">Vigentes <span>{{ conteo.activo }}</span></a>
         <a href="{{ url_for('guard.dashboard', estado='dentro', **_f) }}"            class="grd-stab {% if estado_sel == 'dentro' %}on{% endif %}">Dentro <span>{{ conteo.dentro }}</span></a>
         <a href="{{ url_for('guard.dashboard', estado='salida_registrada', **_f) }}" class="grd-stab {% if estado_sel == 'salida_registrada' %}on{% endif %}">Finalizadas <span>{{ conteo.salida_registrada }}</span></a>
@@ -472,8 +472,8 @@
         </div>
 
         <!-- Salto directo (derecha) -->
-        <form method="GET" action="{{ url_for('guard.dashboard') }}" class="grd-page-jump"
-              onsubmit="var i=this.page; if(+i.value>{{ total_paginas }})i.value={{ total_paginas }}; if(+i.value<1||!i.value)i.value=1;">
+          <form method="GET" action="{{ url_for('guard.dashboard') }}" class="grd-page-jump"
+              onsubmit="return validarPagina(this);">
             <input type="hidden" name="fecha_inicio" value="{{ fecha_inicio }}">
             <input type="hidden" name="fecha_fin" value="{{ fecha_fin }}">
             <input type="hidden" name="busqueda" value="{{ busqueda }}">

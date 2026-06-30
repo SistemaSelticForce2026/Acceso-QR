@@ -516,10 +516,9 @@ photoModal.addEventListener("click", function(){
 })();
 </script>
 
+{% if auto_qr %}
 <script>
 /* ─── Auto abrir QR recién generado ───────────────────────────────── */
-
-{% if auto_qr %}
 window.addEventListener("load", () => {
 
     const el = document.querySelector('[data-qr-token="{{ auto_qr }}"]');
@@ -534,9 +533,8 @@ window.addEventListener("load", () => {
     }
 
 });
-{% endif %}
-
 </script>
+{% endif %}
 
 <!-- BUSCADOR TABLA -->
 <script>

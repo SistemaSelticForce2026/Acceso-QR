@@ -1,4 +1,9 @@
+"""Endpoints de API para el residente (listado de sus visitas)."""
+
+# pylint: disable=missing-function-docstring
+
 from flask import Blueprint, jsonify
+
 from extensions import mongo
 from utils.fraccionamientos import visitas_colecciones
 
@@ -7,14 +12,11 @@ residente_api = Blueprint("residente_api", __name__)
 
 @residente_api.route("/api/residente/visitas")
 def obtener_visitas():
-
     resultado = []
 
-    # Recorre las 3 colecciones de visitas (una por fraccionamiento)
-    for nombre in VISITAS_COLECCIONES.values():
-
+    # Recorre las colecciones de visitas (una por fraccionamiento)
+    for nombre in visitas_colecciones(mongo.db).values():
         for visita in mongo.db[nombre].find().sort("created_at", -1):
-
             resultado.append(
                 {
                     "id": str(visita["_id"]),

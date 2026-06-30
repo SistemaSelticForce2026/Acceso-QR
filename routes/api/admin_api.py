@@ -1,8 +1,11 @@
+"""Endpoints de API del panel de administración (KPIs del dashboard)."""
+
+# pylint: disable=missing-function-docstring
+
 from flask import Blueprint, jsonify
+
 from extensions import mongo
-from utils.fraccionamientos import (
-    visitas_colecciones,
-)
+from utils.fraccionamientos import visitas_colecciones
 
 admin_api = Blueprint("admin_api", __name__)
 
@@ -14,7 +17,7 @@ def dashboard_api():
     total_activas = 0
     total_salidas = 0
 
-    for col_name in visitas_colecciones.values():
+    for col_name in visitas_colecciones(mongo.db).values():
         total_visitas += mongo.db[col_name].count_documents({})
         total_dentro += mongo.db[col_name].count_documents({"estado": "dentro"})
         total_activas += mongo.db[col_name].count_documents({"estado": "activo"})

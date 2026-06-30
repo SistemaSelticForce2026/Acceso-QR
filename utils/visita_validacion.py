@@ -1,4 +1,8 @@
+"""Utilidades para validación de acceso mediante QR."""
+
 from datetime import datetime, timedelta
+from extensions import mongo
+from utils.fraccionamientos import coleccion_visitas
 
 DIAS_SEMANA_MAP = {
     "lunes": 0,
@@ -41,6 +45,7 @@ def _parse_fecha(valor):
 
 
 def vigencia_recurrente_meses(meses=1):
+    """Calcula el rango de vigencia en meses a partir de hoy."""
     inicio = datetime.now()
     fin = inicio + timedelta(days=30 * meses)
     return inicio, fin
@@ -59,33 +64,17 @@ def validar_acceso_qr(visita):
 
     if modalidad == "recurrente":
 
-        # ==========================
-        # ESTADO
-        # ==========================
-
         if visita.get("estado_recurrente") == "suspendido":
-
             return (False, "El permiso recurrente se encuentra suspendido.")
 
-        # ==========================
-        # FECHAS
-        # ==========================
-
         fecha_inicio = _parse_fecha(visita.get("fecha_inicio_recurrente"))
-
         fecha_fin = _parse_fecha(visita.get("fecha_fin_recurrente"))
 
         if fecha_inicio and ahora.date() < fecha_inicio:
-
             return (False, "La autorización aún no inicia.")
 
         if fecha_fin and ahora.date() > fecha_fin:
-
             return (False, "La autorización ya venció.")
-
-        # ==========================
-        # DIAS
-        # ==========================
 
         dias_autorizados = [d.lower() for d in visita.get("dias_autorizados", [])]
 
@@ -102,26 +91,18 @@ def validar_acceso_qr(visita):
         dia_actual = dias_hoy[ahora.weekday()]
 
         if dias_autorizados and dia_actual not in dias_autorizados:
-
             return (False, f"Acceso no permitido los {dia_actual.capitalize()}.")
 
-        # ==========================
-        # HORARIO
-        # ==========================
-
         hora_desde = _parse_time(visita.get("hora_desde"))
-
         hora_hasta = _parse_time(visita.get("hora_hasta"))
 
         if hora_desde and ahora.time() < hora_desde:
-
             return (
                 False,
                 f"Acceso permitido a partir de las {hora_desde.strftime('%H:%M')}.",
             )
 
         if hora_hasta and ahora.time() > hora_hasta:
-
             return (
                 False,
                 f"El horario autorizado finalizó a las {hora_hasta.strftime('%H:%M')}.",
@@ -146,16 +127,12 @@ def validar_acceso_qr(visita):
 
 
 def actualizar_qr_vencido_si_aplica(visita_id, visita):
-    """Marca QR recurrente como vencido si pasó el mes de vigencia.
-    Escribe en la colección de visitas del fraccionamiento de la visita."""
+    """Marca QR recurrente como vencido si pasó el mes de vigencia."""
     if visita.get("modalidad_visita") != "recurrente":
         return
     vigencia_hasta = visita.get("vigencia_hasta")
     if vigencia_hasta and isinstance(vigencia_hasta, datetime):
         if datetime.now() > vigencia_hasta:
-            from extensions import mongo
-            from utils.fraccionamientos import coleccion_visitas
-
             col = coleccion_visitas(mongo.db, visita.get("fraccionamiento"))
             if col is not None:
                 col.update_one(

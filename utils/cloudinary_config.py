@@ -1,3 +1,5 @@
+"""Configuración de Cloudinary usando variables de entorno."""
+
 import os
 import cloudinary
 from dotenv import load_dotenv

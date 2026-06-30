@@ -1,0 +1,5 @@
+[MESSAGES CONTROL]
+disable=
+    import-outside-toplevel,
+    redefined-outer-name,
+    unused-import

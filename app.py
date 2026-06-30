@@ -1,9 +1,15 @@
+"""Aplicación principal Flask: configuración, filtros, índices y blueprints."""
+
 import os
 import time
+from datetime import datetime
 
-os.environ["TZ"] = "America/Mexico_City"
-if hasattr(time, "tzset"):
-    time.tzset()
+from flask import Flask, render_template, session, request
+from flask_socketio import join_room
+
+from config import Config
+from extensions import mongo, socketio
+from utils.fraccionamientos import visitas_colecciones
 
 from routes.api.auth_api import auth_api
 from routes.api.admin_api import admin_api
@@ -13,17 +19,10 @@ from routes.api.qr_api import qr_api
 from routes.api.reportes_api import reportes_api
 from routes.api.upload_api import upload_api
 
+os.environ["TZ"] = "America/Mexico_City"
+if hasattr(time, "tzset"):
+    time.tzset()
 
-from flask import Flask, render_template, session, request
-from config import Config
-from extensions import mongo, socketio
-
-from datetime import datetime
-
-from flask_socketio import join_room
-
-# Importamos el diccionario de fraccionamientos para automatizar los índices
-from utils.fraccionamientos import visitas_colecciones
 
 # ======================
 # FILTRO HORA AM / PM
@@ -31,77 +30,68 @@ from utils.fraccionamientos import visitas_colecciones
 
 
 def hora_ampm(valor):
-
+    """Convierte una cadena HH:MM o HH:MM:SS al formato 12 h con AM/PM."""
     if not valor:
-
         return ""
-
-    formatos = ["%H:%M:%S", "%H:%M"]
-
-    for formato in formatos:
-
+    for formato in ("%H:%M:%S", "%H:%M"):
         try:
-
-            hora = datetime.strptime(valor, formato)
-
-            return hora.strftime("%I:%M %p")
-
-        except:
-
+            return datetime.strptime(valor, formato).strftime("%I:%M %p")
+        except ValueError:
             pass
-
     return valor
 
 
 # ===============================
 # ÍNDICES DE BASE DE DATOS
 # ===============================
+
+
 def crear_indices():
     """Crea los índices una sola vez al arrancar.
 
     create_index es idempotente cuando las opciones coinciden, pero lanza
     OperationFailure si ya existe un índice con el mismo nombre y opciones
-    distintas (p. ej. 'qr_token' ya creado como ÚNICO en Atlas). En ese caso
-    el índice equivalente ya existe, así que ignoramos el conflicto y dejamos
-    arrancar la app en vez de abortar."""
+    distintas. En ese caso el índice equivalente ya existe, así que ignoramos
+    el conflicto y dejamos arrancar la app en vez de abortar.
+    """
 
     def _idx(coll, *args, **kwargs):
         try:
             coll.create_index(*args, **kwargs)
-        except Exception as e:
+        except Exception as exc:  # pylint: disable=broad-except
             print(
-                f"AVISO: índice {args} en '{coll.name}' ya existe o no se pudo crear: {e}"
+                f"AVISO: índice {args} en '{coll.name}' "
+                f"ya existe o no se pudo crear: {exc}"
             )
 
-    # --- Índices de rendimiento fijos ---
     _idx(mongo.db.users, "rol")
     _idx(mongo.db.access_logs, "fecha_hora")
     _idx(mongo.db.incidencias, "fecha_hora")
     _idx(mongo.db.reportes, "fecha")
 
-    # --- Índices dinámicos para cada fraccionamiento ---
-    # Le pasamos mongo.db como argumento a la función
     for col_name in visitas_colecciones(mongo.db).values():
-        coleccion_dinamica = mongo.db[col_name]
-        _idx(coleccion_dinamica, "qr_token", unique=True)
-        _idx(coleccion_dinamica, "residente_id")
-        _idx(coleccion_dinamica, "estado")
-        _idx(coleccion_dinamica, "created_at")
-        _idx(coleccion_dinamica, "fecha_visita")
+        col = mongo.db[col_name]
+        _idx(col, "qr_token", unique=True)
+        _idx(col, "residente_id")
+        _idx(col, "estado")
+        _idx(col, "created_at")
+        _idx(col, "fecha_visita")
 
-    # --- Índice único de correo (puede fallar si ya hay correos duplicados) ---
     try:
         mongo.db.users.create_index("correo", unique=True)
-    except Exception as e:
-        print("AVISO: no se pudo crear índice único en 'correo':", e)
+    except Exception as exc:  # pylint: disable=broad-except
+        print("AVISO: no se pudo crear índice único en 'correo':", exc)
         print("       Revisa si ya tienes correos repetidos en la base.")
 
 
 # ===============================
 # SALAS POR ROL / USUARIO
 # ===============================
+
+
 @socketio.on("connect")
 def on_connect():
+    """Une al cliente a las salas de su rol y su usuario al conectarse."""
     rol = session.get("rol")
     user_id = session.get("user_id")
     if rol:
@@ -113,50 +103,36 @@ def on_connect():
 # ================
 # CREAR APP
 # ================
+
+
 def create_app():
+    """Crea y configura la instancia de Flask."""
 
     app = Flask(__name__, static_folder="static", template_folder="templates")
-
     app.config.from_object(Config)
 
     # =====================================
     # MODO MANTENIMIENTO
+    # False = Sistema normal (todos entran)
+    # True  = Solo administradores entran
     # =====================================
 
-    # False = Sistema normal
-    # Todos pueden ingresar:
-    # Admin, Guardias y Residentes
-
-    # True = Sistema en mantenimiento
-    # Solo los administradores pueden ingresar
-    # Guardias y Residentes verán la página
-    # mantenimiento.html
-
-    MODO_MANTENIMIENTO = False
+    modo_mantenimiento = False
 
     @app.before_request
     def mantenimiento():
-
-        if not MODO_MANTENIMIENTO:
+        if not modo_mantenimiento:
             return None
-
         if request.endpoint in ["auth.login", "auth.logout", "static"]:
             return None
-
         if session.get("rol") == "admin":
             return None
-
         return render_template("mantenimiento.html"), 503
-
-    # =====================================
-    # CONFIGURAR UPLOADS
-    # =====================================
 
     app.config["UPLOAD_FOLDER"] = Config.UPLOAD_FOLDER
 
     mongo.init_app(app)
 
-    # Crear índices una sola vez al arrancar
     with app.app_context():
         crear_indices()
 
@@ -168,52 +144,38 @@ def create_app():
         engineio_logger=False,
     )
 
-    # ===========================
-    # REGISTRAR FILTRO JINJA
-    # ===========================
-
     app.add_template_filter(hora_ampm, "hora_ampm")
 
     # ===========================
     # BLUEPRINTS
     # ===========================
 
-    from routes.auth_routes import auth_bp
-    from routes.residente_routes import resident_bp
-    from routes.guardia_routes import guard_bp
-    from routes.admin_routes import admin_bp
+    from routes.auth_routes import auth_bp  # noqa: PLC0415
+    from routes.residente_routes import resident_bp  # noqa: PLC0415
+    from routes.guardia_routes import guard_bp  # noqa: PLC0415
+    from routes.admin_routes import admin_bp  # noqa: PLC0415
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(resident_bp)
     app.register_blueprint(guard_bp)
     app.register_blueprint(admin_bp)
 
-    # ===========================
-    # APIS
-    # ===========================
-
     app.register_blueprint(auth_api)
-
     app.register_blueprint(admin_api)
-
     app.register_blueprint(residente_api)
-
     app.register_blueprint(guardia_api)
-
     app.register_blueprint(qr_api)
-
     app.register_blueprint(reportes_api)
-
     app.register_blueprint(upload_api)
 
     return app
 
 
-app = create_app()
-
+app = create_app()  # pylint: disable=invalid-name
 
 # ===============================
 # INICIAR APP
 # ===============================
+
 if __name__ == "__main__":
     socketio.run(app, debug=False, allow_unsafe_werkzeug=True)

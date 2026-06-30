@@ -228,7 +228,7 @@
 
 {% if bloqueo_activo %}
 <script>
-let segundos = {{ segundos_restantes }};
+let segundos = parseInt("{{ segundos_restantes | default(0) }}", 10);
 const timer = document.getElementById("timer");
 
 function actualizarTimer() {

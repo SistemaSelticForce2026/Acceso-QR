@@ -8,9 +8,11 @@ Manejo central de colecciones por fraccionamiento.
 - Guardias y admins NO se parten: siguen en `users`.
 """
 
-from bson import ObjectId
 import re
 import unicodedata
+
+from bson import ObjectId
+from pymongo.errors import PyMongoError
 
 # ------------------------------------------------------------------
 # Fraccionamientos base del sistema
@@ -48,6 +50,7 @@ VISITAS_COLECCIONES = {
 
 
 def _norm(frac):
+    """Normaliza el nombre de un fraccionamiento (sin espacios, minúsculas)."""
     return (frac or "").strip().lower()
 
 
@@ -71,6 +74,7 @@ def _slug_fraccionamiento(nombre):
 
 
 def residentes_colecciones(db):
+    """Devuelve {fraccionamiento_norm: nombre_coleccion} de residentes."""
 
     colecciones = dict(RESIDENTES_COLECCIONES)
 
@@ -88,6 +92,7 @@ def residentes_colecciones(db):
 
 
 def visitas_colecciones(db):
+    """Devuelve {fraccionamiento_norm: nombre_coleccion} de visitas."""
 
     colecciones = {}
 
@@ -121,6 +126,7 @@ def visitas_colecciones(db):
 
 
 def obtener_fraccionamientos(db):
+    """Devuelve la lista ordenada de nombres de fraccionamientos."""
 
     nombres = list(FRACCIONAMIENTOS)
 
@@ -143,6 +149,7 @@ def obtener_fraccionamientos(db):
 
 
 def es_fraccionamiento_valido(db, frac):
+    """Indica si 'frac' corresponde a un fraccionamiento registrado."""
 
     return _norm(frac) in residentes_colecciones(db)
 
@@ -153,6 +160,7 @@ def es_fraccionamiento_valido(db, frac):
 
 
 def coleccion_residentes(db, frac):
+    """Devuelve la colección de residentes del fraccionamiento, o None."""
 
     nombre = residentes_colecciones(db).get(_norm(frac))
 
@@ -160,6 +168,7 @@ def coleccion_residentes(db, frac):
 
 
 def coleccion_visitas(db, frac):
+    """Devuelve la colección de visitas del fraccionamiento, o None."""
 
     nombre = visitas_colecciones(db).get(_norm(frac))
 
@@ -172,6 +181,7 @@ def coleccion_visitas(db, frac):
 
 
 def buscar_login(db, correo):
+    """Busca al usuario por correo en 'users' y en cada colección de residentes."""
 
     correo = (correo or "").strip()
 
@@ -196,6 +206,7 @@ def buscar_login(db, correo):
 
 
 def correo_ya_existe(db, correo):
+    """Indica si el correo ya está registrado en 'users' o en residentes."""
 
     correo = (correo or "").strip()
 
@@ -217,6 +228,7 @@ def correo_ya_existe(db, correo):
 
 
 def buscar_residente_por_id(db, residente_id):
+    """Busca un residente por su _id recorriendo todas las colecciones."""
 
     if isinstance(residente_id, str):
 
@@ -238,6 +250,7 @@ def buscar_residente_por_id(db, residente_id):
 
 
 def buscar_visita_por_token(db, qr_token):
+    """Busca una visita por su token QR en todas las colecciones de visitas."""
 
     for frac_norm, nombre in visitas_colecciones(db).items():
 
@@ -255,6 +268,7 @@ def buscar_visita_por_token(db, qr_token):
 
 
 def _union(db, colecciones, pipeline):
+    """Ejecuta un pipeline sobre la unión de varias colecciones ($unionWith)."""
 
     cols = list(colecciones.values())
 
@@ -272,11 +286,13 @@ def _union(db, colecciones, pipeline):
 
 
 def agg_visitas(db, pipeline):
+    """Aplica un pipeline de agregación sobre todas las visitas."""
 
     return _union(db, visitas_colecciones(db), pipeline)
 
 
 def agg_residentes(db, pipeline):
+    """Aplica un pipeline de agregación sobre todos los residentes."""
 
     return _union(db, residentes_colecciones(db), pipeline)
 
@@ -285,19 +301,20 @@ def agg_residentes(db, pipeline):
 # Find visitas
 # ------------------------------------------------------------------
 
-_indices_visitas_ok = False
+# Cache de colecciones cuyo índice ya fue asegurado en esta ejecución.
+_INDICES_VISITAS_CREADOS = set()
 
 
 def _asegurar_indices_visitas(db):
-    global _indices_visitas_ok
-    if _indices_visitas_ok:
-        return
+    """Crea (una sola vez por colección) el índice por created_at descendente."""
     for nombre in visitas_colecciones(db).values():
+        if nombre in _INDICES_VISITAS_CREADOS:
+            continue
         try:
             db[nombre].create_index([("created_at", -1)])
-        except Exception:
+            _INDICES_VISITAS_CREADOS.add(nombre)
+        except PyMongoError:
             pass
-    _indices_visitas_ok = True
 
 
 def _cols_visitas(db, frac=None):
@@ -310,6 +327,7 @@ def _cols_visitas(db, frac=None):
 
 
 def find_visitas(db, filtro=None, sort=None, skip=0, limit=0, frac=None):
+    """Busca visitas con filtro/orden/paginación en una o todas las colecciones."""
 
     filtro = filtro or {}
     sort_list = list(sort) if sort else None
@@ -341,6 +359,7 @@ def find_visitas(db, filtro=None, sort=None, skip=0, limit=0, frac=None):
 
 
 def contar_visitas(db, filtro=None, frac=None):
+    """Cuenta visitas que cumplen el filtro en una o todas las colecciones."""
     filtro = filtro or {}
     total = 0
     for col in _cols_visitas(db, frac):
@@ -354,6 +373,7 @@ def contar_visitas(db, filtro=None, frac=None):
 
 
 def find_residentes(db, filtro=None, sort=None, skip=0, limit=0):
+    """Busca residentes con filtro/orden/paginación sobre la unión de colecciones."""
 
     pipe = [{"$match": filtro or {}}]
 
@@ -370,6 +390,7 @@ def find_residentes(db, filtro=None, sort=None, skip=0, limit=0):
 
 
 def contar_residentes(db, filtro=None):
+    """Cuenta residentes que cumplen el filtro en todas las colecciones."""
 
     filtro = filtro or {}
 

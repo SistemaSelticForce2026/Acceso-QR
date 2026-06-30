@@ -1,7 +1,7 @@
+"""Extensiones de Flask: MongoDB y SocketIO."""
+
 from flask_pymongo import PyMongo
-
 from flask_socketio import SocketIO
-
 import certifi
 
 # =====================================================
@@ -9,7 +9,6 @@ import certifi
 # =====================================================
 
 mongo = PyMongo(tlsCAFile=certifi.where())
-
 
 # =====================================================
 # SOCKET.IO
