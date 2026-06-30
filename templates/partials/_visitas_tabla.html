@@ -5,6 +5,19 @@
    desincronizan el diseño ni las columnas.
    ============================================================ #}
 
+{# ── Macro: convierte "HH:MM" (24h) a 12h con AM/PM ── #}
+{%- macro hora12(t) -%}
+  {%- if t and ':' in t -%}
+    {%- set hp = t.split(':') -%}
+    {%- set h = hp[0] | int -%}
+    {%- set m = hp[1] -%}
+    {%- set ampm = 'AM' if h < 12 else 'PM' -%}
+    {%- set h12 = h % 12 -%}
+    {%- if h12 == 0 -%}{%- set h12 = 12 -%}{%- endif -%}
+    {{ h12 }}:{{ m }} {{ ampm }}
+  {%- else -%}{{ t }}{%- endif -%}
+{%- endmacro -%}
+
 <div class="tbl-wrap">
   <table class="ad-table">
     <thead>
@@ -40,7 +53,7 @@
         {%- set badge_lbl = (visita.estado or '—') | replace('_', ' ') | capitalize -%}
       {%- endif -%}
 
-      {# ── Cálculo de duración del acceso (solo si hay entrada y salida "HH:MM") ── #}
+      {# ── Duración real (solo aplica si entró y salió) ── #}
       {%- set hi = visita.hora_inicio -%}
       {%- set hs = visita.hora_salida -%}
       {%- set dur = '' -%}
@@ -105,49 +118,45 @@
           {% if visita.fecha_visita %}{% set partes = visita.fecha_visita.split('-') %}{{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }}{% else %}—{% endif %}
         </td>
 
-        {# ── Horario: relato del acceso (entró / salió / duración / en curso) ── #}
+        {# ══════════════════════════════════════════════════════════════
+           HORARIO — guiado por el ESTADO (no solo por si existe la hora).
+           "entró" SOLO cuando realmente ingresó (dentro / finalizada).
+           En los demás casos la hora es PROGRAMADA, no de ingreso.
+           ══════════════════════════════════════════════════════════════ #}
         <td>
-          {# ── Duración del acceso ── #}
-          {%- set hi = visita.hora_inicio -%}
-          {%- set hs = visita.hora_salida -%}
-          {%- set dur = '' -%}
-          {%- if hi and hs and ':' in hi and ':' in hs -%}
-            {%- set m_in = (hi.split(':')[0] | int) * 60 + (hi.split(':')[1] | int) -%}
-            {%- set m_out = (hs.split(':')[0] | int) * 60 + (hs.split(':')[1] | int) -%}
-            {%- set diff = m_out - m_in -%}
-            {%- if diff > 0 -%}
-              {%- set hh = diff // 60 -%}{%- set mm = diff % 60 -%}
-              {%- set dur = (hh ~ ' h ' ~ mm ~ ' min') if hh > 0 else (mm ~ ' min') -%}
-            {%- endif -%}
-          {%- endif -%}
-
           <div class="htl">
-            {% if visita.hora_inicio %}
+            {% if est == 'salida_registrada' %}
+              {# Entró y salió → relato completo #}
               <span class="htl-dot htl-in"></span>
-              <span class="htl-time">{{ visita.hora_inicio }} <span class="htl-tag">entró</span></span>
+              <span class="htl-time">{{ hora12(visita.hora_inicio) }} <span class="htl-tag">entró</span></span>
+              <span class="htl-line"></span>
+              {% if dur %}<span class="htl-dur"><i class="fa-solid fa-clock"></i> {{ dur }}</span>{% else %}<span></span>{% endif %}
+              <span class="htl-dot htl-out"></span>
+              <span class="htl-time">{{ hora12(visita.hora_salida) }} <span class="htl-tag">salió</span></span>
 
-              {% if visita.hora_salida %}
-                <span class="htl-line"></span>
-                {% if dur %}<span class="htl-dur"><i class="fa-solid fa-clock"></i> {{ dur }}</span>{% else %}<span></span>{% endif %}
-                <span class="htl-dot htl-out"></span>
-                <span class="htl-time">{{ visita.hora_salida }} <span class="htl-tag">salió</span></span>
-              {% elif est == 'dentro' %}
-                <span class="htl-line htl-line-live"></span>
-                <span class="htl-live"><span class="htl-pulse"></span> dentro{% if dur %} · {{ dur }}{% endif %}</span>
-              {% else %}
-                <span class="htl-line"></span>
-                <span class="htl-wait"><i class="fa-solid fa-hourglass-half"></i> sin salida</span>
-              {% endif %}
+            {% elif est == 'dentro' %}
+              {# Entró y sigue dentro #}
+              <span class="htl-dot htl-in"></span>
+              <span class="htl-time">{{ hora12(visita.hora_inicio) }} <span class="htl-tag">entró</span></span>
+              <span class="htl-line htl-line-live"></span>
+              <span class="htl-live"><span class="htl-pulse"></span> dentro</span>
 
             {% elif est in ['rechazado', 'cancelado'] or qrest == 'rechazado' %}
+              {# NO entró — acceso negado #}
               <span class="htl-dot htl-deny"></span>
               <span class="htl-deny-tx"><i class="fa-solid fa-ban"></i> acceso negado</span>
+              {% if visita.hora_inicio %}<span></span><span class="htl-prog-tx">{{ hora12(visita.hora_inicio) }} <span class="htl-tag">programada</span></span>{% endif %}
+
             {% elif est in ['vencido', 'no_se_presento', 'no_presento'] %}
+              {# NO entró — no se presentó #}
               <span class="htl-dot htl-miss"></span>
               <span class="htl-miss-tx"><i class="fa-solid fa-hourglass-end"></i> no se presentó</span>
+              {% if visita.hora_inicio %}<span></span><span class="htl-prog-tx">{{ hora12(visita.hora_inicio) }} <span class="htl-tag">programada</span></span>{% endif %}
+
             {% else %}
+              {# activo / pendiente / por autorizar → aún no ingresa: hora PROGRAMADA #}
               <span class="htl-dot htl-prog"></span>
-              <span class="htl-prog-tx">{% if visita.fecha_visita %}{% set pz = visita.fecha_visita.split('-') %}{{ pz[2] }}/{{ pz[1] }}{% endif %} <span class="htl-tag">programada</span></span>
+              <span class="htl-prog-tx">{% if visita.hora_inicio %}{{ hora12(visita.hora_inicio) }}{% elif visita.fecha_visita %}{% set pz = visita.fecha_visita.split('-') %}{{ pz[2] }}/{{ pz[1] }}{% else %}—{% endif %} <span class="htl-tag">programada</span></span>
               <span></span>
               <span class="htl-wait"><i class="fa-solid fa-hourglass-half"></i> sin ingresar</span>
             {% endif %}
