@@ -52,77 +52,34 @@ def register():
 
     if request.method == "POST":
 
-        # =================
-        # OBTENER DATOS
-        # ==================
-
         nombre = request.form["nombre"].strip()
-
         correo = request.form["correo"].strip()
-
         telefono = request.form["telefono"].strip()
-
         password = request.form["password"]
-
         confirm_password = request.form["confirm_password"]
-
         fraccionamiento = request.form["fraccionamiento"].strip().lower()
-
         privada = request.form["privada"].strip().lower()
-
-        # ==============================
-        # CONVERTIR SIEMPRE A STRING
-        # ============================
-
         numero_casa = str(request.form["numero_casa"]).strip()
 
-        # =========================
-        # VALIDAR CONTRASEÑAS
-        # =========================
-
         if password != confirm_password:
-
             flash(
                 "Las contraseñas no coinciden. Por favor, verifica e intenta de nuevo.",
                 "danger",
             )
-
             return redirect(url_for("auth.register"))
-
-        # =========================================
-        # VALIDAR FRACCIONAMIENTO PERMITIDO
-        # =========================================
 
         if not es_fraccionamiento_valido(mongo.db, fraccionamiento):
-
             flash("Selecciona un fraccionamiento válido.", "danger")
-
             return redirect(url_for("auth.register"))
-
-        # =========================================
-        # COLECCIÓN DESTINO (según fraccionamiento)
-        # =========================================
 
         residentes_col = coleccion_residentes(mongo.db, fraccionamiento)
 
-        # ===============================
-        # VALIDAR CORREO DUPLICADO
-        # (en users + las 3 colecciones)
-        # ==============================
-
         if correo_ya_existe(mongo.db, correo):
-
             flash(
                 "Este correo electrónico ya está registrado. ¿Olvidaste tu contraseña?",
                 "danger",
             )
-
             return redirect(url_for("auth.register"))
-
-        # =============================
-        # VALIDAR CASA DUPLICADA
-        # (dentro de SU fraccionamiento)
-        # =============================
 
         casa_existente = residentes_col.find_one(
             {
@@ -133,23 +90,13 @@ def register():
             }
         )
 
-        # ===================
-        # SI YA EXISTE
-        # ===================
-
         if casa_existente:
-
             flash(
                 f"La casa {numero_casa} ya está registrada en "
                 f"{privada.title()} – {fraccionamiento.title()}.",
                 "danger",
             )
-
             return redirect(url_for("auth.register"))
-
-        # ===================
-        # CREAR USUARIO
-        # ===================
 
         usuario = {
             "nombre": nombre,
@@ -167,15 +114,7 @@ def register():
             "bloqueado_hasta": None,
         }
 
-        # ====================
-        # INSERTAR USUARIO
-        # ====================
-
         residentes_col.insert_one(usuario)
-
-        # ====================
-        # MENSAJE
-        # ====================
 
         flash("¡Cuenta creada con éxito! Ya puedes iniciar sesión.", "success")
 
@@ -201,79 +140,46 @@ def login():
         password = request.form.get("password", "").strip()
 
         if not correo or not password:
-
             flash("Correo y contraseña son campos obligatorios.", "danger")
-
             return redirect(url_for("auth.login"))
-
-        # =================
-        # BUSCAR USUARIO
-        # =================
 
         usuario, col = buscar_login(mongo.db, correo)
 
-        # ===================
-        # USUARIO NO EXISTE
-        # ===================
-
         if not usuario:
-
             flash(
                 "No encontramos una cuenta con ese correo. "
                 "Verifica los datos o regístrate.",
                 "danger",
             )
-
             return redirect(url_for("auth.login"))
-
-        # ===================
-        # BLOQUEO TEMPORAL
-        # ===================
 
         bloqueado_hasta = usuario.get("bloqueado_hasta")
 
         if bloqueado_hasta:
-
             if datetime.now() < bloqueado_hasta:
-
                 segundos_restantes = int(
                     (bloqueado_hasta - datetime.now()).total_seconds()
                 )
-
                 return render_template(
                     "login.html",
                     bloqueo_activo=True,
                     segundos_restantes=segundos_restantes,
                 )
 
-        # ====================
-        # VALIDAR CONTRASEÑA
-        # ===================
-
         if not check_password_hash(usuario["password"], password):
 
             intentos = usuario.get("intentos_fallidos", 0) + 1
-
             update_data = {"intentos_fallidos": intentos}
 
-            # ==============================
-            # BLOQUEAR SI SUPERA EL LÍMITE
-            # ===============================
-
             if intentos >= 5:
-
                 update_data["bloqueado_hasta"] = datetime.now() + timedelta(minutes=5)
-
                 flash(
                     "Demasiados intentos fallidos. "
                     "Cuenta bloqueada temporalmente por 5 minutos.",
                     "danger",
                 )
-
             else:
-
                 restantes = 5 - intentos
-
                 flash(
                     f"Contraseña incorrecta. "
                     f"Te quedan {restantes} intentos antes del bloqueo.",
@@ -284,37 +190,25 @@ def login():
 
             return redirect(url_for("auth.login"))
 
-        # ================
-        # VALIDAR ESTADO
-        # ================
-
         if usuario.get("estado") != "activo":
-
             flash(
                 "Tu cuenta está inactiva. "
                 "Contacta al administrador del fraccionamiento.",
                 "danger",
             )
-
             return redirect(url_for("auth.login"))
 
         # ===============
         # CREAR SESIÓN
         # ===============
 
+        session.permanent = True  # <-- AGREGADO: habilita PERMANENT_SESSION_LIFETIME
+
         session["user_id"] = str(usuario["_id"])
-
         session["nombre"] = usuario["nombre"]
-
         session["rol"] = usuario["rol"]
-
         session["correo"] = usuario["correo"]
-
         session["fraccionamiento"] = usuario.get("fraccionamiento")
-
-        # =====================
-        # RESETEAR INTENTOS
-        # =====================
 
         col.update_one(
             {"_id": usuario["_id"]},
@@ -327,10 +221,6 @@ def login():
             },
         )
 
-        # ================
-        # LOG SISTEMA
-        # ================
-
         mongo.db.logs.insert_one(
             {
                 "usuario": usuario["nombre"],
@@ -341,12 +231,7 @@ def login():
             }
         )
 
-        # ===================
-        # TURNOS GUARDIAS
-        # ===================
-
         if usuario["rol"] == "guardia":
-
             mongo.db.turnos.insert_one(
                 {
                     "guardia": usuario["nombre"],
@@ -355,16 +240,10 @@ def login():
                 }
             )
 
-        # ===================
-        # REDIRECCIONES
-        # ===================
-
         if usuario["rol"] == "admin":
-
             return redirect(url_for("admin.dashboard"))
 
         if usuario["rol"] == "guardia":
-
             return redirect(url_for("guard.scan_entrada"))
 
         return redirect(url_for("resident.dashboard"))
@@ -382,7 +261,6 @@ def forgot_password():
     """Genera un código temporal de recuperación de contraseña para residentes."""
 
     if request.method == "GET":
-
         return render_template("recuperar_contrasena.html")
 
     correo = request.form["correo"].strip()
@@ -390,30 +268,21 @@ def forgot_password():
     usuario, col = buscar_login(mongo.db, correo)
 
     if not usuario:
-
         flash("No hay ninguna cuenta asociada a ese correo electrónico.", "danger")
-
         return redirect(url_for("auth.forgot_password"))
 
-    # ============================================
-    # SOLO RESIDENTES PUEDEN RECUPERAR POR ESTE MEDIO
-    # ============================================
     if usuario.get("rol") != "residente":
-
         flash(
             "La recuperación de contraseña es solo para residentes. "
             "Si eres guardia o administrador, contacta al administrador del sistema.",
             "danger",
         )
-
         return redirect(url_for("auth.forgot_password"))
 
     token = str(random.randint(100000, 999999))
-
     expiracion = datetime.now() + timedelta(minutes=5)
 
     session["recovery_token"] = token
-
     session["correo_recuperacion"] = correo
 
     col.update_one(
@@ -438,11 +307,9 @@ def verify_token():
     """Verifica el código temporal y permite continuar al cambio de contraseña."""
 
     token_ingresado = request.form["token"]
-
     token_guardado = session.get("recovery_token")
 
     if token_ingresado == token_guardado:
-
         return redirect(url_for("auth.reset_password"))
 
     flash(
@@ -465,37 +332,28 @@ def reset_password():
     correo = session.get("correo_recuperacion")
 
     if not correo:
-
         flash(
             "La sesión de recuperación expiró. Inicia el proceso nuevamente.", "danger"
         )
-
         return redirect(url_for("auth.forgot_password"))
 
     if request.method == "GET":
-
         return render_template("nueva_contrasena.html")
 
     password = request.form["password"]
-
     confirm_password = request.form["confirm_password"]
 
     if password != confirm_password:
-
         flash(
             "Las contraseñas no coinciden. Por favor, verifica e intenta de nuevo.",
             "danger",
         )
-
         return redirect(url_for("auth.reset_password"))
 
-    # Actualizar en la colección correcta
     usuario, col = buscar_login(mongo.db, correo)
 
     if not usuario:
-
         flash("La cuenta ya no existe. Regístrate de nuevo.", "danger")
-
         return redirect(url_for("auth.register"))
 
     col.update_one(
@@ -510,7 +368,6 @@ def reset_password():
     )
 
     session.pop("recovery_token", None)
-
     session.pop("correo_recuperacion", None)
 
     flash(
@@ -579,7 +436,6 @@ def logout():
     """Cierra la sesión, finaliza el turno del guardia si aplica y registra el log."""
 
     if session.get("rol") == "guardia":
-
         mongo.db.turnos.update_many(
             {
                 "guardia": session.get("nombre"),

@@ -2,9 +2,9 @@
 
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from flask import Flask, render_template, session, request
+from flask import Flask, render_template, session, request, redirect, url_for, flash
 from flask_socketio import join_room
 
 from config import Config
@@ -22,6 +22,13 @@ from routes.api.upload_api import upload_api
 os.environ["TZ"] = "America/Mexico_City"
 if hasattr(time, "tzset"):
     time.tzset()
+
+
+# =====================================
+# TIEMPO DE INACTIVIDAD PERMITIDO
+# =====================================
+
+TIEMPO_INACTIVIDAD = timedelta(minutes=5)
 
 
 # ======================
@@ -128,6 +135,66 @@ def create_app():
         if session.get("rol") == "admin":
             return None
         return render_template("mantenimiento.html"), 503
+
+    # =====================================
+    # CIERRE DE SESIÓN POR INACTIVIDAD
+    # =====================================
+
+    @app.before_request
+    def verificar_inactividad():
+        """Cierra la sesión automáticamente si el usuario no ha tenido
+        actividad durante TIEMPO_INACTIVIDAD."""
+
+        if request.endpoint == "static":
+            return None
+
+        if "user_id" in session:
+
+            ahora = datetime.now()
+            ultima_str = session.get("ultima_actividad")
+
+            if ultima_str:
+                ultima_actividad = datetime.fromisoformat(ultima_str)
+
+                if ahora - ultima_actividad > TIEMPO_INACTIVIDAD:
+                    rol = session.get("rol")
+                    nombre = session.get("nombre")
+
+                    if rol == "guardia":
+                        mongo.db.turnos.update_many(
+                            {"guardia": nombre, "estado": "activo"},
+                            {"$set": {"estado": "finalizado", "salida": ahora}},
+                        )
+
+                    mongo.db.logs.insert_one(
+                        {
+                            "usuario": nombre,
+                            "rol": rol,
+                            "accion": "Cierre de sesión por inactividad",
+                            "fecha": ahora,
+                        }
+                    )
+
+                    session.clear()
+                    flash(
+                        "Tu sesión se cerró por inactividad. Inicia sesión de nuevo.",
+                        "warning",
+                    )
+                    return redirect(url_for("auth.login"))
+
+            session["ultima_actividad"] = ahora.isoformat()
+
+        return None
+
+    @app.after_request
+    def no_cache_headers(response):
+        if request.endpoint != "static":
+            response.headers["Cache-Control"] = (
+                "no-store, no-cache, must-revalidate, max-age=0"
+            )
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "-1"
+        return response
 
     app.config["UPLOAD_FOLDER"] = Config.UPLOAD_FOLDER
 
