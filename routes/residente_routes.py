@@ -316,6 +316,8 @@ def editar_visita(visita_id):
                         "fecha_fin_recurrente": fecha_fin_recurrente,
                         "vigencia_desde": vigencia_desde,
                         "vigencia_hasta": vigencia_hasta,
+                        "estado": "activo",
+                        "qr_estado": "activo",
                     }
                 },
             )
@@ -329,6 +331,10 @@ def editar_visita(visita_id):
                         "telefono": request.form.get("telefono"),
                         "fecha_visita": request.form.get("fecha_visita"),
                         "hora_inicio": request.form.get("hora_inicio"),
+                        "estado": "activo",
+                        "qr_estado": "activo",
+                        "hora_escaneo": None,
+                        "fecha_escaneo": None,
                     }
                 },
             )
