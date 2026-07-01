@@ -805,7 +805,7 @@
 
 @media(max-width:1023px){
     .auth-form-panel{
-        align-items:flex-start;
+        align-items:center;   
         padding-top:max(40px, env(safe-area-inset-top, 24px));
         padding-bottom:max(32px, env(safe-area-inset-bottom, 24px));
     }
@@ -849,7 +849,6 @@
 @media(max-width:600px){
 
     .auth-layout{
-        /* En móvil el panel de formulario ocupa toda la pantalla */
         flex-direction:column;
     }
 
@@ -858,8 +857,7 @@
             max(20px, env(safe-area-inset-top, 16px))
             16px
             max(28px, env(safe-area-inset-bottom, 16px));
-        align-items:flex-start;
-        /* Scroll si el teclado empuja el contenido */
+        align-items:center;    /* antes: flex-start */
         overflow-y:auto;
         -webkit-overflow-scrolling:touch;
         min-height:100dvh;
