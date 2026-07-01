@@ -314,13 +314,16 @@ if (loginForm) {
 document.getElementById('password').focus();
 {% endif %}
 
-// Enlace de contacto: abre la APP de Gmail en móvil (con fallback a la web
-// de Gmail si la app no está instalada). En escritorio abre Gmail web directo.
+// Enlace de contacto: abre la APP de Gmail en móvil (Android con Intent URI,
+// iOS con el esquema googlegmail://, ambos con fallback a la web de Gmail
+// si la app no está instalada). En escritorio abre Gmail web directo.
 (function () {
     const link = document.getElementById('contactSupportLink');
     if (!link) return;
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const ua = navigator.userAgent;
+    const isAndroid = /Android/i.test(ua);
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
     const to = 'software@selticforce.com';
     const subject = 'Solicitud de soporte – Recuperación de correo registrado';
@@ -341,44 +344,59 @@ document.getElementById('password').focus();
         '&su=' + encodeURIComponent(subject) +
         '&body=' + encodeURIComponent(body);
 
-    if (!isMobile) {
-        // Escritorio: Gmail web directo, como ya funcionaba.
-        link.href = gmailWebUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
+    if (isAndroid) {
+        // Android: Intent URI explícito hacia el paquete de Gmail.
+        // Android maneja el fallback de forma nativa vía S.browser_fallback_url
+        // si el paquete com.google.android.gm no está instalado.
+        const intentUrl =
+            'intent://' + encodeURIComponent(to) +
+            '?subject=' + encodeURIComponent(subject) +
+            '&body=' + encodeURIComponent(body) +
+            '#Intent;scheme=mailto;package=com.google.android.gm;' +
+            'S.browser_fallback_url=' + encodeURIComponent(gmailWebUrl) + ';end';
+
+        link.removeAttribute('target');
+        link.removeAttribute('rel');
+        link.href = intentUrl;
         return;
     }
 
-    // Móvil: intentamos abrir la app nativa de Gmail (esquema propio de la app).
-    // Si no está instalada, tras un breve lapso caemos a la versión web.
-    const gmailAppUrl =
-        'googlegmail:///co?to=' + encodeURIComponent(to) +
-        '&subject=' + encodeURIComponent(subject) +
-        '&body=' + encodeURIComponent(body);
+    if (isIOS) {
+        // iOS: esquema propio de la app de Gmail, con fallback manual
+        // (iOS no soporta S.browser_fallback_url como Android).
+        const gmailAppUrl =
+            'googlegmail:///co?to=' + encodeURIComponent(to) +
+            '&subject=' + encodeURIComponent(subject) +
+            '&body=' + encodeURIComponent(body);
 
-    link.removeAttribute('target');
-    link.removeAttribute('rel');
-    link.href = gmailWebUrl; // fallback por si el JS no corre
+        link.removeAttribute('target');
+        link.removeAttribute('rel');
+        link.href = gmailWebUrl; // fallback por si el JS no corre
 
-    link.addEventListener('click', function (e) {
-        e.preventDefault();
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
 
-        let fallbackFired = false;
-        const fallbackTimer = setTimeout(function () {
-            fallbackFired = true;
-            window.location.href = gmailWebUrl;
-        }, 1200);
+            const fallbackTimer = setTimeout(function () {
+                window.location.href = gmailWebUrl;
+            }, 1200);
 
-        function onHide() {
-            if (document.hidden) {
-                clearTimeout(fallbackTimer);
-                document.removeEventListener('visibilitychange', onHide);
+            function onHide() {
+                if (document.hidden) {
+                    clearTimeout(fallbackTimer);
+                    document.removeEventListener('visibilitychange', onHide);
+                }
             }
-        }
-        document.addEventListener('visibilitychange', onHide);
+            document.addEventListener('visibilitychange', onHide);
 
-        window.location.href = gmailAppUrl;
-    });
+            window.location.href = gmailAppUrl;
+        });
+        return;
+    }
+
+    // Escritorio: Gmail web directo, como ya funcionaba.
+    link.href = gmailWebUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
 })();
 </script>
 
