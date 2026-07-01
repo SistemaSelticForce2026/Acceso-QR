@@ -201,6 +201,7 @@
                         <span>
                             ¿No recuerdas tu correo registrado?
                             <a href="https://mail.google.com/mail/?view=cm&fs=1&to=software@selticforce.com&su=Solicitud%20de%20soporte%20%E2%80%93%20Recuperaci%C3%B3n%20de%20correo%20registrado&body=Estimado%20equipo%20de%20soporte%20de%20AccessQR%2C%0D%0A%0D%0APor%20medio%20del%20presente%2C%20solicito%20su%20apoyo%20para%20la%20recuperaci%C3%B3n%20del%20correo%20electr%C3%B3nico%20asociado%20a%20mi%20cuenta%2C%20ya%20que%20actualmente%20no%20cuento%20con%20dicho%20registro%20y%20no%20puedo%20acceder%20al%20sistema.%0D%0A%0D%0AA%20continuaci%C3%B3n%2C%20proporciono%20mis%20datos%20para%20fines%20de%20verificaci%C3%B3n%20e%20identificaci%C3%B3n%3A%0D%0A%0D%0A%E2%80%94%20Nombre%20completo%3A%0D%0A%E2%80%94%20Fraccionamiento%3A%0D%0A%E2%80%94%20Privada%20%2F%20No.%20de%20casa%3A%0D%0A%E2%80%94%20Tel%C3%A9fono%20de%20contacto%3A%0D%0A%0D%0AAgradezco%20de%20antemano%20su%20atenci%C3%B3n%20y%20quedo%20en%20espera%20de%20su%20respuesta%20a%20la%20brevedad%20posible.%0D%0A%0D%0ASin%20otro%20particular%2C%20le%20env%C3%ADo%20un%20cordial%20saludo."
+                               id="contactSupportLink"
                                target="_blank"
                                rel="noopener noreferrer"
                                style="color:#7d8590; text-decoration:underline;">contáctanos</a>
@@ -312,6 +313,73 @@ if (loginForm) {
 {% if correo_prefill %}
 document.getElementById('password').focus();
 {% endif %}
+
+// Enlace de contacto: abre la APP de Gmail en móvil (con fallback a la web
+// de Gmail si la app no está instalada). En escritorio abre Gmail web directo.
+(function () {
+    const link = document.getElementById('contactSupportLink');
+    if (!link) return;
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    const to = 'software@selticforce.com';
+    const subject = 'Solicitud de soporte – Recuperación de correo registrado';
+    const body =
+        'Estimado equipo de soporte de AccessQR,\r\n\r\n' +
+        'Por medio del presente, solicito su apoyo para la recuperación del correo electrónico asociado a mi cuenta, ya que actualmente no cuento con dicho registro y no puedo acceder al sistema.\r\n\r\n' +
+        'A continuación, proporciono mis datos para fines de verificación e identificación:\r\n\r\n' +
+        '— Nombre completo:\r\n' +
+        '— Fraccionamiento:\r\n' +
+        '— Privada / No. de casa:\r\n' +
+        '— Teléfono de contacto:\r\n\r\n' +
+        'Agradezco de antemano su atención y quedo en espera de su respuesta a la brevedad posible.\r\n\r\n' +
+        'Sin otro particular, le envío un cordial saludo.';
+
+    const gmailWebUrl =
+        'https://mail.google.com/mail/?view=cm&fs=1' +
+        '&to=' + encodeURIComponent(to) +
+        '&su=' + encodeURIComponent(subject) +
+        '&body=' + encodeURIComponent(body);
+
+    if (!isMobile) {
+        // Escritorio: Gmail web directo, como ya funcionaba.
+        link.href = gmailWebUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        return;
+    }
+
+    // Móvil: intentamos abrir la app nativa de Gmail (esquema propio de la app).
+    // Si no está instalada, tras un breve lapso caemos a la versión web.
+    const gmailAppUrl =
+        'googlegmail:///co?to=' + encodeURIComponent(to) +
+        '&subject=' + encodeURIComponent(subject) +
+        '&body=' + encodeURIComponent(body);
+
+    link.removeAttribute('target');
+    link.removeAttribute('rel');
+    link.href = gmailWebUrl; // fallback por si el JS no corre
+
+    link.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        let fallbackFired = false;
+        const fallbackTimer = setTimeout(function () {
+            fallbackFired = true;
+            window.location.href = gmailWebUrl;
+        }, 1200);
+
+        function onHide() {
+            if (document.hidden) {
+                clearTimeout(fallbackTimer);
+                document.removeEventListener('visibilitychange', onHide);
+            }
+        }
+        document.addEventListener('visibilitychange', onHide);
+
+        window.location.href = gmailAppUrl;
+    });
+})();
 </script>
 
 {% endblock %}
