@@ -4,66 +4,85 @@
 {% block page_title %}Editar Visita{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/crear_visita.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/editar_visita.css') }}">
 {% endblock %}
 
 {% block content %}
 
-<div class="edit-card">
+<div class="cv-wrapper">
 
-    <div class="edit-header">
-        <h1>Editar visita</h1>
-        <p>Actualiza la información de tu visitante.</p>
+    <div class="cv-header">
+        <h1 class="cv-title">Editar visita</h1>
+        <p class="cv-subtitle">Actualiza la información de tu visitante.</p>
     </div>
 
-    <form method="POST">
+    <div class="cv-card">
 
-        <div class="edit-grid">
+        <form method="POST">
 
-            <div class="edit-field">
-                <label>Nombre del visitante</label>
-                <input type="text"
-                       value="{{ visita.nombre_visitante }}"
-                       disabled>
+            <div class="cv-card-body">
+
+                <div class="cv-field">
+                    <label class="cv-label">Nombre del visitante</label>
+                    <input type="text"
+                           class="cv-input cv-input-readonly"
+                           value="{{ visita.nombre_visitante }}"
+                           disabled>
+                </div>
+
+                <div class="cv-field">
+                    <label class="cv-label">Teléfono</label>
+                    <input type="tel"
+                           name="telefono"
+                           class="cv-input"
+                           value="{{ visita.telefono }}"
+                           inputmode="numeric"
+                           placeholder="55 0000 0000">
+                </div>
+
+                <div class="cv-grid-2">
+
+                    <div class="cv-field">
+                        <label class="cv-label">Fecha de visita</label>
+                        <input type="date"
+                               name="fecha_visita"
+                               class="cv-input"
+                               value="{{ visita.fecha_visita }}">
+                    </div>
+
+                    <div class="cv-field">
+                        <label class="cv-label">Hora de entrada</label>
+                        <input type="time"
+                               name="hora_inicio"
+                               class="cv-input"
+                               value="{{ visita.hora_inicio }}">
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="edit-field">
-                <label>Teléfono</label>
-                <input type="tel"
-                       name="telefono"
-                       value="{{ visita.telefono }}"
-                       inputmode="numeric">
+            <div class="cv-card-footer">
+
+                <a href="{{ url_for('resident.visitors') }}" class="cv-btn-back">
+                    Cancelar
+                </a>
+
+                <button type="submit" class="cv-btn-submit">
+                    <span class="cv-btn-ico">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 6L9 17l-5-5"/>
+                        </svg>
+                    </span>
+                    Guardar cambios
+                </button>
+
             </div>
 
-            <div class="edit-field">
-                <label>Fecha de visita</label>
-                <input type="date"
-                       name="fecha_visita"
-                       value="{{ visita.fecha_visita }}">
-            </div>
+        </form>
 
-            <div class="edit-field">
-                <label>Hora de entrada</label>
-                <input type="time"
-                       name="hora_inicio"
-                       value="{{ visita.hora_inicio }}">
-            </div>
-
-        </div>
-
-        <div class="edit-actions">
-
-            <button type="submit" class="btn-save">
-                Guardar cambios
-            </button>
-
-            <a href="{{ url_for('resident.visitors') }}" class="btn-back">
-                Cancelar
-            </a>
-
-        </div>
-
-    </form>
+    </div>
 
 </div>
 {% endblock %}
