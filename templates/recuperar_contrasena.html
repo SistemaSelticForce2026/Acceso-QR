@@ -40,24 +40,35 @@
                     </p>
                 </div>
 
+                <!-- Mensaje de error dinámico (AJAX) -->
+                <div id="ajaxError" class="auth-flash" style="display:none; margin-bottom:14px;">
+                    <div class="alert danger" style="background:#fdecea; border:1px solid #f5b5ac; color:#7a1f14; display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:10px; font-weight:500;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ba1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                        <span id="ajaxErrorText" style="color:#7a1f14;"></span>
+                    </div>
+                </div>
+
                 <!-- Security box -->
-                <div class="auth-security-box {% if token_generado %}auth-security-active{% else %}auth-security-inactive{% endif %}">
+                <div class="auth-security-box {% if token_generado %}auth-security-active{% else %}auth-security-inactive{% endif %}" id="securityBox">
                     <svg class="auth-security-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
                     <div class="auth-security-body">
-                        {% if token_generado %}
-                            <strong>Código temporal activo</strong>
-                            <p>El código de recuperación fue generado correctamente.</p>
-                            <div class="auth-recovery-timer" id="recoveryTimer">05:00</div>
-                        {% else %}
+
+                        <div id="secInactive" {% if token_generado %}style="display:none;"{% endif %}>
                             <strong>Validación segura</strong>
                             <p>Verifica tu identidad para continuar con el proceso de recuperación.</p>
-                        {% endif %}
+                        </div>
+
+                        <div id="secActive" {% if not token_generado %}style="display:none;"{% endif %}>
+                            <strong>Código temporal activo</strong>
+                            <p>El código de recuperación fue generado correctamente.</p>
+                            <div class="auth-recovery-timer" id="recoveryTimer" data-expira-ms="{{ token_expira_ms }}">05:00</div>
+                        </div>
+
                     </div>
                 </div>
 
                 <!-- Formulario correo -->
-                {% if not token_generado %}
-                <form method="POST" id="recoveryForm" style="margin-top:20px;">
+                <form method="POST" id="recoveryForm" style="margin-top:20px; {% if token_generado %}display:none;{% endif %}">
 
                     <div class="auth-field">
                         <label class="auth-label" for="correo">Correo electrónico</label>
@@ -86,53 +97,52 @@
                     </button>
 
                 </form>
-                {% endif %}
 
                 <!-- Token generado -->
-                {% if token_generado %}
+                <div id="tokenStep" style="{% if not token_generado %}display:none;{% endif %}">
 
-                <div class="auth-token-box">
-                    <div class="auth-token-header">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
-                        Código temporal generado
-                    </div>
-                    <div class="auth-token-code">{{ token_generado }}</div>
-                </div>
-
-                <form method="POST" action="/verify-token" id="verifyForm" style="margin-top:20px;">
-
-                    <div class="auth-field">
-                        <label class="auth-label" for="token">Ingresar código temporal</label>
-                        <div class="auth-input-wrap">
-                            <span class="auth-input-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></svg>
-                            </span>
-                            <input
-                                class="auth-input"
-                                type="text"
-                                id="token"
-                                name="token"
-                                placeholder="000000"
-                                maxlength="6"
-                                required
-                                autocomplete="off"
-                                inputmode="numeric"
-                                style="letter-spacing:0.25em; font-weight:700;"
-                            >
+                    <div class="auth-token-box">
+                        <div class="auth-token-header">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                            Código temporal generado
                         </div>
+                        <div class="auth-token-code" id="tokenCode">{{ token_generado }}</div>
                     </div>
 
-                    <button type="submit" class="btn-auth-primary btn-auth-success" id="verifyBtn">
-                        <span id="verifyText">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                            Validar código
-                        </span>
-                        <span class="auth-spinner" id="verifySpinner" style="display:none;"></span>
-                    </button>
+                    <form method="POST" action="/verify-token" id="verifyForm" style="margin-top:20px;">
 
-                </form>
+                        <div class="auth-field">
+                            <label class="auth-label" for="token">Ingresar código temporal</label>
+                            <div class="auth-input-wrap">
+                                <span class="auth-input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></svg>
+                                </span>
+                                <input
+                                    class="auth-input"
+                                    type="text"
+                                    id="token"
+                                    name="token"
+                                    placeholder="000000"
+                                    maxlength="6"
+                                    required
+                                    autocomplete="off"
+                                    inputmode="numeric"
+                                    style="letter-spacing:0.25em; font-weight:700;"
+                                >
+                            </div>
+                        </div>
 
-                {% endif %}
+                        <button type="submit" class="btn-auth-primary btn-auth-success" id="verifyBtn">
+                            <span id="verifyText">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                Validar código
+                            </span>
+                            <span class="auth-spinner" id="verifySpinner" style="display:none;"></span>
+                        </button>
+
+                    </form>
+
+                </div>
 
                 <hr class="auth-divider">
 
@@ -150,27 +160,23 @@
 {% endblock %}
 
 {% block extra_js %}
-
-{% if token_generado %}
 <script>
-const timerEl = document.getElementById("recoveryTimer");
+let timerIntervalId = null;
 
-if (timerEl) {
-    const DURACION = 300;
-    let expiracion = localStorage.getItem("recovery_expiration");
+function iniciarTimer(expiraMs) {
+    const timerEl = document.getElementById("recoveryTimer");
+    if (!timerEl) return;
 
-    if (!expiracion) {
-        expiracion = Date.now() + DURACION * 1000;
-        localStorage.setItem("recovery_expiration", expiracion);
-    }
+    if (timerIntervalId) clearInterval(timerIntervalId);
+    timerEl.classList.remove("auth-timer-expired", "auth-timer-warning");
 
     function tick() {
-        const restante = Math.floor((expiracion - Date.now()) / 1000);
+        const restante = Math.floor((expiraMs - Date.now()) / 1000);
 
         if (restante <= 0) {
             timerEl.textContent = "Código expirado";
             timerEl.classList.add("auth-timer-expired");
-            localStorage.removeItem("recovery_expiration");
+            clearInterval(timerIntervalId);
             return;
         }
 
@@ -183,19 +189,79 @@ if (timerEl) {
     }
 
     tick();
-    setInterval(tick, 1000);
+    timerIntervalId = setInterval(tick, 1000);
 }
-</script>
+
+// Si el token ya viene renderizado desde el servidor (primera carga, o
+// respaldo si el navegador no ejecuta JS al enviar el formulario),
+// arrancamos su timer normalmente.
+{% if token_generado and token_expira_ms %}
+iniciarTimer({{ token_expira_ms }});
 {% endif %}
 
-<script>
-// Spinner en envío de correo
-const recoveryForm = document.getElementById("recoveryForm");
+// ==================================================
+// Envío del formulario de correo vía fetch (AJAX)
+// ==================================================
+// Se hace así para que reenviar el formulario NO genere una nueva entrada
+// en el historial del navegador: no hay redirect ni recarga de página.
+// Sin importar cuántas veces el usuario solicite un código nuevo, con un
+// solo "atrás" sale directo de esta pantalla, en vez de tener que pasar
+// por cada intento anterior.
+const recoveryForm  = document.getElementById("recoveryForm");
+const tokenStep     = document.getElementById("tokenStep");
+const secInactive   = document.getElementById("secInactive");
+const secActive     = document.getElementById("secActive");
+const securityBox   = document.getElementById("securityBox");
+const ajaxError     = document.getElementById("ajaxError");
+const ajaxErrorText = document.getElementById("ajaxErrorText");
+
 if (recoveryForm) {
-    recoveryForm.addEventListener("submit", () => {
-        document.getElementById("sendBtn").disabled = true;
-        document.getElementById("sendText").style.display = "none";
-        document.getElementById("sendSpinner").style.display = "block";
+    recoveryForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const sendBtn     = document.getElementById("sendBtn");
+        const sendText    = document.getElementById("sendText");
+        const sendSpinner = document.getElementById("sendSpinner");
+
+        sendBtn.disabled = true;
+        sendText.style.display = "none";
+        sendSpinner.style.display = "block";
+        ajaxError.style.display = "none";
+
+        try {
+            const formData = new FormData(recoveryForm);
+            const resp = await fetch(window.location.pathname, {
+                method: "POST",
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                body: formData,
+            });
+            const data = await resp.json();
+
+            if (!resp.ok || !data.success) {
+                ajaxErrorText.textContent = data.message || "Ocurrió un error. Intenta de nuevo.";
+                ajaxError.style.display = "block";
+                return;
+            }
+
+            // Éxito: mostramos el paso del token sin navegar a ninguna parte
+            document.getElementById("tokenCode").textContent = data.token;
+            recoveryForm.style.display = "none";
+            tokenStep.style.display = "block";
+            secInactive.style.display = "none";
+            secActive.style.display = "block";
+            securityBox.classList.remove("auth-security-inactive");
+            securityBox.classList.add("auth-security-active");
+
+            iniciarTimer(data.expira_ms);
+
+        } catch (err) {
+            ajaxErrorText.textContent = "No se pudo conectar con el servidor. Intenta de nuevo.";
+            ajaxError.style.display = "block";
+        } finally {
+            sendBtn.disabled = false;
+            sendText.style.display = "inline-flex";
+            sendSpinner.style.display = "none";
+        }
     });
 }
 
@@ -209,5 +275,4 @@ if (verifyForm) {
     });
 }
 </script>
-
 {% endblock %}

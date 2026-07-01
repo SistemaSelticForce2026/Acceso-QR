@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from flask import (
     Blueprint,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -260,41 +261,99 @@ def login():
 def forgot_password():
     """Genera un código temporal de recuperación de contraseña para residentes."""
 
+    es_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
     if request.method == "GET":
-        return render_template("recuperar_contrasena.html")
+
+        mostrar_token = session.get("recovery_token_pending_display", False)
+        token_generado = session.get("recovery_token") if mostrar_token else None
+        expira_raw = session.get("recovery_token_expira")
+        if isinstance(expira_raw, str):
+            expira = datetime.fromisoformat(expira_raw)
+        else:
+            expira = expira_raw  # ya es datetime (cookies previas) o None
+        if expira and expira.tzinfo is not None:
+            expira = expira.replace(tzinfo=None)
+
+        # Si el token ya expiró, no lo mostramos y limpiamos la sesión
+        if token_generado and expira and datetime.now() > expira:
+            token_generado = None
+            session.pop("recovery_token", None)
+            session.pop("recovery_token_expira", None)
+            session.pop("correo_recuperacion", None)
+
+        # El token se muestra una sola vez: al recargar esta página de nuevo
+        # (por ejemplo con el botón "atrás" del navegador) ya no aparecerá,
+        # y el usuario verá el formulario para pedir el correo otra vez.
+        session["recovery_token_pending_display"] = False
+
+        expira_ms = (
+            int(expira.timestamp() * 1000) if (token_generado and expira) else None
+        )
+
+        return render_template(
+            "recuperar_contrasena.html",
+            token_generado=token_generado,
+            token_expira_ms=expira_ms,
+        )
+
+    # ---- POST: generar el token ----
 
     correo = request.form["correo"].strip()
 
     usuario, col = buscar_login(mongo.db, correo)
 
     if not usuario:
-        flash("No hay ninguna cuenta asociada a ese correo electrónico.", "danger")
+        mensaje = "No hay ninguna cuenta asociada a ese correo electrónico."
+        if es_ajax:
+            return jsonify(success=False, message=mensaje), 400
+        flash(mensaje, "danger")
         return redirect(url_for("auth.forgot_password"))
 
     if usuario.get("rol") != "residente":
-        flash(
+        mensaje = (
             "La recuperación de contraseña es solo para residentes. "
-            "Si eres guardia o administrador, contacta al administrador del sistema.",
-            "danger",
+            "Si eres guardia o administrador, contacta al administrador del sistema."
         )
+        if es_ajax:
+            return jsonify(success=False, message=mensaje), 400
+        flash(mensaje, "danger")
         return redirect(url_for("auth.forgot_password"))
 
     token = str(random.randint(100000, 999999))
     expiracion = datetime.now() + timedelta(minutes=5)
 
     session["recovery_token"] = token
+    session["recovery_token_expira"] = expiracion.isoformat()
     session["correo_recuperacion"] = correo
+    # Si es AJAX no habrá otro GET después de esto (no navegamos a ninguna
+    # parte), así que no necesitamos la bandera de "mostrar una vez".
+    session["recovery_token_pending_display"] = not es_ajax
 
     col.update_one(
         {"_id": usuario["_id"]},
         {"$set": {"token_recuperacion": token, "token_expira": expiracion}},
     )
 
+    if es_ajax:
+        # Respondemos con JSON: el frontend actualiza el DOM sin navegar,
+        # por lo que el navegador NUNCA agrega una entrada nueva al
+        # historial, sin importar cuántas veces se reenvíe el formulario.
+        return jsonify(
+            success=True,
+            token=token,
+            expira_ms=int(expiracion.timestamp() * 1000),
+        )
+
     flash(
         "Código temporal generado. Ingrésalo a continuación para continuar.", "success"
     )
 
-    return render_template("recuperar_contrasena.html", token_generado=token)
+    # PRG (respaldo si el JS está desactivado): nunca renderizar directamente
+    # sobre un POST, siempre redirigir. Esto evita el error "Confirmar
+    # reenvío del formulario" / ERR_CACHE_MISS al usar el botón de
+    # atrás/adelante del navegador.
+    return redirect(url_for("auth.forgot_password"))
 
 
 # =====================================
@@ -306,10 +365,29 @@ def forgot_password():
 def verify_token():
     """Verifica el código temporal y permite continuar al cambio de contraseña."""
 
-    token_ingresado = request.form["token"]
+    token_ingresado = request.form["token"].strip()
     token_guardado = session.get("recovery_token")
+    expira_raw = session.get("recovery_token_expira")
+    if isinstance(expira_raw, str):
+        expira = datetime.fromisoformat(expira_raw)
+    else:
+        expira = expira_raw  # ya es datetime (cookies previas) o None
+    if expira and expira.tzinfo is not None:
+        expira = expira.replace(tzinfo=None)
 
-    if token_ingresado == token_guardado:
+    # Validar expiración en backend (el timer del frontend es solo visual)
+    if expira and datetime.now() > expira:
+        flash("El código ha expirado. Solicita uno nuevo e intenta de nuevo.", "danger")
+        session.pop("recovery_token", None)
+        session.pop("recovery_token_expira", None)
+        return redirect(url_for("auth.forgot_password"))
+
+    if token_guardado and token_ingresado == token_guardado:
+        # El token ya cumplió su propósito, lo invalidamos para que no
+        # pueda reutilizarse si el usuario vuelve a /forgot-password.
+        session.pop("recovery_token", None)
+        session.pop("recovery_token_expira", None)
+        session.pop("recovery_token_pending_display", None)
         return redirect(url_for("auth.reset_password"))
 
     flash(
@@ -368,6 +446,8 @@ def reset_password():
     )
 
     session.pop("recovery_token", None)
+    session.pop("recovery_token_expira", None)
+    session.pop("recovery_token_pending_display", None)
     session.pop("correo_recuperacion", None)
 
     flash(
