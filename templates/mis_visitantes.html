@@ -5,6 +5,915 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/residente_dashboard.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/mis_visitantes.css') }}">
+<style>
+/* =====================================================================
+   MIS VISITANTES — sistema visual profesional + responsive avanzado
+   ===================================================================== */
+
+:root{
+    --mv-blue:       #2e5bff;
+    --mv-blue-dark:  #1f45cc;
+    --mv-blue-bg:    #e8edff;
+    --mv-ink:        #101323;
+    --mv-text:       #1d2333;
+    --mv-muted:      #6b7280;
+    --mv-faint:      #9aa1b0;
+    --mv-border:     #e7e9f1;
+    --mv-bg-soft:    #f6f7fb;
+    --mv-green:      #12805c;
+    --mv-green-bg:   #e7f7f0;
+    --mv-amber:      #b9700a;
+    --mv-amber-bg:   #fff4e0;
+    --mv-red:        #c8272c;
+    --mv-red-bg:     #fdecec;
+    --mv-violet:     #6d28d9;
+    --mv-violet-bg:  #f1ebfe;
+    --mv-gray:       #4b5265;
+    --mv-gray-bg:    #eef0f5;
+    --mv-shadow-sm:  0 1px 2px rgba(16,24,40,.05);
+    --mv-shadow-md:  0 4px 14px rgba(16,24,40,.07);
+    --mv-shadow-lg:  0 10px 26px rgba(16,24,40,.14);
+    --mv-radius-lg:  18px;
+    --mv-radius-md:  14px;
+}
+
+.res-visits-section{
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+/* ─── Header de página ─────────────────────────────────────────── */
+
+.res-page-header{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+}
+
+.res-page-heading{
+    font-size: clamp(20px, 3.6vw, 25px);
+    font-weight: 700;
+    color: var(--mv-ink);
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+}
+
+.res-page-sub{
+    font-size: 13.5px;
+    color: var(--mv-muted);
+    margin: 0;
+}
+
+.res-btn-new{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--mv-blue);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 11px;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: var(--mv-shadow-sm);
+    transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+.res-btn-new:hover{
+    background: var(--mv-blue-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--mv-shadow-md);
+}
+
+/* ─── Filtros ──────────────────────────────────────────────────── */
+
+.res-filter-card{
+    background: #fff;
+    border: 1px solid var(--mv-border);
+    border-radius: var(--mv-radius-md);
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    box-shadow: var(--mv-shadow-sm);
+}
+
+.res-filter-row{
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.res-filter-field{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 140px;
+}
+
+.res-filter-field--grow{
+    flex: 1 1 220px;
+}
+
+.res-filter-label{
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--mv-muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.res-filter-input{
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--mv-border);
+    border-radius: 9px;
+    font-size: 13.5px;
+    color: var(--mv-text);
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.res-filter-input:focus{
+    outline: none;
+    border-color: var(--mv-blue);
+    box-shadow: 0 0 0 3px rgba(46,91,255,.12);
+}
+
+.res-filter-btns{
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.res-filter-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 16px;
+    background: var(--mv-blue);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background-color .15s ease;
+    white-space: nowrap;
+}
+
+.res-filter-btn:hover{ background: var(--mv-blue-dark); }
+
+.res-filter-clear{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 14px;
+    background: #fff;
+    color: var(--mv-muted);
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--mv-border);
+    border-radius: 9px;
+    text-decoration: none;
+    transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+    white-space: nowrap;
+}
+
+.res-filter-clear:hover{
+    border-color: var(--mv-blue);
+    color: var(--mv-blue);
+    background: #f7f9ff;
+}
+
+/* ─── Contador de resultados ───────────────────────────────────── */
+
+.res-count-label{
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mv-muted);
+    margin: 0 0 14px;
+}
+
+/* ─── Tarjeta de visita ────────────────────────────────────────── */
+
+.res-visit-card{
+    background: #fff;
+    border: 1px solid var(--mv-border);
+    border-radius: var(--mv-radius-lg);
+    padding: 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--mv-shadow-sm);
+    transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+}
+
+.res-visit-card:hover{
+    box-shadow: var(--mv-shadow-md);
+    border-color: #d8dcec;
+}
+
+.res-visit-body{
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    grid-template-areas: "avatar info right";
+    align-items: flex-start;
+    gap: 16px;
+}
+
+/* Avatar */
+.res-avatar-photo{
+    grid-area: avatar;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid var(--mv-border);
+}
+
+.res-avatar-img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: zoom-in;
+}
+
+.res-avatar{
+    grid-area: avatar;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* Info central */
+.res-visit-info{
+    grid-area: info;
+    min-width: 0;
+}
+
+.res-visit-namerow{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.res-visit-name{
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--mv-ink);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.res-accesschip{
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mv-gray);
+    background: var(--mv-gray-bg);
+    border: 1px solid var(--mv-border);
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.res-badge{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.res-badge-dot{
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+.badge-success   { background: var(--mv-green-bg);  color: var(--mv-green); }
+.badge-blue      { background: var(--mv-blue-bg);    color: var(--mv-blue); }
+.badge-violet    { background: var(--mv-violet-bg);  color: var(--mv-violet); }
+.badge-warning   { background: var(--mv-amber-bg);   color: var(--mv-amber); }
+.badge-danger    { background: var(--mv-red-bg);     color: var(--mv-red); }
+.badge-secondary { background: var(--mv-gray-bg);    color: var(--mv-gray); }
+
+.res-visit-motive{
+    font-size: 13px;
+    color: var(--mv-muted);
+    margin: 0 0 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.res-visit-meta{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 6px;
+}
+
+.res-visit-meta-veh{ margin-top: 8px; }
+
+.res-visit-meta-item{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--mv-text);
+    white-space: nowrap;
+}
+
+.res-visit-meta-item svg{
+    color: var(--mv-faint);
+    flex-shrink: 0;
+}
+
+/* Bloque derecho: QR + acciones */
+.res-visit-right{
+    grid-area: right;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.res-visit-qrwrap{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.res-qr-thumb{
+    width: 76px;
+    height: 76px;
+    border-radius: 10px;
+    border: 1px solid var(--mv-border);
+    object-fit: contain;
+    background: #fff;
+    padding: 4px;
+}
+
+.res-qr-thumb.qr-clickable{
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.res-qr-thumb.qr-clickable:hover{
+    transform: scale(1.04);
+    box-shadow: var(--mv-shadow-md);
+}
+
+.res-qr-thumb.qr-cancelado{
+    opacity: .35;
+    filter: grayscale(1);
+}
+
+.res-verpase{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mv-blue);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+.res-verpase:hover{ text-decoration: underline; }
+
+.res-visit-actions{
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+}
+
+.res-visit-actions--done{
+    align-items: center;
+}
+
+.res-btn-cancel{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mv-red);
+    background: var(--mv-red-bg);
+    border: 1px solid #f5c6c2;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color .15s ease;
+    white-space: nowrap;
+}
+
+.res-btn-cancel:hover:not(.is-disabled){ background: #f9d9d6; }
+
+.res-btn-cancel.is-disabled{
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.res-action-icons{
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.res-iconact{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--mv-border);
+    color: var(--mv-text);
+    background: #fff;
+    transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+
+.res-btn-edit:hover:not(.is-disabled){
+    border-color: var(--mv-blue);
+    color: var(--mv-blue);
+    background: #f7f9ff;
+}
+
+.res-iconact.is-disabled{
+    opacity: .4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.res-done-chip{
+    /* estilos base ya vienen inline desde Jinja (color dinámico);
+       aquí solo garantizamos que no se deforme */
+    text-align: center;
+}
+
+/* ─── Estado vacío ─────────────────────────────────────────────── */
+
+.res-empty{
+    text-align: center;
+    padding: 56px 20px 44px;
+    background: #fff;
+    border: 1px solid var(--mv-border);
+    border-radius: var(--mv-radius-lg);
+}
+
+.res-empty-icon{
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: var(--mv-bg-soft);
+    color: var(--mv-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.res-empty-title{
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--mv-ink);
+    margin: 0 0 6px;
+}
+
+.res-empty-sub{
+    font-size: 13.5px;
+    color: var(--mv-muted);
+    margin: 0 0 18px;
+}
+
+/* ─── Botón "agregar" punteado ─────────────────────────────────── */
+
+.res-add-dashed{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 13px;
+    border: 1.5px dashed var(--mv-border);
+    border-radius: 13px;
+    color: var(--mv-muted);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+
+.res-add-dashed:hover{
+    border-color: var(--mv-blue);
+    color: var(--mv-blue);
+    background: #f7f9ff;
+}
+
+/* ─── Paginación ───────────────────────────────────────────────── */
+
+.res-pagination{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 24px;
+}
+
+.res-page-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 6px;
+    border-radius: 9px;
+    border: 1px solid var(--mv-border);
+    color: var(--mv-text);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    background: #fff;
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.res-page-btn:hover{
+    border-color: var(--mv-blue);
+    color: var(--mv-blue);
+}
+
+.res-page-btn.active{
+    background: var(--mv-blue);
+    border-color: var(--mv-blue);
+    color: #fff;
+}
+
+/* ─── Modal QR ─────────────────────────────────────────────────── */
+
+.res-qr-modal{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,12,24,.78);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    backdrop-filter: blur(3px);
+}
+
+.res-qr-panel{
+    position: relative;
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 26px 24px;
+    width: min(380px, 100%);
+    box-shadow: var(--mv-shadow-lg);
+    text-align: center;
+}
+
+.res-qr-close{
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: var(--mv-bg-soft);
+    color: var(--mv-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.res-qr-close:hover{ background: #eceef4; color: var(--mv-ink); }
+
+.res-qr-modal-title{
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--mv-ink);
+    margin: 0 0 4px;
+}
+
+.res-qr-modal-sub{
+    font-size: 12.5px;
+    color: var(--mv-muted);
+    margin: 0 0 18px;
+}
+
+.res-qr-image-wrap{
+    background: var(--mv-bg-soft);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.res-qr-modal-image{
+    width: 100%;
+    max-width: 220px;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+}
+
+.res-token-row{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--mv-bg-soft);
+    border: 1px solid var(--mv-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+}
+
+.res-token-code{
+    flex: 1;
+    font-family: 'Roboto Mono', monospace, monospace;
+    font-size: 12.5px;
+    color: var(--mv-text);
+    text-align: left;
+    word-break: break-all;
+}
+
+.res-token-copy{
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--mv-border);
+    background: #fff;
+    color: var(--mv-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color .15s ease, color .15s ease;
+}
+
+.res-token-copy:hover{ border-color: var(--mv-blue); color: var(--mv-blue); }
+
+.res-qr-actions{
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.res-qr-action-btn{
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid var(--mv-border);
+    background: #fff;
+    color: var(--mv-text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+
+.res-qr-action-btn:hover{
+    border-color: var(--mv-blue);
+    background: #f7f9ff;
+}
+
+.res-qr-share-hint{
+    font-size: 11.5px;
+    color: var(--mv-faint);
+    margin: 0;
+}
+
+/* ─── Modal foto visitante ─────────────────────────────────────── */
+
+.res-photo-modal{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,12,24,.82);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    cursor: zoom-out;
+    backdrop-filter: blur(2px);
+}
+
+.res-photo-zoom{
+    max-width: min(560px, 92vw);
+    max-height: 86vh;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    object-fit: contain;
+}
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+
+/* ---- ≥1440px ---- */
+@media (min-width: 1440px){
+    .res-visit-card{ padding: 20px 22px; }
+    .res-visit-body{ gap: 20px; }
+}
+
+/* ---- ≤1024px: laptop chica / tablet grande ----
+   El bloque derecho (QR + acciones) se hace un poco más compacto. */
+@media (max-width: 1024px){
+    .res-qr-thumb{ width: 68px; height: 68px; }
+}
+
+/* ---- ≤860px: tablet ----
+   La tarjeta pasa de 3 columnas a un layout de 2 filas:
+   [avatar][info] arriba, [QR+acciones] abajo a todo el ancho. */
+@media (max-width: 860px){
+    .res-visit-body{
+        grid-template-columns: 56px 1fr;
+        grid-template-areas:
+            "avatar info"
+            "right  right";
+        row-gap: 14px;
+    }
+
+    .res-visit-right{
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid var(--mv-border);
+        padding-top: 14px;
+        width: 100%;
+    }
+
+    .res-visit-qrwrap{ flex-direction: row; align-items: center; gap: 10px; }
+    .res-qr-thumb{ width: 56px; height: 56px; }
+    .res-verpase{ font-size: 11.5px; }
+
+    .res-visit-actions{
+        flex-direction: row;
+        align-items: center;
+        width: auto;
+        gap: 10px;
+    }
+
+    .res-btn-cancel{ height: 36px; }
+    .res-iconact{ width: 36px; height: 36px; }
+}
+
+/* ---- ≤700px: filtros se apilan ---- */
+@media (max-width: 700px){
+    .res-filter-card{ padding: 14px 14px; }
+
+    .res-filter-row{
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .res-filter-field,
+    .res-filter-field--grow{
+        min-width: 0;
+        width: 100%;
+    }
+
+    .res-filter-btns{
+        width: 100%;
+    }
+
+    .res-filter-btn,
+    .res-filter-clear{
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+/* ---- ≤620px: móvil ---- */
+@media (max-width: 620px){
+    .res-page-header{
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .res-btn-new{
+        justify-content: center;
+        width: 100%;
+    }
+
+    .res-visit-card{
+        padding: 14px;
+        border-radius: 15px;
+    }
+
+    .res-avatar-photo,
+    .res-avatar{
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+    }
+
+    .res-visit-name{ font-size: 14px; }
+
+    .res-visit-meta{ gap: 6px 12px; }
+    .res-visit-meta-item{ font-size: 11.5px; }
+
+    .res-accesschip,
+    .res-badge{ font-size: 10.5px; padding: 3px 8px; }
+
+    .res-visit-right{ padding-top: 12px; }
+    .res-qr-thumb{ width: 50px; height: 50px; }
+
+    .res-btn-cancel span,
+    .res-btn-cancel{ font-size: 11.5px; padding: 0 10px; }
+
+    /* Objetivo táctil mínimo */
+    .res-iconact,
+    .res-page-btn{ min-width: 40px; min-height: 40px; }
+}
+
+/* ---- ≤480px: móvil angosto ----
+   La info del visitante puede necesitar todo el ancho disponible;
+   el bloque de acciones pasa a ocupar el ancho completo debajo del QR
+   si no caben lado a lado. */
+@media (max-width: 480px){
+    .res-page-heading{ font-size: 19px; }
+    .res-page-sub{ font-size: 12.5px; }
+
+    .res-visit-right{
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .res-visit-qrwrap{ width: 100%; justify-content: center; }
+    .res-visit-actions{ width: 100%; justify-content: center; }
+
+    .res-qr-panel{ padding: 22px 18px 18px; }
+    .res-qr-actions{ flex-direction: column; }
+}
+
+/* ---- ≤360px: muy angosto ---- */
+@media (max-width: 360px){
+    .res-visit-meta{ flex-direction: column; gap: 6px; }
+    .res-visit-namerow{ gap: 6px; }
+}
+
+/* ---- Modo horizontal en móvil (poca altura) ---- */
+@media (max-height: 480px) and (orientation: landscape){
+    .res-page-header{ margin-bottom: 14px; }
+    .res-filter-card{ padding: 12px 14px; margin-bottom: 12px; }
+    .res-visit-card{ padding: 12px; margin-bottom: 8px; }
+    .res-qr-modal-image{ max-width: 160px; }
+}
+
+/* Accesibilidad: respeta si el usuario prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce){
+    .res-visit-card,
+    .res-btn-new,
+    .res-qr-thumb.qr-clickable,
+    .res-add-dashed{
+        transition: none;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
