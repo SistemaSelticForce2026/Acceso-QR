@@ -29,9 +29,10 @@
 
             <div class="edit-field">
                 <label>Teléfono</label>
-                <input type="text"
+                <input type="tel"
                        name="telefono"
-                       value="{{ visita.telefono }}">
+                       value="{{ visita.telefono }}"
+                       inputmode="numeric">
             </div>
 
             <div class="edit-field">
@@ -52,15 +53,13 @@
 
         <div class="edit-actions">
 
-            <a href="{{ url_for('resident.visitors') }}"
-               class="btn-back">
-                Cancelar
-            </a>
-
-            <button type="submit"
-                    class="btn-save">
+            <button type="submit" class="btn-save">
                 Guardar cambios
             </button>
+
+            <a href="{{ url_for('resident.visitors') }}" class="btn-back">
+                Cancelar
+            </a>
 
         </div>
 
