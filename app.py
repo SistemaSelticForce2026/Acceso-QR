@@ -4,7 +4,9 @@ import os
 import time
 from datetime import datetime, timedelta
 
+from bson import ObjectId
 from flask import Flask, render_template, session, request, redirect, url_for, flash
+from flask.json.provider import DefaultJSONProvider
 from flask_socketio import join_room
 
 from config import Config
@@ -46,6 +48,27 @@ def hora_ampm(valor):
         except ValueError:
             pass
     return valor
+
+
+# ===============================
+# JSON PROVIDER (soporte ObjectId)
+# ===============================
+#
+# Por defecto, json.dumps / tojson no saben serializar ObjectId (tipo de
+# Mongo). Esto provoca un 500 "Object of type ObjectId is not JSON
+# serializable" en cualquier template que haga {{ algo|tojson }} sobre un
+# documento de Mongo (por ejemplo, resultado/visita en scanear_qr.html).
+# Este provider le enseña a Flask a convertir ObjectId -> str automáticamente,
+# tanto en jsonify() como en el filtro tojson de Jinja.
+
+
+class MongoJSONProvider(DefaultJSONProvider):
+    """JSON provider que sabe serializar ObjectId de Mongo como string."""
+
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return super().default(o)
 
 
 # ===============================
@@ -117,6 +140,9 @@ def create_app():
 
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.config.from_object(Config)
+
+    # Permite serializar ObjectId de Mongo en jsonify() y en {{ x|tojson }}.
+    app.json = MongoJSONProvider(app)
 
     # =====================================
     # MODO MANTENIMIENTO
