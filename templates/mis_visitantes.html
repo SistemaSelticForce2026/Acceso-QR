@@ -530,17 +530,68 @@ btnCopyToken.addEventListener("click", async () => {
     } catch { alert("No se pudo copiar el token."); }
 });
 
-/* ─── Cancelar QR ──────────────────────────────────────────────────── */
+/* ─── Cancelar QR (Profesional y Realista) ─────────────────────────── */
 document.querySelectorAll(".btn-cancelar-qr").forEach(btn => {
     btn.addEventListener("click", async function () {
         const token = this.dataset.token;
-        if (!confirm("¿Deseas cancelar este QR?")) return;
+
+        // Confirmación estilizada y profesional
+        const confirmacion = await Swal.fire({
+            title: '¿Confirmas la cancelación?',
+            text: "El visitante ya no podrá ingresar con este código QR.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6e7881',
+            confirmButtonText: 'Sí, cancelar acceso',
+            cancelButtonText: 'Mantener activo',
+            reverseButtons: true,
+            background: '#ffffff',
+            customClass: {
+                popup: 'res-swal-popup',
+                title: 'res-swal-title',
+                confirmButton: 'res-swal-confirm'
+            }
+        });
+
+        if (!confirmacion.isConfirmed) return;
+
+        // Estado visual de carga en el botón original
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+
         try {
-            const res  = await fetch(`/resident/cancelar-qr/${token}`, { method: "POST" });
+            const res = await fetch(`/resident/cancelar-qr/${token}`, { method: "POST" });
             const data = await res.json();
-            if (data.success) { alert("QR cancelado correctamente"); location.reload(); }
-            else alert("No se pudo cancelar el QR");
-        } catch { alert("Error al cancelar el QR"); }
+
+            if (data.success) {
+                // Notificación de éxito rápida antes de recargar
+                await Swal.fire({
+                    title: 'Acceso Cancelado',
+                    text: 'El código QR ha sido invalidado correctamente.',
+                    icon: 'success',
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+                location.reload();
+            } else {
+                throw new Error(data.message || "Error del servidor");
+            }
+        } catch (error) {
+            // Manejo de errores elegante
+            Swal.fire({
+                title: 'No se pudo procesar',
+                text: error.message || 'Hubo un problema de conexión al invalidar el código.',
+                icon: 'error',
+                confirmButtonColor: '#2e5bff',
+                confirmButtonText: 'Entendido'
+            });
+            
+            // Restablecer botón si falla
+            this.disabled = false;
+            this.innerHTML = originalText;
+        }
     });
 });
 
