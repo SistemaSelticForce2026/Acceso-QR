@@ -1331,5 +1331,15 @@ footer.app-foot b{color:var(--ink-600)}
   })(); 
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CIERRE DE SESIÓN POR INACTIVIDAD                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{% if session.user_id %}
+<script>
+    window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};
+</script>
+<script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
+{% endif %}
+
 </body>
 </html>

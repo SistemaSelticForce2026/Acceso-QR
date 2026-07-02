@@ -3,6 +3,7 @@
 import random
 from datetime import datetime, timedelta
 
+from bson import ObjectId
 from flask import (
     Blueprint,
     flash,
@@ -113,6 +114,7 @@ def register():
             "ultimo_acceso": None,
             "intentos_fallidos": 0,
             "bloqueado_hasta": None,
+            "conectado": False,
         }
 
         residentes_col.insert_one(usuario)
@@ -218,6 +220,9 @@ def login():
                     "intentos_fallidos": 0,
                     "bloqueado_hasta": None,
                     "ultimo_acceso": datetime.now(),
+                    # "conectado" se pone en True cuando el navegador abre el
+                    # socket (evento connect en app.py), no aquí — así el
+                    # estado refleja una conexión real, no solo el login.
                 }
             },
         )
@@ -515,7 +520,31 @@ def cambiar_password():
 def logout():
     """Cierra la sesión, finaliza el turno del guardia si aplica y registra el log."""
 
-    if session.get("rol") == "guardia":
+    user_id = session.get("user_id")
+    rol = session.get("rol")
+
+    # Marcamos "conectado" en False de inmediato, sin esperar a que el
+    # socket se desconecte solo (eso puede tardar unos segundos). Es el
+    # mismo campo que actualiza app.py en el evento "disconnect" de
+    # Socket.IO — aquí lo hacemos explícito porque el logout es una acción
+    # intencional del usuario y no debería tener ningún retraso visual.
+    if user_id:
+        try:
+            if rol == "residente" and session.get("fraccionamiento"):
+                col_usuario = coleccion_residentes(
+                    mongo.db, session.get("fraccionamiento")
+                )
+            else:
+                col_usuario = mongo.db.users
+
+            col_usuario.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"conectado": False, "ultima_desconexion": datetime.now()}},
+            )
+        except Exception:  # pylint: disable=broad-except
+            pass
+
+    if rol == "guardia":
         mongo.db.turnos.update_many(
             {
                 "guardia": session.get("nombre"),
@@ -532,7 +561,7 @@ def logout():
     mongo.db.logs.insert_one(
         {
             "usuario": session.get("nombre"),
-            "rol": session.get("rol"),
+            "rol": rol,
             "accion": "Cierre de sesión",
             "fecha": datetime.now(),
         }

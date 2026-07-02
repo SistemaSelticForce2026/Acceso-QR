@@ -1391,7 +1391,7 @@ def editar_residente(id):
 @role_required("admin")
 def bloquear_residente(id):
     _, col = buscar_residente_por_id(mongo.db, id)
-    if col:
+    if col is not None:
         col.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
         _invalidar_cache_conteos()
 
@@ -1406,7 +1406,7 @@ def bloquear_residente(id):
 @role_required("admin")
 def eliminar_residente(id):
     _, col = buscar_residente_por_id(mongo.db, id)
-    if col:
+    if col is not None:
         col.delete_one({"_id": ObjectId(id)})
         _invalidar_cache_conteos()
 
@@ -1421,7 +1421,7 @@ def eliminar_residente(id):
 @role_required("admin")
 def desbloquear_residente(id):
     _, col = buscar_residente_por_id(mongo.db, id)
-    if col:
+    if col is not None:  # ← así
         col.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
         _invalidar_cache_conteos()
 

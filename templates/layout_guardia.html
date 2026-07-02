@@ -152,6 +152,17 @@
 
     <script src="{{ url_for('static', filename='js/date_placeholder.js') }}"></script>
 
+    <!-- ======================================================= -->
+    <!-- CIERRE DE SESIÓN POR INACTIVIDAD                        -->
+    <!-- ======================================================= -->
+
+    {% if session.user_id %}
+    <script>
+        window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};
+    </script>
+    <script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
+    {% endif %}
+
     {% block extra_js %}{% endblock %}
 
 </body>

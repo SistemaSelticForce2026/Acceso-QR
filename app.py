@@ -11,7 +11,7 @@ from flask_socketio import join_room
 
 from config import Config
 from extensions import mongo, socketio
-from utils.fraccionamientos import visitas_colecciones
+from utils.fraccionamientos import visitas_colecciones, coleccion_residentes
 
 from routes.api.auth_api import auth_api
 from routes.api.admin_api import admin_api
@@ -30,7 +30,12 @@ if hasattr(time, "tzset"):
 # TIEMPO DE INACTIVIDAD PERMITIDO
 # =====================================
 
-TIEMPO_INACTIVIDAD = timedelta(minutes=5)
+TIEMPOS_INACTIVIDAD = {
+    "admin": timedelta(minutes=10),
+    "guardia": timedelta(minutes=15),
+    "residente": timedelta(minutes=20),
+}
+TIEMPO_INACTIVIDAD_DEFAULT = timedelta(minutes=10)
 
 
 # ======================
@@ -115,19 +120,85 @@ def crear_indices():
 
 
 # ===============================
+# COLECCIÓN DEL USUARIO ACTUAL (según su rol)
+# ===============================
+#
+# Admin y guardia viven en mongo.db.users; los residentes viven en una
+# colección por fraccionamiento (residentes_<slug>). Esta función devuelve
+# la colección correcta para poder actualizar el campo "conectado" del
+# usuario que tiene la sesión abierta, sin importar su rol.
+
+
+def _coleccion_usuario_actual():
+    rol = session.get("rol")
+    if rol == "residente":
+        frac = session.get("fraccionamiento")
+        if not frac:
+            return None
+        return coleccion_residentes(mongo.db, frac)
+    return mongo.db.users
+
+
+# ===============================
 # SALAS POR ROL / USUARIO
 # ===============================
 
 
 @socketio.on("connect")
 def on_connect():
-    """Une al cliente a las salas de su rol y su usuario al conectarse."""
+    """Une al cliente a las salas de su rol y su usuario al conectarse, y
+    marca al usuario como 'conectado' (en línea) en tiempo real."""
     rol = session.get("rol")
     user_id = session.get("user_id")
     if rol:
         join_room(f"rol:{rol}")
     if user_id:
         join_room(f"user:{user_id}")
+
+        col = _coleccion_usuario_actual()
+        if col is not None:
+            try:
+                col.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$set": {"conectado": True, "ultima_conexion": datetime.now()}},
+                )
+            except Exception:  # pylint: disable=broad-except
+                pass
+
+        socketio.emit(
+            "estado_conexion_actualizado",
+            {"user_id": user_id, "conectado": True},
+            to="rol:admin",
+        )
+
+
+@socketio.on("disconnect")
+def on_disconnect():
+    """Marca al usuario como 'desconectado' cuando cierra la pestaña, pierde
+    la conexión, o cierra sesión (el socket se cae al navegar a otra
+    página)."""
+    user_id = session.get("user_id")
+    if user_id:
+        col = _coleccion_usuario_actual()
+        if col is not None:
+            try:
+                col.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {
+                        "$set": {
+                            "conectado": False,
+                            "ultima_desconexion": datetime.now(),
+                        }
+                    },
+                )
+            except Exception:  # pylint: disable=broad-except
+                pass
+
+        socketio.emit(
+            "estado_conexion_actualizado",
+            {"user_id": user_id, "conectado": False},
+            to="rol:admin",
+        )
 
 
 # ================
@@ -165,6 +236,15 @@ def create_app():
     # =====================================
     # CIERRE DE SESIÓN POR INACTIVIDAD
     # =====================================
+    #
+    # Este chequeo es el RESPALDO de seguridad del lado del servidor: valida
+    # y cierra la sesión en cuanto llega la siguiente petición después de
+    # vencido el plazo. Pero por sí solo NO cierra la sesión "al momento" si
+    # el usuario se queda quieto sin generar ninguna petición (sin recargar,
+    # sin dar clic, sin navegar) — para eso hace falta un temporizador del
+    # lado del cliente (ver static/js/inactivity.js), que se dispara con
+    # setTimeout exactamente cuando se cumple TIEMPO_INACTIVIDAD, sin
+    # depender de que el usuario haga algo.
 
     @app.before_request
     def verificar_inactividad():
@@ -178,11 +258,15 @@ def create_app():
 
             ahora = datetime.now()
             ultima_str = session.get("ultima_actividad")
+            rol_actual = session.get("rol")
+            tiempo_permitido = TIEMPOS_INACTIVIDAD.get(
+                rol_actual, TIEMPO_INACTIVIDAD_DEFAULT
+            )
 
             if ultima_str:
                 ultima_actividad = datetime.fromisoformat(ultima_str)
 
-                if ahora - ultima_actividad > TIEMPO_INACTIVIDAD:
+                if ahora - ultima_actividad > tiempo_permitido:
                     rol = session.get("rol")
                     nombre = session.get("nombre")
 
@@ -223,6 +307,16 @@ def create_app():
         return response
 
     app.config["UPLOAD_FOLDER"] = Config.UPLOAD_FOLDER
+
+    # Expone el tiempo de inactividad (en ms) a TODOS los templates, según el
+    # ROL de la sesión actual, para que el temporizador del lado del cliente
+    # (inactivity.js) use exactamente el mismo valor que valida
+    # verificar_inactividad() en el servidor para ese mismo usuario.
+    @app.context_processor
+    def inject_inactivity_config():
+        rol_actual = session.get("rol")
+        tiempo = TIEMPOS_INACTIVIDAD.get(rol_actual, TIEMPO_INACTIVIDAD_DEFAULT)
+        return {"tiempo_inactividad_ms": int(tiempo.total_seconds() * 1000)}
 
     mongo.init_app(app)
 

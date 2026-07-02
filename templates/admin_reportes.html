@@ -207,6 +207,13 @@ footer.app-foot b{color:var(--ink-600)}
 .ql-item b{font-size:12px;font-weight:600;color:#e2e8f0;display:block;line-height:1.2}
 .ql-item small{font-size:10.5px;color:#7e8aa8}
 
+/* Flash */
+.flash{display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:var(--rad-sm);border:1px solid;font-size:13px;font-weight:600}
+.flash i{flex-shrink:0}
+.flash-success{background:var(--ok-bg);border-color:var(--ok-bd);color:#0f7a3a}
+.flash-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:#a8261f}
+.flash-info{background:var(--pri-50);border-color:var(--pri-200);color:var(--pri-700)}
+
 /* Responsive */
 @media(max-width:1280px){.rpt-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:1100px){.two-col{grid-template-columns:1fr}}
@@ -288,6 +295,20 @@ footer.app-foot b{color:var(--ink-600)}
 
     <div class="content">
       <div class="rpt-page">
+
+        {# ===== Mensajes flash ===== #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div id="flashStackReportes" style="display:flex; flex-direction:column; gap:8px;">
+              {% for category, msg in messages %}
+              <div class="flash flash-{{ category if category in ['success','danger','info'] else 'info' }}">
+                <i class="fa-solid {{ 'fa-circle-check' if category=='success' else ('fa-circle-exclamation' if category=='danger' else 'fa-circle-info') }}"></i>
+                {{ msg }}
+              </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
 
         <!-- ENCABEZADO -->
         <div class="page-head">
@@ -522,6 +543,31 @@ footer.app-foot b{color:var(--ink-600)}
   document.getElementById('burger')?.addEventListener('click',()=>document.getElementById('rail').classList.toggle('open'));
 })();
 </script>
+
+<script>
+// Auto-desaparecer mensajes flash
+(function () {
+  var DURACION = 4000;
+  document.querySelectorAll('#flashStackReportes .flash').forEach(function (flash) {
+    setTimeout(function () {
+      flash.style.transition = 'opacity .4s ease, transform .4s ease';
+      flash.style.opacity = '0';
+      flash.style.transform = 'translateY(-8px)';
+      setTimeout(function () { flash.remove(); }, 400);
+    }, DURACION);
+  });
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CIERRE DE SESIÓN POR INACTIVIDAD                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{% if session.user_id %}
+<script>
+    window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};
+</script>
+<script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
+{% endif %}
 
 </body>
 </html>

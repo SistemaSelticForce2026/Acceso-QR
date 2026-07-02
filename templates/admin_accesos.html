@@ -236,6 +236,13 @@ footer.app-foot b{color:var(--ink-600)}
 .sys-name{font-size:13px;font-weight:600;color:var(--ink-900);margin:0}
 .sys-desc{font-size:11.5px;color:var(--ink-400);margin:2px 0 0}
 
+/* Flash (mensajes de resultado de una acción) */
+.flash{display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:var(--rad-sm);border:1px solid;font-size:13px;font-weight:600}
+.flash i{flex-shrink:0}
+.flash-success{background:var(--ok-bg);border-color:var(--ok-bd);color:#0f7a3a}
+.flash-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:#a8261f}
+.flash-info{background:var(--pri-50);border-color:var(--pri-200);color:var(--pri-700)}
+
 /* Toast */
 .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,16px);display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:#0c1322;color:#fff;font-size:12.5px;font-weight:600;border-radius:999px;box-shadow:var(--sh-3);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:1200}
 .toast i{color:#4ade80}
@@ -325,6 +332,20 @@ footer.app-foot b{color:var(--ink-600)}
 
     <div class="content">
       <div class="ad-page">
+
+        {# ===== Mensajes flash ===== #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div id="flashStackAccesos" style="display:flex; flex-direction:column; gap:8px;">
+              {% for category, msg in messages %}
+              <div class="flash flash-{{ category if category in ['success','danger','info'] else 'info' }}">
+                <i class="fa-solid {{ 'fa-circle-check' if category=='success' else ('fa-circle-exclamation' if category=='danger' else 'fa-circle-info') }}"></i>
+                {{ msg }}
+              </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
 
         {# ===== Encabezado ===== #}
         <div class="page-head">
@@ -633,6 +654,21 @@ footer.app-foot b{color:var(--ink-600)}
 </script>
 
 <script>
+// Auto-desaparecer mensajes flash
+(function () {
+  var DURACION = 4000;
+  document.querySelectorAll('#flashStackAccesos .flash').forEach(function (flash) {
+    setTimeout(function () {
+      flash.style.transition = 'opacity .4s ease, transform .4s ease';
+      flash.style.opacity = '0';
+      flash.style.transform = 'translateY(-8px)';
+      setTimeout(function () { flash.remove(); }, 400);
+    }, DURACION);
+  });
+})();
+</script>
+
+<script>
 (function () {
     function normalizar(t){
         return (t || '').toString().toLowerCase()
@@ -703,6 +739,16 @@ footer.app-foot b{color:var(--ink-600)}
     else { init(); }
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CIERRE DE SESIÓN POR INACTIVIDAD                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{% if session.user_id %}
+<script>
+    window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};
+</script>
+<script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
+{% endif %}
 
 </body>
 </html>

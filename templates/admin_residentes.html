@@ -237,6 +237,14 @@ footer.app-foot b{color:var(--ink-600)}
 .a-info{background:var(--info-bg);border-color:var(--info-bd);color:#0a5a72}.a-info i{color:var(--info)}
 .a-warning{background:var(--warn-bg);border-color:var(--warn-bd);color:#8a5d04}.a-warning i{color:var(--warn)}
 
+/* Flash (mensajes de resultado de una acción: bloquear, eliminar, etc.) */
+.flash{display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:var(--rad-sm);border:1px solid;font-size:13px;font-weight:600;transition:opacity .35s ease, transform .35s ease, margin .35s ease, padding .35s ease, max-height .35s ease;overflow:hidden;max-height:60px}
+.flash i{flex-shrink:0}
+.flash-success{background:var(--ok-bg);border-color:var(--ok-bd);color:#0f7a3a}
+.flash-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:#a8261f}
+.flash-info{background:var(--pri-50);border-color:var(--pri-200);color:var(--pri-700)}
+.flash.flash-out{opacity:0;transform:translateX(20px);max-height:0;padding-top:0;padding-bottom:0;margin:0;border-width:0}
+
 /* Responsive */
 @media(max-width:1100px){.ad-stats{grid-template-columns:1fr}}
 @media(max-width:980px){
@@ -321,6 +329,20 @@ footer.app-foot b{color:var(--ink-600)}
     <div class="content">
       <div class="ad-page">
 
+        {# ===== Mensajes flash (resultado de bloquear/desbloquear/eliminar, etc.) ===== #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div id="flashStackResidentes" style="display:flex; flex-direction:column; gap:8px;">
+              {% for category, msg in messages %}
+              <div class="flash flash-{{ category if category in ['success','danger','info'] else 'info' }}">
+                <i class="fa-solid {{ 'fa-circle-check' if category=='success' else ('fa-circle-exclamation' if category=='danger' else 'fa-circle-info') }}"></i>
+                {{ msg }}
+              </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
         {# ===== Encabezado ===== #}
         <div class="page-head">
           <div class="ph-l">
@@ -367,7 +389,7 @@ footer.app-foot b{color:var(--ink-600)}
         {# ===== KPIs ===== #}
         <div class="ad-stats">
           <div class="ad-stat"><div class="ast-top"><p class="ast-label">{% if frac_sel %}Residentes en {{ frac_sel }}{% else %}Total residentes{% endif %}</p><div class="ast-ico ico-blue"><i class="fa-solid fa-users"></i></div></div><p class="ast-num">{{ total }}</p><p class="ast-sub">Usuarios registrados</p></div>
-          <div class="ad-stat"><div class="ast-top"><p class="ast-label">Activos</p><div class="ast-ico ico-green"><i class="fa-solid fa-user-check"></i></div></div><p class="ast-num">{{ usuarios | selectattr("estado", "equalto", "activo") | list | length }}</p><p class="ast-sub">En esta página</p></div>
+          <div class="ad-stat"><div class="ast-top"><p class="ast-label">En línea ahora</p><div class="ast-ico ico-green"><i class="fa-solid fa-circle-check"></i></div></div><p class="ast-num" id="kpiEnLinea">{{ usuarios | selectattr("conectado") | list | length }}</p><p class="ast-sub">En esta página</p></div>
           <div class="ad-stat"><div class="ast-top"><p class="ast-label">Privadas</p><div class="ast-ico ico-purple"><i class="fa-solid fa-building"></i></div></div><p class="ast-num">{{ usuarios | map(attribute='privada') | unique | list | length }}</p><p class="ast-sub">En esta página</p></div>
         </div>
 
@@ -413,7 +435,7 @@ footer.app-foot b{color:var(--ink-600)}
               </thead>
               <tbody id="tablaResidentes">
                 {% for usuario in usuarios %}
-                <tr class="fila-residente" data-buscar="{{ (usuario.nombre ~ ' ' ~ (usuario.correo or '') ~ ' ' ~ (usuario.fraccionamiento or '') ~ ' ' ~ (usuario.privada or '') ~ ' ' ~ (usuario.numero_casa or '')) | lower }}">
+                <tr class="fila-residente" data-user-id="{{ usuario._id }}" data-buscar="{{ (usuario.nombre ~ ' ' ~ (usuario.correo or '') ~ ' ' ~ (usuario.fraccionamiento or '') ~ ' ' ~ (usuario.privada or '') ~ ' ' ~ (usuario.numero_casa or '')) | lower }}">
 
                   {# Residente #}
                   <td>
@@ -441,13 +463,20 @@ footer.app-foot b{color:var(--ink-600)}
                     <div class="cell-sub">Casa {{ usuario.numero_casa }}</div>
                   </td>
 
-                  {# Estado #}
-                  <td>
-                    {% if usuario.estado == "activo" %}
-                      <span class="badge b-on"><span class="dot"></span> Activo</span>
-                    {% else %}
-                      <span class="badge b-off"><span class="dot"></span> Inactivo</span>
-                    {% endif %}
+                  {# Estado de conexión (en tiempo real) + estado de la cuenta #}
+                  <td class="celda-estado">
+                    <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                      {% if usuario.conectado %}
+                        <span class="badge b-on badge-conexion"><span class="dot"></span> En línea</span>
+                      {% else %}
+                        <span class="badge b-off badge-conexion"><span class="dot"></span> Desconectado</span>
+                      {% endif %}
+                      {% if usuario.estado != "activo" %}
+                        <span class="badge" style="background:var(--bad-bg); color:var(--bad);">
+                          <i class="fa-solid fa-lock" style="font-size:9px;"></i> Cuenta bloqueada
+                        </span>
+                      {% endif %}
+                    </div>
                   </td>
 
                   {# Acciones #}
@@ -456,10 +485,31 @@ footer.app-foot b{color:var(--ink-600)}
                       <a href="{{ url_for('admin.ver_residente', id=usuario._id) }}" class="act-ico a-view" title="Ver perfil"><i class="fa-solid fa-eye"></i></a>
                       <a href="{{ url_for('admin.editar_residente', id=usuario._id) }}" class="act-ico a-edit" title="Editar"><i class="fa-solid fa-pen"></i></a>
                       {% if usuario.estado == "activo" %}
-                      <a href="{{ url_for('admin.bloquear_residente', id=usuario._id) }}" class="act-ico a-warn" title="Bloquear" onclick="return confirm('¿Deseas bloquear este residente?')"><i class="fa-solid fa-user-lock"></i></a>
-                      <a href="{{ url_for('admin.eliminar_residente', id=usuario._id) }}" class="act-ico a-del" title="Eliminar" onclick="return confirm('¿Deseas eliminar este residente permanentemente?')"><i class="fa-solid fa-trash"></i></a>
+                      <a href="{{ url_for('admin.bloquear_residente', id=usuario._id) }}"
+                         class="act-ico a-warn confirm-accion"
+                         title="Bloquear"
+                         data-titulo="¿Bloquear a este residente?"
+                         data-texto="No podrá iniciar sesión hasta que lo desbloquees."
+                         data-icono="warning"
+                         data-color="#c2820a"
+                         data-boton="Sí, bloquear"><i class="fa-solid fa-user-lock"></i></a>
+                      <a href="{{ url_for('admin.eliminar_residente', id=usuario._id) }}"
+                         class="act-ico a-del confirm-accion"
+                         title="Eliminar"
+                         data-titulo="¿Eliminar este residente?"
+                         data-texto="Esta acción es permanente y no se puede deshacer."
+                         data-icono="error"
+                         data-color="#d6342c"
+                         data-boton="Sí, eliminar"><i class="fa-solid fa-trash"></i></a>
                       {% else %}
-                      <a href="{{ url_for('admin.desbloquear_residente', id=usuario._id) }}" class="act-ico a-ok" title="Desbloquear" onclick="return confirm('¿Deseas desbloquear este residente?')"><i class="fa-solid fa-lock-open"></i></a>
+                      <a href="{{ url_for('admin.desbloquear_residente', id=usuario._id) }}"
+                         class="act-ico a-ok confirm-accion"
+                         title="Desbloquear"
+                         data-titulo="¿Desbloquear a este residente?"
+                         data-texto="Podrá volver a iniciar sesión normalmente."
+                         data-icono="question"
+                         data-color="#16a34a"
+                         data-boton="Sí, desbloquear"><i class="fa-solid fa-lock-open"></i></a>
                       {% endif %}
                     </div>
                   </td>
@@ -547,6 +597,23 @@ footer.app-foot b{color:var(--ink-600)}
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════
+// AUTO-DESAPARECER de los mensajes flash (bloqueado, desbloqueado,
+// eliminado, etc.) después de unos segundos, con una animación
+// suave en vez de quedarse pegados en pantalla.
+// ═══════════════════════════════════════════════════════════
+(function () {
+  var DURACION = 4000; // ms visible antes de desaparecer
+  document.querySelectorAll('#flashStackResidentes .flash').forEach(function (flash) {
+    setTimeout(function () {
+      flash.classList.add('flash-out');
+      setTimeout(function () { flash.remove(); }, 400);
+    }, DURACION);
+  });
+})();
+</script>
+
+<script>
   // Reloj topbar
   function tick(){
     const now=new Date();
@@ -598,6 +665,91 @@ footer.app-foot b{color:var(--ink-600)}
   if(input) input.addEventListener('input', filtrar);
 })();
 </script>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIRMACIONES ELEGANTES (reemplaza el confirm() nativo del
+// navegador por un modal de SweetAlert2, consistente con el
+// resto del sistema).
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.confirm-accion').forEach(function (link) {
+  link.addEventListener('click', function (e) {
+    e.preventDefault();
+    const href = link.getAttribute('href');
+
+    Swal.fire({
+      title: link.dataset.titulo || '¿Estás seguro?',
+      text: link.dataset.texto || '',
+      icon: link.dataset.icono || 'question',
+      showCancelButton: true,
+      confirmButtonText: link.dataset.boton || 'Sí, continuar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: link.dataset.color || '#2563eb',
+      cancelButtonColor: '#8a93a6',
+      reverseButtons: true,
+      focusCancel: true
+    }).then(function (resultado) {
+      if (resultado.isConfirmed) {
+        window.location.href = href;
+      }
+    });
+  });
+});
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ESTADO DE CONEXIÓN EN TIEMPO REAL (En línea / Desconectado)
+// Escucha el evento que emite app.py al conectar/desconectar
+// cualquier usuario, y actualiza el badge de esa fila sin
+// necesidad de recargar la página.
+// ═══════════════════════════════════════════════════════════
+(function () {
+  try {
+    const socket = io();
+    socket.on('estado_conexion_actualizado', function (data) {
+      if (!data || !data.user_id) return;
+      const fila = document.querySelector('.fila-residente[data-user-id="' + data.user_id + '"]');
+      if (!fila) return; // el residente actualizado no está en esta página/filtro
+
+      const badge = fila.querySelector('.badge-conexion');
+      if (!badge) return;
+
+      if (data.conectado) {
+        badge.classList.remove('b-off');
+        badge.classList.add('b-on');
+        badge.innerHTML = '<span class="dot"></span> En línea';
+      } else {
+        badge.classList.remove('b-on');
+        badge.classList.add('b-off');
+        badge.innerHTML = '<span class="dot"></span> Desconectado';
+      }
+
+      // Actualiza el contador de "En línea ahora" del KPI
+      const kpi = document.getElementById('kpiEnLinea');
+      if (kpi) {
+        const total = document.querySelectorAll('.badge-conexion.b-on').length;
+        kpi.textContent = total;
+      }
+    });
+  } catch (e) {
+    // Si el socket no está disponible, la tabla sigue funcionando
+    // normalmente; solo no se actualiza en vivo hasta recargar.
+  }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CIERRE DE SESIÓN POR INACTIVIDAD                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{% if session.user_id %}
+<script>
+    window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};
+</script>
+<script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
+{% endif %}
 
 </body>
 </html>
