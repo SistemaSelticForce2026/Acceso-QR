@@ -88,6 +88,13 @@
         {# ── Residente ── #}
         <td class="td-residente">
           <p class="td-strong">{{ visita.residente_nombre or '—' }}</p>
+          {% if visita.residente_activo is defined and not visita.residente_activo %}
+            <p class="td-muted"
+               style="color:var(--bad);display:flex;align-items:center;gap:4px;margin-top:2px;cursor:help"
+               title="{% if visita.residente_eliminado_en %}Eliminado el {{ visita.residente_eliminado_en.strftime('%d/%m/%Y a las %H:%M') }}{% else %}Este residente ya no existe en el sistema{% endif %}">
+              <i class="fa-solid fa-user-slash" style="font-size:9px"></i> Residente eliminado
+            </p>
+          {% endif %}
         </td>
 
         {# ── Fraccionamiento ── #}
@@ -208,7 +215,7 @@
 </div>
 
 {% if total_registros_tabla and total_registros_tabla > 0 %}
-{% set base_qs = periodo_qs ~ '&fraccionamiento=' ~ (frac_sel or '') ~ '&busqueda=' ~ (busqueda or '') ~ '&fecha_inicio_tabla=' ~ (fecha_inicio_tabla or '') ~ '&fecha_fin_tabla=' ~ (fecha_fin_tabla or '') ~ '&per_page=' ~ por_pagina_tabla %}
+{% set base_qs = periodo_qs ~ '&fraccionamiento=' ~ (frac_sel or '') ~ '&busqueda=' ~ (busqueda or '') ~ '&fecha_inicio_tabla=' ~ (fecha_inicio_tabla or '') ~ '&fecha_fin_tabla=' ~ (fecha_fin_tabla or '') ~ '&per_page=' ~ por_pagina_tabla ~ '&solo_activos=' ~ ('1' if solo_activos else '') %}
 {% set desde = (pagina_tabla - 1) * por_pagina_tabla + 1 %}
 {% set hasta = [pagina_tabla * por_pagina_tabla, total_registros_tabla] | min %}
 {% set ventana = 1 %}

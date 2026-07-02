@@ -303,6 +303,9 @@ footer.app-foot b{color:var(--ink-600)}
 .tbl-search-clear{position:absolute;right:11px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--line);color:var(--ink-500);text-decoration:none;font-size:11px;transition:.15s}
 .tbl-search-clear:hover{background:var(--ink-300);color:#fff}
 .tbl-exports{margin-left:auto;display:flex;gap:7px}
+.tbl-toggle-activos{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-600);cursor:pointer;white-space:nowrap;padding:0 4px;user-select:none;transition:.16s}
+.tbl-toggle-activos:hover{color:var(--ink-900)}
+.tbl-toggle-activos input[type=checkbox]{width:16px;height:16px;accent-color:var(--pri-600);cursor:pointer;flex-shrink:0}
 .btn-export{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:var(--rad-sm);font-size:12px;font-weight:600;text-decoration:none;border:1px solid;transition:.15s}
 .btn-export:hover{transform:translateY(-1px);box-shadow:var(--sh-2)}
 .btn-pdf{background:var(--bad-bg);border-color:var(--bad-bd);color:#b02720}
@@ -927,6 +930,13 @@ footer.app-foot b{color:var(--ink-600)}
                 {% endif %}
               </div>
             </form>
+            <!-- NUEVO: filtro "Solo residentes activos". No borra nada del
+                 historial; solo oculta de la vista las visitas cuyo
+                 residente ya fue eliminado del sistema. -->
+            <label class="tbl-toggle-activos" for="filtroSoloActivos" title="Oculta las visitas de residentes que ya fueron eliminados del sistema">
+              <input type="checkbox" id="filtroSoloActivos">
+              <span>Solo residentes activos</span>
+            </label>
             <div class="tbl-exports">
               <a href="{{ url_for('admin.exportar_visitas_pdf', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</a>
               <a href="{{ url_for('admin.exportar_visitas_excel', fraccionamiento=frac_sel, modo=modo, dia=dia_sel, semana=semana_sel, mes=mes_sel, fecha_inicio_tabla=fecha_inicio_tabla, fecha_fin_tabla=fecha_fin_tabla, busqueda=busqueda) }}" class="btn-export btn-excel"><i class="fa-solid fa-file-excel"></i> Excel</a>
@@ -1176,6 +1186,9 @@ footer.app-foot b{color:var(--ink-600)}
     const p=new URLSearchParams();
     form.querySelectorAll('input[name]').forEach(i=>{ if(i.name==='busqueda')return; if(i.value!=='')p.set(i.name,i.value); });
     p.set('busqueda', input.value.trim());
+    // NUEVO: filtro "Solo residentes activos" (checkbox fuera del form).
+    const chkActivos = document.getElementById('filtroSoloActivos');
+    if (chkActivos && chkActivos.checked) p.set('solo_activos', '1');
     if(extra) Object.keys(extra).forEach(k=>p.set(k,extra[k]));
     return p;
   }
@@ -1201,6 +1214,11 @@ footer.app-foot b{color:var(--ink-600)}
   }
   input.addEventListener('input',()=>{ clearTimeout(timer); timer=setTimeout(()=>cargar({page:1}),180); });
   input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); clearTimeout(timer); cargar({page:1}); } });
+  // NUEVO: al activar/desactivar "Solo residentes activos", recarga la tabla.
+  document.getElementById('filtroSoloActivos')?.addEventListener('change', () => {
+    clearTimeout(timer);
+    cargar({page:1});
+  });
   const clearBtn=form.querySelector('.tbl-search-clear');
   if(clearBtn) clearBtn.addEventListener('click',e=>{ e.preventDefault(); input.value=''; input.focus(); cargar({page:1}); });
   wrap.addEventListener('click',e=>{

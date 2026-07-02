@@ -36,7 +36,7 @@ from utils.fraccionamientos import (
     coleccion_residentes,
     buscar_residente_por_id,
     es_fraccionamiento_valido,
-    VISITAS_COLECCIONES,
+    visitas_colecciones,  # <-- CORREGIDO: función dinámica (antes: VISITAS_COLECCIONES fijo)
     FRACCIONAMIENTOS,
 )
 from bson.objectid import ObjectId
@@ -117,6 +117,40 @@ def _invalidar_cache_fracs():
     """Llama esto al crear o eliminar un fraccionamiento."""
     _CACHE_FRACS["lista"] = None
     _CACHE_FRACS["ts"] = 0
+
+
+# =========================================================
+# CACHÉ DE COLECCIONES DE VISITAS (dinámico)
+# visitas_colecciones(db) consulta db.fraccionamientos en cada
+# llamada. Como se usa en cada carga del dashboard (_facet_visitas,
+# _asegurar_indices, _distinct_visitas), se cachea 60s igual que
+# _fraccionamientos_disponibles() para no pagar esa consulta extra
+# en cada request.
+# =========================================================
+
+_CACHE_VISITAS_COLS = {"data": None, "ts": 0}
+_CACHE_VISITAS_COLS_TTL = 60  # segundos
+
+
+def _visitas_colecciones_cacheadas():
+    """{fraccionamiento_norm: nombre_coleccion} de visitas, con caché de 60s."""
+    ahora = time.time()
+    if (
+        _CACHE_VISITAS_COLS["data"] is not None
+        and (ahora - _CACHE_VISITAS_COLS["ts"]) < _CACHE_VISITAS_COLS_TTL
+    ):
+        return _CACHE_VISITAS_COLS["data"]
+
+    resultado = visitas_colecciones(mongo.db)
+    _CACHE_VISITAS_COLS["data"] = resultado
+    _CACHE_VISITAS_COLS["ts"] = ahora
+    return resultado
+
+
+def _invalidar_cache_visitas_cols():
+    """Llama esto al crear o eliminar un fraccionamiento."""
+    _CACHE_VISITAS_COLS["data"] = None
+    _CACHE_VISITAS_COLS["ts"] = 0
 
 
 # =========================================================
@@ -454,7 +488,10 @@ def _registrar_historial_reporte(nombre, tipo, formato):
 
 def _distinct_visitas(campo, filtro):
     valores = set()
-    for nombre in VISITAS_COLECCIONES.values():
+    # CORREGIDO: antes iteraba sobre VISITAS_COLECCIONES (dict fijo con solo
+    # 3 fraccionamientos hardcodeados). Ahora usa la versión dinámica cacheada,
+    # que incluye cualquier fraccionamiento creado desde el panel de admin.
+    for nombre in _visitas_colecciones_cacheadas().values():
         valores.update(mongo.db[nombre].distinct(campo, filtro))
     return list(valores)
 
@@ -474,7 +511,8 @@ def _asegurar_indices():
     if _INDICES_LISTOS:
         return
     try:
-        for nombre in VISITAS_COLECCIONES.values():
+        # CORREGIDO: antes usaba VISITAS_COLECCIONES.values() (fijo).
+        for nombre in _visitas_colecciones_cacheadas().values():
             col = mongo.db[nombre]
             col.create_index("fecha_visita")
             col.create_index([("fraccionamiento", 1), ("fecha_visita", 1)])
@@ -508,8 +546,15 @@ def _asegurar_indices():
 
 
 def _facet_visitas(db, match):
-    """Una sola agregación sobre las 3 colecciones con $unionWith."""
-    cols = list(VISITAS_COLECCIONES.values())
+    """Una sola agregación sobre TODAS las colecciones de visitas con $unionWith.
+    CORREGIDO: antes usaba list(VISITAS_COLECCIONES.values()) (dict fijo con
+    solo 3 fraccionamientos hardcodeados en utils/fraccionamientos.py), por lo
+    que cualquier fraccionamiento creado después desde el panel de admin
+    (ej. "Tulipanes") quedaba invisible para los KPIs y gráficas del dashboard,
+    aunque sí aparecía en la tabla de historial (que usa find_visitas/
+    contar_visitas, ya dinámicas). Ahora usa la misma fuente dinámica.
+    """
+    cols = list(_visitas_colecciones_cacheadas().values())
     if not cols:
         return {}
 
@@ -862,6 +907,11 @@ def buscar_visitas_tabla():
     dia_sel = request.args.get("dia", "").strip()
     semana_sel = request.args.get("semana", "").strip()
     mes_sel = request.args.get("mes", "").strip()
+    # NUEVO: filtro "Solo residentes activos" (checkbox en la tabla).
+    # No borra ni oculta nada del historial por defecto: solo cuando el
+    # admin lo activa explícitamente se excluyen las visitas cuyo
+    # residente ya fue eliminado del sistema.
+    solo_activos = request.args.get("solo_activos", "").strip() in ("1", "true", "on")
 
     hoy = _ahora_local()
 
@@ -909,6 +959,11 @@ def buscar_visitas_tabla():
             {"residente_nombre": rx},
             {"vehiculo.placa": rx},
         ]
+    if solo_activos:
+        # $ne:False incluye también los documentos antiguos que no tienen
+        # el campo (creados antes de esta funcionalidad), tratándolos como
+        # activos por defecto.
+        match_visitas["residente_activo"] = {"$ne": False}
 
     PER_PAGE_OPCIONES = [10, 25, 50, 100]
     pagina_tabla = max(1, int(request.args.get("page", 1)))
@@ -947,6 +1002,7 @@ def buscar_visitas_tabla():
         total_registros_tabla=total,
         por_pagina_tabla=por_pagina_tabla,
         per_page_opciones=PER_PAGE_OPCIONES,
+        solo_activos=solo_activos,
     )
 
 
@@ -1444,15 +1500,48 @@ def bloquear_residente(id):
 @login_required
 @role_required("admin")
 def eliminar_residente(id):
-    _, col = buscar_residente_por_id(mongo.db, id)
-    if col is not None:
+    """Elimina al residente y marca (sin borrar) sus visitas históricas
+    como huérfanas, para que la tabla de Historial de visitas siga
+    mostrando el registro tal como ocurrió, pero indicando claramente
+    que ese residente ya no existe en el sistema."""
+    usuario, col = buscar_residente_por_id(mongo.db, id)
+
+    if col is not None and usuario is not None:
+        nombre_residente = usuario.get("nombre", "")
+        frac_residente = (usuario.get("fraccionamiento") or "").strip().lower()
+
+        # 1) Borra al residente
         col.delete_one({"_id": ObjectId(id)})
+
+        # 2) Marca sus visitas como "residente eliminado" SIN borrar el
+        #    historial ni cambiar el nombre que ya quedó registrado.
+        #    CORREGIDO: antes usaba VISITAS_COLECCIONES.values() (dict fijo
+        #    con solo 3 fraccionamientos); ahora usa la lista dinámica.
+        if nombre_residente:
+            filtro_visitas = {"residente_nombre": nombre_residente}
+            if frac_residente:
+                filtro_visitas["fraccionamiento"] = frac_residente
+
+            for nombre_col in _visitas_colecciones_cacheadas().values():
+                mongo.db[nombre_col].update_many(
+                    filtro_visitas,
+                    {
+                        "$set": {
+                            "residente_activo": False,
+                            "residente_eliminado_en": datetime.now(),
+                        }
+                    },
+                )
+
         _invalidar_cache_conteos()
         _invalidar_cache_kpis()
 
     socketio.emit("actualizar_residentes", to="rol:admin")
     socketio.emit("actualizar_dashboard", to="rol:admin")
-    flash("Residente eliminado correctamente.", "success")
+    flash(
+        "Residente eliminado correctamente. Su historial de visitas se conserva.",
+        "success",
+    )
     return redirect(url_for("admin.residentes"))
 
 
@@ -2235,11 +2324,17 @@ def exportar_visitas_pdf():
     for i, v in enumerate(visitas, start=1):
         vehiculo = v.get("vehiculo", {})
         placa = vehiculo.get("placa", "") if isinstance(vehiculo, dict) else ""
+        # NUEVO: si el residente ya fue eliminado del sistema, se conserva
+        # el registro histórico (no se borra del reporte) pero se marca
+        # con la misma etiqueta que se ve en la tabla del dashboard.
+        residente_txt = v.get("residente_nombre", "") or "—"
+        if v.get("residente_activo") is False:
+            residente_txt += "  (Eliminado)"
         data.append(
             [
                 _c(i, _CELDA_NUM),
                 _c(v.get("nombre_visitante", ""), _CELDA_FUERTE),
-                _c(v.get("residente_nombre", "")),
+                _c(residente_txt),
                 _c(str(placa).upper(), _CELDA_NUM),
                 _badge_estado(
                     v.get("estado", ""),
@@ -2350,10 +2445,15 @@ def exportar_visitas_excel():
     for v in visitas:
         vehiculo = v.get("vehiculo", {})
         placa = vehiculo.get("placa", "") if isinstance(vehiculo, dict) else ""
+        # NUEVO: misma etiqueta que en PDF y en la tabla del dashboard;
+        # el registro histórico se conserva completo, solo se marca.
+        residente_txt = v.get("residente_nombre", "") or ""
+        if v.get("residente_activo") is False:
+            residente_txt += " (Eliminado)"
         data.append(
             {
                 "Visitante": v.get("nombre_visitante", ""),
-                "Residente": v.get("residente_nombre", ""),
+                "Residente": residente_txt,
                 "Fraccionamiento": str(v.get("fraccionamiento", "")).title(),
                 "Fecha": v.get("fecha_visita", ""),
                 "Placas": placa,
@@ -2767,9 +2867,13 @@ def crear_fraccionamiento():
         upsert=True,
     )
 
+    # CORREGIDO: invalidar también el caché de colecciones de visitas,
+    # para que el nuevo fraccionamiento aparezca de inmediato en los
+    # KPIs/gráficas del dashboard (_facet_visitas) y no solo en la tabla.
     _invalidar_cache_fracs()
     _invalidar_cache_conteos()
     _invalidar_cache_kpis()
+    _invalidar_cache_visitas_cols()
 
     socketio.emit("actualizar_dashboard", to="rol:admin")
     flash(f"Fraccionamiento «{_formato_frac(nombre)}» creado correctamente.", "success")
@@ -2797,9 +2901,11 @@ def eliminar_fraccionamiento():
         mongo.db.config_fraccionamientos.delete_one({"fraccionamiento": slug})
         mongo.db.fraccionamientos.delete_one({"slug": slug})
 
+        # CORREGIDO: invalidar también el caché de colecciones de visitas.
         _invalidar_cache_fracs()
         _invalidar_cache_conteos()
         _invalidar_cache_kpis()
+        _invalidar_cache_visitas_cols()
 
         socketio.emit("actualizar_dashboard", to="rol:admin")
         flash(
