@@ -340,12 +340,15 @@ def create_app():
     from routes.auth_routes import auth_bp  # noqa: PLC0415
     from routes.residente_routes import resident_bp  # noqa: PLC0415
     from routes.guardia_routes import guard_bp  # noqa: PLC0415
-    from routes.admin_routes import admin_bp  # noqa: PLC0415
+    from routes.admin_routes import admin_bp, _asegurar_indices  # noqa: PLC0415
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(resident_bp)
     app.register_blueprint(guard_bp)
     app.register_blueprint(admin_bp)
+
+    with app.app_context():
+        _asegurar_indices()
 
     app.register_blueprint(auth_api)
     app.register_blueprint(admin_api)

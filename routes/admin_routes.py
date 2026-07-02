@@ -43,6 +43,7 @@ from bson.objectid import ObjectId
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 import time
+from concurrent.futures import ThreadPoolExecutor
 from werkzeug.security import generate_password_hash
 import secrets
 import string
@@ -74,6 +75,14 @@ def _ahora_local():
 # =========================================================
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+# =========================================================
+# EXECUTOR GLOBAL — se reutiliza en cada request en vez de
+# crear un ThreadPoolExecutor nuevo cada vez (evita overhead).
+# =========================================================
+
+_EXECUTOR = ThreadPoolExecutor(max_workers=8)
 
 
 # =========================================================
@@ -122,6 +131,22 @@ def _invalidar_cache_conteos():
     """Llama esto al crear/eliminar fraccionamientos o residentes."""
     _CACHE_CONTEOS["data"] = None
     _CACHE_CONTEOS["ts"] = 0
+
+
+# =========================================================
+# CACHÉ DE KPIs DEL DASHBOARD (por combinación de filtros)
+# Evita repetir la agregación $facet/$unionWith pesada si
+# varios admins consultan el mismo período en pocos segundos.
+# =========================================================
+
+_CACHE_KPIS = {}
+_CACHE_KPIS_TTL = 20  # segundos
+
+
+def _invalidar_cache_kpis():
+    """Llama esto en cualquier operación que cambie visitas, accesos,
+    residentes, guardias o incidencias."""
+    _CACHE_KPIS.clear()
 
 
 def _residentes_colecciones(db):
@@ -435,7 +460,10 @@ def _distinct_visitas(campo, filtro):
 
 
 # =========================================================
-# ÍNDICES — se crean UNA sola vez por proceso
+# ÍNDICES — se crean UNA sola vez por proceso.
+# IMPORTANTE: llama a _asegurar_indices() al arrancar la app
+# (por ejemplo en tu app factory, dentro de app.app_context()),
+# así ningún usuario paga el costo de crearlos en su primer request.
 # =========================================================
 
 _INDICES_LISTOS = False
@@ -560,6 +588,11 @@ def ultima_actualizacion(fraccionamiento):
 # ENDPOINT AJAX: KPIs y datos de gráficas (carga lazy)
 # El dashboard HTML carga instantáneo con ceros y luego
 # este endpoint rellena los datos reales en ~500ms.
+#
+# OPTIMIZADO:
+#  - Ya no repite las 4 queries de conteo (antes se hacían 2 veces).
+#  - Usa el executor global _EXECUTOR en vez de crear uno nuevo.
+#  - Cachea la respuesta completa 20s por combinación de filtros.
 # =========================================================
 
 
@@ -574,6 +607,14 @@ def dashboard_kpis():
     dia_sel = request.args.get("dia", "").strip()
     semana_sel = request.args.get("semana", "").strip()
     mes_sel = request.args.get("mes", "").strip()
+
+    # ── Caché de la respuesta completa por combinación de filtros ──
+    clave_cache = (modo, frac_sel, dia_sel, semana_sel, mes_sel)
+    ahora_cache = time.time()
+    hit = _CACHE_KPIS.get(clave_cache)
+    if hit and (ahora_cache - hit[1]) < _CACHE_KPIS_TTL:
+        return jsonify(hit[0])
+
     hoy = _ahora_local()
 
     # ── Rango del período ──
@@ -626,13 +667,7 @@ def dashboard_kpis():
         tipo_labels.append(row["_id"] or "General")
         tipo_data.append(row["n"])
 
-    rechazados = mongo.db.access_logs.count_documents({"resultado": "rechazado"})
-    total_residentes = contar_residentes(mongo.db, {"rol": "residente"})
-    total_guardias = mongo.db.users.count_documents({"rol": "guardia"})
-    total_incidencias = mongo.db.incidencias.count_documents({})
-
-    from concurrent.futures import ThreadPoolExecutor
-
+    # ── Conteos independientes en paralelo (una sola vez, con el executor global) ──
     def _q_rechazados():
         return mongo.db.access_logs.count_documents({"resultado": "rechazado"})
 
@@ -645,43 +680,43 @@ def dashboard_kpis():
     def _q_incidencias():
         return mongo.db.incidencias.count_documents({})
 
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        f_rech = ex.submit(_q_rechazados)
-        f_res = ex.submit(_q_residentes)
-        f_gua = ex.submit(_q_guardias)
-        f_inc = ex.submit(_q_incidencias)
-        rechazados = f_rech.result()
-        total_residentes = f_res.result()
-        total_guardias = f_gua.result()
-        total_incidencias = f_inc.result()
+    f_rech = _EXECUTOR.submit(_q_rechazados)
+    f_res = _EXECUTOR.submit(_q_residentes)
+    f_gua = _EXECUTOR.submit(_q_guardias)
+    f_inc = _EXECUTOR.submit(_q_incidencias)
+    rechazados = f_rech.result()
+    total_residentes = f_res.result()
+    total_guardias = f_gua.result()
+    total_incidencias = f_inc.result()
 
-    return jsonify(
-        {
-            "total_visitas": total_visitas,
-            "dentro": dentro,
-            "activas": activas,
-            "salidas": salidas,
-            "rechazados": rechazados,
-            "total_residentes": total_residentes,
-            "total_guardias": total_guardias,
-            "total_incidencias": total_incidencias,
-            "promedio": round(total_visitas / dias_periodo, 1),
-            "tipo_labels": tipo_labels,
-            "tipo_data": tipo_data,
-            "dias_labels": [
-                _dt.strptime(f, "%Y-%m-%d").strftime("%d/%m") for f in fechas_ord
-            ],
-            "dias_data": [dias_raw[f] for f in fechas_ord],
-            "salidas_data": [salidas_raw.get(f, 0) for f in fechas_ord],
-            "top_residentes": [
-                [r["_id"] or "—", r["n"]] for r in facet.get("residentes", [])[:5]
-            ],
-            "vehiculos": [r["_id"] for r in facet.get("vehiculos", []) if r.get("_id")][
-                :10
-            ],
-            "actividad_reciente": [],  # se carga por el partial de tabla
-        }
-    )
+    resultado = {
+        "total_visitas": total_visitas,
+        "dentro": dentro,
+        "activas": activas,
+        "salidas": salidas,
+        "rechazados": rechazados,
+        "total_residentes": total_residentes,
+        "total_guardias": total_guardias,
+        "total_incidencias": total_incidencias,
+        "promedio": round(total_visitas / dias_periodo, 1),
+        "tipo_labels": tipo_labels,
+        "tipo_data": tipo_data,
+        "dias_labels": [
+            _dt.strptime(f, "%Y-%m-%d").strftime("%d/%m") for f in fechas_ord
+        ],
+        "dias_data": [dias_raw[f] for f in fechas_ord],
+        "salidas_data": [salidas_raw.get(f, 0) for f in fechas_ord],
+        "top_residentes": [
+            [r["_id"] or "—", r["n"]] for r in facet.get("residentes", [])[:5]
+        ],
+        "vehiculos": [r["_id"] for r in facet.get("vehiculos", []) if r.get("_id")][
+            :10
+        ],
+        "actividad_reciente": [],  # se carga por el partial de tabla
+    }
+
+    _CACHE_KPIS[clave_cache] = (resultado, ahora_cache)
+    return jsonify(resultado)
 
 
 # =========================================================
@@ -1041,6 +1076,7 @@ def registrar_residente():
         )
 
         _invalidar_cache_conteos()
+        _invalidar_cache_kpis()
 
         socketio.emit("actualizar_residentes", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
@@ -1290,6 +1326,7 @@ def carga_masiva_residentes():
     # ── RESULTADO · resumen general + desglose por fraccionamiento ───
     if creados:
         _invalidar_cache_conteos()
+        _invalidar_cache_kpis()
         socketio.emit("actualizar_residentes", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
         flash(
@@ -1338,6 +1375,7 @@ def eliminar_carga_masiva_residentes():
                 eliminados += resultado.deleted_count
 
         _invalidar_cache_conteos()
+        _invalidar_cache_kpis()
         socketio.emit("actualizar_residentes", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
         flash(f"Se eliminaron {eliminados} residente(s) de carga masiva.", "success")
@@ -1394,6 +1432,7 @@ def bloquear_residente(id):
     if col is not None:
         col.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
         _invalidar_cache_conteos()
+        _invalidar_cache_kpis()
 
     socketio.emit("actualizar_residentes", to="rol:admin")
     socketio.emit("actualizar_dashboard", to="rol:admin")
@@ -1409,6 +1448,7 @@ def eliminar_residente(id):
     if col is not None:
         col.delete_one({"_id": ObjectId(id)})
         _invalidar_cache_conteos()
+        _invalidar_cache_kpis()
 
     socketio.emit("actualizar_residentes", to="rol:admin")
     socketio.emit("actualizar_dashboard", to="rol:admin")
@@ -1424,6 +1464,7 @@ def desbloquear_residente(id):
     if col is not None:  # ← así
         col.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
         _invalidar_cache_conteos()
+        _invalidar_cache_kpis()
 
     socketio.emit("actualizar_residentes", to="rol:admin")
     flash("Residente desbloqueado correctamente", "success")
@@ -1624,6 +1665,7 @@ def registrar_guardia():
             }
         )
 
+        _invalidar_cache_kpis()
         socketio.emit("actualizar_guardias", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
         flash(f"Guardia registrado correctamente. Contraseña: {password}", "success")
@@ -1680,6 +1722,7 @@ def editar_guardia(id):
 @role_required("admin")
 def desactivar_guardia(id):
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "inactivo"}})
+    _invalidar_cache_kpis()
     socketio.emit("actualizar_guardias", to="rol:admin")
     socketio.emit("actualizar_dashboard", to="rol:admin")
     flash("Guardia desactivado correctamente")
@@ -1691,6 +1734,7 @@ def desactivar_guardia(id):
 @role_required("admin")
 def activar_guardia(id):
     mongo.db.users.update_one({"_id": ObjectId(id)}, {"$set": {"estado": "activo"}})
+    _invalidar_cache_kpis()
     socketio.emit("actualizar_guardias", to="rol:admin")
     socketio.emit("actualizar_dashboard", to="rol:admin")
     flash("Guardia activado correctamente")
@@ -2725,6 +2769,7 @@ def crear_fraccionamiento():
 
     _invalidar_cache_fracs()
     _invalidar_cache_conteos()
+    _invalidar_cache_kpis()
 
     socketio.emit("actualizar_dashboard", to="rol:admin")
     flash(f"Fraccionamiento «{_formato_frac(nombre)}» creado correctamente.", "success")
@@ -2754,6 +2799,7 @@ def eliminar_fraccionamiento():
 
         _invalidar_cache_fracs()
         _invalidar_cache_conteos()
+        _invalidar_cache_kpis()
 
         socketio.emit("actualizar_dashboard", to="rol:admin")
         flash(

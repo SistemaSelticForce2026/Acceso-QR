@@ -451,9 +451,19 @@ footer.app-foot b{color:var(--ink-600)}
 @media(max-width:980px){
   .rail{position:fixed;left:0;transform:translateX(-100%);transition:transform .25s var(--ease);box-shadow:var(--sh-3)}
   .rail.open{transform:translateX(0)}
-  .burger{display:inline-grid;place-items:center}
+  .burger{display:inline-grid;place-items:center;position:relative;z-index:31}
   .t-search{max-width:none}
 }
+
+.rail-backdrop{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(9,14,26,.5);
+  z-index:29;
+  backdrop-filter:blur(2px);
+}
+.rail-backdrop.open{display:block;animation:fadeIn .18s var(--ease)}
 @media(max-width:860px){.ad-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){
   .content{padding:18px 14px 32px}
@@ -474,6 +484,8 @@ footer.app-foot b{color:var(--ink-600)}
 <body>
 
 <div id="topLoader"></div>
+
+<div class="rail-backdrop" id="railBackdrop"></div>
 
 <div class="app">
 
@@ -967,7 +979,28 @@ footer.app-foot b{color:var(--ink-600)}
   tick(); setInterval(tick,1000);
 
   // Menú móvil
-  document.getElementById('burger')?.addEventListener('click',()=>document.getElementById('rail').classList.toggle('open'));
+  const railEl = document.getElementById('rail');
+  const backdropEl = document.getElementById('railBackdrop');
+
+  function toggleRail(){
+    railEl.classList.toggle('open');
+    backdropEl.classList.toggle('open');
+  }
+  function closeRail(){
+    railEl.classList.remove('open');
+    backdropEl.classList.remove('open');
+  }
+
+  document.getElementById('burger')?.addEventListener('click', toggleRail);
+  backdropEl?.addEventListener('click', closeRail);
+
+  // Cierra el menú si tocan un link de la navegación (útil en móvil)
+  railEl?.querySelectorAll('.nav-item').forEach(link=>{
+    link.addEventListener('click', closeRail);
+  });
+
+  // Cierra con la tecla Escape
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeRail(); });
 
   // Buscador del topbar → enfoca la búsqueda de la tabla
   document.getElementById('topSearch')?.addEventListener('keydown', e=>{
