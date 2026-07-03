@@ -32,6 +32,7 @@
       {# ── Resolución del estado en un solo lugar (clase + icono + etiqueta) ── #}
       {%- set est = (visita.estado or '') | lower -%}
       {%- set qrest = (visita.qr_estado or '') | lower -%}
+      {%- set no_presento_hoy = visita.no_presento_hoy or false -%}
 
       {%- if est == 'dentro' -%}
         {%- set badge_cls = 'b-in' -%}{%- set badge_ico = 'fa-arrow-right-to-bracket' -%}{%- set badge_lbl = 'Dentro' -%}
@@ -46,6 +47,16 @@
       {%- elif est in ['vencido', 'no_presento', 'no_se_presento'] or qrest == 'vencido' -%}
         {%- set badge_cls = 'b-expired' -%}{%- set badge_ico = 'fa-clock-rotate-left' -%}
         {%- set badge_lbl = 'No se presentó' if est in ['no_presento', 'no_se_presento'] else 'Vencida' -%}
+      {%- elif est == 'activo' and no_presento_hoy -%}
+        {# NUEVO: visita RECURRENTE que ya venció su hora de hoy y no
+           entró — mismo criterio que utils.visita_validacion
+           .visita_no_presentada_hoy(), calculado en el backend
+           (buscar_visitas_tabla) y confirmado/actualizado en vivo por
+           JS cada minuto. Las visitas TEMPORALES llegan aquí con
+           no_presento_hoy=False siempre (el backend nunca las calcula,
+           igual que en "Mis Visitantes" del residente); su vencimiento
+           se detecta 100% en el navegador. #}
+        {%- set badge_cls = 'b-expired' -%}{%- set badge_ico = 'fa-clock-rotate-left' -%}{%- set badge_lbl = 'No se presentó' -%}
       {%- elif est == 'activo' -%}
         {%- set badge_cls = 'b-pending' -%}{%- set badge_ico = 'fa-clock' -%}{%- set badge_lbl = 'Pendiente' -%}
       {%- else -%}
@@ -67,7 +78,14 @@
         {%- endif -%}
       {%- endif -%}
 
-      <tr>
+      <tr
+        data-modalidad="{{ visita.modalidad_visita or '' }}"
+        data-estado="{{ est }}"
+        data-qr="{{ qrest }}"
+        data-fecha="{{ visita.fecha_visita or '' }}"
+        data-hora="{{ visita.hora_inicio or '' }}"
+        data-hora-desde="{{ visita.hora_desde or '' }}"
+        data-dias="{{ (visita.dias_autorizados or visita.dias or []) | join(',') | lower }}">
         {# ── Visitante ── #}
         <td>
           <div class="vis-cell">
@@ -154,8 +172,9 @@
               <span class="htl-deny-tx"><i class="fa-solid fa-ban"></i> acceso negado</span>
               {% if visita.hora_inicio %}<span></span><span class="htl-prog-tx">{{ hora12(visita.hora_inicio) }} <span class="htl-tag">programada</span></span>{% endif %}
 
-            {% elif est in ['vencido', 'no_se_presento', 'no_presento'] %}
-              {# NO entró — no se presentó #}
+            {% elif est in ['vencido', 'no_se_presento', 'no_presento'] or (est == 'activo' and no_presento_hoy) %}
+              {# NO entró — no se presentó (vencido explícito, o recurrente
+                 vencida hoy vía visita_no_presentada_hoy) #}
               <span class="htl-dot htl-miss"></span>
               <span class="htl-miss-tx"><i class="fa-solid fa-hourglass-end"></i> no se presentó</span>
               {% if visita.hora_inicio %}<span></span><span class="htl-prog-tx">{{ hora12(visita.hora_inicio) }} <span class="htl-tag">programada</span></span>{% endif %}
@@ -171,7 +190,7 @@
         </td>
 
         {# ── Estado (badge unificado con punto + icono) ── #}
-        <td>
+        <td class="td-estado">
           <span class="badge {{ badge_cls }}">
             <span class="badge-dot"></span>
             <i class="fa-solid {{ badge_ico }}"></i> {{ badge_lbl }}

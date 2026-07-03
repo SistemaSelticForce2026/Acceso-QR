@@ -39,6 +39,13 @@ from utils.fraccionamientos import (
     visitas_colecciones,  # <-- CORREGIDO: función dinámica (antes: VISITAS_COLECCIONES fijo)
     FRACCIONAMIENTOS,
 )
+
+# NUEVO: mismo criterio que usa el residente ("Mis Visitantes" / "Inicio")
+# para marcar visitas RECURRENTES como "no se presentó hoy". Las visitas
+# TEMPORALES no se calculan aquí (el backend nunca lo hizo, ni en residente):
+# se detectan 100% en vivo desde JS en el navegador, igual que en el panel
+# de residente, comparando fecha_visita + hora_inicio contra la hora actual.
+from utils.visita_validacion import visita_no_presentada_hoy
 from bson.objectid import ObjectId
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
@@ -984,6 +991,17 @@ def buscar_visitas_tabla():
         limit=por_pagina_tabla,
         frac=frac_sel or None,
     )
+
+    # NUEVO: mismo criterio que "Mis Visitantes" / "Inicio" del residente.
+    # Para visitas RECURRENTES, calcula si "no se presentó hoy" usando
+    # exactamente utils.visita_validacion.visita_no_presentada_hoy (única
+    # fuente de verdad, sin duplicar la regla aquí). Las TEMPORALES no se
+    # tocan en el backend: se marcan 100% en vivo desde el JS del dashboard,
+    # igual que hace mis_visitantes.html/residente_dashboard.html.
+    visitas = list(visitas)
+    ahora_visita = _ahora_local()
+    for v in visitas:
+        v["no_presento_hoy"] = visita_no_presentada_hoy(v, ahora_visita)
 
     return render_template(
         "partials/_visitas_tabla.html",

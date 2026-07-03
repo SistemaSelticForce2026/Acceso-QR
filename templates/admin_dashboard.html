@@ -1175,6 +1175,124 @@ footer.app-foot b{color:var(--ink-600)}
 </script>
 
 <script>
+// ════════════════════════════════════════════════════════════════════
+// "NO SE PRESENTÓ" EN VIVO — mismo criterio que Residente
+// (mis_visitantes.html / residente_dashboard.html)
+//
+// TEMPORALES: comparación directa fecha_visita + hora_inicio vs. ahora.
+// El backend NUNCA calcula esto para temporales (tampoco lo hace en el
+// panel de residente): se detecta 100% aquí, en el navegador.
+//
+// RECURRENTES: mismo criterio que utils/visita_validacion.py
+// (visita_no_presentada_hoy), recalculado en cliente para no esperar
+// a un refresh. El backend YA marca no_presento_hoy en cada visita
+// que llega desde buscar_visitas_tabla, así que al cargar la tabla
+// las recurrentes vencidas de hoy ya se ven correctamente; este script
+// solo las mantiene actualizadas minuto a minuto sin recargar.
+//
+// Se re-ejecuta tras cada carga/recarga AJAX de la tabla (búsqueda,
+// paginación, cambio de per_page, carga inicial lazy).
+// ════════════════════════════════════════════════════════════════════
+(function () {
+  const DIAS_JS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+
+  function marcarFila(tr) {
+    const badgeSpan = tr.querySelector('.td-estado .badge');
+    if (badgeSpan && !badgeSpan.textContent.includes('No se presentó')) {
+      badgeSpan.className = 'badge b-expired';
+      badgeSpan.innerHTML = '<span class="badge-dot"></span><i class="fa-solid fa-clock-rotate-left"></i> No se presentó';
+    }
+    const htl = tr.querySelector('.htl');
+    if (htl && !htl.innerHTML.includes('no se presentó')) {
+      let horaTxt = '';
+      if (tr.dataset.hora && tr.dataset.hora.includes(':')) {
+        const [hh, mm] = tr.dataset.hora.split(':').map(Number);
+        const ampm = hh < 12 ? 'AM' : 'PM';
+        let h12 = hh % 12; if (h12 === 0) h12 = 12;
+        horaTxt = h12 + ':' + String(mm).padStart(2, '0') + ' ' + ampm;
+      }
+      htl.innerHTML =
+        '<span class="htl-dot htl-miss"></span>' +
+        '<span class="htl-miss-tx"><i class="fa-solid fa-hourglass-end"></i> no se presentó</span>' +
+        (horaTxt ? '<span></span><span class="htl-prog-tx">' + horaTxt + ' <span class="htl-tag">programada</span></span>' : '');
+    }
+  }
+
+  function revisarTemporales(scope) {
+    const ahoraRaw = new Date();
+    const ahora = new Date(ahoraRaw.getFullYear(), ahoraRaw.getMonth(), ahoraRaw.getDate(), ahoraRaw.getHours(), ahoraRaw.getMinutes());
+
+    scope.querySelectorAll('.ad-table tbody tr[data-modalidad]').forEach(tr => {
+      if (tr.dataset.modalidad === 'recurrente') return;
+
+      const estado = tr.dataset.estado, qr = tr.dataset.qr, fecha = tr.dataset.fecha;
+      const hora = tr.dataset.hora || '23:59';
+
+      if (['dentro', 'salida_registrada', 'rechazado', 'no_presento', 'vencido', 'cancelado'].includes(estado)) return;
+      if (['cancelado', 'vencido', 'rechazado', 'no_presentado'].includes(qr)) return;
+      if (!fecha) return;
+
+      const [y, m, d] = fecha.split('-').map(Number);
+      const [hh, mm] = hora.split(':').map(Number);
+      const programada = new Date(y, m - 1, d, hh || 0, mm || 0);
+
+      if (ahora > programada) {
+        marcarFila(tr);
+      }
+    });
+  }
+
+  function revisarRecurrentes(scope) {
+    const ahora = new Date();
+    const diaHoy = DIAS_JS[ahora.getDay()];
+    const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+
+    scope.querySelectorAll('.ad-table tbody tr[data-modalidad="recurrente"]').forEach(tr => {
+      const estado = tr.dataset.estado;
+      if (['dentro', 'salida_registrada', 'rechazado', 'cancelado'].includes(estado)) return;
+
+      const badgeSpan = tr.querySelector('.td-estado .badge');
+      if (badgeSpan && badgeSpan.textContent.includes('No se presentó')) return; // ya marcada (por backend o antes)
+
+      const dias = (tr.dataset.dias || '').split(',').filter(Boolean);
+      if (dias.length && !dias.includes(diaHoy)) return;
+
+      const horaDesde = tr.dataset.horaDesde;
+      if (!horaDesde) return;
+      const [hh, mm] = horaDesde.split(':').map(Number);
+      const minutosDesde = (hh || 0) * 60 + (mm || 0);
+
+      if (minutosAhora > minutosDesde) {
+        marcarFila(tr);
+      }
+    });
+  }
+
+  function revisarTodo() {
+    const wrap = document.getElementById('tablaVisitasWrap');
+    if (!wrap) return;
+    revisarTemporales(wrap);
+    revisarRecurrentes(wrap);
+  }
+
+  function programarCadaMinuto(fn) {
+    function msHastaProximoMinuto() {
+      const a = new Date();
+      return 60000 - (a.getSeconds() * 1000 + a.getMilliseconds());
+    }
+    fn();
+    (function tick(){ fn(); setTimeout(tick, msHastaProximoMinuto()); })();
+  }
+
+  // Expuesta globalmente para que el código de búsqueda/paginación AJAX
+  // (más abajo en este archivo) la reutilice tras cada recarga de la tabla.
+  window._revisarNoPresentadoAdmin = revisarTodo;
+
+  programarCadaMinuto(revisarTodo);
+})();
+</script>
+
+<script>
 // ════ BÚSQUEDA + PAGINACIÓN EN VIVO (AJAX) ════
 (function () {
   const input=document.getElementById('searchTable'), form=document.getElementById('searchForm'), wrap=document.getElementById('tablaVisitasWrap');
@@ -1204,6 +1322,7 @@ footer.app-foot b{color:var(--ink-600)}
       wrap.innerHTML=await resp.text();
       history.replaceState(null,'',location.pathname+'?'+params.toString());
       activarZoom();
+      window._revisarNoPresentadoAdmin && window._revisarNoPresentadoAdmin();
     }catch(err){ if(err.name!=='AbortError') form.submit(); }
     finally{ wrap.classList.remove('tbl-loading'); barra(false); }
   }
@@ -1358,6 +1477,7 @@ footer.app-foot b{color:var(--ink-600)}
             img.addEventListener('click', () => { mi.src = img.src; m.classList.add('open'); });
           });
         }
+        window._revisarNoPresentadoAdmin && window._revisarNoPresentadoAdmin();
         wrapTabla.addEventListener('click', e => {
           const link = e.target.closest('.pagination a[href]');
           if (!link || link.classList.contains('disabled')) return;
@@ -1371,6 +1491,7 @@ footer.app-foot b{color:var(--ink-600)}
           }).then(r => r.text()).then(h => {
             wrapTabla.innerHTML = h;
             wrapTabla.style.opacity = '1';
+            window._revisarNoPresentadoAdmin && window._revisarNoPresentadoAdmin();
           });
         });
       })
