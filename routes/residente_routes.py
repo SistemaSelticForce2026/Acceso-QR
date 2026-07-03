@@ -252,6 +252,7 @@ def cancelar_qr(token):
         {"$set": {"qr_estado": "cancelado", "estado": "cancelado"}},
     )
     socketio.emit("actualizar_dashboard", to="rol:admin")
+    socketio.emit("actualizar_dashboard", to="rol:guardia")
     return {"success": True}
 
 
@@ -360,10 +361,12 @@ def editar_visita(visita_id):
             )
 
         # ====================================
-        # AVISAR A LOS DASHBOARDS (correcto)
+        # AVISAR A LOS DASHBOARDS (admin y guardia,
+        # para que se actualicen en vivo sin refrescar)
         # ====================================
 
         socketio.emit("actualizar_dashboard", to="rol:admin")
+        socketio.emit("actualizar_dashboard", to="rol:guardia")
 
         flash("Visita actualizada correctamente.", "success")
 
