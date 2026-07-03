@@ -467,7 +467,7 @@ def _marcar_no_presentado_visual(visitas, ahora):
         except (ValueError, IndexError):
             continue
 
-        if ahora > programada:
+        if ahora.replace(second=0, microsecond=0) > programada:
             v["es_no_presentado"] = True
 
 
