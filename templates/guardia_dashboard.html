@@ -540,7 +540,9 @@
 /* ─── Marcar visitas TEMPORALES no presentadas EN VIVO (cada 20s) ───
    Mismo criterio que las vistas del residente: si ya pasó la fecha/hora
    programada y el visitante nunca ingresó, se marca "No se presentó"
-   sin esperar a refrescar la página. ─────────────────────────────── */
+   sin esperar a refrescar la página. Se compara por MINUTOS ENTEROS
+   (igual que recurrentes) para que se dispare DESPUÉS de que termine
+   el minuto exacto, no apenas empieza. ─────────────────────────────── */
 (function () {
 
     function marcarNoPresentado(card) {
@@ -552,7 +554,8 @@
     }
 
     function revisarTemporales() {
-        const ahora = new Date();
+        const ahoraRaw = new Date();
+        const ahora = new Date(ahoraRaw.getFullYear(), ahoraRaw.getMonth(), ahoraRaw.getDate(), ahoraRaw.getHours(), ahoraRaw.getMinutes());
 
         document.querySelectorAll('.grd-visit-card').forEach(card => {
             const modalidad = card.dataset.modalidad;

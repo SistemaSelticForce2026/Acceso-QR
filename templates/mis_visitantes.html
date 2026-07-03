@@ -688,6 +688,8 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
 <script>
 /* ─── Marcar visitas TEMPORALES no presentadas (fecha/hora vencida sin
    escanear), EN VIVO cada 20s, sin esperar a refrescar la página.
+   Se compara por MINUTOS ENTEROS (igual que recurrentes) para que se
+   dispare DESPUÉS de que termine el minuto exacto, no apenas empieza.
    El QR de la tarjeta nunca se toca aquí: sigue visible siempre por si el
    visitante necesita mostrarlo o el residente necesita compartirlo de
    nuevo. Solo se reemplazan las acciones por el estado "No se presentó"
@@ -723,7 +725,8 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
     }
 
     function revisarTemporales() {
-        const ahora = new Date();
+        const ahoraRaw = new Date();
+        const ahora = new Date(ahoraRaw.getFullYear(), ahoraRaw.getMonth(), ahoraRaw.getDate(), ahoraRaw.getHours(), ahoraRaw.getMinutes());
 
         document.querySelectorAll('.res-visit-card').forEach(card => {
             const modalidad = card.dataset.modalidad;
