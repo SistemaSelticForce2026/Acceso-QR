@@ -20,6 +20,7 @@ from utils.auth import login_required, role_required
 from utils.fraccionamientos import coleccion_residentes, coleccion_visitas
 from utils.qr_generator import generate_qr
 from utils.uploads import guardar_imagen
+from utils.visita_validacion import visita_no_presentada_hoy, _ahora_local
 
 resident_bp = Blueprint("resident", __name__, url_prefix="/resident")
 
@@ -87,6 +88,12 @@ def dashboard():
     visitas_recientes = list(
         visitas_col.find({"residente_id": residente_id}).sort("created_at", -1).limit(5)
     )
+
+    # Calcula "no se presentó hoy" para recurrentes UNA sola vez en el
+    # backend, con la misma lógica que usan Mis Visitantes y el guardia.
+    _ahora = _ahora_local()
+    for v in visitas_recientes:
+        v["no_presento_hoy"] = visita_no_presentada_hoy(v, _ahora)
 
     # =============================================
     # ESTADISTICAS
@@ -188,6 +195,13 @@ def visitors():
         .limit(por_pagina)
     )
 
+    # Mismo cálculo centralizado que en el dashboard: "no se presentó hoy"
+    # para visitas recurrentes, calculado una sola vez en el backend para
+    # que coincida con lo que muestra "Inicio" y el guardia.
+    _ahora = _ahora_local()
+    for v in visitas:
+        v["no_presento_hoy"] = visita_no_presentada_hoy(v, _ahora)
+
     return render_template(
         "mis_visitantes.html",
         visitas=visitas,
@@ -284,9 +298,14 @@ def editar_visita(visita_id):
 
         if visita.get("modalidad_visita") == "recurrente":
 
-            dias_autorizados = request.form.getlist("dias[]")
-            hora_desde = request.form.get("hora_desde")
-            hora_hasta = request.form.get("hora_hasta")
+            dias_autorizados = (
+                request.form.getlist("dias[]")
+                or visita.get("dias_autorizados")
+                or visita.get("dias")
+                or []
+            )
+            hora_desde = request.form.get("hora_desde") or visita.get("hora_desde")
+            hora_hasta = request.form.get("hora_hasta") or visita.get("hora_hasta")
             tipo_recurrente = request.form.get("tipo_recurrente")
             fecha_inicio_recurrente = request.form.get("fecha_inicio_recurrente")
             fecha_fin_recurrente = request.form.get("fecha_fin_recurrente")
@@ -312,6 +331,7 @@ def editar_visita(visita_id):
                         "hora_desde": hora_desde,
                         "hora_hasta": hora_hasta,
                         "hora_programada": hora_desde,
+                        "hora_inicio": hora_desde,
                         "fecha_inicio_recurrente": fecha_inicio_recurrente,
                         "fecha_fin_recurrente": fecha_fin_recurrente,
                         "vigencia_desde": vigencia_desde,

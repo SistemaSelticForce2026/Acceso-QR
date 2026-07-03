@@ -193,7 +193,14 @@
 
         {% for visita in visitas %}
 
-        <div class="grd-glass-card grd-visit-card">
+        <div class="grd-glass-card grd-visit-card"
+             data-modalidad="{{ visita.modalidad_visita }}"
+             data-estado="{{ visita.estado }}"
+             data-qr="{{ visita.qr_estado }}"
+             data-fecha="{{ visita.fecha_visita }}"
+             data-hora="{{ visita.hora_inicio }}"
+             data-hora-desde="{{ visita.hora_desde or '' }}"
+             data-dias="{{ (visita.dias_autorizados or visita.dias or []) | join(',') | lower }}">
 
             <div class="grd-visit-main">
 
@@ -222,31 +229,31 @@
                                 {% endif %}
 
                                 {% if visita.es_no_presentado or visita.qr_estado == "no_presentado" or visita.estado == "no_presento" %}
-                                    <span class="grd-badge danger">No se presentó</span>
+                                    <span class="grd-badge grd-status-badge danger">No se presentó</span>
 
                                 {% elif visita.qr_estado == "vencido" %}
-                                    <span class="grd-badge danger">QR vencido</span>
+                                    <span class="grd-badge grd-status-badge danger">QR vencido</span>
 
                                 {% elif visita.qr_estado == "cancelado" %}
-                                    <span class="grd-badge danger">QR cancelado</span>
+                                    <span class="grd-badge grd-status-badge danger">QR cancelado</span>
 
                                 {% elif visita.qr_estado == "rechazado" or visita.estado == "rechazado" %}
-                                    <span class="grd-badge danger">Rechazado</span>
+                                    <span class="grd-badge grd-status-badge danger">Rechazado</span>
 
                                 {% elif visita.estado == "dentro" %}
-                                    <span class="grd-badge success">Dentro</span>
+                                    <span class="grd-badge grd-status-badge success">Dentro</span>
 
                                 {% elif visita.estado == "pendiente_autorizacion" %}
-                                    <span class="grd-badge warning">Pendiente</span>
+                                    <span class="grd-badge grd-status-badge warning">Pendiente</span>
 
                                 {% elif visita.estado == "activo" %}
-                                    <span class="grd-badge info">Vigente</span>
+                                    <span class="grd-badge grd-status-badge info">Vigente</span>
 
                                 {% elif visita.estado == "salida_registrada" %}
-                                    <span class="grd-badge neutral">Finalizada</span>
+                                    <span class="grd-badge grd-status-badge neutral">Finalizada</span>
 
                                 {% else %}
-                                    <span class="grd-badge neutral">{{ visita.estado | capitalize }}</span>
+                                    <span class="grd-badge grd-status-badge neutral">{{ visita.estado | capitalize }}</span>
                                 {% endif %}
 
                             </span>
@@ -527,5 +534,105 @@
             card.style.display = (name.includes(q) || phone.includes(q) || placa.includes(q)) ? '' : 'none';
         });
     });
+</script>
+
+<script>
+/* ─── Marcar visitas TEMPORALES no presentadas EN VIVO (cada 20s) ───
+   Mismo criterio que las vistas del residente: si ya pasó la fecha/hora
+   programada y el visitante nunca ingresó, se marca "No se presentó"
+   sin esperar a refrescar la página. ─────────────────────────────── */
+(function () {
+
+    function marcarNoPresentado(card) {
+        const badge = card.querySelector('.grd-status-badge');
+        if (badge && !badge.textContent.includes('No se presentó')) {
+            badge.className = 'grd-badge grd-status-badge danger';
+            badge.textContent = 'No se presentó';
+        }
+    }
+
+    function revisarTemporales() {
+        const ahora = new Date();
+
+        document.querySelectorAll('.grd-visit-card').forEach(card => {
+            const modalidad = card.dataset.modalidad;
+            const estado    = card.dataset.estado;
+            const qr        = card.dataset.qr;
+            const fecha     = card.dataset.fecha;            // YYYY-MM-DD
+            const hora      = card.dataset.hora || '23:59';  // HH:MM
+
+            // Las recurrentes se manejan aparte (revisarRecurrentes).
+            if (modalidad === 'recurrente') return;
+
+            // Ya fue atendido por caseta
+            if (['dentro', 'salida_registrada', 'rechazado', 'no_presento'].includes(estado)) return;
+
+            // Estados del QR que ya no deben cambiar
+            if (['cancelado', 'vencido', 'rechazado', 'no_presentado'].includes(qr)) return;
+
+            if (!fecha) return;
+
+            const [y, m, d]  = fecha.split('-').map(Number);
+            const [hh, mm]   = hora.split(':').map(Number);
+            const programada = new Date(y, m - 1, d, hh || 0, mm || 0);
+
+            if (ahora > programada) {
+                marcarNoPresentado(card);
+            }
+        });
+    }
+
+    revisarTemporales();
+    setInterval(revisarTemporales, 20000); // revisa cada 20 segundos
+})();
+</script>
+
+<script>
+/* ─── Marcar visitas RECURRENTES no presentadas EN VIVO (cada 20s) ───
+   Mismo criterio que usa el backend (visita_no_presentada_hoy): se
+   dispara apenas pasa el minuto de hora_desde de HOY, sin esperar a
+   refrescar la página. Al recargar, el backend ya manda el estado
+   correcto de una vez; esto solo cubre el tiempo real mientras la
+   pestaña sigue abierta sin recargar. ─────────────────────────────── */
+(function () {
+    const DIAS_JS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+
+    function marcarNoPresentado(card) {
+        const badge = card.querySelector('.grd-status-badge');
+        if (badge && !badge.textContent.includes('No se presentó')) {
+            badge.className = 'grd-badge grd-status-badge danger';
+            badge.textContent = 'No se presentó';
+        }
+    }
+
+    function revisarRecurrentes() {
+        const ahora = new Date();
+        const diaHoy = DIAS_JS[ahora.getDay()];
+        const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+
+        document.querySelectorAll('.grd-visit-card[data-modalidad="recurrente"]').forEach(card => {
+            const estado = card.dataset.estado;
+            if (['dentro', 'salida_registrada', 'rechazado', 'cancelado'].includes(estado)) return;
+
+            const badge = card.querySelector('.grd-status-badge');
+            if (badge && badge.textContent.includes('No se presentó')) return; // ya marcada
+
+            const dias = (card.dataset.dias || '').split(',').filter(Boolean);
+            if (dias.length && !dias.includes(diaHoy)) return;
+
+            const horaDesde = card.dataset.horaDesde;
+            if (!horaDesde) return;
+            const [hh, mm] = horaDesde.split(':').map(Number);
+            const minutosDesde = (hh || 0) * 60 + (mm || 0);
+
+            if (minutosAhora > minutosDesde) {
+                marcarNoPresentado(card);
+            }
+        });
+    }
+
+    revisarRecurrentes();
+    setInterval(revisarRecurrentes, 20000); // revisa cada 20 segundos
+})();
 </script>
 {% endblock %}

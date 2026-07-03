@@ -120,7 +120,7 @@
             {%- set badge_cls = 'badge-success' -%}
             {%- set badge_label = 'Dentro' -%}
 
-        {%- elif visita.estado == 'no_se_presento' -%}
+        {%- elif visita.estado == 'no_se_presento' or visita.estado == 'no_presento' or visita.qr_estado == 'no_presentado' or visita.no_presento_hoy -%}
             {%- set badge_cls = 'badge-danger' -%}
             {%- set badge_label = 'No se presentó' -%}
 
@@ -136,7 +136,14 @@
             {%- set badge_label = 'Pendiente' -%}
         {%- endif -%}
 
-        <div class="res-recent-row">
+        <div class="res-recent-row"
+             data-modalidad="{{ visita.modalidad_visita }}"
+             data-estado="{{ visita.estado }}"
+             data-qr="{{ visita.qr_estado }}"
+             data-fecha="{{ visita.fecha_visita }}"
+             data-hora="{{ visita.hora_inicio }}"
+             data-hora-desde="{{ visita.hora_desde or '' }}"
+             data-dias="{{ (visita.dias_autorizados or visita.dias or []) | join(',') | lower }}">
 
             {% if visita.foto_visitante %}
 
@@ -259,39 +266,109 @@ photoModal.addEventListener("click", function(){
 </script>
 
 <script>
+document.querySelectorAll('.res-recent-avatar[data-bg]').forEach(function (el) {
+    el.style.backgroundColor = el.dataset.bg;
+});
+</script>
+
+<script>
+/* ─── Marcar visitas TEMPORALES no presentadas EN VIVO (cada 20s) ───
+   Mismo criterio que "Mis Visitantes": si ya pasó la fecha/hora
+   programada y el visitante nunca ingresó, se marca "No se presentó"
+   sin esperar a refrescar la página. ─────────────────────────────── */
 (function () {
-    const ahora = new Date();
 
-    document.querySelectorAll('.res-recent-row').forEach(row => {
-
+    function marcarNoPresentado(row) {
         const badge = row.querySelector('.res-badge');
-        if (!badge) return;
-
-        // Solo cambiar las que todavía dicen "Vigente"
-        if (!badge.textContent.includes("Vigente")) return;
-
-        const fechaEl = row.querySelector('.res-recent-date');
-        if (!fechaEl) return;
-
-        // Ajusta este formato si tu fecha no viene como YYYY-MM-DD
-        const fecha = new Date(fechaEl.textContent);
-
-        if (ahora > fecha) {
-            badge.className = "res-badge badge-danger";
-            badge.innerHTML =
-                '<span class="res-badge-dot"></span> No se presentó';
-
-            row.style.opacity = "0.75";
+        if (badge && !badge.textContent.includes('No se presentó')) {
+            badge.className = 'res-badge badge-danger';
+            badge.innerHTML = '<span class="res-badge-dot"></span> No se presentó';
         }
+    }
 
-    });
+    function revisarTemporales() {
+        const ahora = new Date();
+
+        document.querySelectorAll('.res-recent-row').forEach(row => {
+            const modalidad = row.dataset.modalidad;
+            const estado    = row.dataset.estado;
+            const qr        = row.dataset.qr;
+            const fecha     = row.dataset.fecha;            // YYYY-MM-DD
+            const hora      = row.dataset.hora || '23:59';  // HH:MM
+
+            // Las recurrentes se manejan aparte (revisarRecurrentes).
+            if (modalidad === 'recurrente') return;
+
+            // Ya fue atendido por caseta
+            if (['dentro', 'salida_registrada', 'rechazado', 'no_presento'].includes(estado)) return;
+
+            // Estados del QR que ya no deben cambiar
+            if (['cancelado', 'vencido', 'rechazado', 'no_presentado'].includes(qr)) return;
+
+            if (!fecha) return;
+
+            const [y, m, d]  = fecha.split('-').map(Number);
+            const [hh, mm]   = hora.split(':').map(Number);
+            const programada = new Date(y, m - 1, d, hh || 0, mm || 0);
+
+            if (ahora > programada) {
+                marcarNoPresentado(row);
+            }
+        });
+    }
+
+    revisarTemporales();
+    setInterval(revisarTemporales, 20000); // revisa cada 20 segundos
 })();
 </script>
 
 <script>
-document.querySelectorAll('.res-recent-avatar[data-bg]').forEach(function (el) {
-    el.style.backgroundColor = el.dataset.bg;
-});
+/* ─── Marcar visitas RECURRENTES no presentadas EN VIVO (cada 20s) ───
+   Mismo criterio que usa el backend (visita_no_presentada_hoy): se
+   dispara apenas pasa el minuto de hora_desde de HOY, sin esperar a
+   refrescar la página. Al recargar, el backend ya manda el estado
+   correcto de una vez; esto solo cubre el tiempo real mientras la
+   pestaña sigue abierta sin recargar. ─────────────────────────────── */
+(function () {
+    const DIAS_JS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+
+    function marcarNoPresentado(row) {
+        const badge = row.querySelector('.res-badge');
+        if (badge && !badge.textContent.includes('No se presentó')) {
+            badge.className = 'res-badge badge-danger';
+            badge.innerHTML = '<span class="res-badge-dot"></span> No se presentó';
+        }
+    }
+
+    function revisarRecurrentes() {
+        const ahora = new Date();
+        const diaHoy = DIAS_JS[ahora.getDay()];
+        const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+
+        document.querySelectorAll('.res-recent-row[data-modalidad="recurrente"]').forEach(row => {
+            const estado = row.dataset.estado;
+            if (['dentro', 'salida_registrada', 'rechazado', 'cancelado'].includes(estado)) return;
+
+            const badge = row.querySelector('.res-badge');
+            if (badge && badge.textContent.includes('No se presentó')) return; // ya marcada
+
+            const dias = (row.dataset.dias || '').split(',').filter(Boolean);
+            if (dias.length && !dias.includes(diaHoy)) return;
+
+            const horaDesde = row.dataset.horaDesde;
+            if (!horaDesde) return;
+            const [hh, mm] = horaDesde.split(':').map(Number);
+            const minutosDesde = (hh || 0) * 60 + (mm || 0);
+
+            if (minutosAhora > minutosDesde) {
+                marcarNoPresentado(row);
+            }
+        });
+    }
+
+    revisarRecurrentes();
+    setInterval(revisarRecurrentes, 20000); // revisa cada 20 segundos
+})();
 </script>
 
 {% endblock %}

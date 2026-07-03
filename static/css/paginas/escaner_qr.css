@@ -859,6 +859,7 @@
 .grd-deny-detail.blue i  { color: #2e5bff; }
 
 .grd-deny-detail.red   { background: rgba(220, 38, 38, 0.07); border: 1px solid rgba(220, 38, 38, 0.20); color: #7f1d1d; }
+.grd-deny-detail.red i   { color: #dc2626; }
 
 
 /* =========================================================
@@ -1064,4 +1065,148 @@ a.grd-prow-val:hover { color: #2e5bff; }
     .grd-prow-val { width: 100%; padding-left: 52px; text-align: left; }
     .grd-meta { grid-template-columns: 1fr; }
 }
-.grd-deny-detail.red i   { color: #dc2626; }
+
+
+/* =========================================================
+   PROGRAMACIÓN DE ACCESO RECURRENTE
+   Tarjeta dedicada: días de la semana + horario + estado
+   en vivo. Usa el mismo lenguaje visual que .grd-recent /
+   .grd-meta-cell / .access-alert (radios 22px, JetBrains
+   Mono para labels, tonos oklch).
+========================================================= */
+
+.grd-recurrence-card {
+    background: #fff;
+    border: 1px solid #e9edf3;
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: 0 1px 2px rgba(20, 30, 60, 0.04), 0 18px 44px -28px rgba(20, 30, 60, 0.5);
+}
+
+.grd-recurrence-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.grd-recurrence-head .card-title { margin-bottom: 0; }
+
+.grd-recurrence-live {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 13px;
+    border-radius: 999px;
+    white-space: nowrap;
+    color: #6b7488;
+    background: #f1f3f8;
+}
+.grd-recurrence-live.ok {
+    color: oklch(0.5 0.13 155);
+    background: oklch(0.94 0.05 155);
+}
+.grd-recurrence-live.warn {
+    color: oklch(0.5 0.14 70);
+    background: oklch(0.94 0.06 80);
+}
+.grd-recurrence-live.danger {
+    color: oklch(0.5 0.17 25);
+    background: oklch(0.95 0.045 30);
+}
+
+/* --- tira de días --- */
+.grd-week-strip {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.grd-week-cell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.grd-week-box {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #f3f5f9;
+    color: #97a1b4;
+    font-weight: 800;
+    font-size: 13px;
+    border: 1px solid #e7eaf1;
+    transition: transform .15s, box-shadow .15s;
+}
+
+.grd-week-box.active {
+    color: oklch(0.5 0.13 155);
+    background: oklch(0.94 0.05 155);
+    border-color: oklch(0.85 0.07 155);
+}
+
+.grd-week-cell.today .grd-week-box {
+    box-shadow: 0 0 0 2px #2e5bff inset;
+    border-color: transparent;
+}
+
+.grd-week-cell.today .grd-week-box.active {
+    color: #fff;
+    background: oklch(0.55 0.15 155);
+    box-shadow: 0 8px 18px -8px oklch(0.55 0.15 155 / 0.6);
+}
+
+.grd-week-tag {
+    font: 700 9.5px/1 "JetBrains Mono", monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2e5bff;
+    height: 11px;
+}
+.grd-week-cell.today .grd-week-tag::after { content: "hoy"; }
+
+/* --- meta: horario / días autorizados --- */
+.grd-recurrence-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.grd-recurrence-item {
+    background: #f6f8fb;
+    border: 1px solid #eceff4;
+    border-radius: 14px;
+    padding: 14px 16px;
+}
+
+.grd-recurrence-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font: 700 10.5px/1 "JetBrains Mono", monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #97a1b4;
+    margin-bottom: 8px;
+}
+.grd-recurrence-label i { font-size: 11px; color: #2e5bff; }
+
+.grd-recurrence-item strong {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #1c2333;
+}
+
+@media (max-width: 560px) {
+    .grd-recurrence-meta { grid-template-columns: 1fr; }
+    .grd-recurrence-head { flex-wrap: wrap; }
+}

@@ -19,7 +19,7 @@
 
     <div class="cv-card">
 
-        <form method="POST">
+        <form method="POST" id="editForm">
 
             <div class="cv-card-body">
 
@@ -41,6 +41,116 @@
                            placeholder="55 0000 0000">
                 </div>
 
+                {% if visita.modalidad_visita == "recurrente" %}
+
+                {# ═══════════════════════════════════════════ #}
+                {# VISITA RECURRENTE                            #}
+                {# ═══════════════════════════════════════════ #}
+
+                {% set dias_actuales = (visita.get('dias') or visita.get('dias_autorizados') or []) | map('lower') | list %}
+                {% set h_ini_actual = (visita.get('hora_desde') or '')[:5] %}
+                {% set h_fin_actual = (visita.get('hora_hasta') or '')[:5] %}
+                {% set sin_restriccion = h_ini_actual in ['00:00'] and h_fin_actual in ['23:59'] %}
+
+                <div class="cv-info-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <p>Esta es una visita recurrente. Ajusta la vigencia, los días y el horario permitido.</p>
+                </div>
+
+                <p class="cv-rec-section-label" style="margin-top:20px;">Vigencia del pase</p>
+
+                <div class="cv-grid-2">
+                    <div class="cv-field">
+                        <label class="cv-label" for="fecha_inicio_recurrente">Válido desde</label>
+                        <input class="cv-input" type="date" name="fecha_inicio_recurrente" id="fecha_inicio_recurrente"
+                               value="{{ visita.fecha_inicio_recurrente }}">
+                    </div>
+                    <div class="cv-field">
+                        <label class="cv-label" for="fecha_fin_recurrente">Válido hasta</label>
+                        <input class="cv-input" type="date" name="fecha_fin_recurrente" id="fecha_fin_recurrente"
+                               value="{{ visita.fecha_fin_recurrente }}">
+                    </div>
+                </div>
+
+                <p class="cv-rec-section-label" style="margin-top:20px;">Días de acceso</p>
+                <p class="cv-rec-section-desc">Selecciona los días en los que se permite el ingreso.</p>
+
+                <div class="cv-days-grid" id="recDaysGrid" role="group" aria-label="Días de acceso permitidos">
+                    {% for dia, letra in [('lunes','Lu'),('martes','Ma'),('miercoles','Mi'),('jueves','Ju'),('viernes','Vi'),('sabado','Sá'),('domingo','Do')] %}
+                    <label class="cv-day-label">
+                        <input type="checkbox" name="dias[]" value="{{ dia }}" class="rec-dia-check"
+                               {% if dia in dias_actuales %}checked{% endif %}>
+                        <span class="cv-day-span">{{ letra }}</span>
+                        <span class="sr-only">{{ dia }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <p class="cv-rec-section-label" style="margin-top:20px;">Horario permitido</p>
+
+                <div class="cv-rec-horario-presets" id="recHorarioPresets" role="radiogroup" aria-label="Horario permitido">
+
+                    <button type="button" class="cv-rec-horario-btn" role="radio" aria-checked="false"
+                            data-h="manana" data-desde="07:00" data-hasta="14:00">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                        Mañana <span>7:00 – 14:00</span>
+                    </button>
+
+                    <button type="button" class="cv-rec-horario-btn" role="radio" aria-checked="false"
+                            data-h="tarde" data-desde="14:00" data-hasta="20:00">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                        Tarde <span>14:00 – 20:00</span>
+                    </button>
+
+                    <button type="button" class="cv-rec-horario-btn" role="radio" aria-checked="false"
+                            data-h="laboral" data-desde="08:00" data-hasta="18:00">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                        Laboral <span>8:00 – 18:00</span>
+                    </button>
+
+                    <button type="button" class="cv-rec-horario-btn" role="radio" aria-checked="false"
+                            data-h="todo" data-desde="00:00" data-hasta="23:59">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12c-2-2.7-4-4-6-4a4 4 0 0 0 0 8c2 0 4-1.3 6-4Zm0 0c2 2.7 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.3-6 4Z"/></svg>
+                        Sin restricción
+                    </button>
+
+                    <button type="button" class="cv-rec-horario-btn" role="radio" aria-checked="false"
+                            data-h="personalizado">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+                        Personalizado
+                    </button>
+
+                </div>
+
+                <div class="cv-warn-box" id="recWarnTodo" style="display:none; margin-top:12px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                    <p>Sin restricción: el visitante podrá ingresar a cualquier hora durante los días autorizados.</p>
+                </div>
+
+                <div id="recHorarioCustom" style="display:none; margin-top:12px;">
+                    <div class="cv-grid-2">
+                        <div class="cv-field">
+                            <label class="cv-label" for="hora_desde_input">Entrada permitida desde</label>
+                            <input class="cv-input" type="time" id="hora_desde_input" value="{{ h_ini_actual }}">
+                        </div>
+                        <div class="cv-field">
+                            <label class="cv-label" for="hora_hasta_input">Hasta las</label>
+                            <input class="cv-input" type="time" id="hora_hasta_input" value="{{ h_fin_actual }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hiddens que llegan al backend -->
+                <input type="hidden" name="hora_desde" id="hora_desde_hidden" value="{{ h_ini_actual }}">
+                <input type="hidden" name="hora_hasta" id="hora_hasta_hidden" value="{{ h_fin_actual }}">
+                <input type="hidden" name="tipo_recurrente" value="{{ visita.tipo_recurrente or '' }}">
+
+                {% else %}
+
+                {# ═══════════════════════════════════════════ #}
+                {# VISITA TEMPORAL                              #}
+                {# ═══════════════════════════════════════════ #}
+
                 <div class="cv-grid-2">
 
                     <div class="cv-field">
@@ -60,6 +170,8 @@
                     </div>
 
                 </div>
+
+                {% endif %}
 
             </div>
 
@@ -85,4 +197,79 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if visita.modalidad_visita == "recurrente" %}
+<script>
+(function () {
+"use strict";
+
+function $(id) { return document.getElementById(id); }
+
+const hIniActual = "{{ h_ini_actual }}";
+const hFinActual = "{{ h_fin_actual }}";
+const sinRestriccion = {{ 'true' if sin_restriccion else 'false' }};
+
+/* ── Determinar qué preset corresponde al horario actual y marcarlo ── */
+function presetInicial() {
+    if (!hIniActual || !hFinActual) return null;
+    if (sinRestriccion) return "todo";
+    const btns = document.querySelectorAll(".cv-rec-horario-btn");
+    for (const btn of btns) {
+        if (btn.dataset.desde === hIniActual && btn.dataset.hasta === hFinActual) {
+            return btn.dataset.h;
+        }
+    }
+    return "personalizado";
+}
+
+function seleccionarPreset(h, { silencioso } = {}) {
+    document.querySelectorAll(".cv-rec-horario-btn").forEach(b => {
+        b.classList.remove("selected");
+        b.setAttribute("aria-checked", "false");
+    });
+    const btn = document.querySelector(`.cv-rec-horario-btn[data-h="${h}"]`);
+    if (!btn) return;
+    btn.classList.add("selected");
+    btn.setAttribute("aria-checked", "true");
+
+    const warn = $("recWarnTodo");
+    const cust = $("recHorarioCustom");
+
+    if (h === "personalizado") {
+        cust.style.display = "block";
+        warn.style.display = "none";
+        if (!silencioso) {
+            $("hora_desde_hidden").value = "";
+            $("hora_hasta_hidden").value = "";
+        }
+    } else {
+        cust.style.display = "none";
+        warn.style.display = h === "todo" ? "flex" : "none";
+        $("hora_desde_hidden").value = btn.dataset.desde || "";
+        $("hora_hasta_hidden").value = btn.dataset.hasta || "";
+    }
+}
+
+document.querySelectorAll(".cv-rec-horario-btn").forEach(btn => {
+    btn.addEventListener("click", () => seleccionarPreset(btn.dataset.h));
+});
+
+$("hora_desde_input").addEventListener("input", function () {
+    $("hora_desde_hidden").value = this.value;
+});
+$("hora_hasta_input").addEventListener("input", function () {
+    $("hora_hasta_hidden").value = this.value;
+});
+
+/* ── Init: preseleccionar según los valores actuales de la visita ── */
+const inicial = presetInicial();
+if (inicial) {
+    seleccionarPreset(inicial, { silencioso: true });
+}
+
+})();
+</script>
+{% endif %}
 {% endblock %}

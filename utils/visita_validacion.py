@@ -1,6 +1,6 @@
 """Utilidades para validación de acceso mediante QR."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from extensions import mongo
 from utils.fraccionamientos import coleccion_visitas
 
@@ -20,6 +20,34 @@ MODALIDAD_LABELS = {
     "temporal": "Visita temporal",
     "recurrente": "Visita recurrente",
 }
+
+
+# ---------------------------------------------------------------------------
+# Zona horaria del negocio (Centro de México)
+# ---------------------------------------------------------------------------
+
+try:
+    from zoneinfo import ZoneInfo
+
+    TZ_LOCAL = ZoneInfo("America/Mexico_City")
+except (ImportError, KeyError):
+    TZ_LOCAL = timezone(timedelta(hours=-6))
+
+
+def _ahora_local():
+    """Hora actual en México, como datetime naive (consistente con el resto
+    del sistema, que guarda fechas/horas sin tz)."""
+    return datetime.now(TZ_LOCAL).replace(tzinfo=None)
+
+
+# ---------------------------------------------------------------------------
+# Tolerancia de horario para visitas recurrentes
+# ---------------------------------------------------------------------------
+# Colchón para absorber pequeños desfases entre el reloj del guardia y el
+# del servidor. Solo aplica a la validación de HORA de visitas recurrentes:
+# las visitas temporales no comparan hora, solo fecha, así que no les afecta.
+# Cambia este número si quieres más o menos margen.
+TOLERANCIA_HORARIO_MIN = 5
 
 
 def _parse_time(valor):
@@ -51,12 +79,54 @@ def vigencia_recurrente_meses(meses=1):
     return inicio, fin
 
 
+def visita_no_presentada_hoy(visita, ahora=None):
+    """Indica si una visita RECURRENTE 'no se presentó' en el día de hoy:
+    hoy es día autorizado, ya pasó la hora_desde de hoy (mismo criterio que
+    se usa para temporales: se dispara apenas pasa la hora programada de
+    inicio, sin esperar a que cierre toda la ventana), el visitante no está
+    dentro y no entró hoy en este ciclo. No aplica a temporales."""
+    if ahora is None:
+        ahora = _ahora_local()
+
+    if visita.get("modalidad_visita") != "recurrente":
+        return False
+
+    if visita.get("estado") == "dentro":
+        return False
+
+    dias_autorizados = [
+        d.lower() for d in (visita.get("dias_autorizados") or visita.get("dias") or [])
+    ]
+    dias_hoy = [
+        "lunes",
+        "martes",
+        "miercoles",
+        "jueves",
+        "viernes",
+        "sabado",
+        "domingo",
+    ]
+    dia_actual = dias_hoy[ahora.weekday()]
+    if dias_autorizados and dia_actual not in dias_autorizados:
+        return False
+
+    hora_desde = _parse_time(visita.get("hora_desde"))
+    if not hora_desde or ahora.time() <= hora_desde:
+        return False
+
+    fecha_entrada = visita.get("fecha_entrada_real")
+    if isinstance(fecha_entrada, datetime) and fecha_entrada.date() == ahora.date():
+        return False
+
+    return True
+
+
 def validar_acceso_qr(visita):
     """
     Valida si el QR puede usarse para una nueva entrada.
     Retorna (valido: bool, mensaje: str).
     """
-    ahora = datetime.now()
+    ahora = _ahora_local()
     modalidad = visita.get("modalidad_visita", "temporal")
 
     if visita.get("qr_estado") in ("vencido", "cancelado", "finalizado"):
@@ -96,17 +166,26 @@ def validar_acceso_qr(visita):
         hora_desde = _parse_time(visita.get("hora_desde"))
         hora_hasta = _parse_time(visita.get("hora_hasta"))
 
-        if hora_desde and ahora.time() < hora_desde:
-            return (
-                False,
-                f"Acceso permitido a partir de las {hora_desde.strftime('%H:%M')}.",
-            )
+        # Colchón de tolerancia: se compara la hora actual +/- el margen
+        # contra los límites reales del horario, sin modificar los límites
+        # que se muestran al usuario (esos siguen siendo los originales).
+        tolerancia = timedelta(minutes=TOLERANCIA_HORARIO_MIN)
 
-        if hora_hasta and ahora.time() > hora_hasta:
-            return (
-                False,
-                f"El horario autorizado finalizó a las {hora_hasta.strftime('%H:%M')}.",
-            )
+        if hora_desde:
+            desde_dt = datetime.combine(ahora.date(), hora_desde)
+            if ahora < desde_dt - tolerancia:
+                return (
+                    False,
+                    f"Acceso permitido a partir de las {hora_desde.strftime('%H:%M')}.",
+                )
+
+        if hora_hasta:
+            hasta_dt = datetime.combine(ahora.date(), hora_hasta)
+            if ahora > hasta_dt:
+                return (
+                    False,
+                    f"El horario autorizado finalizó a las {hora_hasta.strftime('%H:%M')}.",
+                )
 
         return True, ""
 

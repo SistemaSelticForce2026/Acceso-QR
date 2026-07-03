@@ -95,6 +95,10 @@
         {%- set badge_cls = 'badge-success' -%}
         {%- set badge_label = 'Dentro' -%}
 
+    {%- elif visita.estado == 'no_presento' or visita.qr_estado == 'no_presentado' or visita.no_presento_hoy -%}
+        {%- set badge_cls = 'badge-danger' -%}
+        {%- set badge_label = 'No se presentó' -%}
+
     {%- elif visita.estado == 'activo' -%}
         {%- set badge_cls = 'badge-blue' -%}
         {%- set badge_label = 'Vigente' -%}
@@ -107,10 +111,6 @@
         {%- set badge_cls = 'badge-warning' -%}
         {%- set badge_label = 'Pendiente' -%}
 
-    {%- elif visita.estado == 'no_presento' or visita.qr_estado == 'no_presentado' -%}
-        {%- set badge_cls = 'badge-danger' -%}
-        {%- set badge_label = 'No se presentó' -%}
-
     {%- else -%}
         {%- set badge_cls = 'badge-secondary' -%}
         {%- set badge_label = visita.estado|title -%}
@@ -121,9 +121,11 @@
         or visita.estado in ['rechazado', 'no_presento'] -%}
 
     {# ── ¿Esta visita es un "no se presentó"? Estas SÍ pueden editarse
-         para reprogramar fecha/horario, aunque ya estén "concluidas". ── #}
+         para reprogramar fecha/horario, aunque ya estén "concluidas".
+         no_presento_hoy cubre el caso de RECURRENTES que no se presentaron
+         hoy pero siguen vigentes para otros días de su ciclo. ── #}
     {%- set es_no_presentado =
-        visita.estado == 'no_presento' or visita.qr_estado == 'no_presentado' -%}
+        visita.estado == 'no_presento' or visita.qr_estado == 'no_presentado' or visita.no_presento_hoy -%}
 
     {# ── Visita CONCLUIDA: ya entró, finalizó, fue rechazada o no se presentó.
          El QR SÍ se mantiene visible (por si el visitante pierde su copia),
@@ -164,6 +166,8 @@
          data-qr="{{ visita.qr_estado }}"
          data-fecha="{{ visita.fecha_visita }}"
          data-hora="{{ visita.hora_inicio }}"
+         data-hora-desde="{{ visita.hora_desde or '' }}"
+         data-dias="{{ (visita.dias_autorizados or visita.dias or []) | join(',') | lower }}"
          data-visita-id="{{ visita._id }}"
          data-edit-url="{{ url_for('resident.editar_visita', visita_id=visita._id) }}">
 
@@ -682,68 +686,144 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
 </script>
 
 <script>
-/* ─── Marcar visitas no presentadas (fecha/hora vencida sin escanear) ───
+/* ─── Marcar visitas TEMPORALES no presentadas (fecha/hora vencida sin
+   escanear), EN VIVO cada 20s, sin esperar a refrescar la página.
    El QR de la tarjeta nunca se toca aquí: sigue visible siempre por si el
    visitante necesita mostrarlo o el residente necesita compartirlo de
    nuevo. Solo se reemplazan las acciones por el estado "No se presentó"
    + un botón de Editar para poder reprogramar el horario. ─────────────── */
 (function () {
-    const ahora = new Date();
 
-    document.querySelectorAll('.res-visit-card').forEach(card => {
-        const modalidad = card.dataset.modalidad;
-        const estado    = card.dataset.estado;
-        const qr        = card.dataset.qr;
-        const fecha     = card.dataset.fecha;            // YYYY-MM-DD
-        const hora      = card.dataset.hora || '23:59';  // HH:MM
-        const editUrl   = card.dataset.editUrl;
-
-        // Solo marcar como "No se presentó" si NUNCA fue escaneado
-        if (modalidad === 'recurrente') return;
-
-        // Ya fue atendido por caseta
-        if (['dentro', 'salida_registrada', 'rechazado', 'no_presento'].includes(estado)) return;
-
-        // Estados del QR que ya no deben cambiar
-        if (['cancelado', 'vencido', 'rechazado', 'no_presentado'].includes(qr)) return;
-
-        if (!fecha) return;
-
-        const [y, m, d]  = fecha.split('-').map(Number);
-        const [hh, mm]   = hora.split(':').map(Number);
-        const programada = new Date(y, m - 1, d, hh || 0, mm || 0);
-
-        // Si ya pasó la fecha/hora programada y el visitante nunca ingresó
-        if (ahora > programada) {
-            const estadoBadge = card.querySelector('.res-visit-namerow .res-badge');
-            if (estadoBadge) {
-                estadoBadge.className = 'res-badge badge-danger';
-                estadoBadge.innerHTML = '<span class="res-badge-dot"></span> No se presentó';
-            }
-
-            // ── El QR se queda; se reemplazan las acciones por el estado
-            //    "No se presentó" + un botón de Editar para reprogramar. ──
-            const actions = card.querySelector('.res-visit-actions');
-            if (actions) {
-                actions.classList.add('res-visit-actions--done');
-
-                const editBtn = editUrl
-                    ? `<div class="res-action-icons">
-                         <a href="${editUrl}" class="res-btn-edit res-iconact"
-                            title="Editar horario y reprogramar visita"
-                            aria-label="Editar horario y reprogramar visita">
-                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                         </a>
-                       </div>`
-                    : '';
-
-                actions.innerHTML =
-                    '<span class="res-done-chip" style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;color:#d6342c;background:#d6342c14;white-space:nowrap;">' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>' +
-                    'No se presentó</span>' + editBtn;
-            }
+    function marcarNoPresentado(card, editUrl) {
+        const estadoBadge = card.querySelector('.res-visit-namerow .res-badge');
+        if (estadoBadge) {
+            estadoBadge.className = 'res-badge badge-danger';
+            estadoBadge.innerHTML = '<span class="res-badge-dot"></span> No se presentó';
         }
-    });
+
+        const actions = card.querySelector('.res-visit-actions');
+        if (actions && !actions.classList.contains('res-visit-actions--done')) {
+            actions.classList.add('res-visit-actions--done');
+
+            const editBtn = editUrl
+                ? `<div class="res-action-icons">
+                     <a href="${editUrl}" class="res-btn-edit res-iconact"
+                        title="Editar horario y reprogramar visita"
+                        aria-label="Editar horario y reprogramar visita">
+                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                     </a>
+                   </div>`
+                : '';
+
+            actions.innerHTML =
+                '<span class="res-done-chip" style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;color:#d6342c;background:#d6342c14;white-space:nowrap;">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>' +
+                'No se presentó</span>' + editBtn;
+        }
+    }
+
+    function revisarTemporales() {
+        const ahora = new Date();
+
+        document.querySelectorAll('.res-visit-card').forEach(card => {
+            const modalidad = card.dataset.modalidad;
+            const estado    = card.dataset.estado;
+            const qr        = card.dataset.qr;
+            const fecha     = card.dataset.fecha;            // YYYY-MM-DD
+            const hora      = card.dataset.hora || '23:59';  // HH:MM
+            const editUrl   = card.dataset.editUrl;
+
+            // Las recurrentes se manejan aparte (revisarRecurrentes).
+            if (modalidad === 'recurrente') return;
+
+            // Ya fue atendido por caseta
+            if (['dentro', 'salida_registrada', 'rechazado', 'no_presento'].includes(estado)) return;
+
+            // Estados del QR que ya no deben cambiar
+            if (['cancelado', 'vencido', 'rechazado', 'no_presentado'].includes(qr)) return;
+
+            if (!fecha) return;
+
+            const [y, m, d]  = fecha.split('-').map(Number);
+            const [hh, mm]   = hora.split(':').map(Number);
+            const programada = new Date(y, m - 1, d, hh || 0, mm || 0);
+
+            // Si ya pasó la fecha/hora programada y el visitante nunca ingresó
+            if (ahora > programada) {
+                marcarNoPresentado(card, editUrl);
+            }
+        });
+    }
+
+    revisarTemporales();
+    setInterval(revisarTemporales, 20000); // revisa cada 20 segundos
+})();
+</script>
+
+<script>
+/* ─── Marcar visitas RECURRENTES no presentadas EN VIVO ─────────────
+   Mismo criterio que usa el backend (visita_no_presentada_hoy): se
+   dispara apenas pasa el minuto de hora_desde de HOY, sin esperar a
+   refrescar la página. Se revisa cada 20 segundos mientras la pestaña
+   siga abierta; al recargar, el backend ya manda el estado correcto
+   de una vez (esto es solo para el tiempo real mientras no se recarga). ── */
+(function () {
+    const DIAS_JS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+
+    function marcarNoPresentado(card, editUrl) {
+        const badge = card.querySelector('.res-visit-namerow .res-badge');
+        if (badge) {
+            badge.className = 'res-badge badge-danger';
+            badge.innerHTML = '<span class="res-badge-dot"></span>No se presentó';
+        }
+
+        const actions = card.querySelector('.res-visit-actions');
+        if (actions && !actions.classList.contains('res-visit-actions--done')) {
+            actions.classList.add('res-visit-actions--done');
+            const editBtn = editUrl
+                ? `<div class="res-action-icons">
+                     <a href="${editUrl}" class="res-btn-edit res-iconact"
+                        title="Editar horario y reprogramar visita"
+                        aria-label="Editar horario y reprogramar visita">
+                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                     </a>
+                   </div>`
+                : '';
+            actions.innerHTML =
+                '<span class="res-done-chip" style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;color:#d6342c;background:#d6342c14;white-space:nowrap;">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>' +
+                'No se presentó</span>' + editBtn;
+        }
+    }
+
+    function revisarRecurrentes() {
+        const ahora = new Date();
+        const diaHoy = DIAS_JS[ahora.getDay()];
+        const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+
+        document.querySelectorAll('.res-visit-card[data-modalidad="recurrente"]').forEach(card => {
+            const estado = card.dataset.estado;
+            if (['dentro', 'salida_registrada', 'rechazado', 'cancelado'].includes(estado)) return;
+
+            const badge = card.querySelector('.res-visit-namerow .res-badge');
+            if (badge && badge.textContent.includes('No se presentó')) return; // ya marcada
+
+            const dias = (card.dataset.dias || '').split(',').filter(Boolean);
+            if (dias.length && !dias.includes(diaHoy)) return;
+
+            const horaDesde = card.dataset.horaDesde;
+            if (!horaDesde) return;
+            const [hh, mm] = horaDesde.split(':').map(Number);
+            const minutosDesde = (hh || 0) * 60 + (mm || 0);
+
+            if (minutosAhora > minutosDesde) {
+                marcarNoPresentado(card, card.dataset.editUrl);
+            }
+        });
+    }
+
+    revisarRecurrentes();
+    setInterval(revisarRecurrentes, 20000); // revisa cada 20 segundos
 })();
 </script>
 
