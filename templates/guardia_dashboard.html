@@ -537,12 +537,10 @@
 </script>
 
 <script>
-/* ─── Marcar visitas TEMPORALES no presentadas EN VIVO (cada 20s) ───
-   Mismo criterio que las vistas del residente: si ya pasó la fecha/hora
-   programada y el visitante nunca ingresó, se marca "No se presentó"
-   sin esperar a refrescar la página. Se compara por MINUTOS ENTEROS
-   (igual que recurrentes) para que se dispare DESPUÉS de que termine
-   el minuto exacto, no apenas empieza. ─────────────────────────────── */
+/* ─── Marcar visitas TEMPORALES no presentadas EXACTO AL MINUTO ───
+   Se compara por MINUTOS ENTEROS y se dispara justo en el segundo :00
+   de cada minuto (no en intervalos fijos de 20s), auto-corrigiendo en
+   cada vuelta para no acumular desfase. ────────────────────────────── */
 (function () {
 
     function marcarNoPresentado(card) {
@@ -585,18 +583,28 @@
         });
     }
 
-    revisarTemporales();
-    setInterval(revisarTemporales, 20000); // revisa cada 20 segundos
+    function programarCadaMinuto(fn) {
+        function msHastaProximoMinuto() {
+            const ahora = new Date();
+            return 60000 - (ahora.getSeconds() * 1000 + ahora.getMilliseconds());
+        }
+        fn();
+        function tick() {
+            fn();
+            setTimeout(tick, msHastaProximoMinuto());
+        }
+        setTimeout(tick, msHastaProximoMinuto());
+    }
+
+    programarCadaMinuto(revisarTemporales);
 })();
 </script>
 
 <script>
-/* ─── Marcar visitas RECURRENTES no presentadas EN VIVO (cada 20s) ───
-   Mismo criterio que usa el backend (visita_no_presentada_hoy): se
-   dispara apenas pasa el minuto de hora_desde de HOY, sin esperar a
-   refrescar la página. Al recargar, el backend ya manda el estado
-   correcto de una vez; esto solo cubre el tiempo real mientras la
-   pestaña sigue abierta sin recargar. ─────────────────────────────── */
+/* ─── Marcar visitas RECURRENTES no presentadas EXACTO AL MINUTO ───
+   Mismo criterio que usa el backend (visita_no_presentada_hoy). Se
+   dispara justo en el segundo :00 de cada minuto, no en intervalos
+   fijos de 20s. ────────────────────────────────────────────────────── */
 (function () {
     const DIAS_JS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
 
@@ -634,8 +642,20 @@
         });
     }
 
-    revisarRecurrentes();
-    setInterval(revisarRecurrentes, 20000); // revisa cada 20 segundos
+    function programarCadaMinuto(fn) {
+        function msHastaProximoMinuto() {
+            const ahora = new Date();
+            return 60000 - (ahora.getSeconds() * 1000 + ahora.getMilliseconds());
+        }
+        fn();
+        function tick() {
+            fn();
+            setTimeout(tick, msHastaProximoMinuto());
+        }
+        setTimeout(tick, msHastaProximoMinuto());
+    }
+
+    programarCadaMinuto(revisarRecurrentes);
 })();
 </script>
 {% endblock %}

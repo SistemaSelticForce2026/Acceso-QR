@@ -686,14 +686,14 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
 </script>
 
 <script>
-/* ─── Marcar visitas TEMPORALES no presentadas (fecha/hora vencida sin
-   escanear), EN VIVO cada 20s, sin esperar a refrescar la página.
-   Se compara por MINUTOS ENTEROS (igual que recurrentes) para que se
-   dispare DESPUÉS de que termine el minuto exacto, no apenas empieza.
-   El QR de la tarjeta nunca se toca aquí: sigue visible siempre por si el
-   visitante necesita mostrarlo o el residente necesita compartirlo de
-   nuevo. Solo se reemplazan las acciones por el estado "No se presentó"
-   + un botón de Editar para poder reprogramar el horario. ─────────────── */
+/* ─── Marcar visitas TEMPORALES no presentadas EXACTO AL MINUTO ───
+   Se compara por MINUTOS ENTEROS y se dispara justo en el segundo :00
+   de cada minuto (no en intervalos fijos de 20s), auto-corrigiendo en
+   cada vuelta para no acumular desfase. El QR de la tarjeta nunca se
+   toca aquí: sigue visible siempre por si el visitante necesita
+   mostrarlo o el residente necesita compartirlo de nuevo. Solo se
+   reemplazan las acciones por el estado "No se presentó" + un botón de
+   Editar para poder reprogramar el horario. ─────────────────────────── */
 (function () {
 
     function marcarNoPresentado(card, editUrl) {
@@ -751,25 +751,34 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
             const [hh, mm]   = hora.split(':').map(Number);
             const programada = new Date(y, m - 1, d, hh || 0, mm || 0);
 
-            // Si ya pasó la fecha/hora programada y el visitante nunca ingresó
             if (ahora > programada) {
                 marcarNoPresentado(card, editUrl);
             }
         });
     }
 
-    revisarTemporales();
-    setInterval(revisarTemporales, 20000); // revisa cada 20 segundos
+    function programarCadaMinuto(fn) {
+        function msHastaProximoMinuto() {
+            const ahora = new Date();
+            return 60000 - (ahora.getSeconds() * 1000 + ahora.getMilliseconds());
+        }
+        fn();
+        function tick() {
+            fn();
+            setTimeout(tick, msHastaProximoMinuto());
+        }
+        setTimeout(tick, msHastaProximoMinuto());
+    }
+
+    programarCadaMinuto(revisarTemporales);
 })();
 </script>
 
 <script>
-/* ─── Marcar visitas RECURRENTES no presentadas EN VIVO ─────────────
-   Mismo criterio que usa el backend (visita_no_presentada_hoy): se
-   dispara apenas pasa el minuto de hora_desde de HOY, sin esperar a
-   refrescar la página. Se revisa cada 20 segundos mientras la pestaña
-   siga abierta; al recargar, el backend ya manda el estado correcto
-   de una vez (esto es solo para el tiempo real mientras no se recarga). ── */
+/* ─── Marcar visitas RECURRENTES no presentadas EXACTO AL MINUTO ───
+   Mismo criterio que usa el backend (visita_no_presentada_hoy). Se
+   dispara justo en el segundo :00 de cada minuto, no en intervalos
+   fijos de 20s. ────────────────────────────────────────────────────── */
 (function () {
     const DIAS_JS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
 
@@ -825,8 +834,20 @@ document.getElementById("searchTable").addEventListener("keyup", function () {
         });
     }
 
-    revisarRecurrentes();
-    setInterval(revisarRecurrentes, 20000); // revisa cada 20 segundos
+    function programarCadaMinuto(fn) {
+        function msHastaProximoMinuto() {
+            const ahora = new Date();
+            return 60000 - (ahora.getSeconds() * 1000 + ahora.getMilliseconds());
+        }
+        fn();
+        function tick() {
+            fn();
+            setTimeout(tick, msHastaProximoMinuto());
+        }
+        setTimeout(tick, msHastaProximoMinuto());
+    }
+
+    programarCadaMinuto(revisarRecurrentes);
 })();
 </script>
 
