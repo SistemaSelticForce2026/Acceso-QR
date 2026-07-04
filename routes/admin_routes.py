@@ -1131,11 +1131,13 @@ def registrar_residente():
             )
             return redirect(url_for("admin.registrar_residente"))
 
+        password_temporal = "Residente123*"
+
         residentes_col.insert_one(
             {
                 "nombre": nombre,
                 "correo": correo,
-                "password": generate_password_hash("Residente123*"),
+                "password": generate_password_hash(password_temporal),
                 "telefono": telefono,
                 "fraccionamiento": fraccionamiento,
                 "privada": privada,
@@ -1154,7 +1156,10 @@ def registrar_residente():
 
         socketio.emit("actualizar_residentes", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
-        flash("Residente registrado correctamente.", "success")
+        flash(
+            f"Residente registrado correctamente. Contraseña temporal: {password_temporal}",
+            "success",
+        )
         return redirect(url_for("admin.residentes"))
 
     return render_template(
