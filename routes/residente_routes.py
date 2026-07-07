@@ -406,17 +406,23 @@ def create_visit():
 
         token = str(uuid.uuid4())
 
-        qr_path = generate_qr(token)
+        qr_path = generate_qr(token, residente["fraccionamiento"])
 
         # =============================================
         # GUARDAR IMÁGENES
         # =============================================
 
         foto_visitante = guardar_imagen(
-            request.files.get("foto_visitante"), "visitantes"
+            request.files.get("foto_visitante"),
+            residente["fraccionamiento"],
+            "visitantes",
         )
 
-        foto_placa = guardar_imagen(request.files.get("foto_placa"), "placas")
+        foto_placa = guardar_imagen(
+            request.files.get("foto_placa"),
+            residente["fraccionamiento"],
+            "placas",
+        )
 
         # =============================================
         # VARIABLES BASE (siempre definidas)
