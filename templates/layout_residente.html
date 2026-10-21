@@ -1,218 +1,333 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Acceso QR | {% block title %}Panel{% endblock %}</title>
-<link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/alertas.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/estructura/layout_residente.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/date_placeholder.css') }}">
-{% block extra_css %}{% endblock %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<style>
-/* =========================================================
-   MODAL CAMBIO DE CONTRASEÑA — estilo sobrio (igual al panel admin)
-   Para cambiar el tamaño del logo: edita --logo
-========================================================= */
-.pw-overlay,.pw-overlay *,.pw-overlay *::before,.pw-overlay *::after{box-sizing:border-box;animation:none!important;transition:none!important}
-.pw-overlay{--pri:#27407d;--pri-600:#2f4c96;--pri-50:#eef1f9;--pri-200:#c3cfe8;--ink-900:#111827;--ink-600:#4b5565;--ink-500:#667085;--ink-400:#98a1b2;--line:#e5e8ee;--panel-2:#f8f9fb;--bg:#f4f5f8;--ok:#2f7d5b;--ok-bg:#eaf4ef;--warn:#a8741a;--warn-bg:#faf3e3;--logo:236px;position:fixed;inset:0;z-index:99999;display:flex;padding:24px;overflow-y:auto;background:rgba(17,24,39,.72);font-family:'Inter',system-ui,sans-serif}
-.pw-card{width:100%;max-width:440px;margin:auto;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;text-align:center;box-shadow:0 16px 48px rgba(16,24,40,.2)}
-.pw-hero{position:relative;display:flex;align-items:center;justify-content:center;padding:26px 0;background:var(--bg);border-bottom:1px solid var(--line)}
-.pw-logo-tile{width:var(--logo);height:var(--logo);padding:10px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
-.pw-logo-img{width:100%;height:100%;object-fit:contain;display:block}
-.pw-float{position:absolute;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;border:1px solid var(--line);color:var(--ink-500);font-size:12px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
-.pw-float.f1{top:18px;left:22px}
-.pw-float.f2{top:18px;right:22px;color:var(--ok)}
-.pw-float.f3{bottom:18px;left:44px}
-.pw-float.f4{bottom:18px;right:44px}
-.pw-body{padding:22px 30px 26px}
-.pw-chip{display:inline-flex;align-items:center;gap:7px;margin-bottom:12px;padding:5px 12px;border-radius:999px;background:var(--pri-50);border:1px solid var(--pri-200);color:var(--pri);font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
-.pw-pulse{width:6px;height:6px;border-radius:50%;background:var(--warn)}
-.pw-title{margin:0 0 10px;color:var(--ink-900);font-size:22px;font-weight:700;line-height:1.25;letter-spacing:-.4px}
-.pw-title span{color:var(--pri)}
-.pw-text{max-width:350px;margin:0 auto 20px;color:var(--ink-500);font-size:13.5px;line-height:1.65}
-.pw-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 22px}
-.pw-step{padding:13px 8px 11px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line)}
-.pw-step-ico{width:34px;height:34px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;border-radius:9px;font-size:13px}
-.pw-step-ico.s1{background:var(--pri-50);color:var(--pri)}
-.pw-step-ico.s2{background:var(--ok-bg);color:var(--ok)}
-.pw-step-ico.s3{background:var(--warn-bg);color:var(--warn)}
-.pw-step p{margin:0;color:var(--ink-600);font-size:11.5px;font-weight:600;line-height:1.35}
-.pw-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;height:46px;padding:0 18px;border-radius:10px;background:var(--pri);border:1px solid var(--pri);color:#fff;font-size:13.5px;font-weight:600;text-decoration:none;box-shadow:0 1px 2px rgba(16,24,40,.04)}
-.pw-btn:hover{color:#fff;background:var(--pri-600);border-color:var(--pri-600)}
-.pw-foot{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;color:var(--ink-400);font-size:11.5px;font-weight:500}
-.pw-foot i{color:var(--ok)}
-@media(max-height:780px){.pw-overlay{--logo:176px}.pw-hero{padding:18px 0}.pw-float.f1,.pw-float.f2{top:12px}.pw-float.f3,.pw-float.f4{bottom:12px}.pw-body{padding-top:18px}}
-@media(max-width:520px){
-.pw-overlay{--logo:204px;padding:14px}
-.pw-card{border-radius:10px}
-.pw-float.f1{left:12px}.pw-float.f2{right:12px}.pw-float.f3{left:22px}.pw-float.f4{right:22px}
-.pw-body{padding:18px 18px 22px}
-.pw-title{font-size:20px}
-.pw-text{font-size:13px}
-.pw-steps{gap:8px}
-.pw-step p{font-size:10.5px}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso QR | {% block title %}Panel{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/alertas.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estructura/layout_residente.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/date_placeholder.css') }}">
+    {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+    /* ===== MODAL CAMBIO DE CONTRASEÑA — estilo sobrio ===== */
+    .pw-overlay{
+      position:fixed;inset:0;z-index:99999;
+      display:flex;align-items:center;justify-content:center;
+      padding:24px;overflow:hidden auto;
+      background:rgba(17,24,39,.72);
+    }
+    .pw-blob{display:none!important}
+    .pw-card{
+      position:relative;z-index:2;width:100%;max-width:420px;
+      background:#fff;border:1px solid #e5e8ee;border-radius:12px;
+      overflow:hidden;text-align:center;
+      box-shadow:0 16px 48px rgba(16,24,40,.2);
+    }
+    .pw-hero{
+      position:relative;height:190px;
+      display:flex;align-items:center;justify-content:center;
+      background:#f4f5f8;border-bottom:1px solid #e5e8ee;overflow:hidden;
+    }
+    .pw-hero::after,.pw-grid,.pw-ring{display:none!important}
+
+    /* Tarjeta blanca del logo (sin fondo azul) */
+    .pw-orb{
+      position:relative;z-index:2;
+      width:150px;height:150px;
+    }
+    .pw-core{
+      position:absolute;inset:0;
+      display:flex;align-items:center;justify-content:center;
+      border-radius:20px;
+      background:#fff;
+      border:1px solid #e5e8ee;
+      box-shadow:0 2px 8px rgba(16,24,40,.06);
+      transform:none;animation:none!important;
+      overflow:hidden;
+      padding:8px;
+    }
+    .pw-core i{filter:none;transform:none}
+
+    /* LOGO GRANDE — ocupa casi toda la tarjeta */
+    .pw-logo-img{
+      width:134px!important;
+      height:134px!important;
+      max-width:134px!important;
+      max-height:134px!important;
+      object-fit:contain!important;
+      display:block!important;
+    }
+
+    .pw-float{
+      position:absolute;z-index:2;width:32px;height:32px;
+      display:flex;align-items:center;justify-content:center;
+      border-radius:8px;background:#fff;border:1px solid #e5e8ee;
+      font-size:12px;color:#667085;
+      box-shadow:0 1px 2px rgba(16,24,40,.04);animation:none!important;
+    }
+    .pw-float.f1{top:14px;left:16px}
+    .pw-float.f2{top:14px;right:22px;color:#2f7d5b}
+    .pw-float.f3{bottom:34px;left:38px}
+    .pw-float.f4{bottom:18px;right:42px}
+    .pw-body{position:relative;z-index:3;padding:22px 28px 26px}
+    .pw-chip{
+      display:inline-flex;align-items:center;gap:7px;
+      margin-bottom:14px;padding:5px 12px;border-radius:999px;
+      background:#eef1f9;border:1px solid #c3cfe8;
+      color:#27407d;font-size:10.5px;font-weight:600;
+      letter-spacing:.1em;text-transform:uppercase;
+    }
+    .pw-pulse{width:6px;height:6px;border-radius:50%;background:#a8741a;box-shadow:none;animation:none!important}
+    .pw-title{margin:0 0 10px;color:#111827;font-size:22px;font-weight:700;line-height:1.25;letter-spacing:-.4px}
+    .pw-title span{background:none;-webkit-text-fill-color:unset;color:#27407d}
+    .pw-text{max-width:340px;margin:0 auto 20px;color:#667085;font-size:13.5px;line-height:1.65}
+    .pw-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 22px}
+    .pw-step{padding:14px 8px 12px;border-radius:10px;background:#f8f9fb;border:1px solid #e5e8ee}
+    .pw-step:hover{transform:none;box-shadow:none}
+    .pw-step-ico{width:36px;height:36px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;border-radius:9px;font-size:14px}
+    .pw-step-ico.s1{background:#eef1f9;color:#27407d}
+    .pw-step-ico.s2{background:#eaf4ef;color:#2f7d5b}
+    .pw-step-ico.s3{background:#faf3e3;color:#a8741a}
+    .pw-step p{margin:0;color:#4b5565;font-size:11.5px;font-weight:600;line-height:1.35}
+    .pw-btn{
+      position:relative;overflow:hidden;width:100%;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      padding:14px 18px;border-radius:10px;
+      background:#27407d;color:#fff;font-size:14px;font-weight:600;
+      text-decoration:none;border:1px solid #27407d;
+      box-shadow:0 1px 2px rgba(16,24,40,.04);
+    }
+    .pw-btn::before{display:none!important}
+    .pw-btn:hover{color:#fff;background:#2f4c96;transform:none}
+    .pw-btn .arrow{transition:none}
+    .pw-btn:hover .arrow{transform:none}
+    .pw-foot{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;color:#98a1b2;font-size:11.5px;font-weight:500}
+    .pw-foot i{color:#2f7d5b}
+    @media(max-width:520px){
+      .pw-overlay{padding:14px}
+      .pw-card{border-radius:10px}
+      .pw-hero{height:170px}
+      .pw-orb{width:130px;height:130px}
+      .pw-logo-img{width:116px!important;height:116px!important;max-width:116px!important;max-height:116px!important}
+      .pw-core{border-radius:18px;padding:6px}
+      .pw-float.f1{left:12px}.pw-float.f2{right:14px}
+      .pw-float.f3{left:22px}.pw-float.f4{right:24px}
+      .pw-body{padding:18px 18px 22px}
+      .pw-title{font-size:20px}
+      .pw-text{font-size:13px}
+      .pw-steps{gap:8px}
+      .pw-step p{font-size:10.5px}
+    }
+    </style>
 </head>
 <body class="res-body">
-<div class="res-overlay" id="resOverlay" aria-hidden="true"></div>
 
-<aside class="res-sidebar" id="resSidebar">
-  <div class="res-brand">
-    <div class="res-brand-icon"><img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}" alt="AccessQR" style="width:20px;height:20px;object-fit:contain;"></div>
-    <span class="res-brand-name">AccessQR</span>
-  </div>
-  <nav class="res-nav">
-    <a href="{{ url_for('resident.dashboard') }}" class="res-nav-item {% if request.endpoint == 'resident.dashboard' %}active{% endif %}">
-      <div class="res-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
-      <span>Inicio</span>
-      {% if request.endpoint == 'resident.dashboard' %}<div class="res-nav-dot"></div>{% endif %}
-    </a>
-    <a href="{{ url_for('resident.create_visit') }}" class="res-nav-item {% if request.endpoint == 'resident.create_visit' %}active{% endif %}">
-      <div class="res-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M20 14v.01M14 20v.01M20 17v4M17 20h.01"/></svg></div>
-      <span>Nueva Visita</span>
-      {% if request.endpoint == 'resident.create_visit' %}<div class="res-nav-dot"></div>{% endif %}
-    </a>
-    <a href="{{ url_for('resident.visitors') }}" class="res-nav-item {% if request.endpoint == 'resident.visitors' %}active{% endif %}">
-      <div class="res-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg></div>
-      <span>Mis Visitantes</span>
-      {% if request.endpoint == 'resident.visitors' %}<div class="res-nav-dot"></div>{% endif %}
-    </a>
-  </nav>
-  <div class="res-user-section">
-    <div class="res-user-card">
-      <div class="res-user-avatar" id="resUserAvatar">{{ session.nombre[0] if session.nombre else '?' }}</div>
-      <div class="res-user-info">
-        <div class="res-user-name">{{ session.nombre }}</div>
-        <div class="res-user-sub">Residente</div>
-      </div>
-    </div>
-    <a href="{{ url_for('auth.logout') }}" class="res-logout-btn">
-      <div class="res-logout-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></div>
-      Cerrar sesión
-    </a>
-  </div>
-</aside>
+    <div class="res-overlay" id="resOverlay" aria-hidden="true"></div>
 
-<div class="res-main">
-  <header class="res-header">
-    <button class="res-menu-btn" id="resMenuBtn" aria-label="Abrir menú"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-    <h1 class="res-header-title">{% block page_title %}Panel{% endblock %}</h1>
-  </header>
-  <main class="res-content">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      <div class="flash-stack" id="flashStack">
-        {% for category, message in messages %}
-        <div class="flash-toast flash-{{ category }}" role="alert">
-          <div class="flash-icon">
-            {% if category == 'success' %}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-            {% elif category == 'danger' %}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
-            {% elif category == 'warning' %}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
-            {% else %}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            {% endif %}
-          </div>
-          <span class="flash-text">{{ message }}</span>
-          <button class="flash-close" onclick="dismissToast(this.parentElement)" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-          <div class="flash-progress"></div>
+    <aside class="res-sidebar" id="resSidebar">
+        <div class="res-brand">
+            <div class="res-brand-icon">
+                <img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}"
+                     alt="AccessQR"
+                     style="width:20px;height:20px;object-fit:contain;">
+            </div>
+            <span class="res-brand-name">AccessQR</span>
         </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-    {% endwith %}
-    {% block content %}{% endblock %}
-  </main>
-</div>
 
-<nav class="res-bottom-nav">
-  <a href="{{ url_for('resident.dashboard') }}" class="res-tab {% if request.endpoint == 'resident.dashboard' %}active{% endif %}">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
-    <span>Inicio</span>
-  </a>
-  <a href="{{ url_for('resident.create_visit') }}" class="res-tab {% if request.endpoint == 'resident.create_visit' %}active{% endif %}">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M20 14v.01M14 20v.01M20 17v4M17 20h.01"/></svg>
-    <span>Nueva</span>
-  </a>
-  <a href="{{ url_for('resident.visitors') }}" class="res-tab {% if request.endpoint == 'resident.visitors' %}active{% endif %}">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg>
-    <span>Visitantes</span>
-  </a>
-</nav>
+        <nav class="res-nav">
+            <a href="{{ url_for('resident.dashboard') }}"
+               class="res-nav-item {% if request.endpoint == 'resident.dashboard' %}active{% endif %}">
+                <div class="res-nav-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+                </div>
+                <span>Inicio</span>
+                {% if request.endpoint == 'resident.dashboard' %}
+                <div class="res-nav-dot"></div>
+                {% endif %}
+            </a>
 
-{% block modals %}{% endblock %}
+            <a href="{{ url_for('resident.create_visit') }}"
+               class="res-nav-item {% if request.endpoint == 'resident.create_visit' %}active{% endif %}">
+                <div class="res-nav-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M20 14v.01M14 20v.01M20 17v4M17 20h.01"/></svg>
+                </div>
+                <span>Nueva Visita</span>
+                {% if request.endpoint == 'resident.create_visit' %}
+                <div class="res-nav-dot"></div>
+                {% endif %}
+            </a>
 
-{% if debe_cambiar_password %}
-<div class="pw-overlay" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
-  <div class="pw-card">
-    <div class="pw-hero">
-      <span class="pw-float f1"><i class="fa-solid fa-shield-halved"></i></span>
-      <span class="pw-float f2"><i class="fa-solid fa-check"></i></span>
-      <span class="pw-float f3"><i class="fa-solid fa-lock"></i></span>
-      <span class="pw-float f4"><i class="fa-solid fa-fingerprint"></i></span>
-      <div class="pw-logo-tile"><img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}" alt="AccessQR" class="pw-logo-img"></div>
+            <a href="{{ url_for('resident.visitors') }}"
+               class="res-nav-item {% if request.endpoint == 'resident.visitors' %}active{% endif %}">
+                <div class="res-nav-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg>
+                </div>
+                <span>Mis Visitantes</span>
+                {% if request.endpoint == 'resident.visitors' %}
+                <div class="res-nav-dot"></div>
+                {% endif %}
+            </a>
+        </nav>
+
+        <div class="res-user-section">
+            <div class="res-user-card">
+                <div class="res-user-avatar" id="resUserAvatar">
+                    {{ session.nombre[0] if session.nombre else '?' }}
+                </div>
+                <div class="res-user-info">
+                    <div class="res-user-name">{{ session.nombre }}</div>
+                    <div class="res-user-sub">Residente</div>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="res-logout-btn">
+                <div class="res-logout-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </div>
+                Cerrar sesión
+            </a>
+        </div>
+    </aside>
+
+    <div class="res-main">
+        <header class="res-header">
+            <button class="res-menu-btn" id="resMenuBtn" aria-label="Abrir menú">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            </button>
+            <h1 class="res-header-title">{% block page_title %}Panel{% endblock %}</h1>
+        </header>
+
+        <main class="res-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-stack" id="flashStack">
+                        {% for category, message in messages %}
+                            <div class="flash-toast flash-{{ category }}" role="alert">
+                                <div class="flash-icon">
+                                    {% if category == 'success' %}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                    {% elif category == 'danger' %}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+                                    {% elif category == 'warning' %}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                                    {% else %}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                                    {% endif %}
+                                </div>
+                                <span class="flash-text">{{ message }}</span>
+                                <button class="flash-close" onclick="dismissToast(this.parentElement)" aria-label="Cerrar">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                </button>
+                                <div class="flash-progress"></div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
     </div>
-    <div class="pw-body">
-      <span class="pw-chip"><span class="pw-pulse"></span>Seguridad de la cuenta</span>
-      <h2 class="pw-title" id="pwTitle">Crea tu <span>contraseña personal</span></h2>
-      <p class="pw-text">Estás usando la contraseña temporal que te asignó la administración. Personalízala ahora para proteger tu cuenta.</p>
-      <div class="pw-steps">
-        <div class="pw-step"><div class="pw-step-ico s1"><i class="fa-solid fa-user-lock"></i></div><p>Solo tú la conoces</p></div>
-        <div class="pw-step"><div class="pw-step-ico s2"><i class="fa-solid fa-shield-heart"></i></div><p>Letras, números y símbolos</p></div>
-        <div class="pw-step"><div class="pw-step-ico s3"><i class="fa-solid fa-bolt"></i></div><p>Toma menos de un minuto</p></div>
-      </div>
-      <a href="{{ url_for('auth.cambiar_password') }}" class="pw-btn">
-        <i class="fa-solid fa-key"></i> Cambiar contraseña <i class="fa-solid fa-arrow-right" style="font-size:12px;"></i>
-      </a>
-      <div class="pw-foot"><i class="fa-solid fa-circle-check"></i> Tu acceso está protegido</div>
+
+    <nav class="res-bottom-nav">
+        <a href="{{ url_for('resident.dashboard') }}"
+           class="res-tab {% if request.endpoint == 'resident.dashboard' %}active{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+            <span>Inicio</span>
+        </a>
+        <a href="{{ url_for('resident.create_visit') }}"
+           class="res-tab {% if request.endpoint == 'resident.create_visit' %}active{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M20 14v.01M14 20v.01M20 17v4M17 20h.01"/></svg>
+            <span>Nueva</span>
+        </a>
+        <a href="{{ url_for('resident.visitors') }}"
+           class="res-tab {% if request.endpoint == 'resident.visitors' %}active{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg>
+            <span>Visitantes</span>
+        </a>
+    </nav>
+
+    {% block modals %}{% endblock %}
+
+    {% if debe_cambiar_password %}
+    <div class="pw-overlay" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+        <div class="pw-card">
+            <div class="pw-hero">
+                <span class="pw-float f1"><i class="fa-solid fa-lock"></i></span>
+                <span class="pw-float f2"><i class="fa-solid fa-shield-halved"></i></span>
+                <span class="pw-float f3"><i class="fa-solid fa-key"></i></span>
+                <span class="pw-float f4"><i class="fa-solid fa-check"></i></span>
+                <div class="pw-orb">
+                    <div class="pw-core">
+                        <img src="{{ url_for('static', filename='img/seltic-force-logo.png') }}"
+                             alt="Seltic Force"
+                             class="pw-logo-img">
+                    </div>
+                </div>
+            </div>
+            <div class="pw-body">
+                <span class="pw-chip"><span class="pw-pulse"></span>Seguridad de la cuenta</span>
+                <h2 class="pw-title" id="pwTitle">Crea tu <span>contraseña personal</span></h2>
+                <p class="pw-text">Estás usando la contraseña temporal que te asignó la administración. Personalízala ahora para proteger tu cuenta.</p>
+                <div class="pw-steps">
+                    <div class="pw-step"><div class="pw-step-ico s1"><i class="fa-solid fa-lock"></i></div><p>Solo tú la conoces</p></div>
+                    <div class="pw-step"><div class="pw-step-ico s2"><i class="fa-solid fa-key"></i></div><p>Letras, números y símbolos</p></div>
+                    <div class="pw-step"><div class="pw-step-ico s3"><i class="fa-regular fa-clock"></i></div><p>Toma menos de un minuto</p></div>
+                </div>
+                <a href="{{ url_for('auth.cambiar_password') }}" class="pw-btn">
+                    <i class="fa-solid fa-key"></i>
+                    Cambiar contraseña
+                    <i class="fa-solid fa-arrow-right arrow" style="font-size:12px;"></i>
+                </a>
+                <div class="pw-foot"><i class="fa-solid fa-circle-check"></i> Tu acceso está protegido</div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-{% endif %}
+    {% endif %}
 
-<script src="{{ url_for('static', filename='js/app.js') }}"></script>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script src="{{ url_for('static', filename='js/socket.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-const resSidebar = document.getElementById('resSidebar');
-const resOverlay = document.getElementById('resOverlay');
-const resMenuBtn = document.getElementById('resMenuBtn');
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-if (resMenuBtn) {
-    resMenuBtn.addEventListener('click', () => {
-        const open = resSidebar.classList.toggle('open');
-        if (open) { resOverlay.classList.add('show'); } else { resOverlay.classList.remove('show'); }
-    });
-}
-if (resOverlay) {
-    resOverlay.addEventListener('click', () => {
-        resSidebar.classList.remove('open');
-        resOverlay.classList.remove('show');
-    });
-}
+    <script>
+        const resSidebar = document.getElementById('resSidebar');
+        const resOverlay = document.getElementById('resOverlay');
+        const resMenuBtn = document.getElementById('resMenuBtn');
 
-const avatar = document.getElementById('resUserAvatar');
-if (avatar) {
-    const COLORS = ['#2e5bff', '#009869', '#d97706', '#7c3aed', '#0891b2', '#1a1c2e'];
-    const name = "{{ session.nombre | default('') }}";
-    let h = 0;
-    for (let i = 0; i < name.length; i++) { h = (h + name.charCodeAt(i)) % COLORS.length; }
-    avatar.style.backgroundColor = COLORS[h];
-}
-</script>
-<script src="{{ url_for('static', filename='js/date_placeholder.js') }}"></script>
-{% if session.user_id %}
-<script>window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};</script>
-<script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
-{% endif %}
-{% block extra_js %}{% endblock %}
+        resMenuBtn.addEventListener('click', () => {
+            const open = resSidebar.classList.toggle('open');
+            if (open) resOverlay.classList.add('show');
+            else resOverlay.classList.remove('show');
+        });
+
+        resOverlay.addEventListener('click', () => {
+            resSidebar.classList.remove('open');
+            resOverlay.classList.remove('show');
+        });
+
+        const avatar = document.getElementById('resUserAvatar');
+        if (avatar) {
+            const COLORS = ['#2e5bff','#009869','#d97706','#7c3aed','#0891b2','#1a1c2e'];
+            const name = "{{ session.nombre | default('') }}";
+            let h = 0;
+            for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i)) % COLORS.length;
+            avatar.style.backgroundColor = COLORS[h];
+        }
+    </script>
+
+    <script src="{{ url_for('static', filename='js/date_placeholder.js') }}"></script>
+
+    {% if session.user_id %}
+    <script>
+        window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};
+    </script>
+    <script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+
 </body>
 </html>

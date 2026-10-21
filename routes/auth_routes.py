@@ -44,6 +44,27 @@ CAPTCHA_MAYUS = "ABDEFGHJKLMNPQRTUY"
 CAPTCHA_MINUS = "abdefghjkmnpqrtuy"
 CAPTCHA_DIGITOS = "23456789"
 
+
+# =====================================================
+# MODAL "CREA TU CONTRASEÑA PERSONAL"
+# Inyecta debe_cambiar_password en TODOS los templates.
+# layout_residente.html lo usa para mostrar el modal
+# antes de mandar al residente a /cambiar-password.
+# =====================================================
+
+
+@auth_bp.app_context_processor
+def inyectar_debe_cambiar_password():
+    """Expone a los templates si el residente aún usa la contraseña temporal."""
+
+    return {
+        "debe_cambiar_password": bool(
+            session.get("rol") == "residente"
+            and session.get("debe_cambiar_password", False)
+        )
+    }
+
+
 # ================
 # INICIO
 # ================
@@ -249,13 +270,21 @@ def login():
         # tiempo real siempre une al usuario a las salas correctas.
         session.clear()
 
-        session.permanent = True  # <-- AGREGADO: habilita PERMANENT_SESSION_LIFETIME
+        session.permanent = True  # habilita PERMANENT_SESSION_LIFETIME
 
         session["user_id"] = str(usuario["_id"])
         session["nombre"] = usuario["nombre"]
         session["rol"] = usuario["rol"]
         session["correo"] = usuario["correo"]
         session["fraccionamiento"] = usuario.get("fraccionamiento")
+
+        # Bandera para mostrar el modal "Crea tu contraseña personal"
+        # en el dashboard del residente (ya NO se redirige directo a
+        # /cambiar-password: primero se ve el modal).
+        session["debe_cambiar_password"] = bool(
+            usuario["rol"] == "residente"
+            and usuario.get("debe_cambiar_password", False)
+        )
 
         col.update_one(
             {"_id": usuario["_id"]},
@@ -290,17 +319,14 @@ def login():
                 }
             )
 
-        if usuario["rol"] == "residente" and usuario.get(
-            "debe_cambiar_password", False
-        ):
-            return redirect(url_for("auth.cambiar_password"))
-
         if usuario["rol"] == "admin":
             return redirect(url_for("admin.dashboard"))
 
         if usuario["rol"] == "guardia":
             return redirect(url_for("guard.scan_entrada"))
 
+        # Residente: siempre al dashboard. Si aún usa la contraseña
+        # temporal, ahí aparecerá el modal y desde él irá a cambiarla.
         return redirect(url_for("resident.dashboard"))
 
     return render_template("login.html", correo_prefill=request.args.get("correo", ""))
@@ -501,6 +527,7 @@ def reset_password():
                 "password": generate_password_hash(password),
                 "token_recuperacion": None,
                 "token_expira": None,
+                "debe_cambiar_password": False,
             }
         },
     )
@@ -553,6 +580,9 @@ def cambiar_password():
                 }
             },
         )
+
+        # Ya no debe volver a salir el modal
+        session["debe_cambiar_password"] = False
 
         flash("Contraseña actualizada correctamente.", "success")
 
