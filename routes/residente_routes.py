@@ -1,9 +1,11 @@
 """Rutas del residente: dashboard, visitantes, creación y edición de visitas."""
 
 import uuid
+
 from datetime import datetime, timedelta
 
 from bson import ObjectId
+
 from flask import (
     Blueprint,
     flash,
@@ -14,6 +16,8 @@ from flask import (
     session,
     url_for,
 )
+
+from werkzeug.security import check_password_hash
 
 from extensions import mongo, socketio
 from utils.auth import login_required, role_required
@@ -28,47 +32,89 @@ resident_bp = Blueprint("resident", __name__, url_prefix="/resident")
 @resident_bp.after_request
 def no_cache(response):
     """Evita que el navegador cachee las páginas del residente."""
+
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+
     response.headers["Pragma"] = "no-cache"
+
     response.headers["Expires"] = "0"
+
     return response
 
 
 # =====================================================
+
 # HELPERS DE COLECCIÓN (según el fraccionamiento del residente logueado)
+
 # =====================================================
 
 
 def _frac_actual():
     """Fraccionamiento del residente logueado (se guarda en sesión al hacer login)."""
+
     return session.get("fraccionamiento")
+
+
+def _sala_guardias():
+    """Sala de Socket.IO con SOLO los guardias del fraccionamiento del residente.
+
+    Debe coincidir con la sala que se crea en app.py (on_connect):
+    f"guardia:{fraccionamiento}" en minúsculas y sin espacios a los lados.
+    """
+
+    return f"guardia:{(_frac_actual() or '').strip().lower()}"
+
+
+def _invalidar_kpis_admin():
+    """Limpia la caché de KPIs del dashboard admin para que, al recargarse
+    en vivo, muestre los números nuevos y no los de hace unos segundos."""
+
+    try:
+        from routes.admin_routes import (  # pylint: disable=import-outside-toplevel
+            _invalidar_cache_kpis,
+        )
+
+        _invalidar_cache_kpis()
+    except Exception:  # pylint: disable=broad-except
+        pass
 
 
 def _mis_visitas():
     """Colección de visitas del fraccionamiento del residente logueado."""
+
     col = coleccion_visitas(mongo.db, _frac_actual())
+
     if col is None:
+
         # Si esto truena es porque el login no guardó session["fraccionamiento"].
+
         raise RuntimeError(
             "No hay fraccionamiento en la sesión. "
             "Asegúrate de guardar session['fraccionamiento'] al hacer login."
         )
+
     return col
 
 
 def _mi_residente_col():
     """Colección de residentes del fraccionamiento del residente logueado."""
+
     col = coleccion_residentes(mongo.db, _frac_actual())
+
     if col is None:
+
         raise RuntimeError(
             "No hay fraccionamiento en la sesión. "
             "Asegúrate de guardar session['fraccionamiento'] al hacer login."
         )
+
     return col
 
 
 # =====================================================
+
 # DASHBOARD RESIDENTE
+
 # =====================================================
 
 
@@ -82,6 +128,28 @@ def dashboard():
     visitas_col = _mis_visitas()
 
     # =============================================
+    # DATOS DEL RESIDENTE
+    # =============================================
+
+    residente = _mi_residente_col().find_one({"_id": ObjectId(residente_id)})
+
+    debe_cambiar_password = False
+
+    if residente:
+        # Si ya tiene el campo en MongoDB, lo respetamos
+        debe_cambiar_password = residente.get("debe_cambiar_password", False)
+
+        # Compatibilidad con residentes creados antes de agregar el campo:
+        # si todavía usan Residente123*, mostrar también el aviso.
+        if not debe_cambiar_password:
+            try:
+                debe_cambiar_password = check_password_hash(
+                    residente.get("password", ""), "Residente123*"
+                )
+            except (ValueError, TypeError):
+                debe_cambiar_password = False
+
+    # =============================================
     # 5 VISITAS MÁS RECIENTES
     # =============================================
 
@@ -89,9 +157,9 @@ def dashboard():
         visitas_col.find({"residente_id": residente_id}).sort("created_at", -1).limit(5)
     )
 
-    # Calcula "no se presentó hoy" para recurrentes UNA sola vez en el
-    # backend, con la misma lógica que usan Mis Visitantes y el guardia.
+    # Calcula "no se presentó hoy" para recurrentes
     _ahora = _ahora_local()
+
     for v in visitas_recientes:
         v["no_presento_hoy"] = visita_no_presentada_hoy(v, _ahora)
 
@@ -123,11 +191,14 @@ def dashboard():
         visitas_dentro=visitas_dentro,
         visitas_finalizadas=visitas_finalizadas,
         visitas_pendientes=visitas_pendientes,
+        debe_cambiar_password=debe_cambiar_password,
     )
 
 
 # =====================================================
+
 # MIS VISITANTES
+
 # =====================================================
 
 
@@ -140,13 +211,17 @@ def visitors():
     visitas_col = _mis_visitas()
 
     # =============================================
+
     # AUTO ABRIR QR
+
     # =============================================
 
     auto_qr = request.args.get("auto_qr")
 
     # =============================================
+
     # PAGINACION Y FILTROS
+
     # =============================================
 
     pagina = int(request.args.get("page", 1))
@@ -181,7 +256,9 @@ def visitors():
         ]
 
     # =============================================
+
     # CONSULTA
+
     # =============================================
 
     total_visitas = visitas_col.count_documents(filtro)
@@ -196,10 +273,15 @@ def visitors():
     )
 
     # Mismo cálculo centralizado que en el dashboard: "no se presentó hoy"
+
     # para visitas recurrentes, calculado una sola vez en el backend para
+
     # que coincida con lo que muestra "Inicio" y el guardia.
+
     _ahora = _ahora_local()
+
     for v in visitas:
+
         v["no_presento_hoy"] = visita_no_presentada_hoy(v, _ahora)
 
     return render_template(
@@ -216,7 +298,9 @@ def visitors():
 
 
 # =====================================================
+
 # CANCELAR QR
+
 # =====================================================
 
 
@@ -233,15 +317,18 @@ def cancelar_qr(token):
     )
 
     if not visita:
+
         return jsonify({"success": False, "message": "Visita no encontrada"}), 404
 
     # No permitir cancelar pases ya utilizados, finalizados o no vigentes
+
     if visita.get("estado") in [
         "pendiente_autorizacion",
         "dentro",
         "salida_registrada",
         "rechazado",
     ] or visita.get("qr_estado") in ["cancelado", "vencido", "rechazado"]:
+
         return (
             jsonify({"success": False, "message": "Este QR ya no puede cancelarse."}),
             409,
@@ -251,13 +338,21 @@ def cancelar_qr(token):
         {"_id": visita["_id"]},
         {"$set": {"qr_estado": "cancelado", "estado": "cancelado"}},
     )
+
+    _invalidar_kpis_admin()
+
     socketio.emit("actualizar_dashboard", to="rol:admin")
-    socketio.emit("actualizar_dashboard", to="rol:guardia")
+
+    # Solo los guardias del fraccionamiento de este residente
+    socketio.emit("actualizar_dashboard", to=_sala_guardias())
+
     return {"success": True}
 
 
 # =====================================================
+
 # EDITAR VISITA
+
 # =====================================================
 
 
@@ -274,10 +369,13 @@ def editar_visita(visita_id):
     )
 
     if not visita:
+
         return redirect(url_for("resident.visitors"))
 
     # ==========================
+
     # BLOQUEAR VISITAS UTILIZADAS
+
     # ==========================
 
     if visita.get("estado") in [
@@ -294,7 +392,9 @@ def editar_visita(visita_id):
     if request.method == "POST":
 
         # ==============================================
+
         # ACTUALIZAR SEGÚN MODALIDAD
+
         # ==============================================
 
         if visita.get("modalidad_visita") == "recurrente":
@@ -305,20 +405,31 @@ def editar_visita(visita_id):
                 or visita.get("dias")
                 or []
             )
+
             hora_desde = request.form.get("hora_desde") or visita.get("hora_desde")
+
             hora_hasta = request.form.get("hora_hasta") or visita.get("hora_hasta")
+
             tipo_recurrente = request.form.get("tipo_recurrente")
+
             fecha_inicio_recurrente = request.form.get("fecha_inicio_recurrente")
+
             fecha_fin_recurrente = request.form.get("fecha_fin_recurrente")
 
             try:
+
                 vigencia_desde = datetime.strptime(fecha_inicio_recurrente, "%Y-%m-%d")
+
             except (TypeError, ValueError):
+
                 vigencia_desde = visita.get("vigencia_desde") or datetime.now()
 
             try:
+
                 vigencia_hasta = datetime.strptime(fecha_fin_recurrente, "%Y-%m-%d")
+
             except (TypeError, ValueError):
+
                 vigencia_hasta = visita.get("vigencia_hasta")
 
             visitas_col.update_one(
@@ -361,12 +472,18 @@ def editar_visita(visita_id):
             )
 
         # ====================================
-        # AVISAR A LOS DASHBOARDS (admin y guardia,
-        # para que se actualicen en vivo sin refrescar)
+
+        # AVISAR A LOS DASHBOARDS (admin y guardias del
+
+        # mismo fraccionamiento, para que se actualicen en vivo)
+
         # ====================================
 
+        _invalidar_kpis_admin()
+
         socketio.emit("actualizar_dashboard", to="rol:admin")
-        socketio.emit("actualizar_dashboard", to="rol:guardia")
+
+        socketio.emit("actualizar_dashboard", to=_sala_guardias())
 
         flash("Visita actualizada correctamente.", "success")
 
@@ -376,7 +493,9 @@ def editar_visita(visita_id):
 
 
 # =====================================================
+
 # CREAR VISITA
+
 # =====================================================
 
 
@@ -387,13 +506,17 @@ def create_visit():
     """Crea una visita temporal o recurrente y genera su token/QR de acceso."""
 
     # =============================================
+
     # OBTENER RESIDENTE (de la colección de su fraccionamiento)
+
     # =============================================
 
     residente = _mi_residente_col().find_one({"_id": ObjectId(session["user_id"])})
 
     # =============================================
+
     # POST
+
     # =============================================
 
     if request.method == "POST":
@@ -401,7 +524,9 @@ def create_visit():
         modalidad = request.form.get("modalidad_visita", "temporal")
 
         # =============================================
+
         # GENERAR TOKEN Y QR
+
         # =============================================
 
         token = str(uuid.uuid4())
@@ -409,7 +534,9 @@ def create_visit():
         qr_path = generate_qr(token, residente["fraccionamiento"])
 
         # =============================================
+
         # GUARDAR IMÁGENES
+
         # =============================================
 
         foto_visitante = guardar_imagen(
@@ -425,23 +552,33 @@ def create_visit():
         )
 
         # =============================================
+
         # VARIABLES BASE (siempre definidas)
+
         # =============================================
 
         vigencia_desde = None
+
         vigencia_hasta = None
 
         dias_autorizados = []
 
         # Campos recurrentes (nombres reales del formulario)
+
         tipo_recurrente = None
+
         hora_desde = None
+
         hora_hasta = None
+
         fecha_inicio_recurrente = None
+
         fecha_fin_recurrente = None
 
         # Compatibilidad con validación / código anterior
+
         hora_programada = None
+
         hora_limite_salida = None
 
         fecha_visita = request.form.get("fecha_visita")
@@ -449,13 +586,17 @@ def create_visit():
         hora_inicio = request.form.get("hora_inicio")
 
         # =============================================
+
         # VISITA RECURRENTE
+
         # =============================================
 
         if modalidad == "recurrente":
 
             # =========================================
+
             # DATOS REALES DEL FORMULARIO
+
             # =========================================
 
             tipo_recurrente = request.form.get("tipo_recurrente")
@@ -471,29 +612,43 @@ def create_visit():
             fecha_fin_recurrente = request.form.get("fecha_fin_recurrente")
 
             # =========================================
+
             # VIGENCIA REAL (según lo que eligió el residente)
+
             # Se guardan como datetime para la validación del QR.
+
             # =========================================
 
             try:
+
                 vigencia_desde = datetime.strptime(fecha_inicio_recurrente, "%Y-%m-%d")
+
             except (TypeError, ValueError):
+
                 vigencia_desde = datetime.now()
 
             try:
+
                 vigencia_hasta = datetime.strptime(fecha_fin_recurrente, "%Y-%m-%d")
+
             except (TypeError, ValueError):
+
                 vigencia_hasta = vigencia_desde + timedelta(days=30)
 
             # =========================================
+
             # COMPATIBILIDAD
+
             # =========================================
 
             hora_programada = hora_desde
+
             hora_inicio = hora_desde
 
             # =========================================
+
             # FECHA BASE: el primer día válido del rango
+
             # =========================================
 
             fecha_visita = fecha_inicio_recurrente or vigencia_desde.strftime(
@@ -501,7 +656,9 @@ def create_visit():
             )
 
         # =============================================
+
         # CREAR OBJETO VISITA
+
         # =============================================
 
         visita = {
@@ -551,13 +708,17 @@ def create_visit():
         }
 
         # =============================================
+
         # GUARDAR EN MONGO (colección de visitas del fraccionamiento)
+
         # =============================================
 
         _mis_visitas().insert_one(visita)
 
         # =============================================
+
         # SOCKET NUEVA VISITA
+
         # =============================================
 
         datos_visita = {
@@ -565,17 +726,27 @@ def create_visit():
             "visitante": visita["nombre_visitante"],
             "residente": visita["residente_nombre"],
         }
+
+        _invalidar_kpis_admin()
+
+        # El admin ve todos los fraccionamientos
         socketio.emit("nueva_visita", datos_visita, to="rol:admin")
-        socketio.emit("nueva_visita", datos_visita, to="rol:guardia")
+
+        # Solo los guardias del fraccionamiento de este residente
+        socketio.emit("nueva_visita", datos_visita, to=_sala_guardias())
 
         # =============================================
+
         # REDIRECCIONAR Y ABRIR QR AUTOMÁTICAMENTE
+
         # =============================================
 
         return redirect(url_for("resident.visitors", auto_qr=token))
 
     # =============================================
+
     # RENDER GET
+
     # =============================================
 
     return render_template("crear_visita.html", residente=residente)

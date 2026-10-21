@@ -1,0 +1,39 @@
+{# Menú lateral del admin. Uso en cada página:
+   {% set active_page = 'dashboard' %}
+   {% include 'partials/sidebar_admin.html' %}
+   Valores: dashboard, accesos, validacion, residentes, guardias, fraccionamientos, incidencias, reportes, configuracion #}
+{% set _ap = active_page | default('') %}
+{% set _dentro = dentro if dentro is defined and dentro else 0 %}
+{% set _inc = total_incidencias if total_incidencias is defined and total_incidencias else (incidencias | length if incidencias is defined and incidencias else 0) %}
+<aside class="rail" id="rail">
+  <div class="brand">
+    <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
+    <div class="brand-txt"><b>AccessQR</b><span>Control de acceso</span></div>
+  </div>
+  <div class="rail-scroll">
+    <div class="nav-label">Operación</div>
+    <a class="nav-item {{ 'active' if _ap == 'dashboard' }}" href="{{ url_for('admin.dashboard') }}"><span class="nav-ico"><i class="fa-solid fa-gauge-high"></i></span><span class="nav-txt">Panel general</span></a>
+    <a class="nav-item {{ 'active' if _ap == 'accesos' }}" href="{{ url_for('admin.accesos') }}"><span class="nav-ico"><i class="fa-solid fa-right-to-bracket"></i></span><span class="nav-txt">Historial de accesos</span>{% if _dentro > 0 %}<span class="nav-badge b-live">{{ _dentro }}</span>{% endif %}</a>
+    <a class="nav-item {{ 'active' if _ap == 'validacion' }}" href="#"><span class="nav-ico"><i class="fa-solid fa-qrcode"></i></span><span class="nav-txt">Validación QR</span></a>
+
+    <div class="nav-label">Administración</div>
+    <a class="nav-item {{ 'active' if _ap == 'residentes' }}" href="{{ url_for('admin.residentes') }}"><span class="nav-ico"><i class="fa-solid fa-users"></i></span><span class="nav-txt">Residentes</span></a>
+    <a class="nav-item {{ 'active' if _ap == 'guardias' }}" href="{{ url_for('admin.guardias') }}"><span class="nav-ico"><i class="fa-solid fa-user-shield"></i></span><span class="nav-txt">Guardias</span></a>
+    <a class="nav-item {{ 'active' if _ap in ['fraccionamientos','configuracion'] }}" href="{{ url_for('admin.configuracion') }}"><span class="nav-ico"><i class="fa-solid fa-city"></i></span><span class="nav-txt">Fraccionamientos</span></a>
+
+    <div class="nav-label">Seguridad</div>
+    <a class="nav-item {{ 'active' if _ap == 'incidencias' }}" href="{{ url_for('admin.incidencias') }}"><span class="nav-ico"><i class="fa-solid fa-triangle-exclamation"></i></span><span class="nav-txt">Incidencias</span>{% if _inc > 0 %}<span class="nav-badge b-alert">{{ _inc }}</span>{% endif %}</a>
+    <a class="nav-item {{ 'active' if _ap == 'reportes' }}" href="{{ url_for('admin.reportes') }}"><span class="nav-ico"><i class="fa-solid fa-file-export"></i></span><span class="nav-txt">Reportes</span></a>
+    <a class="nav-item {{ 'active' if _ap == 'configuracion' }}" href="{{ url_for('admin.configuracion') }}"><span class="nav-ico"><i class="fa-solid fa-gear"></i></span><span class="nav-txt">Configuración</span></a>
+
+    <div class="nav-sep"></div>
+    <a class="nav-item nav-logout" href="{{ url_for('auth.logout') }}"><span class="nav-ico"><i class="fa-solid fa-right-from-bracket"></i></span><span class="nav-txt">Cerrar sesión</span></a>
+  </div>
+  <div class="rail-foot">
+    <div class="rail-user">
+      <div class="ru-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}<span class="ru-status"></span></div>
+      <div class="ru-meta"><b>{{ session.nombre if session and session.nombre else 'Administrador' }}</b><span>Administrador</span></div>
+      <i class="fa-solid fa-ellipsis-vertical"></i>
+    </div>
+  </div>
+</aside>

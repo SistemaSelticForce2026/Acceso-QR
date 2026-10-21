@@ -1,175 +1,229 @@
-{% extends 'layout.html' %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar Residente · AccessQR</title>
 
-{% block extra_css %}
-<style>
-/* ============================================================
-   EDITAR RESIDENTE — mismo lenguaje visual que admin/residentes
-   ============================================================ */
-:root{
-  --bg:#eef0f4; --panel:#fff; --panel-2:#f7f8fb;
-  --ink-900:#0c1322; --ink-700:#243049; --ink-600:#475569;
-  --ink-500:#5b6678; --ink-400:#8a93a6; --ink-300:#aab2c2;
-  --line:#e4e7ef; --line-soft:#eef0f5;
-  --pri-50:#eff4ff; --pri-100:#dbe6ff; --pri-200:#c2d3fb;
-  --pri-500:#3b6ef5; --pri-600:#2563eb; --pri-700:#1d4ed8;
-  --ok:#16a34a; --ok-bg:#e8f6ee; --ok-bd:#c2e6cf;
-  --bad:#d6342c; --bad-bg:#fdeceb; --bad-bd:#f5c8c5;
-  --rad:12px; --rad-sm:9px;
-  --sh-1:0 1px 2px rgba(16,24,40,.05);
-  --sh-2:0 2px 8px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
-  --ease:cubic-bezier(.22,.61,.36,1);
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink-700);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/admin_dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginas/editar_residente.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/sidebar_admin.css') }}">
+</head>
+<body>
 
-/* ===== Shell ===== */
-.er-page{display:flex;flex-direction:column;gap:20px;max-width:860px;width:100%;margin:0 auto;padding:24px 26px 40px}
+<div class="rail-backdrop" id="railBackdrop"></div>
 
-/* ===== Back ===== */
-.er-back{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-500);text-decoration:none;transition:.15s}
-.er-back i{font-size:11px}
-.er-back:hover{color:var(--pri-600)}
+<div class="app">
 
-/* ===== Page head ===== */
-.page-head{display:flex;align-items:flex-start;gap:15px}
-.ph-badge{width:50px;height:50px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;font-size:19px;color:#fff;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));box-shadow:0 8px 18px rgba(37,99,235,.32)}
-.ph-eyebrow{font-size:11px;font-weight:700;color:var(--pri-600);text-transform:uppercase;letter-spacing:.08em;margin:0 0 3px}
-.ph-title{font-size:22px;font-weight:800;color:var(--ink-900);letter-spacing:-.5px;line-height:1.15}
-.ph-sub{font-size:13px;color:var(--ink-500);margin-top:5px;line-height:1.55}
-.ph-name-tag{display:inline-flex;align-items:center;gap:7px;margin-top:8px;background:var(--pri-50);border:1px solid var(--pri-200);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;color:var(--pri-700)}
-.ph-name-tag i{font-size:11px}
+  {% set active_page = 'residentes' %}
+  {% include 'partials/sidebar_admin.html' %}
 
-/* ===== Formulario card ===== */
-.ad-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:22px 24px;box-shadow:var(--sh-2)}
-.section-title{font-size:14px;font-weight:700;color:var(--ink-900);margin:0 0 18px;display:flex;align-items:center;gap:9px;letter-spacing:-.2px}
-.section-title i{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600);flex-shrink:0}
+  <div class="main">
 
-/* ===== Grid de campos ===== */
-.er-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.er-field{display:flex;flex-direction:column;gap:6px}
-.er-field.full{grid-column:1/-1}
-.er-field label{font-size:12px;font-weight:700;color:var(--ink-600);text-transform:uppercase;letter-spacing:.05em}
-.er-field input,.er-field select,.er-field textarea{width:100%;height:44px;border:1.5px solid var(--line);border-radius:var(--rad-sm);background:var(--panel-2);padding:0 14px;font-size:13.5px;color:var(--ink-900);font-family:inherit;outline:none;transition:.16s var(--ease)}
-.er-field input:focus,.er-field select:focus{background:#fff;border-color:var(--pri-500);box-shadow:0 0 0 3px var(--pri-50)}
-.er-field input::placeholder{color:var(--ink-300)}
-.er-field .field-hint{font-size:11.5px;color:var(--ink-400);line-height:1.5;margin-top:2px}
+    <header class="topbar">
+      <button class="burger" id="burger" aria-label="Abrir menú"><i class="fa-solid fa-bars"></i></button>
+      <div class="crumb">
+        <span>Administración</span><i class="fa-solid fa-chevron-right"></i>
+        <a href="{{ url_for('admin.residentes') }}">Residentes</a><i class="fa-solid fa-chevron-right"></i>
+        <b>Editar</b>
+      </div>
+      <div class="top-right">
+        <div class="top-clock"><b id="clk">—</b><span id="dte">—</span></div>
+        <a class="icon-btn" href="{{ url_for('admin.incidencias') }}" aria-label="Incidencias"><i class="fa-regular fa-bell"></i></a>
+        <a class="icon-btn" href="{{ url_for('admin.residentes') }}" aria-label="Volver"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="top-prof">
+          <div class="tp-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
+          <b>{{ session.nombre.split(' ')[0] if session and session.nombre else 'Admin' }}</b>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+      </div>
+    </header>
 
-/* Separador de secciones dentro del form */
-.form-divider{grid-column:1/-1;height:1px;background:var(--line-soft);margin:4px 0}
-.form-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--ink-400);text-transform:uppercase;letter-spacing:.1em;padding-top:4px}
+    <div class="content">
+      <div class="ad-page">
 
-/* ===== Acciones del form ===== */
-.er-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line-soft);flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 18px;border-radius:var(--rad-sm);font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink-700);transition:.16s var(--ease);box-shadow:var(--sh-1);text-decoration:none;cursor:pointer;font-family:inherit}
-.btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
-.btn i{font-size:12px}
-.btn-save{background:var(--pri-600);border-color:var(--pri-600);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
-.btn-save:hover{background:var(--pri-700);border-color:var(--pri-700);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.4)}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+            <div class="flash flash-{{ category if category in ['success','danger','info'] else 'info' }}">
+              <i class="fa-solid {{ 'fa-circle-check' if category=='success' else ('fa-circle-exclamation' if category=='danger' else 'fa-circle-info') }}"></i>
+              {{ msg }}
+            </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
 
-/* ===== Aviso ===== */
-.er-notice{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-radius:var(--rad-sm);border:1px solid var(--pri-200);background:var(--pri-50);font-size:12.5px;color:var(--ink-600);line-height:1.55}
-.er-notice i{color:var(--pri-500);margin-top:1px;flex-shrink:0;font-size:13px}
+        {% set activo = usuario.estado == 'activo' %}
 
-/* ===== Responsive ===== */
-@media(max-width:680px){
-  .er-page{padding:16px 14px 32px}
-  .er-grid{grid-template-columns:1fr}
-  .er-field.full{grid-column:auto}
-  .er-actions{justify-content:stretch}
-  .btn{flex:1;justify-content:center}
-}
-@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
-</style>
-{% endblock %}
+        <!-- ENCABEZADO -->
+        <div class="page-head">
+          <div class="ph-l">
+            <div class="eyebrow">Administración</div>
+            <h1>Editar residente</h1>
+            <p>Actualiza la información del residente registrado en el sistema.</p>
+          </div>
+          <div class="ph-r">
+            <a class="btn" href="{{ url_for('admin.ver_residente', id=usuario._id) }}"><i class="fa-solid fa-eye"></i> Ver perfil</a>
+            <a class="btn" href="{{ url_for('admin.residentes') }}"><i class="fa-solid fa-arrow-left"></i> Volver al directorio</a>
+          </div>
+        </div>
 
-{% block content %}
+        <!-- RESUMEN -->
+        <div class="ad-stats">
+          <div class="ad-stat {{ 'k-ok' if activo else 'k-bad' }}">
+            <div class="ast-top"><p class="ast-label">Estado</p><i class="fa-solid fa-circle-dot ast-ico"></i></div>
+            <p class="ast-num txt">{{ 'Activo' if activo else 'Bloqueado' }}</p>
+            <p class="ast-sub">{{ 'Con acceso al sistema QR' if activo else 'Sin acceso al sistema QR' }}</p>
+          </div>
+          <div class="ad-stat k-info">
+            <div class="ast-top"><p class="ast-label">Fraccionamiento</p><i class="fa-solid fa-city ast-ico"></i></div>
+            <p class="ast-num txt">{{ usuario.fraccionamiento | frac if usuario.fraccionamiento else '—' }}</p>
+            <p class="ast-sub">Domicilio actual</p>
+          </div>
+          <div class="ad-stat k-vio">
+            <div class="ast-top"><p class="ast-label">Vivienda</p><i class="fa-solid fa-house ast-ico"></i></div>
+            <p class="ast-num txt">{{ usuario.privada | title if usuario.privada else '—' }} · Casa {{ usuario.numero_casa or '—' }}</p>
+            <p class="ast-sub">Privada y número</p>
+          </div>
+        </div>
 
-<div class="er-page">
+        <form method="POST">
+        <div class="two-col wide">
 
-  <!-- Back -->
-  <a href="{{ url_for('admin.residentes') }}" class="er-back">
-    <i class="fa-solid fa-arrow-left"></i> Volver al directorio
-  </a>
+          <!-- FORMULARIO -->
+          <div class="ad-card">
+            <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Datos del residente</h2>
+            <p class="rank-sub">Modifica los datos necesarios y guarda los cambios. Todos los campos son obligatorios.</p>
 
-  <!-- Page head -->
-  <div class="page-head">
-    <div class="ph-badge"><i class="fa-solid fa-user-pen"></i></div>
-    <div>
-      <p class="ph-eyebrow">Administración</p>
-      <h1 class="ph-title">Editar residente</h1>
-      <p class="ph-sub">Actualiza la información del residente en el sistema.</p>
-      <div class="ph-name-tag"><i class="fa-solid fa-user"></i> {{ usuario.nombre }}</div>
+            <div class="form-grid">
+
+              <div class="form-label-sec">Datos personales</div>
+
+              <div class="field full">
+                <label for="nombre">Nombre completo <span class="req">*</span></label>
+                <input type="text" id="nombre" name="nombre" value="{{ usuario.nombre }}" required placeholder="Nombre completo del residente">
+              </div>
+
+              <div class="field">
+                <label for="correo">Correo electrónico <span class="req">*</span></label>
+                <input type="email" id="correo" name="correo" value="{{ usuario.correo }}" required placeholder="correo@ejemplo.com">
+                <small>Se usa para iniciar sesión en la app móvil.</small>
+              </div>
+
+              <div class="field">
+                <label for="telefono">Teléfono <span class="req">*</span></label>
+                <input type="text" id="telefono" name="telefono" value="{{ usuario.telefono or '' }}" required inputmode="numeric" placeholder="10 dígitos">
+              </div>
+
+              <div class="form-div"></div>
+              <div class="form-label-sec">Domicilio</div>
+
+              <div class="field full">
+                <label for="fraccionamiento">Fraccionamiento <span class="req">*</span></label>
+                <input type="text" id="fraccionamiento" name="fraccionamiento" value="{{ usuario.fraccionamiento }}" required placeholder="Nombre del fraccionamiento">
+              </div>
+
+              <div class="field">
+                <label for="privada">Privada <span class="req">*</span></label>
+                <input type="text" id="privada" name="privada" value="{{ usuario.privada }}" required placeholder="Nombre de la privada">
+              </div>
+
+              <div class="field">
+                <label for="numero_casa">Número de casa <span class="req">*</span></label>
+                <input type="text" id="numero_casa" name="numero_casa" value="{{ usuario.numero_casa }}" required placeholder="Ej. 14">
+              </div>
+
+            </div>
+
+            <div class="form-actions">
+              <a href="{{ url_for('admin.ver_residente', id=usuario._id) }}" class="btn"><i class="fa-solid fa-xmark"></i> Cancelar</a>
+              <button type="submit" class="btn btn-pri"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
+            </div>
+          </div>
+
+          <!-- LATERAL -->
+          <div class="stack">
+
+            <div class="ad-card">
+              <h2 class="section-title"><i class="fa-solid fa-circle-info"></i> Información del residente</h2>
+              <div class="sys-list">
+                <div class="sys-item">
+                  <div class="sys-info">
+                    <div class="sys-ic"><i class="fa-solid fa-fingerprint"></i></div>
+                    <div class="sys-tx"><p class="sys-name">ID de residente</p><p class="sys-desc mono">{{ usuario._id }}</p></div>
+                  </div>
+                </div>
+                <div class="sys-item">
+                  <div class="sys-info">
+                    <div class="sys-ic ic-info"><i class="fa-solid fa-qrcode"></i></div>
+                    <div class="sys-tx"><p class="sys-name">Accesos QR</p><p class="sys-desc">Puede generar accesos para visitantes y trabajadores.</p></div>
+                  </div>
+                </div>
+                <div class="sys-item">
+                  <div class="sys-info">
+                    <div class="sys-ic ic-ok"><i class="fa-solid fa-mobile-screen"></i></div>
+                    <div class="sys-tx"><p class="sys-name">App móvil</p><p class="sys-desc">Inicia sesión con su correo electrónico.</p></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ad-card">
+              <h2 class="section-title"><i class="fa-solid fa-triangle-exclamation"></i> Antes de guardar</h2>
+              <div class="alert-list">
+                <div class="alert-item a-warning"><i class="fa-solid fa-triangle-exclamation"></i><p>Si cambias el correo, el residente deberá usar el nuevo para iniciar sesión.</p></div>
+                <div class="alert-item a-info"><i class="fa-solid fa-circle-info"></i><p>Los cambios se aplican de inmediato.</p></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        </form>
+
+      </div>
     </div>
+
+    <footer class="app-foot">
+      <div>© 2026 <b>AccessQR</b> · Sistema de control de acceso residencial</div>
+      <div>Última carga <span class="mono" id="syncTime">—</span></div>
+    </footer>
   </div>
-
-  <!-- Aviso informativo -->
-  <div class="er-notice">
-    <i class="fa-solid fa-circle-info"></i>
-    <span>Los cambios se aplican de inmediato. El correo electrónico se usa para el inicio de sesión del residente en la aplicación móvil.</span>
-  </div>
-
-  <!-- Formulario -->
-  <div class="ad-card">
-    <h2 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Datos del residente</h2>
-
-    <form method="POST">
-
-      <div class="er-grid">
-
-        <!-- Datos personales -->
-        <div class="form-section-label">Datos personales</div>
-
-        <div class="er-field full">
-          <label for="nombre">Nombre completo</label>
-          <input type="text" id="nombre" name="nombre" value="{{ usuario.nombre }}" required placeholder="Nombre completo del residente">
-        </div>
-
-        <div class="er-field">
-          <label for="correo">Correo electrónico</label>
-          <input type="email" id="correo" name="correo" value="{{ usuario.correo }}" required placeholder="correo@ejemplo.com">
-          <span class="field-hint">Se usa para iniciar sesión en la app móvil.</span>
-        </div>
-
-        <div class="er-field">
-          <label for="telefono">Teléfono</label>
-          <input type="text" id="telefono" name="telefono" value="{{ usuario.telefono }}" required placeholder="10 dígitos">
-        </div>
-
-        <div class="form-divider"></div>
-
-        <!-- Domicilio -->
-        <div class="form-section-label">Domicilio</div>
-
-        <div class="er-field full">
-          <label for="fraccionamiento">Fraccionamiento</label>
-          <input type="text" id="fraccionamiento" name="fraccionamiento" value="{{ usuario.fraccionamiento }}" required placeholder="Nombre del fraccionamiento">
-        </div>
-
-        <div class="er-field">
-          <label for="privada">Privada</label>
-          <input type="text" id="privada" name="privada" value="{{ usuario.privada }}" required placeholder="Nombre de la privada">
-        </div>
-
-        <div class="er-field">
-          <label for="numero_casa">Número de casa</label>
-          <input type="text" id="numero_casa" name="numero_casa" value="{{ usuario.numero_casa }}" required placeholder="Ej. 14">
-        </div>
-
-      </div>
-
-      <!-- Botones -->
-      <div class="er-actions">
-        <a href="{{ url_for('admin.residentes') }}" class="btn">
-          <i class="fa-solid fa-xmark"></i> Cancelar
-        </a>
-        <button type="submit" class="btn btn-save">
-          <i class="fa-solid fa-check"></i> Guardar cambios
-        </button>
-      </div>
-
-    </form>
-  </div>
-
 </div>
 
-{% endblock %}
+<script>
+(function(){
+  const now=new Date();
+  const t=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const d=now.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'}).replace('.','');
+  const clk=document.getElementById('clk'); if(clk)clk.textContent=t;
+  const dte=document.getElementById('dte'); if(dte)dte.textContent=d;
+  const sy=document.getElementById('syncTime'); if(sy)sy.textContent=t;
+
+  const railEl=document.getElementById('rail'), backdropEl=document.getElementById('railBackdrop');
+  function toggleRail(){ railEl?.classList.toggle('open'); backdropEl?.classList.toggle('open'); }
+  function closeRail(){ railEl?.classList.remove('open'); backdropEl?.classList.remove('open'); }
+  document.getElementById('burger')?.addEventListener('click', toggleRail);
+  backdropEl?.addEventListener('click', closeRail);
+  railEl?.querySelectorAll('.nav-item').forEach(l=>l.addEventListener('click', closeRail));
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeRail(); });
+
+  document.querySelectorAll('.flash').forEach(function(f){
+    setTimeout(function(){ f.style.display='none'; },4000);
+  });
+})();
+</script>
+
+{% if session.user_id %}
+<script>window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};</script>
+<script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
+{% endif %}
+
+</body>
+</html>

@@ -8,272 +8,249 @@
 <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
 <style>
+/* =========================================================
+   VER RESIDENTE — mismo diseño sobrio que dashboard
+========================================================= */
+
 :root{
-  --bg:#eef0f4;--panel:#fff;--panel-2:#f7f8fb;
-  --ink-900:#0c1322;--ink-700:#243049;--ink-600:#475569;
-  --ink-500:#5b6678;--ink-400:#8a93a6;--ink-300:#aab2c2;
-  --line:#e4e7ef;--line-soft:#eef0f5;
-  --pri-50:#eff4ff;--pri-100:#dbe6ff;--pri-200:#c2d3fb;
-  --pri-500:#3b6ef5;--pri-600:#2563eb;--pri-700:#1d4ed8;
-  --ok:#16a34a;--ok-bg:#e8f6ee;--ok-bd:#c2e6cf;
-  --warn:#c2820a;--warn-bg:#fcf3df;--warn-bd:#f0dca6;
-  --bad:#d6342c;--bad-bg:#fdeceb;--bad-bd:#f5c8c5;
-  --info:#0e7490;--info-bg:#e3f4f7;--info-bd:#bce4ec;
-  --vio:#7c3aed;--vio-bg:#f1ecfd;
-  --rail-bg:#0d1424;--rail-bg-2:#111a2e;--rail-ink:#9aa6bf;
-  --rail-ink-2:#5e6b88;--rail-line:#1c2740;
-  --rad:12px;--rad-sm:9px;--rad-lg:16px;
-  --sh-1:0 1px 2px rgba(16,24,40,.05);
-  --sh-2:0 2px 8px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
-  --sh-3:0 12px 30px rgba(13,20,40,.12);
-  --ease:cubic-bezier(.22,.61,.36,1);
-  --rail-w:248px;--top-h:60px;
+  --bg:#f4f5f8; --panel:#fff; --panel-2:#f8f9fb;
+  --ink-900:#111827; --ink-700:#2b3445; --ink-600:#4b5565;
+  --ink-500:#667085; --ink-400:#98a1b2; --ink-300:#c3c9d4;
+  --line:#e5e8ee; --line-soft:#eef0f4;
+
+  --pri:#27407d; --pri-600:#2f4c96; --pri-50:#eef1f9; --pri-100:#dde4f3; --pri-200:#c3cfe8;
+  --ok:#2f7d5b; --ok-bg:#eaf4ef; --ok-bd:#cfe5da;
+  --warn:#a8741a; --warn-bg:#faf3e3; --warn-bd:#ecdcae;
+  --bad:#b4443c; --bad-bg:#fbeeed; --bad-bd:#efcfcc;
+  --info:#2c6e8a; --info-bg:#e9f2f6; --info-bd:#c8dfe8;
+  --vio:#6b4fa3;
+
+  --rail:#0f172a; --rail-ink:#94a0b8; --rail-ink-2:#5b6680; --rail-line:#1e293b;
+  --rad:10px; --rad-sm:8px;
+  --sh:0 1px 2px rgba(16,24,40,.04);
+  --rail-w:244px; --top-h:58px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink-700);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink-700);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
 .mono{font-family:'JetBrains Mono',monospace}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer}
 ::selection{background:var(--pri-100)}
 
-/* SHELL */
+/* ═══ SHELL ═══ */
 .app{display:flex;min-height:100vh}
-.rail{width:var(--rail-w);flex:0 0 var(--rail-w);background:linear-gradient(185deg,var(--rail-bg),var(--rail-bg-2));color:var(--rail-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid #060b16;z-index:30}
+.rail{width:var(--rail-w);flex:0 0 var(--rail-w);background:var(--rail);color:var(--rail-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:30}
 .brand{display:flex;align-items:center;gap:11px;padding:0 20px;height:var(--top-h);border-bottom:1px solid var(--rail-line);flex-shrink:0}
-.brand-mark{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));display:grid;place-items:center;color:#fff;font-size:15px;box-shadow:0 4px 12px rgba(37,99,235,.45),inset 0 1px 0 rgba(255,255,255,.25)}
-.brand-txt b{color:#fff;font-size:14.5px;font-weight:700;letter-spacing:-.2px;display:block;line-height:1.15}
-.brand-txt span{font-size:10.5px;color:var(--rail-ink-2);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
-.rail-scroll{flex:1;overflow-y:auto;padding:14px 12px 20px}
-.rail-scroll::-webkit-scrollbar{width:6px}
-.rail-scroll::-webkit-scrollbar-thumb{background:#1d2942;border-radius:9px}
-.nav-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rail-ink-2);padding:14px 12px 7px}
-.nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:var(--rad-sm);font-size:13.5px;font-weight:500;color:var(--rail-ink);margin-bottom:1px;position:relative;transition:.16s var(--ease)}
-.nav-item i:first-child{width:18px;text-align:center;font-size:14px;color:var(--rail-ink-2);transition:.16s}
-.nav-item:hover{background:#172339;color:#dfe5f2}
-.nav-item:hover i:first-child{color:var(--pri-500)}
-.nav-item.active{background:linear-gradient(90deg,rgba(37,99,235,.18),rgba(37,99,235,.04));color:#fff;font-weight:600}
-.nav-item.active i:first-child{color:var(--pri-500)}
-.nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:22px;border-radius:0 3px 3px 0;background:var(--pri-500)}
-.nav-logout{margin-top:6px;border-top:1px solid var(--rail-line);border-radius:0;padding-top:14px}
-.nav-logout:hover{background:rgba(214,52,44,.12);color:#fca5a5}
-.nav-logout:hover i:first-child{color:#fb7185}
+.brand-mark{width:32px;height:32px;border-radius:8px;background:#fff;color:var(--rail);display:grid;place-items:center;font-size:14px}
+.brand-txt b{color:#fff;font-size:14px;font-weight:600;letter-spacing:-.1px;display:block;line-height:1.2}
+.brand-txt span{font-size:10px;color:var(--rail-ink-2);font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.rail-scroll{flex:1;overflow-y:auto;padding:10px 12px 20px}
+.rail-scroll::-webkit-scrollbar{width:5px}
+.rail-scroll::-webkit-scrollbar-thumb{background:#243049;border-radius:9px}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--rail-ink-2);padding:18px 12px 8px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--rad-sm);font-size:13px;font-weight:500;color:var(--rail-ink);margin-bottom:1px;position:relative}
+.nav-item i:first-child{width:16px;text-align:center;font-size:13px;color:var(--rail-ink-2)}
+.nav-item:hover{background:#18233a;color:#e2e8f3}
+.nav-item.active{background:#1a2742;color:#fff;font-weight:600}
+.nav-item.active i:first-child{color:#fff}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:0 3px 3px 0;background:#fff}
+.nav-logout{margin-top:8px;border-top:1px solid var(--rail-line);border-radius:0;padding-top:14px}
+.nav-logout:hover{background:rgba(180,68,60,.14);color:#f1a9a3}
 .rail-foot{padding:12px;border-top:1px solid var(--rail-line);flex-shrink:0}
-.rail-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--rad-sm);transition:.16s;cursor:pointer}
-.rail-user:hover{background:#172339}
-.ru-av{width:34px;height:34px;border-radius:8px;flex-shrink:0;background:linear-gradient(145deg,#334155,#1e293b);color:#cbd5e1;display:grid;place-items:center;font-weight:700;font-size:13px;border:1px solid #2a3650}
-.ru-meta b{color:#e7ecf6;font-size:12.5px;font-weight:600;display:block;line-height:1.2}
+.rail-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--rad-sm)}
+.ru-av{width:32px;height:32px;border-radius:8px;background:#1e293b;color:#cbd5e1;display:grid;place-items:center;font-weight:600;font-size:12px;border:1px solid #2a3650}
+.ru-meta b{color:#e5eaf3;font-size:12.5px;font-weight:600;display:block;line-height:1.2}
 .ru-meta span{font-size:10.5px;color:var(--rail-ink-2)}
-.rail-user .fa-ellipsis-vertical{margin-left:auto;color:var(--rail-ink-2);font-size:12px}
 
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
-.topbar{height:var(--top-h);position:sticky;top:0;z-index:25;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px}
+.topbar{height:var(--top-h);position:sticky;top:0;z-index:25;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 26px}
 .burger{display:none;background:none;border:none;color:var(--ink-500);font-size:17px}
-.crumb{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-400);font-weight:500}
-.crumb b{color:var(--ink-900);font-weight:700}
-.crumb a{color:var(--ink-400);transition:.15s}
-.crumb a:hover{color:var(--pri-600)}
-.crumb i{font-size:8px;color:var(--ink-300)}
-.top-right{margin-left:auto;display:flex;align-items:center;gap:7px}
-.top-clock{display:flex;flex-direction:column;align-items:flex-end;margin-right:6px;line-height:1.15}
-.top-clock b{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-900);font-weight:600;letter-spacing:-.3px}
-.top-clock span{font-size:10px;color:var(--ink-400);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.icon-btn{width:38px;height:38px;border-radius:var(--rad-sm);border:1px solid var(--line);background:#fff;color:var(--ink-500);display:grid;place-items:center;font-size:14px;position:relative;transition:.16s}
-.icon-btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
-.top-prof{display:flex;align-items:center;gap:9px;padding:5px 10px 5px 6px;border:1px solid var(--line);border-radius:999px;background:#fff;margin-left:4px;transition:.16s}
-.top-prof:hover{border-color:var(--pri-200);box-shadow:var(--sh-1)}
-.tp-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+.crumb{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-400);white-space:nowrap;flex-shrink:0;flex-wrap:wrap}
+.crumb b{color:var(--ink-900);font-weight:600}
+.crumb a:hover{color:var(--pri)}
+.crumb i.fa-chevron-right{font-size:8px;color:var(--ink-300)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.top-clock{display:flex;flex-direction:column;align-items:flex-end;margin-right:8px;line-height:1.2}
+.top-clock b{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-900);font-weight:500}
+.top-clock span{font-size:10px;color:var(--ink-400);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.icon-btn{width:36px;height:36px;border-radius:var(--rad-sm);border:1px solid var(--line);background:#fff;color:var(--ink-500);display:grid;place-items:center;font-size:13px}
+.icon-btn:hover{border-color:var(--pri-200);color:var(--pri);background:var(--pri-50)}
+.top-prof{display:flex;align-items:center;gap:9px;padding:4px 11px 4px 4px;border:1px solid var(--line);border-radius:999px;background:#fff;margin-left:4px}
+.tp-av{width:26px;height:26px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:600}
 .top-prof b{font-size:12.5px;color:var(--ink-900);font-weight:600}
-.top-prof i{font-size:10px;color:var(--ink-400)}
+.top-prof i{font-size:9px;color:var(--ink-400)}
 
-.content{padding:24px 26px 40px;max-width:1640px;width:100%;margin:0 auto}
-footer.app-foot{padding:18px 26px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-400);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:auto}
-footer.app-foot b{color:var(--ink-600)}
+.content{padding:28px 30px 44px;max-width:1600px;width:100%;margin:0 auto}
+footer.app-foot{padding:18px 30px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-400);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:auto;background:#fff}
+footer.app-foot b{color:var(--ink-600);font-weight:600}
 
-/* Componentes */
-.btn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border-radius:var(--rad-sm);font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink-700);transition:.16s var(--ease);box-shadow:var(--sh-1);cursor:pointer}
-.btn:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
-.btn i{font-size:12px}
-.btn-pri{background:var(--pri-600);border-color:var(--pri-600);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
-.btn-pri:hover{background:var(--pri-700);border-color:var(--pri-700);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.4)}
-.btn-ghost{background:transparent;border-color:var(--line);color:var(--ink-600)}
-.btn-ghost:hover{border-color:var(--ink-300);color:var(--ink-900);background:var(--panel-2)}
+/* ═══ PÁGINA ═══ */
+.ad-page{display:flex;flex-direction:column;gap:18px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-bottom:4px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--pri-600);margin-bottom:6px}
+.ph-l h1{font-size:24px;font-weight:700;color:var(--ink-900);letter-spacing:-.5px;line-height:1.15}
+.ph-l p{font-size:13px;color:var(--ink-500);margin-top:6px;max-width:620px;line-height:1.6}
+.ph-r{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 15px;border-radius:var(--rad-sm);font-size:12.5px;font-weight:500;border:1px solid var(--line);background:#fff;color:var(--ink-700);box-shadow:var(--sh);text-decoration:none;cursor:pointer}
+.btn:hover{border-color:var(--pri-200);color:var(--pri);background:var(--pri-50)}
+.btn i{font-size:11.5px}
+.btn-pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn-pri:hover{background:var(--pri-600);border-color:var(--pri-600);color:#fff}
 .btn-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:var(--bad)}
-.btn-danger:hover{background:#fbd9d7;border-color:var(--bad);color:#a8261f}
-.btn-success{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
-.btn-success:hover{background:#c6e9d3;border-color:var(--ok);color:#0d6634}
-.btn-block{width:100%;justify-content:center}
+.btn-danger:hover{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn-warn{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn)}
+.btn-warn:hover{background:var(--warn);border-color:var(--warn);color:#fff}
+.btn-ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
+.btn-ok:hover{background:var(--ok);border-color:var(--ok);color:#fff}
 
-.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap}
-.b-success{background:var(--ok-bg);color:var(--ok)}
-.b-info{background:var(--pri-50);color:var(--pri-700)}
-.b-warning{background:var(--warn-bg);color:var(--warn)}
-.b-danger{background:var(--bad-bg);color:var(--bad)}
-.b-neutral{background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line)}
-.b-vio{background:var(--vio-bg);color:var(--vio)}
+.ad-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:22px;box-shadow:var(--sh)}
+.section-title{font-size:14px;font-weight:600;color:var(--ink-900);margin:0 0 14px;display:flex;align-items:center;gap:9px;letter-spacing:-.1px}
+.section-title i{font-size:12px;color:var(--ink-400)}
 
-.ad-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:20px;box-shadow:var(--sh-2);transition:box-shadow .2s var(--ease)}
-.ad-card:hover{box-shadow:var(--sh-3)}
-.section-title{font-size:14px;font-weight:700;color:var(--ink-900);margin:0 0 16px;display:flex;align-items:center;gap:9px;letter-spacing:-.2px;padding-bottom:14px;border-bottom:1px solid var(--line-soft)}
-.section-title i{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600)}
+/* KPIs */
+.ad-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.ad-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:18px 20px;box-shadow:var(--sh);position:relative}
+.ad-stat::before{content:'';position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 3px 3px 0;background:var(--pri)}
+.ad-stat.k-ok::before{background:var(--ok)}
+.ad-stat.k-bad::before{background:var(--bad)}
+.ad-stat.k-info::before{background:var(--info)}
+.ad-stat.k-warn::before{background:var(--warn)}
+.ad-stat.k-vio::before{background:var(--vio)}
+.ast-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.ast-label{font-size:11px;font-weight:600;color:var(--ink-500);text-transform:uppercase;letter-spacing:.07em;margin:0}
+.ast-ico{font-size:13px;color:var(--ink-300)}
+.ast-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:500;color:var(--ink-900);line-height:1;letter-spacing:-1px;margin:0}
+.ast-num.txt{font-size:18px;font-weight:600;letter-spacing:-.3px;font-family:'Inter',system-ui,sans-serif}
+.ast-sub{font-size:11.5px;color:var(--ink-400);margin:8px 0 0}
 
-/* Página */
-.gd-page{display:flex;flex-direction:column;gap:16px}
+/* Perfil */
+.profile{display:flex;align-items:center;gap:16px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line-soft)}
+.user-avatar{width:56px;height:56px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;color:#fff;font-size:18px;font-weight:600;background:var(--pri)}
+.user-avatar.av-off{background:var(--ink-400)}
+.profile h2{font-size:18px;font-weight:700;color:var(--ink-900);margin:0 0 4px;letter-spacing:-.3px}
+.profile p{font-size:13px;color:var(--ink-500);margin:0 0 10px}
+.profile-badges{display:flex;flex-wrap:wrap;gap:7px}
 
-/* Hero del perfil */
-.profile-hero{background:linear-gradient(135deg,#101a30,#0c1322);border:1px solid #060b16;border-radius:var(--rad-lg);padding:26px;display:flex;align-items:center;gap:22px;position:relative;overflow:hidden;box-shadow:var(--sh-2)}
-.profile-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 88% 0%,rgba(37,99,235,.28),transparent 55%);pointer-events:none}
-.profile-hero::after{content:'';position:absolute;right:-40px;bottom:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.18),transparent 70%);pointer-events:none}
-.hero-av{width:84px;height:84px;border-radius:20px;flex-shrink:0;display:grid;place-items:center;font-size:32px;font-weight:800;color:#fff;background:linear-gradient(145deg,var(--pri-500),var(--pri-700));box-shadow:0 10px 26px rgba(37,99,235,.4),inset 0 1px 0 rgba(255,255,255,.25);position:relative;z-index:1}
-.hero-av.inactivo{background:linear-gradient(145deg,#94a3b8,#64748b);box-shadow:0 10px 26px rgba(100,116,139,.35)}
-.hero-info{position:relative;z-index:1;min-width:0}
-.hero-info h1{font-size:25px;font-weight:800;color:#fff;letter-spacing:-.6px;line-height:1.1;margin:0}
-.hero-info p{font-size:13px;color:#9aa6bf;margin:7px 0 0;line-height:1.5}
-.hero-badges{display:flex;gap:8px;margin-top:13px;flex-wrap:wrap}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#dfe5f2}
-.hero-badge.on{background:rgba(22,163,74,.18);border-color:rgba(22,163,74,.32);color:#4ade80}
-.hero-badge.off{background:rgba(214,52,44,.18);border-color:rgba(214,52,44,.3);color:#fb7185}
-.hero-badge .hb-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;position:relative}
-.hero-badge.on .hb-dot::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid #4ade80;animation:ring 1.8s infinite}
-@keyframes ring{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
-.hero-actions{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap;position:relative;z-index:1}
-.hero-actions .btn{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14);color:#e7ecf6;box-shadow:none}
-.hero-actions .btn:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff}
-.hero-actions .btn-pri{background:var(--pri-600);border-color:var(--pri-600);color:#fff}
-.hero-actions .btn-pri:hover{background:var(--pri-700);border-color:var(--pri-700)}
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.b-success{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-bd)}
+.b-danger{background:var(--bad-bg);color:var(--bad);border-color:var(--bad-bd)}
+.b-info{background:var(--info-bg);color:var(--info);border-color:var(--info-bd)}
+.b-done{background:var(--panel-2);color:var(--ink-500);border-color:var(--line)}
+.badge .badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;background:currentColor}
+.badge i{font-size:10px}
 
-/* Grid */
-.profile-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+/* Lista de datos */
+.sys-list{display:flex;flex-direction:column;gap:0}
+.sys-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-soft)}
+.sys-item:last-child{border-bottom:none}
+.sys-info{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.sys-ic{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:13px;background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line)}
+.sys-tx{min-width:0}
+.sys-tx .lbl{font-size:11px;font-weight:600;color:var(--ink-400);text-transform:uppercase;letter-spacing:.05em;margin:0 0 2px}
+.sys-val{font-size:13px;font-weight:500;color:var(--ink-900);margin:0;word-break:break-all}
+.sys-val.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
 
-/* Lista de info */
-.info-list{display:flex;flex-direction:column}
-.info-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
-.info-row:last-child{border-bottom:none}
-.info-ic{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:14px;background:var(--panel-2);color:var(--ink-500);border:1px solid var(--line-soft)}
-.info-tx{min-width:0;flex:1}
-.info-tx span{display:block;font-size:11px;font-weight:700;color:var(--ink-400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
-.info-tx strong{font-size:13.5px;font-weight:600;color:var(--ink-900);word-break:break-word}
-.info-tx .id-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-600)}
-.copy-mini{margin-left:auto;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink-400);display:grid;place-items:center;font-size:11px;flex-shrink:0;transition:.15s}
-.copy-mini:hover{border-color:var(--pri-500);color:var(--pri-600);background:var(--pri-50)}
-
-.turno-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 11px;border-radius:999px}
-.turno-matutino{background:var(--warn-bg);color:var(--warn)}
-.turno-vespertino{background:var(--info-bg);color:var(--info)}
-.turno-nocturno{background:var(--vio-bg);color:var(--vio)}
-.estado-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 11px;border-radius:999px}
-.estado-pill.on{background:var(--ok-bg);color:var(--ok)}
-.estado-pill.off{background:var(--bad-bg);color:var(--bad)}
+.act-ico{width:32px;height:32px;border-radius:var(--rad-sm);display:inline-grid;place-items:center;border:1px solid var(--line);background:#fff;color:var(--ink-500);font-size:12px;cursor:pointer;flex-shrink:0}
+.act-ico:hover{border-color:var(--pri-200);color:var(--pri);background:var(--pri-50)}
 
 /* Acciones rápidas */
-.qa-list{display:flex;flex-direction:column;gap:10px}
-.qa-note{font-size:12px;color:var(--ink-400);margin:14px 0 0;line-height:1.5;padding-top:14px;border-top:1px solid var(--line-soft)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.qa-list{display:flex;flex-direction:column;gap:8px}
+.qa-list .btn{width:100%;justify-content:center}
+.qa-sep{height:1px;background:var(--line-soft);margin:4px 0}
+.qa-note{font-size:12px;color:var(--ink-400);line-height:1.55;margin:14px 0 0}
 
-/* Capacidades */
-.cap-list{display:flex;flex-direction:column;gap:9px;margin-top:4px}
-.cap-item{display:flex;gap:11px;align-items:center;padding:11px 12px;border-radius:var(--rad-sm);background:var(--panel-2);border:1px solid var(--line-soft)}
-.cap-item .cap-ic{width:32px;height:32px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:12px;background:var(--pri-50);color:var(--pri-600)}
-.cap-item.g .cap-ic{background:var(--ok-bg);color:var(--ok)}
-.cap-item.c .cap-ic{background:var(--info-bg);color:var(--info)}
-.cap-item b{font-size:12.5px;color:var(--ink-900);font-weight:600}
+/* Layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.two-col.wide{grid-template-columns:1.4fr .8fr}
 
-/* Toast */
-.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);display:flex;align-items:center;gap:10px;background:#0c1322;color:#fff;padding:10px 18px;border-radius:999px;box-shadow:var(--sh-3);font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;z-index:9998;transition:.22s var(--ease)}
-.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-.toast i{color:var(--ok)}
+/* Flash */
+.flash{display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:var(--rad-sm);border:1px solid;font-size:13px;font-weight:500}
+.flash-success{background:var(--ok-bg);border-color:var(--ok-bd);color:#1f5c42}
+.flash-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:#88332c}
+.flash-info{background:var(--pri-50);border-color:var(--pri-200);color:var(--pri)}
 
 /* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(9,14,26,.72);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
-.modal-overlay.open{opacity:1;pointer-events:auto}
-.modal-box{background:#fff;border-radius:var(--rad-lg);padding:28px 28px 24px;max-width:420px;width:100%;box-shadow:var(--sh-3);transform:translateY(10px);transition:transform .2s var(--ease)}
-.modal-overlay.open .modal-box{transform:none}
-.modal-ico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:20px;margin:0 auto 16px;background:var(--bad-bg);color:var(--bad)}
-.modal-box h3{text-align:center;font-size:17px;font-weight:700;color:var(--ink-900);margin:0 0 8px;letter-spacing:-.3px}
-.modal-box p{text-align:center;font-size:13px;color:var(--ink-500);margin:0 0 22px;line-height:1.6}
+.modal-overlay{position:fixed;inset:0;background:rgba(17,24,39,.7);z-index:9999;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:var(--rad);padding:26px;max-width:420px;width:100%;box-shadow:0 16px 48px rgba(16,24,40,.2);border:1px solid var(--line)}
+.modal-ico{width:42px;height:42px;border-radius:9px;display:grid;place-items:center;font-size:16px;margin:0 auto 14px}
+.modal-ico.ico-danger{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad-bd)}
+.modal-ico.ico-success{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-bd)}
+.modal-box h3{text-align:center;font-size:16px;font-weight:700;color:var(--ink-900);margin:0 0 8px}
+.modal-box p{text-align:center;font-size:13px;color:var(--ink-500);margin:0 0 20px;line-height:1.6}
 .modal-actions{display:flex;gap:10px}
 .modal-actions .btn{flex:1;justify-content:center}
 
+/* Toast */
+.toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,12px);display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:#111827;color:#fff;font-size:12.5px;font-weight:500;border-radius:999px;box-shadow:0 8px 24px rgba(16,24,40,.18);opacity:0;pointer-events:none;z-index:1200}
+.toast i{color:#7fd1a9}
+.toast.visible{opacity:1;transform:translate(-50%,0)}
+.toast[hidden]{display:none!important}
+
+.rail-backdrop{display:none;position:fixed;inset:0;background:rgba(10,15,28,.5);z-index:29}
+.rail-backdrop.open{display:block}
+
 /* Responsive */
-@media(max-width:1100px){.profile-grid{grid-template-columns:1fr}}
+@media(max-width:1100px){
+  .ad-stats{grid-template-columns:repeat(2,1fr)}
+  .two-col,.two-col.wide{grid-template-columns:1fr}
+}
 @media(max-width:980px){
-  .rail{position:fixed;left:0;transform:translateX(-100%);transition:transform .25s var(--ease);box-shadow:var(--sh-3)}
+  .rail{position:fixed;left:0;transform:translateX(-100%)}
   .rail.open{transform:translateX(0)}
-  .burger{display:inline-grid;place-items:center}
+  .burger{display:inline-grid;place-items:center;position:relative;z-index:31}
 }
 @media(max-width:768px){
-  .content{padding:18px 14px 32px}
+  .content{padding:20px 14px 32px}
   .top-clock{display:none}
-  .profile-hero{flex-direction:column;align-items:flex-start;text-align:left}
-  .hero-actions{margin-left:0;width:100%}
-  .hero-actions .btn{flex:1;justify-content:center}
+  .ad-stats{grid-template-columns:1fr}
+  .ph-r{width:100%}.btn{flex:1;justify-content:center}
+  .profile{flex-direction:column;text-align:center}
+  .profile-badges{justify-content:center}
 }
-@media(max-width:520px){.modal-actions{flex-direction:column}}
-@media(prefers-reduced-motion:reduce){*,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* Alertas (capacidades) */
+.alert-list{display:flex;flex-direction:column;gap:8px;margin:0}
+.alert-item{display:flex;gap:11px;align-items:flex-start;padding:11px 14px;border-radius:var(--rad-sm);border:1px solid;font-size:12.5px;line-height:1.5}
+.alert-item i{margin-top:2px;flex-shrink:0;font-size:12px}
+.alert-item p{margin:0}
+.a-info{background:var(--info-bg);border-color:var(--info-bd);color:#1f5268}.a-info i{color:var(--info)}
+.a-warning{background:var(--warn-bg);border-color:var(--warn-bd);color:#7a5511}.a-warning i{color:var(--warn)}
+.a-danger{background:var(--bad-bg);border-color:var(--bad-bd);color:#88332c}.a-danger i{color:var(--bad)}
+
+/* Estático */
+*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/sidebar_admin.css') }}">
 </head>
 <body>
 
+<div class="rail-backdrop" id="railBackdrop"></div>
+
 <div class="app">
 
-  <!-- SIDEBAR -->
-  <aside class="rail" id="rail">
-    <div class="brand">
-      <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
-      <div class="brand-txt"><b>AccessQR</b><span>Control de acceso</span></div>
-    </div>
-    <div class="rail-scroll">
-      <div class="nav-group">
-        <div class="nav-label">Operación</div>
-        <a class="nav-item" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Panel general</a>
-        <a class="nav-item" href="{{ url_for('admin.accesos') }}"><i class="fa-solid fa-right-to-bracket"></i> Historial de accesos</a>
-        <a class="nav-item" href="#"><i class="fa-solid fa-qrcode"></i> Validación QR</a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">Administración</div>
-        <a class="nav-item" href="{{ url_for('admin.residentes') }}"><i class="fa-solid fa-users"></i> Residentes</a>
-        <a class="nav-item active" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-user-shield"></i> Guardias</a>
-        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-city"></i> Fraccionamientos</a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">Seguridad</div>
-        <a class="nav-item" href="{{ url_for('admin.incidencias') }}"><i class="fa-solid fa-triangle-exclamation"></i> Incidencias</a>
-        <a class="nav-item" href="{{ url_for('admin.reportes') }}"><i class="fa-solid fa-file-export"></i> Reportes</a>
-        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-gear"></i> Configuración</a>
-        <a class="nav-item nav-logout" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
-      </div>
-    </div>
-    <div class="rail-foot">
-      <div class="rail-user">
-        <div class="ru-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
-        <div class="ru-meta"><b>{{ session.nombre if session and session.nombre else 'Administrador' }}</b><span>Administrador</span></div>
-        <i class="fa-solid fa-ellipsis-vertical"></i>
-      </div>
-    </div>
-  </aside>
+  {% set active_page = 'guardias' %}
+  {% include 'partials/sidebar_admin.html' %}
 
-  <!-- PRINCIPAL -->
   <div class="main">
 
     <header class="topbar">
-      <button class="burger" id="burger"><i class="fa-solid fa-bars"></i></button>
-      <div class="crumb">
-        <span>Administración</span>
-        <i class="fa-solid fa-chevron-right"></i>
-        <a href="{{ url_for('admin.guardias') }}">Guardias</a>
-        <i class="fa-solid fa-chevron-right"></i>
-        <b>Detalle</b>
-      </div>
+      <button class="burger" id="burger" aria-label="Abrir menú"><i class="fa-solid fa-bars"></i></button>
+      <div class="crumb"><span>Administración</span><i class="fa-solid fa-chevron-right"></i><a href="{{ url_for('admin.guardias') }}">Guardias</a><i class="fa-solid fa-chevron-right"></i><b>Detalle</b></div>
       <div class="top-right">
         <div class="top-clock"><b id="clk">—</b><span id="dte">—</span></div>
-        <a class="icon-btn" href="{{ url_for('admin.incidencias') }}"><i class="fa-regular fa-bell"></i></a>
-        <a class="icon-btn" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-arrow-left"></i></a>
+        <a class="icon-btn" href="{{ url_for('admin.incidencias') }}" aria-label="Incidencias"><i class="fa-regular fa-bell"></i></a>
+        <a class="icon-btn" href="{{ url_for('admin.guardias') }}" aria-label="Volver"><i class="fa-solid fa-arrow-left"></i></a>
         <div class="top-prof">
           <div class="tp-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
           <b>{{ session.nombre.split(' ')[0] if session and session.nombre else 'Admin' }}</b>
@@ -283,140 +260,117 @@ footer.app-foot b{color:var(--ink-600)}
     </header>
 
     <div class="content">
-      <div class="gd-page">
+      <div class="ad-page">
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, msg in messages %}
-            <div class="badge b-info" style="padding:12px 15px;border-radius:9px;font-size:13px">
-              <i class="fa-solid fa-circle-info"></i> {{ msg }}
+            <div class="flash flash-{{ category if category in ['success','danger','info'] else 'info' }}">
+              <i class="fa-solid {{ 'fa-circle-check' if category=='success' else ('fa-circle-exclamation' if category=='danger' else 'fa-circle-info') }}"></i>
+              {{ msg }}
             </div>
             {% endfor %}
           {% endif %}
         {% endwith %}
 
-        <!-- HERO -->
-        <div class="profile-hero">
-          <div class="hero-av {% if guardia.estado != 'activo' %}inactivo{% endif %}">{{ guardia.nombre[0] | upper if guardia.nombre else 'G' }}</div>
-          <div class="hero-info">
-            <h1>{{ guardia.nombre }}</h1>
-            <p>Guardia de seguridad registrado dentro del sistema residencial.</p>
-            <div class="hero-badges">
-              {% if guardia.estado == 'activo' %}
-              <span class="hero-badge on"><span class="hb-dot"></span> Activo</span>
-              {% else %}
-              <span class="hero-badge off"><span class="hb-dot"></span> Inactivo</span>
-              {% endif %}
-              <span class="hero-badge"><i class="fa-solid fa-user-shield"></i> Personal de vigilancia</span>
-            </div>
+        <div class="page-head">
+          <div class="ph-l">
+            <div class="eyebrow">Administración</div>
+            <h1>Detalle de guardia</h1>
+            <p>Información del personal de vigilancia, estado operativo y acciones disponibles.</p>
           </div>
-          <div class="hero-actions">
+          <div class="ph-r">
+            <a class="btn" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-arrow-left"></i> Volver al listado</a>
+            <a class="btn btn-pri" href="{{ url_for('admin.editar_guardia', id=guardia._id) }}"><i class="fa-solid fa-pen"></i> Editar guardia</a>
           </div>
         </div>
 
-        <!-- GRID -->
-        <div class="profile-grid">
+        {% set activo = guardia.estado == 'activo' %}
+        <div class="ad-stats">
+          <div class="ad-stat {{ 'k-ok' if activo else 'k-bad' }}">
+            <div class="ast-top"><p class="ast-label">Estado</p><i class="fa-solid fa-circle-dot ast-ico"></i></div>
+            <p class="ast-num txt">{{ 'Activo' if activo else 'Inactivo' }}</p>
+            <p class="ast-sub">{{ 'Con acceso al módulo' if activo else 'Sin acceso al módulo' }}</p>
+          </div>
+          <div class="ad-stat k-warn">
+            <div class="ast-top"><p class="ast-label">Turno</p><i class="fa-solid fa-clock ast-ico"></i></div>
+            <p class="ast-num txt">{{ guardia.turno | title if guardia.turno else '—' }}</p>
+            <p class="ast-sub">Turno asignado</p>
+          </div>
+          <div class="ad-stat k-info">
+            <div class="ast-top"><p class="ast-label">Teléfono</p><i class="fa-solid fa-phone ast-ico"></i></div>
+            <p class="ast-num txt">{{ guardia.telefono or '—' }}</p>
+            <p class="ast-sub">Contacto directo</p>
+          </div>
+          <div class="ad-stat k-vio">
+            <div class="ast-top"><p class="ast-label">Rol</p><i class="fa-solid fa-user-shield ast-ico"></i></div>
+            <p class="ast-num txt">Guardia</p>
+            <p class="ast-sub">Personal de vigilancia</p>
+          </div>
+        </div>
 
-          <!-- INFORMACIÓN GENERAL -->
+        <div class="two-col wide">
+
           <div class="ad-card">
+            <div class="profile">
+              <div class="user-avatar {% if not activo %}av-off{% endif %}">{{ guardia.nombre[:2] | upper if guardia.nombre else 'GU' }}</div>
+              <div>
+                <h2>{{ guardia.nombre }}</h2>
+                <p>Guardia de seguridad registrado en el sistema.</p>
+                <div class="profile-badges">
+                  {% if activo %}<span class="badge b-success"><span class="badge-dot"></span> Activo</span>{% else %}<span class="badge b-done"><span class="badge-dot"></span> Inactivo</span>{% endif %}
+                  <span class="badge b-info"><i class="fa-solid fa-user-shield"></i> Personal de vigilancia</span>
+                </div>
+              </div>
+            </div>
             <h2 class="section-title"><i class="fa-solid fa-id-card"></i> Información general</h2>
-            <div class="info-list">
-
-              <div class="info-row">
-                <div class="info-ic"><i class="fa-solid fa-user"></i></div>
-                <div class="info-tx"><span>Nombre completo</span><strong>{{ guardia.nombre }}</strong></div>
+            <div class="sys-list">
+              <div class="sys-item">
+                <div class="sys-info"><div class="sys-ic"><i class="fa-solid fa-envelope"></i></div><div class="sys-tx"><p class="lbl">Correo electrónico</p><p class="sys-val">{{ guardia.correo }}</p></div></div>
+                <button type="button" class="act-ico" data-copy="{{ guardia.correo }}" title="Copiar"><i class="fa-regular fa-copy"></i></button>
               </div>
-
-              <div class="info-row">
-                <div class="info-ic"><i class="fa-solid fa-envelope"></i></div>
-                <div class="info-tx"><span>Correo electrónico</span><strong>{{ guardia.correo }}</strong></div>
-                <button type="button" class="copy-mini" data-copy="{{ guardia.correo }}" title="Copiar correo"><i class="fa-regular fa-copy"></i></button>
+              <div class="sys-item">
+                <div class="sys-info"><div class="sys-ic"><i class="fa-solid fa-phone"></i></div><div class="sys-tx"><p class="lbl">Teléfono</p><p class="sys-val">{{ guardia.telefono or '—' }}</p></div></div>
               </div>
-
-              <div class="info-row">
-                <div class="info-ic"><i class="fa-solid fa-phone"></i></div>
-                <div class="info-tx"><span>Teléfono</span><strong>{{ guardia.telefono }}</strong></div>
+              <div class="sys-item">
+                <div class="sys-info"><div class="sys-ic"><i class="fa-solid fa-clock"></i></div><div class="sys-tx"><p class="lbl">Turno asignado</p><p class="sys-val">{{ guardia.turno | title if guardia.turno else '—' }}</p></div></div>
               </div>
-
-              <div class="info-row">
-                <div class="info-ic"><i class="fa-solid fa-clock"></i></div>
-                <div class="info-tx">
-                  <span>Turno asignado</span>
-                  {% set t = (guardia.turno or '') | lower %}
-                  {% if t == 'matutino' %}
-                  <strong><span class="turno-pill turno-matutino"><i class="fa-solid fa-sun"></i> Matutino</span></strong>
-                  {% elif t == 'vespertino' %}
-                  <strong><span class="turno-pill turno-vespertino"><i class="fa-solid fa-cloud-sun"></i> Vespertino</span></strong>
-                  {% elif t == 'nocturno' %}
-                  <strong><span class="turno-pill turno-nocturno"><i class="fa-solid fa-moon"></i> Nocturno</span></strong>
-                  {% else %}
-                  <strong>{{ guardia.turno or '—' }}</strong>
-                  {% endif %}
-                </div>
+              <div class="sys-item">
+                <div class="sys-info"><div class="sys-ic"><i class="fa-solid fa-user-tag"></i></div><div class="sys-tx"><p class="lbl">Rol dentro del sistema</p><p class="sys-val">Guardia de seguridad</p></div></div>
               </div>
-
-              <div class="info-row">
-                <div class="info-ic"><i class="fa-solid fa-user-tag"></i></div>
-                <div class="info-tx"><span>Rol dentro del sistema</span><strong>Guardia de seguridad</strong></div>
+              <div class="sys-item">
+                <div class="sys-info"><div class="sys-ic"><i class="fa-solid fa-id-badge"></i></div><div class="sys-tx"><p class="lbl">ID de guardia</p><p class="sys-val mono">{{ guardia._id }}</p></div></div>
+                <button type="button" class="act-ico" data-copy="{{ guardia._id }}" title="Copiar"><i class="fa-regular fa-copy"></i></button>
               </div>
-
-              <div class="info-row">
-                <div class="info-ic"><i class="fa-solid fa-circle-dot"></i></div>
-                <div class="info-tx">
-                  <span>Estado operativo</span>
-                  {% if guardia.estado == 'activo' %}
-                  <strong><span class="estado-pill on"><i class="fa-solid fa-circle-check"></i> Activo</span></strong>
-                  {% else %}
-                  <strong><span class="estado-pill off"><i class="fa-solid fa-ban"></i> Inactivo</span></strong>
-                  {% endif %}
-                </div>
-              </div>
-
-              <div class="info-row">
-                <div class="info-ic"><i class="fa-solid fa-id-badge"></i></div>
-                <div class="info-tx"><span>ID de guardia</span><strong class="id-val">{{ guardia._id }}</strong></div>
-                <button type="button" class="copy-mini" data-copy="{{ guardia._id }}" title="Copiar ID"><i class="fa-regular fa-copy"></i></button>
-              </div>
-
             </div>
           </div>
 
-          <!-- COLUMNA DERECHA -->
-          <div style="display:flex;flex-direction:column;gap:16px">
-
-            <!-- ACCIONES RÁPIDAS -->
+          <div class="stack">
             <div class="ad-card">
               <h2 class="section-title"><i class="fa-solid fa-bolt"></i> Acciones rápidas</h2>
               <div class="qa-list">
-                <a href="{{ url_for('admin.editar_guardia', id=guardia._id) }}" class="btn btn-pri btn-block"><i class="fa-solid fa-pen"></i> Editar información</a>
-
-                {% if guardia.estado == 'activo' %}
-                <button type="button" class="btn btn-danger btn-block"
+                <a class="btn btn-pri" href="{{ url_for('admin.editar_guardia', id=guardia._id) }}"><i class="fa-solid fa-pen"></i> Editar información</a>
+                {% if activo %}
+                <button type="button" class="btn btn-danger" data-tipo="danger" data-titulo="Confirmar desactivación" data-boton="Sí, desactivar"
                         data-confirm="¿Deseas desactivar a {{ guardia.nombre }}? Perderá el acceso al módulo de caseta."
-                        data-href="{{ url_for('admin.desactivar_guardia', id=guardia._id) }}">
-                  <i class="fa-solid fa-ban"></i> Desactivar guardia
-                </button>
+                        data-href="{{ url_for('admin.desactivar_guardia', id=guardia._id) }}"><i class="fa-solid fa-ban"></i> Desactivar guardia</button>
                 {% else %}
-                <a href="{{ url_for('admin.activar_guardia', id=guardia._id) }}" class="btn btn-success btn-block">
-                  <i class="fa-solid fa-circle-check"></i> Activar guardia
-                </a>
+                <button type="button" class="btn btn-ok" data-tipo="success" data-titulo="Confirmar activación" data-boton="Sí, activar"
+                        data-confirm="¿Deseas activar a {{ guardia.nombre }}? Recuperará el acceso al módulo de caseta."
+                        data-href="{{ url_for('admin.activar_guardia', id=guardia._id) }}"><i class="fa-solid fa-circle-check"></i> Activar guardia</button>
                 {% endif %}
-
-                <a href="{{ url_for('admin.guardias') }}" class="btn btn-ghost btn-block"><i class="fa-solid fa-arrow-left"></i> Volver al listado</a>
               </div>
-              <p class="qa-note">Las acciones de estado afectan de inmediato el acceso del guardia al módulo de caseta.</p>
+              <p class="qa-note">Los cambios de estado afectan de inmediato el acceso del guardia al módulo de caseta.</p>
             </div>
 
-            <!-- CAPACIDADES -->
             <div class="ad-card">
               <h2 class="section-title"><i class="fa-solid fa-list-check"></i> Capacidades</h2>
-              <div class="cap-list">
-                <div class="cap-item"><div class="cap-ic"><i class="fa-solid fa-qrcode"></i></div><b>Validación de códigos QR</b></div>
-                <div class="cap-item g"><div class="cap-ic"><i class="fa-solid fa-door-open"></i></div><b>Registro de entradas y salidas</b></div>
-                <div class="cap-item c"><div class="cap-ic"><i class="fa-solid fa-users-viewfinder"></i></div><b>Monitoreo de visitantes</b></div>
+              <div class="alert-list">
+                <div class="alert-item a-info"><i class="fa-solid fa-qrcode"></i><p>Validación de códigos QR</p></div>
+                <div class="alert-item a-info"><i class="fa-solid fa-door-open"></i><p>Registro de entradas y salidas</p></div>
+                <div class="alert-item a-info"><i class="fa-solid fa-users-viewfinder"></i><p>Monitoreo de visitantes</p></div>
               </div>
             </div>
-
           </div>
 
         </div>
@@ -426,66 +380,80 @@ footer.app-foot b{color:var(--ink-600)}
 
     <footer class="app-foot">
       <div>© 2026 <b>AccessQR</b> · Sistema de control de acceso residencial</div>
-      <div>Última actualización <span class="mono" id="syncTime">—</span></div>
+      <div>Última carga <span class="mono" id="syncTime">—</span></div>
     </footer>
   </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true">
   <div class="modal-box">
-    <div class="modal-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
-    <h3>Confirmar desactivación</h3>
+    <div class="modal-ico ico-danger" id="modalIco"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h3 id="modalTitle">Confirmar acción</h3>
     <p id="modalMsg">¿Estás seguro?</p>
     <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" id="modalCancel">Cancelar</button>
-      <a href="#" class="btn btn-danger" id="modalConfirm">Sí, desactivar</a>
+      <button type="button" class="btn" id="modalCancel">Cancelar</button>
+      <a href="#" class="btn btn-danger" id="modalConfirm">Sí, continuar</a>
     </div>
   </div>
 </div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"><i class="fa-solid fa-check"></i> <span id="toastText"></span></div>
+<div class="toast" id="toast" hidden><i class="fa-solid fa-check"></i> <span id="toastText"></span></div>
 
 <script>
 (function(){
-  function tick(){
-    const now=new Date();
-    const clk=document.getElementById('clk'),dte=document.getElementById('dte'),sy=document.getElementById('syncTime');
-    if(clk)clk.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    if(dte)dte.textContent=now.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'}).replace('.','');
-    if(sy)sy.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-  }
-  tick(); setInterval(tick,1000);
-  document.getElementById('burger')?.addEventListener('click',()=>document.getElementById('rail').classList.toggle('open'));
+  const now=new Date();
+  const t=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const d=now.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'}).replace('.','');
+  const clk=document.getElementById('clk'); if(clk)clk.textContent=t;
+  const dte=document.getElementById('dte'); if(dte)dte.textContent=d;
+  const sy=document.getElementById('syncTime'); if(sy)sy.textContent=t;
+
+  const railEl=document.getElementById('rail'), backdropEl=document.getElementById('railBackdrop');
+  function toggleRail(){ railEl?.classList.toggle('open'); backdropEl?.classList.toggle('open'); }
+  function closeRail(){ railEl?.classList.remove('open'); backdropEl?.classList.remove('open'); }
+  document.getElementById('burger')?.addEventListener('click', toggleRail);
+  backdropEl?.addEventListener('click', closeRail);
+  railEl?.querySelectorAll('.nav-item').forEach(l=>l.addEventListener('click', closeRail));
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeRail(); });
 
   let toastTimer;
   function toast(msg){
-    const t=document.getElementById('toast'),s=document.getElementById('toastText');
-    if(!t)return; s.textContent=msg; t.classList.add('show');
-    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+    const el=document.getElementById('toast'), s=document.getElementById('toastText');
+    if(!el) return; s.textContent=msg; el.hidden=false; el.classList.add('visible');
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ el.classList.remove('visible'); el.hidden=true; },1800);
   }
   document.querySelectorAll('[data-copy]').forEach(btn=>{
-    btn.addEventListener('click',()=>{ navigator.clipboard?.writeText(btn.dataset.copy||''); toast('Copiado al portapapeles'); });
+    btn.addEventListener('click', ()=>{ navigator.clipboard?.writeText(btn.dataset.copy||''); toast('Copiado al portapapeles'); });
   });
 
-  // Modal desactivar
   const overlay=document.getElementById('modalOverlay');
-  const modalMsg=document.getElementById('modalMsg');
-  const modalConfirm=document.getElementById('modalConfirm');
-  document.querySelectorAll('[data-confirm]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      modalMsg.textContent=btn.dataset.confirm||'¿Estás seguro?';
-      modalConfirm.href=btn.dataset.href||'#';
-      overlay.classList.add('open');
-    });
+  const modalIco=document.getElementById('modalIco'), modalTitle=document.getElementById('modalTitle');
+  const modalMsg=document.getElementById('modalMsg'), modalConfirm=document.getElementById('modalConfirm');
+  function cerrarModal(){ overlay.classList.remove('open'); }
+  document.querySelectorAll('[data-confirm]').forEach(btn=>btn.addEventListener('click', ()=>{
+    const ok=(btn.dataset.tipo||'')==='success';
+    modalIco.className='modal-ico '+(ok?'ico-success':'ico-danger');
+    modalIco.innerHTML='<i class="fa-solid '+(ok?'fa-circle-check':'fa-triangle-exclamation')+'"></i>';
+    modalTitle.textContent=btn.dataset.titulo||'Confirmar acción';
+    modalMsg.textContent=btn.dataset.confirm||'¿Estás seguro?';
+    modalConfirm.href=btn.dataset.href||'#';
+    modalConfirm.textContent=btn.dataset.boton||'Sí, continuar';
+    modalConfirm.className='btn '+(ok?'btn-pri':'btn-danger');
+    overlay.classList.add('open');
+  }));
+  document.getElementById('modalCancel')?.addEventListener('click', cerrarModal);
+  overlay?.addEventListener('click', e=>{ if(e.target===overlay) cerrarModal(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') cerrarModal(); });
+
+  document.querySelectorAll('.flash').forEach(function(f){
+    setTimeout(function(){ f.style.display='none'; },4000);
   });
-  function cerrar(){ overlay.classList.remove('open'); }
-  document.getElementById('modalCancel')?.addEventListener('click',cerrar);
-  overlay?.addEventListener('click',e=>{ if(e.target===overlay)cerrar(); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape')cerrar(); });
 })();
 </script>
+
+{% if session.user_id %}
+<script>window.TIEMPO_INACTIVIDAD_MS = {{ tiempo_inactividad_ms }};</script>
+<script src="{{ url_for('static', filename='js/inactivity.js') }}"></script>
+{% endif %}
 
 </body>
 </html>

@@ -219,46 +219,14 @@ footer.app-foot b{color:var(--ink-600)}
 }
 @media(prefers-reduced-motion:reduce){*,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/componentes/sidebar_admin.css') }}">
 </head>
 <body>
 
 <div class="app">
 
-  <!-- ════════ SIDEBAR ════════ -->
-  <aside class="rail" id="rail">
-    <div class="brand">
-      <div class="brand-mark"><i class="fa-solid fa-shield-halved"></i></div>
-      <div class="brand-txt"><b>AccessQR</b><span>Control de acceso</span></div>
-    </div>
-    <div class="rail-scroll">
-      <div class="nav-group">
-        <div class="nav-label">Operación</div>
-        <a class="nav-item" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Panel general</a>
-        <a class="nav-item" href="{{ url_for('admin.accesos') }}"><i class="fa-solid fa-right-to-bracket"></i> Historial de accesos</a>
-        <a class="nav-item" href="#"><i class="fa-solid fa-qrcode"></i> Validación QR</a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">Administración</div>
-        <a class="nav-item" href="{{ url_for('admin.residentes') }}"><i class="fa-solid fa-users"></i> Residentes</a>
-        <a class="nav-item active" href="{{ url_for('admin.guardias') }}"><i class="fa-solid fa-user-shield"></i> Guardias</a>
-        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-city"></i> Fraccionamientos</a>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">Seguridad</div>
-        <a class="nav-item" href="{{ url_for('admin.incidencias') }}"><i class="fa-solid fa-triangle-exclamation"></i> Incidencias</a>
-        <a class="nav-item" href="{{ url_for('admin.reportes') }}"><i class="fa-solid fa-file-export"></i> Reportes</a>
-        <a class="nav-item" href="{{ url_for('admin.configuracion') }}"><i class="fa-solid fa-gear"></i> Configuración</a>
-        <a class="nav-item nav-logout" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
-      </div>
-    </div>
-    <div class="rail-foot">
-      <div class="rail-user">
-        <div class="ru-av">{{ (session.nombre[0] | upper) if session and session.nombre else 'A' }}</div>
-        <div class="ru-meta"><b>{{ session.nombre if session and session.nombre else 'Administrador' }}</b><span>Administrador</span></div>
-        <i class="fa-solid fa-ellipsis-vertical"></i>
-      </div>
-    </div>
-  </aside>
+  {% set active_page = 'guardias' %}
+  {% include 'partials/sidebar_admin.html' %}
 
   <!-- ════════ PRINCIPAL ════════ -->
   <div class="main">

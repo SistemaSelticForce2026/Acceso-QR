@@ -1,28 +1,34 @@
-"""Rutas de autenticación: registro, login, recuperación de contraseña y logout."""
+"""Rutas de autenticación: login, captcha, recuperación/cambio de contraseña y logout.
 
+Las cuentas de residentes y guardias las da de alta el administrador.
+"""
+
+import hashlib
+import hmac
+import io
 import random
 from datetime import datetime, timedelta
 
 from bson import ObjectId
 from flask import (
     Blueprint,
+    current_app,
     flash,
     jsonify,
     redirect,
     render_template,
     request,
+    send_file,
     session,
     url_for,
 )
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from extensions import mongo
 from utils.fraccionamientos import (
     buscar_login,
     coleccion_residentes,
-    correo_ya_existe,
-    es_fraccionamiento_valido,
-    obtener_fraccionamientos,
 )
 
 # ==================
@@ -30,6 +36,13 @@ from utils.fraccionamientos import (
 # ==================
 
 auth_bp = Blueprint("auth", __name__)
+
+# Captcha sensible a mayúsculas/minúsculas. Se excluyen los caracteres que se
+# ven igual en ambos casos (c, o, s, v, w, x, z) y los confusables
+# (i, l, I, O, 0, 1).
+CAPTCHA_MAYUS = "ABDEFGHJKLMNPQRTUY"
+CAPTCHA_MINUS = "abdefghjkmnpqrtuy"
+CAPTCHA_DIGITOS = "23456789"
 
 # ================
 # INICIO
@@ -44,88 +57,93 @@ def index():
 
 
 # =======================
-# REGISTRO RESIDENTE
+# CAPTCHA (imagen)
 # =======================
 
 
-@auth_bp.route("/register", methods=["GET", "POST"])
-def register():
-    """Registra un nuevo residente validando correo, casa y fraccionamiento."""
+def _hash_captcha(texto):
+    """Devuelve un HMAC del captcha para no guardar el texto plano en la cookie."""
 
-    if request.method == "POST":
+    clave = current_app.secret_key
+    if isinstance(clave, str):
+        clave = clave.encode("utf-8")
+    return hmac.new(clave, texto.encode("utf-8"), hashlib.sha256).hexdigest()
 
-        nombre = request.form["nombre"].strip()
-        correo = request.form["correo"].strip()
-        telefono = request.form["telefono"].strip()
-        password = request.form["password"]
-        confirm_password = request.form["confirm_password"]
-        fraccionamiento = request.form["fraccionamiento"].strip().lower()
-        privada = request.form["privada"].strip().lower()
-        numero_casa = str(request.form["numero_casa"]).strip()
 
-        if password != confirm_password:
-            flash(
-                "Las contraseñas no coinciden. Por favor, verifica e intenta de nuevo.",
-                "danger",
-            )
-            return redirect(url_for("auth.register"))
+def _cargar_fuente(tamano=30):
+    """Intenta cargar una fuente TrueType; si no existe, usa la de Pillow."""
 
-        if not es_fraccionamiento_valido(mongo.db, fraccionamiento):
-            flash("Selecciona un fraccionamiento válido.", "danger")
-            return redirect(url_for("auth.register"))
+    for nombre in ("DejaVuSans-Bold.ttf", "arialbd.ttf", "Arial.ttf"):
+        try:
+            return ImageFont.truetype(nombre, tamano)
+        except OSError:
+            continue
+    try:
+        return ImageFont.load_default(size=tamano)  # Pillow >= 10.1
+    except TypeError:
+        return ImageFont.load_default()
 
-        residentes_col = coleccion_residentes(mongo.db, fraccionamiento)
 
-        if correo_ya_existe(mongo.db, correo):
-            flash(
-                "Este correo electrónico ya está registrado. ¿Olvidaste tu contraseña?",
-                "danger",
-            )
-            return redirect(url_for("auth.register"))
+@auth_bp.route("/captcha.png")
+def captcha_img():
+    """Genera una imagen de captcha y guarda SOLO su hash en la sesión."""
 
-        casa_existente = residentes_col.find_one(
-            {
-                "rol": "residente",
-                "fraccionamiento": fraccionamiento,
-                "privada": privada,
-                "numero_casa": str(numero_casa),
-            }
+    rnd = random.SystemRandom()
+
+    # Siempre 2 mayúsculas + 2 minúsculas + 1 número, en orden aleatorio
+    caracteres = (
+        [rnd.choice(CAPTCHA_MAYUS) for _ in range(2)]
+        + [rnd.choice(CAPTCHA_MINUS) for _ in range(2)]
+        + [rnd.choice(CAPTCHA_DIGITOS)]
+    )
+    rnd.shuffle(caracteres)
+    texto = "".join(caracteres)
+
+    session["captcha"] = _hash_captcha(texto)
+
+    # Descomenta SOLO para probar; vuelve a comentarla después.
+    # current_app.logger.warning("CAPTCHA: %s", texto)
+
+    w, h = 170, 52
+    img = Image.new("RGB", (w, h), (246, 247, 249))
+    d = ImageDraw.Draw(img)
+    font = _cargar_fuente(30)
+
+    # Ruido: líneas y puntos
+    for _ in range(5):
+        d.line(
+            [
+                (rnd.randint(0, w), rnd.randint(0, h)),
+                (rnd.randint(0, w), rnd.randint(0, h)),
+            ],
+            fill=(rnd.randint(150, 200),) * 3,
+            width=1,
+        )
+    for _ in range(120):
+        d.point(
+            (rnd.randint(0, w), rnd.randint(0, h)),
+            fill=(rnd.randint(120, 200),) * 3,
         )
 
-        if casa_existente:
-            flash(
-                f"La casa {numero_casa} ya está registrada en "
-                f"{privada.title()} – {fraccionamiento.title()}.",
-                "danger",
-            )
-            return redirect(url_for("auth.register"))
+    # Letras con posición variable
+    for i, ch in enumerate(texto):
+        x = 14 + i * 30 + rnd.randint(-3, 3)
+        y = rnd.randint(4, 12)
+        d.text(
+            (x, y),
+            ch,
+            font=font,
+            fill=(rnd.randint(20, 70), rnd.randint(40, 90), rnd.randint(110, 190)),
+        )
 
-        usuario = {
-            "nombre": nombre,
-            "correo": correo,
-            "password": generate_password_hash(password),
-            "rol": "residente",
-            "fraccionamiento": fraccionamiento,
-            "privada": privada,
-            "numero_casa": str(numero_casa),
-            "telefono": telefono,
-            "estado": "activo",
-            "created_at": datetime.now(),
-            "ultimo_acceso": None,
-            "intentos_fallidos": 0,
-            "bloqueado_hasta": None,
-            "conectado": False,
-        }
+    img = img.filter(ImageFilter.SMOOTH)
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    buf.seek(0)
 
-        residentes_col.insert_one(usuario)
-
-        flash("¡Cuenta creada con éxito! Ya puedes iniciar sesión.", "success")
-
-        return redirect(url_for("auth.login", correo=correo))
-
-    return render_template(
-        "registro.html", fraccionamientos=obtener_fraccionamientos(mongo.db)
-    )
+    resp = send_file(buf, mimetype="image/png")
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return resp
 
 
 # ============
@@ -139,6 +157,26 @@ def login():
 
     if request.method == "POST":
 
+        # ===============
+        # VALIDAR CAPTCHA
+        # ===============
+        # Sensible a mayúsculas/minúsculas: se compara el hash de lo que
+        # escribió el usuario contra el hash guardado. Se consume (pop) para
+        # que sirva una sola vez.
+
+        captcha_hash = session.pop("captcha", None)
+        captcha_ingresado = request.form.get("captcha", "").strip()
+
+        if not captcha_hash or not hmac.compare_digest(
+            _hash_captcha(captcha_ingresado), captcha_hash
+        ):
+            flash(
+                "El código de verificación es incorrecto. "
+                "Escríbelo tal como aparece, respetando mayúsculas y minúsculas.",
+                "danger",
+            )
+            return redirect(url_for("auth.login"))
+
         correo = request.form.get("correo", "").strip()
         password = request.form.get("password", "").strip()
 
@@ -151,7 +189,8 @@ def login():
         if not usuario:
             flash(
                 "No encontramos una cuenta con ese correo. "
-                "Verifica los datos o regístrate.",
+                "Verifica los datos o contacta a la administración "
+                "de tu fraccionamiento.",
                 "danger",
             )
             return redirect(url_for("auth.login"))
@@ -205,6 +244,11 @@ def login():
         # CREAR SESIÓN
         # ===============
 
+        # Sesión limpia: borra datos de una sesión anterior (otro usuario,
+        # otro fraccionamiento, recuperación de contraseña a medias). Así el
+        # tiempo real siempre une al usuario a las salas correctas.
+        session.clear()
+
         session.permanent = True  # <-- AGREGADO: habilita PERMANENT_SESSION_LIFETIME
 
         session["user_id"] = str(usuario["_id"])
@@ -245,6 +289,11 @@ def login():
                     "estado": "activo",
                 }
             )
+
+        if usuario["rol"] == "residente" and usuario.get(
+            "debe_cambiar_password", False
+        ):
+            return redirect(url_for("auth.cambiar_password"))
 
         if usuario["rol"] == "admin":
             return redirect(url_for("admin.dashboard"))
@@ -421,10 +470,16 @@ def reset_password():
         return redirect(url_for("auth.forgot_password"))
 
     if request.method == "GET":
-        return render_template("nueva_contrasena.html")
+        return render_template("nueva_contrasena.html", modo="recuperacion")
 
     password = request.form["password"]
     confirm_password = request.form["confirm_password"]
+
+    # Misma regla mínima que en "cambiar contraseña" (el navegador también
+    # la valida, pero el servidor no debe depender solo del navegador).
+    if len(password) < 8:
+        flash("La contraseña debe tener al menos 8 caracteres.", "danger")
+        return redirect(url_for("auth.reset_password"))
 
     if password != confirm_password:
         flash(
@@ -436,8 +491,8 @@ def reset_password():
     usuario, col = buscar_login(mongo.db, correo)
 
     if not usuario:
-        flash("La cuenta ya no existe. Regístrate de nuevo.", "danger")
-        return redirect(url_for("auth.register"))
+        flash("La cuenta ya no existe. Contacta a la administración.", "danger")
+        return redirect(url_for("auth.login"))
 
     col.update_one(
         {"_id": usuario["_id"]},
@@ -508,7 +563,7 @@ def cambiar_password():
             return redirect(url_for("guard.scan_entrada"))
         return redirect(url_for("resident.dashboard"))
 
-    return render_template("cambiar_password.html")
+    return render_template("nueva_contrasena.html", modo="cambio_obligatorio")
 
 
 # ============

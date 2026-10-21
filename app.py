@@ -1,6 +1,7 @@
 """Aplicación principal Flask: configuración, filtros, índices y blueprints."""
 
 import os
+import re
 import time
 from datetime import datetime, timedelta
 
@@ -53,6 +54,14 @@ def hora_ampm(valor):
         except ValueError:
             pass
     return valor
+
+
+def frac(valor):
+    """'villas del bosque ii' -> 'Villas del Bosque II'."""
+    if not valor:
+        return ""
+    texto = str(valor).strip().title().replace(" Del ", " del ")
+    return re.sub(r"\b(Ii|Iii|Iv)\b", lambda m: m.group(1).upper(), texto)
 
 
 # ===============================
@@ -152,6 +161,12 @@ def on_connect():
     user_id = session.get("user_id")
     if rol:
         join_room(f"rol:{rol}")
+
+    # Sala por fraccionamiento: cada guardia solo recibe los avisos de
+    # visitas de SU fraccionamiento (no los de otros fraccionamientos).
+    frac_sesion = (session.get("fraccionamiento") or "").strip().lower()
+    if rol == "guardia" and frac_sesion:
+        join_room(f"guardia:{frac_sesion}")
     if user_id:
         join_room(f"user:{user_id}")
 
@@ -332,6 +347,7 @@ def create_app():
     )
 
     app.add_template_filter(hora_ampm, "hora_ampm")
+    app.add_template_filter(frac, "frac")
 
     # ===========================
     # BLUEPRINTS
@@ -368,4 +384,4 @@ app = create_app()  # pylint: disable=invalid-name
 # ===============================
 
 if __name__ == "__main__":
-    socketio.run(app, debug=False, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=False, allow_unsafe_werkzeug=False)

@@ -1,0 +1,245 @@
+/* =========================================================
+   SIDEBAR ADMIN 
+========================================================= */
+
+aside.rail{
+  --r-bg:#0f172a;
+  --r-ink:#94a0b8;
+  --r-ink2:#5b6680;
+  --r-line:#1e293b;
+  --r-hover:#18233a;
+  --r-active:#1a2742;
+  width:244px;
+  flex:0 0 244px;
+  background:var(--r-bg);
+  color:var(--r-ink);
+  display:flex;
+  flex-direction:column;
+  position:sticky;
+  top:0;
+  height:100vh;
+  z-index:30;
+  border-right:1px solid #0a0f1a;
+  overflow:hidden;
+}
+
+aside.rail .brand{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:0 20px;
+  height:58px;
+  border-bottom:1px solid var(--r-line);
+  flex-shrink:0;
+}
+aside.rail .brand-mark{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  flex-shrink:0;
+  background:#fff;
+  color:var(--r-bg);
+  display:grid;
+  place-items:center;
+  font-size:14px;
+}
+aside.rail .brand-txt b{
+  color:#fff;
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:-.1px;
+  display:block;
+  line-height:1.2;
+}
+aside.rail .brand-txt span{
+  font-size:10px;
+  color:var(--r-ink2);
+  font-weight:500;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+aside.rail .rail-scroll{
+  flex:1;
+  overflow-y:auto;
+  padding:10px 12px 20px;
+}
+aside.rail .rail-scroll::-webkit-scrollbar{width:5px}
+aside.rail .rail-scroll::-webkit-scrollbar-thumb{
+  background:#243049;
+  border-radius:9px;
+}
+
+aside.rail .nav-label{
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--r-ink2);
+  padding:18px 12px 8px;
+}
+
+aside.rail .nav-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:8px 12px;
+  border-radius:8px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--r-ink);
+  margin-bottom:1px;
+  position:relative;
+  text-decoration:none;
+}
+aside.rail .nav-ico{
+  width:16px;
+  height:auto;
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+}
+aside.rail .nav-ico i{
+  width:16px;
+  text-align:center;
+  font-size:13px;
+  color:var(--r-ink2);
+}
+aside.rail .nav-txt{min-width:0}
+
+aside.rail .nav-item:hover{
+  background:var(--r-hover);
+  color:#e2e8f3;
+}
+aside.rail .nav-item:hover .nav-ico i{color:#e2e8f3}
+
+/* Activa — sin barras laterales ni glows */
+aside.rail .nav-item.active{
+  background:var(--r-active);
+  color:#fff;
+  font-weight:600;
+  box-shadow:none;
+}
+aside.rail .nav-item.active .nav-ico{
+  background:transparent;
+  border:none;
+  box-shadow:none;
+}
+aside.rail .nav-item.active .nav-ico i{color:#fff}
+
+/* Eliminar cualquier indicador ::before / ::after en items */
+aside.rail .nav-item::before,
+aside.rail .nav-item::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* Badges */
+aside.rail .nav-badge{
+  margin-left:auto;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:700;
+  font-family:'JetBrains Mono',monospace;
+}
+aside.rail .nav-badge.b-live{
+  background:rgba(47,125,91,.18);
+  color:#7fd1a9;
+}
+aside.rail .nav-badge.b-live::before{content:none!important;display:none!important}
+aside.rail .nav-badge.b-alert{
+  background:rgba(180,68,60,.18);
+  color:#f1a9a3;
+}
+
+/* Separador y logout */
+aside.rail .nav-sep{
+  height:1px;
+  margin:12px 8px 10px;
+  background:var(--r-line);
+}
+aside.rail .nav-logout{
+  margin-top:0;
+  border-top:none;
+  border-radius:8px;
+}
+aside.rail .nav-logout:hover{
+  background:rgba(180,68,60,.14);
+  color:#f1a9a3;
+}
+aside.rail .nav-logout:hover .nav-ico i{color:#f1a9a3}
+
+/* Usuario */
+aside.rail .rail-foot{
+  padding:12px;
+  border-top:1px solid var(--r-line);
+  flex-shrink:0;
+}
+aside.rail .rail-user{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px;
+  border-radius:8px;
+}
+aside.rail .ru-av{
+  position:relative;
+  width:32px;
+  height:32px;
+  flex:0 0 32px;
+  border-radius:8px;
+  background:#1e293b;
+  color:#cbd5e1;
+  display:grid;
+  place-items:center;
+  font-weight:600;
+  font-size:12px;
+  border:1px solid #2a3650;
+  box-shadow:none;
+}
+aside.rail .ru-status{
+  position:absolute;
+  right:-2px;
+  bottom:-2px;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#2f7d5b;
+  border:2px solid var(--r-bg);
+}
+aside.rail .ru-meta{min-width:0}
+aside.rail .ru-meta b{
+  display:block;
+  max-width:120px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  color:#e5eaf3;
+  font-size:12.5px;
+  font-weight:600;
+  line-height:1.2;
+}
+aside.rail .ru-meta span{
+  color:var(--r-ink2);
+  font-size:10.5px;
+}
+aside.rail .rail-user .fa-ellipsis-vertical{
+  margin-left:auto;
+  color:var(--r-ink2);
+  font-size:12px;
+}
+
+/* Móvil: el rail se controla con .open desde cada página */
+@media(max-width:980px){
+  aside.rail{
+    position:fixed;
+    left:0;
+    transform:translateX(-100%);
+  }
+  aside.rail.open{transform:translateX(0)}
+}

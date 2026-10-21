@@ -390,28 +390,6 @@
 .auth-input.has-toggle{ padding-right:48px; }
 
 /* =========================================================
-   GRID DOS COLUMNAS
-========================================================= */
-
-.auth-grid-2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:14px;
-}
-
-/* =========================================================
-   CHIP DE ERROR
-========================================================= */
-
-.auth-error{
-    display:block;
-    margin-top:6px; margin-left:4px;
-    color:#dc2626;
-    font-size:.85rem; font-weight:600;
-    min-height:18px;
-}
-
-/* =========================================================
    BOTÓN PRINCIPAL
 ========================================================= */
 
@@ -450,44 +428,74 @@
     display:inline-flex; align-items:center; gap:10px;
 }
 
-.btn-auth-secondary svg{ display:block; }
-
 .btn-auth-primary:disabled{
     opacity:.6; cursor:not-allowed; transform:none;
 }
 
 /* =========================================================
-   BOTÓN SECUNDARIO
+   CAPTCHA
 ========================================================= */
 
-.btn-auth-secondary{
-    flex:1;
-    padding:14px 20px;
-    min-height:52px;
-    margin-top:0;
-    background:transparent;
-    color:#46464c;
-    border:1.5px solid rgba(199,197,205,.70);
-    border-radius:16px;
-    font-size:14px; font-weight:600;
-    cursor:pointer;
+.auth-captcha{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.auth-captcha img{
+    display:block;
+    flex:0 1 auto;
+    min-width:0;
+    max-width:100%;
+    height:auto;
+    border:1px solid #dde2ec;
+    border-radius:13px;
+    background:#f6f7f9;
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-user-drag:none;
+}
+
+.auth-captcha-refresh{
+    flex-shrink:0;
+    width:48px; height:48px;
+    margin:0; padding:0;
     display:flex; align-items:center; justify-content:center;
-    gap:8px;
-    transition:all .2s ease;
+    background:#fbfcfe;
+    border:1px solid #dde2ec;
+    border-radius:13px;
+    color:#6b7384;
+    cursor:pointer;
     box-shadow:none;
+    transition:color .15s, border-color .15s, background .15s;
     touch-action:manipulation;
     -webkit-tap-highlight-color:transparent;
 }
 
-.btn-auth-secondary:hover{ background:#eceef0; box-shadow:none; transform:none; }
-
-.btn-auth-nav{
-    display:flex;
-    gap:12px;
-    margin-top:24px;
+.auth-captcha-refresh svg{
+    display:block;
+    transition:transform .3s ease;
 }
 
-.btn-auth-nav .btn-auth-primary{ flex:1; width:auto; margin-top:0; }
+.auth-captcha-refresh:hover{
+    color:#2e5bff;
+    border-color:#c6cedd;
+    background:#ffffff;
+    transform:none;
+}
+
+.auth-captcha-refresh:active svg{ transform:rotate(180deg); }
+
+/* Sensible a mayúsculas/minúsculas: NO se transforma el texto */
+#captcha{
+    letter-spacing:.14em;
+    font-weight:700;
+}
+
+#captcha::placeholder{
+    letter-spacing:0;
+    font-weight:400;
+}
 
 /* =========================================================
    ENLACES
@@ -548,51 +556,6 @@
     font-size:28px; font-weight:800;
     color:#ba1a1a; letter-spacing:.05em;
     font-variant-numeric:tabular-nums;
-}
-
-/* =========================================================
-   PROGRESO (registro multi-paso)
-========================================================= */
-
-.auth-progress{
-    display:flex; align-items:center; margin-bottom:28px;
-}
-
-.auth-progress-step{
-    width:36px; height:36px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    font-size:13px; font-weight:700; flex-shrink:0;
-    transition:all .3s ease;
-    background:#eceef0; color:#77767d;
-}
-
-.auth-progress-step.active{
-    background:#1a1c2e; color:#ffffff;
-    box-shadow:0 4px 14px rgba(1,2,17,.25);
-}
-
-.auth-progress-step.done{
-    background:#009869; color:#ffffff;
-    box-shadow:0 3px 12px rgba(0,152,105,.30);
-}
-
-.auth-progress-line{
-    flex:1; height:2px; border-radius:2px;
-    margin:0 8px; background:#e0e3e5;
-    transition:background .5s ease;
-}
-
-.auth-progress-line.done{ background:#009869; }
-
-/* =========================================================
-   PASOS
-========================================================= */
-
-.auth-step{ display:none; }
-
-.auth-step.active{
-    display:block;
-    animation:authFadeIn .22s ease;
 }
 
 /* =========================================================
@@ -805,7 +768,7 @@
 
 @media(max-width:1023px){
     .auth-form-panel{
-        align-items:center;   
+        align-items:center;
         padding-top:max(40px, env(safe-area-inset-top, 24px));
         padding-bottom:max(32px, env(safe-area-inset-bottom, 24px));
     }
@@ -837,8 +800,7 @@
 
     .auth-mobile-logo{ margin-bottom:22px; }
 
-    .btn-auth-primary,
-    .btn-auth-secondary{ min-height:52px; }
+    .btn-auth-primary{ min-height:52px; }
 }
 
 /* =========================================================
@@ -857,7 +819,7 @@
             max(20px, env(safe-area-inset-top, 16px))
             16px
             max(28px, env(safe-area-inset-bottom, 16px));
-        align-items:center;    /* antes: flex-start */
+        align-items:center;
         overflow-y:auto;
         -webkit-overflow-scrolling:touch;
         min-height:100dvh;
@@ -873,7 +835,6 @@
     .glass-card{
         padding:24px 20px;
         border-radius:22px;
-        /* Sombra más sutil en pantalla pequeña */
         box-shadow:
             0 1px 2px rgba(20,30,60,.03),
             0 14px 40px -20px rgba(20,30,60,.30);
@@ -890,6 +851,8 @@
         padding:13px 16px 13px 42px;
         border-radius:12px;
     }
+
+    .auth-input.no-icon{ padding-left:16px; }
 
     .auth-input::placeholder{ font-size:16px; }
 
@@ -912,28 +875,6 @@
         border-radius:14px;
     }
 
-    .btn-auth-secondary{
-        padding:13px 18px;
-        min-height:50px;
-        font-size:14px;
-        border-radius:14px;
-    }
-
-    /* Nav de pasos: columna en pantallas muy pequeñas */
-    .btn-auth-nav{
-        flex-direction:column;
-        gap:10px;
-    }
-
-    .btn-auth-nav .btn-auth-primary,
-    .btn-auth-nav .btn-auth-secondary{
-        flex:unset;
-        width:100%;
-    }
-
-    /* Grid de 2 columnas → 1 columna */
-    .auth-grid-2{ grid-template-columns:1fr; gap:0; }
-
     /* Logo móvil más compacto */
     .auth-mobile-logo{ margin-bottom:20px; gap:10px; }
     .auth-mobile-icon{ width:40px; height:40px; border-radius:12px; }
@@ -947,13 +888,6 @@
 
     .auth-lock-header{ font-size:13px; }
     .auth-timer-box  { font-size:24px; }
-
-    /* Progreso multi-paso */
-    .auth-progress{ margin-bottom:20px; }
-
-    .auth-progress-step{
-        width:32px; height:32px; font-size:12px;
-    }
 
     /* Token code */
     .auth-token-code{
@@ -988,6 +922,8 @@
         padding:12px 14px 12px 40px;
     }
 
+    .auth-input.no-icon{ padding-left:14px; }
+
     .auth-input-icon{ left:12px; }
 
     .btn-auth-primary{
@@ -1006,6 +942,9 @@
     }
 
     .auth-mobile-logo{ margin-bottom:16px; }
+
+    /* Captcha: la imagen se encoge para que quepa el botón de refrescar */
+    .auth-captcha img{ max-width:calc(100% - 58px); }
 }
 
 /* =========================================================

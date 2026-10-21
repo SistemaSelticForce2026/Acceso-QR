@@ -624,16 +624,8 @@ def _generar_password(longitud=10):
 @login_required
 @role_required("admin")
 def ultima_actualizacion(fraccionamiento):
-    config = mongo.db.configuraciones.find_one({"fraccionamiento": fraccionamiento})
-    return jsonify(
-        {
-            "hora": (
-                config.get("actualizado_str", "Sin cambios")
-                if config
-                else "Sin cambios"
-            )
-        }
-    )
+    config = _config_fraccionamiento(fraccionamiento)
+    return jsonify({"hora": config.get("actualizado_str") or "Sin cambios"})
 
 
 # =========================================================
@@ -1148,6 +1140,7 @@ def registrar_residente():
                 "ultimo_acceso": None,
                 "intentos_fallidos": 0,
                 "bloqueado_hasta": None,
+                "debe_cambiar_password": True,
             }
         )
 
@@ -1181,32 +1174,206 @@ COLUMNAS_RESIDENTE = [
     "numero_casa",
 ]
 
+COLUMNAS_OBLIGATORIAS_RESIDENTE = list(COLUMNAS_RESIDENTE)
+
+FRACC_VILLAS = "villas del bosque ii"
+FRACC_FORESTA = "foresta dream lagons"
+
+
+def _norm_texto(txt):
+    import unicodedata
+
+    txt = (
+        unicodedata.normalize("NFKD", str(txt or "")).encode("ascii", "ignore").decode()
+    )
+    return txt.strip().lower()
+
+
+def _norm_excel(txt):
+    import re
+
+    txt = _norm_texto(txt)
+    txt = re.sub(r"[^a-z0-9]+", " ", txt)
+    return " ".join(txt.split())
+
+
+def _nombre_desde_correo(correo, numero_casa=""):
+    import re
+
+    local = (correo or "").split("@", 1)[0].strip()
+    local = re.sub(r"[._\-]+", " ", local)
+    local = " ".join(local.split())
+    if local:
+        return local.title()
+    return f"Residente Casa {numero_casa}".strip()
+
+
+def _detectar_plantilla_residentes(filas):
+    if not filas:
+        return None, None
+
+    limite = min(len(filas), 12)
+    texto_superior = []
+
+    for fila in filas[:limite]:
+        for celda in fila:
+            if celda is not None:
+                texto_superior.append(_norm_excel(celda))
+
+    texto_superior = " ".join(texto_superior)
+
+    if "fraccionamiento foresta dream lagons" in texto_superior:
+        for i, fila in enumerate(filas[:limite]):
+            headers = [_norm_excel(c) for c in fila]
+            requeridos = {"casa", "correo electronico", "privada calle"}
+            if requeridos.issubset(set(headers)):
+                return "foresta", i
+        return "foresta", None
+
+    for i, fila in enumerate(filas[:limite]):
+        headers = [_norm_excel(c).replace(" ", "_") for c in fila]
+        if set(COLUMNAS_OBLIGATORIAS_RESIDENTE).issubset(set(headers)):
+            return "villas", i
+
+    return None, None
+
 
 @admin_bp.route("/residentes/plantilla")
 @login_required
 @role_required("admin")
 def descargar_plantilla_residentes():
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    tipo = _norm_texto(request.args.get("tipo", "villas"))
     wb = Workbook()
     ws = wb.active
     ws.title = "Residentes"
-    ws.append(COLUMNAS_RESIDENTE)
-    ws.append(
-        [
-            "Mariana Ríos López",
-            "mariana@ejemplo.com",
-            "555-123-4567",
-            "El Porvenir",
-            "Privada Los Robles",
-            "A-14",
-        ]
+
+    borde = Border(
+        left=Side(style="thin", color="D9D9D9"),
+        right=Side(style="thin", color="D9D9D9"),
+        top=Side(style="thin", color="D9D9D9"),
+        bottom=Side(style="thin", color="D9D9D9"),
     )
+
+    if tipo == "foresta":
+        ws["A2"] = "FRACCIONAMIENTO : FORESTA DREAM LAGONS"
+        ws["A3"] = "PRIVADA:"
+        ws["A4"] = "NOMBRE DEL REPRESENTANTE:"
+
+        ws["A6"] = "CASA"
+        ws["B6"] = "CORREO ELECTRONICO"
+        ws["C6"] = "PRIVADA/CALLE"
+
+        ejemplos = [
+            ["14", "mariana@ejemplo.com", "Laureles"],
+            ["15", "carlos@ejemplo.com", "Laureles"],
+            ["16", "ana@ejemplo.com", "Encinos"],
+            ["17", "luis@ejemplo.com", "Encinos"],
+            ["18", "sofia@ejemplo.com", "Los Pinos"],
+        ]
+
+        for fila in ejemplos:
+            ws.append(fila)
+
+        for celda in ("A2", "A3", "A4"):
+            ws[celda].font = Font(bold=True)
+
+        for cell in ws[6]:
+            if cell.column <= 3:
+                cell.font = Font(bold=True)
+                cell.alignment = Alignment(horizontal="center")
+                cell.fill = PatternFill("solid", fgColor="E2E8F0")
+                cell.border = borde
+
+        for row in ws.iter_rows(min_row=7, max_row=11, min_col=1, max_col=3):
+            for cell in row:
+                cell.alignment = Alignment(horizontal="center")
+                cell.border = borde
+
+        ws.column_dimensions["A"].width = 34
+        ws.column_dimensions["B"].width = 32
+        ws.column_dimensions["C"].width = 25
+        archivo_salida = "plantilla_foresta_dream_lagons.xlsx"
+
+    elif tipo == "villas":
+        ws.append(COLUMNAS_RESIDENTE)
+
+        ejemplos = [
+            [
+                "Mariana Ríos López",
+                "mariana@ejemplo.com",
+                "555-123-4567",
+                "Villas del Bosque II",
+                "Privada Los Robles",
+                "A-14",
+            ],
+            [
+                "Carlos Pérez Soto",
+                "carlos@ejemplo.com",
+                "555-222-3344",
+                "Villas del Bosque II",
+                "Privada Los Robles",
+                "A-15",
+            ],
+            [
+                "Ana Martínez Ruiz",
+                "ana@ejemplo.com",
+                "555-333-4455",
+                "Villas del Bosque II",
+                "Privada Los Pinos",
+                "B-07",
+            ],
+            [
+                "Luis Hernández",
+                "luis@ejemplo.com",
+                "555-444-5566",
+                "Villas del Bosque II",
+                "Privada Encinos",
+                "C-12",
+            ],
+            [
+                "Sofía Ramírez",
+                "sofia@ejemplo.com",
+                "555-555-6677",
+                "Villas del Bosque II",
+                "Privada Cedros",
+                "D-08",
+            ],
+        ]
+
+        for fila in ejemplos:
+            ws.append(fila)
+
+        for cell in ws[1]:
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal="center")
+            cell.fill = PatternFill("solid", fgColor="E2E8F0")
+            cell.border = borde
+
+        for row in ws.iter_rows(min_row=2, max_row=6, min_col=1, max_col=6):
+            for cell in row:
+                cell.alignment = Alignment(horizontal="center")
+                cell.border = borde
+
+        anchos = {"A": 28, "B": 30, "C": 20, "D": 26, "E": 25, "F": 18}
+        for col, ancho in anchos.items():
+            ws.column_dimensions[col].width = ancho
+
+        archivo_salida = "plantilla_villas_del_bosque_ii.xlsx"
+
+    else:
+        flash("Plantilla no válida.", "danger")
+        return redirect(url_for("admin.registrar_residente"))
+
     buffer = BytesIO()
     wb.save(buffer)
     buffer.seek(0)
+
     return send_file(
         buffer,
         as_attachment=True,
-        download_name="plantilla_residentes.xlsx",
+        download_name=archivo_salida,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
@@ -1220,7 +1387,8 @@ def carga_masiva_residentes():
     from pymongo.errors import BulkWriteError
 
     archivo = request.files.get("archivo")
-    if not archivo or not archivo.filename.lower().endswith((".xlsx", ".xls")):
+
+    if not archivo or not archivo.filename.lower().endswith(".xlsx"):
         flash("Sube un archivo Excel válido (.xlsx).", "danger")
         return redirect(url_for("admin.registrar_residente"))
 
@@ -1230,82 +1398,198 @@ def carga_masiva_residentes():
         filas = list(ws.iter_rows(values_only=True))
         wb.close()
     except Exception:
-        flash("No se pudo leer el archivo.", "danger")
+        flash("No se pudo leer el archivo Excel.", "danger")
         return redirect(url_for("admin.registrar_residente"))
 
     if not filas:
         flash("El archivo está vacío.", "warning")
         return redirect(url_for("admin.registrar_residente"))
 
-    encabezados = [str(c).strip().lower() if c is not None else "" for c in filas[0]]
-    faltantes = [c for c in COLUMNAS_RESIDENTE if c not in encabezados]
-    if faltantes:
-        flash(f"Faltan columnas: {', '.join(faltantes)}.", "danger")
+    tipo_plantilla, fila_encabezados = _detectar_plantilla_residentes(filas)
+
+    if not tipo_plantilla:
+        flash(
+            "No se reconoció la plantilla. Usa la plantilla oficial de Villas del Bosque II o Foresta Dream Lagons.",
+            "danger",
+        )
         return redirect(url_for("admin.registrar_residente"))
 
-    idx = {col: encabezados.index(col) for col in COLUMNAS_RESIDENTE}
-    password_temporal = generate_password_hash("Residente123*")
-    disponibles_norm = {f.strip().lower() for f in _fraccionamientos_disponibles()}
+    if fila_encabezados is None:
+        flash(
+            "La plantilla fue detectada, pero no se encontraron sus encabezados.",
+            "danger",
+        )
+        return redirect(url_for("admin.registrar_residente"))
 
-    # Desglose por fraccionamiento  → {frac: {"creados": n, "omitidos": n}}
+    disponibles_norm = {_norm_texto(f) for f in _fraccionamientos_disponibles()}
+
+    if tipo_plantilla == "foresta" and FRACC_FORESTA not in disponibles_norm:
+        flash(
+            "Foresta Dream Lagons no está registrado como fraccionamiento en el sistema.",
+            "danger",
+        )
+        return redirect(url_for("admin.registrar_residente"))
+
+    if tipo_plantilla == "villas" and FRACC_VILLAS not in disponibles_norm:
+        flash(
+            "Villas del Bosque II no está registrado como fraccionamiento en el sistema.",
+            "danger",
+        )
+        return redirect(url_for("admin.registrar_residente"))
+
     stats = defaultdict(lambda: {"creados": 0, "omitidos": 0})
     omitidos = 0
     errores = []
-
-    # ── PASO 1 · Parsear y validar EN MEMORIA ────────────────────────
-    def val(fila, col):
-        i = idx[col]
-        v = fila[i] if i < len(fila) else None
-        return str(v).strip() if v is not None else ""
-
     registros = []
-    for n, fila in enumerate(filas[1:], start=2):
-        nombre = val(fila, "nombre")
-        correo = val(fila, "correo").lower()
-        telefono = val(fila, "telefono")
-        fraccionamiento = val(fila, "fraccionamiento").lower()
-        privada = val(fila, "privada").lower()
-        numero_casa = val(fila, "numero_casa").lower()
+    fila_header = filas[fila_encabezados]
 
-        if not all([nombre, correo, telefono, fraccionamiento, privada, numero_casa]):
-            clave = fraccionamiento or "(sin fraccionamiento)"
-            omitidos += 1
-            stats[clave]["omitidos"] += 1
-            errores.append(f"Fila {n}: datos incompletos.")
-            continue
+    if tipo_plantilla == "foresta":
+        headers = [_norm_excel(c) for c in fila_header]
 
-        if fraccionamiento not in disponibles_norm:
-            omitidos += 1
-            stats[fraccionamiento]["omitidos"] += 1
-            errores.append(f"Fila {n}: fraccionamiento '{fraccionamiento}' no válido.")
-            continue
+        try:
+            idx_casa = headers.index("casa")
+            idx_correo = headers.index("correo electronico")
+            idx_privada = headers.index("privada calle")
+        except ValueError:
+            flash(
+                "La plantilla de Foresta Dream Lagons debe tener CASA, CORREO ELECTRONICO y PRIVADA/CALLE.",
+                "danger",
+            )
+            return redirect(url_for("admin.registrar_residente"))
 
-        registros.append(
-            {
-                "fila": n,
-                "nombre": nombre,
-                "correo": correo,
-                "telefono": telefono,
-                "fraccionamiento": fraccionamiento,
-                "privada": privada,
-                "numero_casa": numero_casa,
-                "slug": _slug_fraccionamiento(fraccionamiento),
-            }
-        )
+        for numero_fila, fila in enumerate(
+            filas[fila_encabezados + 1 :],
+            start=fila_encabezados + 2,
+        ):
+
+            def valor(i):
+                if i >= len(fila) or fila[i] is None:
+                    return ""
+                return str(fila[i]).strip()
+
+            numero_casa = valor(idx_casa).lower()
+            correo = valor(idx_correo).lower()
+            privada = valor(idx_privada).lower()
+
+            if not any([numero_casa, correo, privada]):
+                continue
+
+            if not all([numero_casa, correo, privada]):
+                omitidos += 1
+                stats[FRACC_FORESTA]["omitidos"] += 1
+                errores.append(
+                    f"Fila {numero_fila}: faltan casa, correo o privada/calle."
+                )
+                continue
+
+            if "@" not in correo or correo.startswith("@") or correo.endswith("@"):
+                omitidos += 1
+                stats[FRACC_FORESTA]["omitidos"] += 1
+                errores.append(f"Fila {numero_fila}: correo '{correo}' no válido.")
+                continue
+
+            nombre = _nombre_desde_correo(correo, numero_casa)
+
+            registros.append(
+                {
+                    "fila": numero_fila,
+                    "nombre": nombre,
+                    "correo": correo,
+                    "telefono": "",
+                    "fraccionamiento": FRACC_FORESTA,
+                    "privada": privada,
+                    "numero_casa": numero_casa,
+                    "slug": _slug_fraccionamiento(FRACC_FORESTA),
+                }
+            )
+
+    elif tipo_plantilla == "villas":
+        headers = [_norm_excel(c).replace(" ", "_") for c in fila_header]
+        faltantes = [c for c in COLUMNAS_OBLIGATORIAS_RESIDENTE if c not in headers]
+
+        if faltantes:
+            flash(
+                f"Faltan columnas en la plantilla de Villas: {', '.join(faltantes)}.",
+                "danger",
+            )
+            return redirect(url_for("admin.registrar_residente"))
+
+        idx = {col: headers.index(col) for col in COLUMNAS_OBLIGATORIAS_RESIDENTE}
+
+        for numero_fila, fila in enumerate(
+            filas[fila_encabezados + 1 :],
+            start=fila_encabezados + 2,
+        ):
+
+            def valor(col):
+                i = idx[col]
+                if i >= len(fila) or fila[i] is None:
+                    return ""
+                return str(fila[i]).strip()
+
+            nombre = valor("nombre")
+            correo = valor("correo").lower()
+            telefono = valor("telefono")
+            fraccionamiento = valor("fraccionamiento").lower()
+            privada = valor("privada").lower()
+            numero_casa = valor("numero_casa").lower()
+
+            campos = [nombre, correo, telefono, fraccionamiento, privada, numero_casa]
+
+            if not any(campos):
+                continue
+
+            if not all(campos):
+                omitidos += 1
+                stats[FRACC_VILLAS]["omitidos"] += 1
+                errores.append(f"Fila {numero_fila}: datos incompletos.")
+                continue
+
+            if _norm_texto(fraccionamiento) != FRACC_VILLAS:
+                omitidos += 1
+                stats[FRACC_VILLAS]["omitidos"] += 1
+                errores.append(
+                    f"Fila {numero_fila}: esta plantilla solo acepta Villas del Bosque II."
+                )
+                continue
+
+            if "@" not in correo or correo.startswith("@") or correo.endswith("@"):
+                omitidos += 1
+                stats[FRACC_VILLAS]["omitidos"] += 1
+                errores.append(f"Fila {numero_fila}: correo '{correo}' no válido.")
+                continue
+
+            registros.append(
+                {
+                    "fila": numero_fila,
+                    "nombre": nombre,
+                    "correo": correo,
+                    "telefono": telefono,
+                    "fraccionamiento": FRACC_VILLAS,
+                    "privada": privada,
+                    "numero_casa": numero_casa,
+                    "slug": _slug_fraccionamiento(FRACC_VILLAS),
+                }
+            )
+
+    if not registros and not omitidos:
+        flash("No se encontraron residentes para registrar.", "warning")
+        return redirect(url_for("admin.registrar_residente"))
 
     slugs = {r["slug"] for r in registros}
 
-    # ── PASO 2 · Precargar lo existente (pocas consultas) ────────────
     try:
         nombres_coll = mongo.db.list_collection_names()
     except Exception:
         nombres_coll = []
 
     fuentes_correo = [c for c in nombres_coll if c.startswith("residentes_")]
+
     if "users" in nombres_coll:
         fuentes_correo.append("users")
 
     correos_existentes = set()
+
     for cname in fuentes_correo:
         for doc in mongo.db[cname].find({}, {"correo": 1, "_id": 0}):
             c = doc.get("correo")
@@ -1313,10 +1597,21 @@ def carga_masiva_residentes():
                 correos_existentes.add(str(c).strip().lower())
 
     casas_existentes = defaultdict(set)
+
     for slug in slugs:
-        for doc in mongo.db[f"residentes_{slug}"].find(
+        nombre_coleccion = f"residentes_{slug}"
+
+        if nombre_coleccion not in nombres_coll:
+            continue
+
+        for doc in mongo.db[nombre_coleccion].find(
             {"rol": "residente"},
-            {"fraccionamiento": 1, "privada": 1, "numero_casa": 1, "_id": 0},
+            {
+                "fraccionamiento": 1,
+                "privada": 1,
+                "numero_casa": 1,
+                "_id": 0,
+            },
         ):
             casas_existentes[slug].add(
                 (
@@ -1326,33 +1621,54 @@ def carga_masiva_residentes():
                 )
             )
 
-    # ── PASO 3 · Validar duplicados y armar lotes por fraccionamiento ─
+    password_temporal = generate_password_hash("Residente123*")
     correos_archivo = set()
     casas_archivo = defaultdict(set)
-    ops = {}  # frac -> {"coll": nombre_coleccion, "docs": [...]}
+    ops = {}
     ahora = datetime.now()
 
     for r in registros:
-        n, correo, slug, frac = r["fila"], r["correo"], r["slug"], r["fraccionamiento"]
-        casa_key = (r["fraccionamiento"], r["privada"], r["numero_casa"])
+        numero_fila = r["fila"]
+        correo = r["correo"]
+        slug = r["slug"]
+        frac = r["fraccionamiento"]
+
+        casa_key = (
+            r["fraccionamiento"],
+            r["privada"],
+            r["numero_casa"],
+        )
 
         if correo in correos_archivo:
             omitidos += 1
             stats[frac]["omitidos"] += 1
-            errores.append(f"Fila {n}: correo {correo} repetido en el archivo.")
+            errores.append(
+                f"Fila {numero_fila}: correo {correo} repetido en el archivo."
+            )
             continue
+
         if correo in correos_existentes:
             omitidos += 1
             stats[frac]["omitidos"] += 1
-            errores.append(f"Fila {n}: correo {correo} ya registrado.")
+            errores.append(f"Fila {numero_fila}: correo {correo} ya registrado.")
             continue
+
         if casa_key in casas_archivo[slug] or casa_key in casas_existentes[slug]:
             omitidos += 1
             stats[frac]["omitidos"] += 1
-            errores.append(f"Fila {n}: casa {r['numero_casa'].upper()} ya existe.")
+            errores.append(
+                f"Fila {numero_fila}: casa {r['numero_casa'].upper()} ya existe."
+            )
             continue
 
-        ops.setdefault(frac, {"coll": f"residentes_{slug}", "docs": []})
+        ops.setdefault(
+            frac,
+            {
+                "coll": f"residentes_{slug}",
+                "docs": [],
+            },
+        )
+
         ops[frac]["docs"].append(
             {
                 "nombre": r["nombre"],
@@ -1368,28 +1684,35 @@ def carga_masiva_residentes():
                 "ultimo_acceso": None,
                 "intentos_fallidos": 0,
                 "bloqueado_hasta": None,
-                "origen": "carga_masiva",  # <-- agrega esta línea
+                "origen": "carga_masiva",
+                "tipo_plantilla": tipo_plantilla,
+                "debe_cambiar_password": True,
             }
         )
+
         correos_archivo.add(correo)
         casas_archivo[slug].add(casa_key)
 
-    # ── PASO 4 · Inserción masiva por fraccionamiento ────────────────
     BATCH = 1000
     creados = 0
+
     for frac, info in ops.items():
         coll = mongo.db[info["coll"]]
         docs = info["docs"]
+
         for i in range(0, len(docs), BATCH):
             lote = docs[i : i + BATCH]
+
             try:
                 res = coll.insert_many(lote, ordered=False)
                 n_ok = len(res.inserted_ids)
+
             except BulkWriteError as bwe:
                 n_ok = bwe.details.get("nInserted", 0)
                 errores.append(
-                    f"{frac}: {len(lote) - n_ok} fila(s) con conflicto de índice."
+                    f"{frac}: {len(lote)-n_ok} fila(s) con conflicto de índice."
                 )
+
             except Exception as e:
                 n_ok = 0
                 errores.append(f"{frac}: error insertando lote ({type(e).__name__}).")
@@ -1398,41 +1721,75 @@ def carga_masiva_residentes():
             creados += n_ok
             stats[frac]["creados"] += n_ok
             fallidos = len(lote) - n_ok
+
             if fallidos:
                 omitidos += fallidos
                 stats[frac]["omitidos"] += fallidos
 
-    # ── RESULTADO · resumen general + desglose por fraccionamiento ───
     if creados:
         _invalidar_cache_conteos()
         _invalidar_cache_kpis()
-        socketio.emit("actualizar_residentes", to="rol:admin")
-        socketio.emit("actualizar_dashboard", to="rol:admin")
+
+        socketio.emit(
+            "actualizar_residentes",
+            to="rol:admin",
+        )
+
+        socketio.emit(
+            "actualizar_dashboard",
+            to="rol:admin",
+        )
+
+        nombre_tipo = (
+            "Foresta Dream Lagons"
+            if tipo_plantilla == "foresta"
+            else "Villas del Bosque II"
+        )
+
         flash(
-            f"Carga completada: {creados} registrado(s), {omitidos} omitido(s).",
+            f"Plantilla detectada: {nombre_tipo}. "
+            f"Carga completada: {creados} registrado(s), "
+            f"{omitidos} omitido(s).",
             "success",
         )
+
     elif omitidos:
         flash(
-            f"No se registró ningún residente. {omitidos} fila(s) omitidas.", "warning"
+            f"No se registró ningún residente. " f"{omitidos} fila(s) omitidas.",
+            "warning",
         )
-    else:
-        flash("No se procesó ninguna fila.", "warning")
 
-    # Una línea por fraccionamiento (se pintan como tarjetas individuales)
+    else:
+        flash(
+            "No se procesó ninguna fila.",
+            "warning",
+        )
+
     for frac in sorted(stats):
         s = stats[frac]
+
         if s["creados"] or s["omitidos"]:
-            nombre_frac = frac.title() if frac != "(sin fraccionamiento)" else frac
+            nombre_frac = (
+                "Villas del Bosque II"
+                if frac == FRACC_VILLAS
+                else "Foresta Dream Lagons" if frac == FRACC_FORESTA else frac.title()
+            )
+
             flash(
-                f"{nombre_frac}  —  {s['creados']} registrado(s) · {s['omitidos']} omitido(s).",
+                f"{nombre_frac} — "
+                f"{s['creados']} registrado(s) · "
+                f"{s['omitidos']} omitido(s).",
                 "info",
             )
 
     if errores:
-        detalle = "  ".join(errores[:6])
-        extra = f"  (+{len(errores) - 6} más)" if len(errores) > 6 else ""
-        flash(f"Detalle: {detalle}{extra}", "warning")
+        detalle = " ".join(errores[:6])
+        extra = f" (+{len(errores)-6} más)" if len(errores) > 6 else ""
+
+        flash(
+            f"Detalle: {detalle}{extra}",
+            "warning",
+        )
 
     return redirect(url_for("admin.registrar_residente"))
 
@@ -1446,19 +1803,34 @@ def carga_masiva_residentes():
 @login_required
 @role_required("admin")
 def eliminar_carga_masiva_residentes():
+
     eliminados = 0
+
     try:
+
         for col_name in mongo.db.list_collection_names():
+
             if col_name.startswith("residentes_"):
+
                 resultado = mongo.db[col_name].delete_many({"origen": "carga_masiva"})
+
                 eliminados += resultado.deleted_count
 
         _invalidar_cache_conteos()
+
         _invalidar_cache_kpis()
+
         socketio.emit("actualizar_residentes", to="rol:admin")
+
         socketio.emit("actualizar_dashboard", to="rol:admin")
-        flash(f"Se eliminaron {eliminados} residente(s) de carga masiva.", "success")
+
+        flash(
+            f"Se eliminaron " f"{eliminados} residente(s) " f"de carga masiva.",
+            "success",
+        )
+
     except Exception as e:
+
         flash(f"Error al eliminar: {str(e)}", "danger")
 
     return redirect(url_for("admin.registrar_residente"))
@@ -1482,25 +1854,59 @@ def ver_residente(id):
 @role_required("admin")
 def editar_residente(id):
     usuario, col = buscar_residente_por_id(mongo.db, id)
+
+    if usuario is None or col is None:
+        flash("El residente no fue encontrado.", "danger")
+        return redirect(url_for("admin.residentes"))
+
     if request.method == "POST":
+        nombre = request.form["nombre"].strip()
+        correo = request.form["correo"].strip().lower()
+        telefono = request.form["telefono"].strip()
+        fraccionamiento = request.form["fraccionamiento"].strip().lower()
+        privada = request.form["privada"].strip().lower()
+        numero_casa = request.form["numero_casa"].strip().lower()
+
+        # =========================================
+        # VALIDAR FRACCIONAMIENTO
+        # =========================================
+        if not es_fraccionamiento_valido(mongo.db, fraccionamiento):
+            flash("Selecciona un fraccionamiento válido.", "danger")
+            return redirect(url_for("admin.editar_residente", id=id))
+
+        # =========================================
+        # ACTUALIZAR RESIDENTE
+        # (se elimina tag_peatonal si el documento aún lo tenía)
+        # =========================================
         col.update_one(
             {"_id": ObjectId(id)},
             {
                 "$set": {
-                    "nombre": request.form["nombre"],
-                    "correo": request.form["correo"],
-                    "telefono": request.form["telefono"],
-                    "fraccionamiento": request.form["fraccionamiento"],
-                    "privada": request.form["privada"],
-                    "numero_casa": request.form["numero_casa"],
-                }
+                    "nombre": nombre,
+                    "correo": correo,
+                    "telefono": telefono,
+                    "fraccionamiento": fraccionamiento,
+                    "privada": privada,
+                    "numero_casa": numero_casa,
+                },
+                "$unset": {"tag_peatonal": ""},
             },
         )
+
+        _invalidar_cache_conteos()
+        _invalidar_cache_kpis()
+
         socketio.emit("actualizar_residentes", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
-        flash("Residente actualizado correctamente")
+
+        flash("Residente actualizado correctamente.", "success")
+
         return redirect(url_for("admin.residentes"))
-    return render_template("editar_residente.html", usuario=usuario)
+
+    return render_template(
+        "editar_residente.html",
+        usuario=usuario,
+    )
 
 
 @admin_bp.route("/residentes/bloquear/<id>")
@@ -1579,6 +1985,7 @@ def desbloquear_residente(id):
         _invalidar_cache_kpis()
 
     socketio.emit("actualizar_residentes", to="rol:admin")
+    socketio.emit("actualizar_dashboard", to="rol:admin")
     flash("Residente desbloqueado correctamente", "success")
     return redirect(url_for("admin.residentes"))
 
@@ -1803,6 +2210,12 @@ def ver_guardia(id):
 def editar_guardia(id):
     guardia = mongo.db.users.find_one({"_id": ObjectId(id)})
     if request.method == "POST":
+        fraccionamiento = request.form.get("fraccionamiento", "").strip().lower()
+        disponibles_norm = {f.strip().lower() for f in _fraccionamientos_disponibles()}
+        if fraccionamiento not in disponibles_norm:
+            flash("Selecciona un fraccionamiento válido para el guardia.", "danger")
+            return redirect(url_for("admin.editar_guardia", id=id))
+
         mongo.db.users.update_one(
             {"_id": ObjectId(id)},
             {
@@ -1812,15 +2225,18 @@ def editar_guardia(id):
                     "telefono": request.form["telefono"],
                     "turno": request.form["turno"],
                     "estado": request.form["estado"],
-                    "fraccionamiento": request.form.get("fraccionamiento", "")
-                    .strip()
-                    .lower(),
+                    "fraccionamiento": fraccionamiento,
                 }
             },
         )
+        _invalidar_cache_kpis()
         socketio.emit("actualizar_guardias", to="rol:admin")
         socketio.emit("actualizar_dashboard", to="rol:admin")
-        flash("Guardia actualizado correctamente")
+        flash(
+            "Guardia actualizado correctamente. Si cambiaste su fraccionamiento, "
+            "debe cerrar sesión y volver a entrar.",
+            "success",
+        )
         return redirect(url_for("admin.guardias"))
     return render_template(
         "editar_guardia.html",
@@ -2814,6 +3230,21 @@ def _contar_residentes_frac(nombre):
     return 0
 
 
+def _plantilla_residentes_vacia():
+    return {
+        "configurada": False,
+        "pendiente": False,
+        "nombre_archivo": "",
+        "fila_encabezados": None,
+        "columnas": {},
+        "columnas_originales": [],
+        "mapeo_sugerido": {},
+        "campos_detectados": [],
+        "generar_nombre_desde_correo": False,
+        "actualizado": None,
+    }
+
+
 def _config_fraccionamiento(frac):
     slug = _slug_fraccionamiento(frac)
     base = {
@@ -2835,11 +3266,23 @@ def _config_fraccionamiento(frac):
         "lectura_placas": False,
         "notificaciones": True,
         "actualizado": None,
+        "plantilla_residentes": _plantilla_residentes_vacia(),
     }
+
     doc = mongo.db.config_fraccionamientos.find_one({"fraccionamiento": slug}) or {}
+
     for k, v in doc.items():
         if k != "_id":
             base[k] = v
+
+    plantilla = base.get("plantilla_residentes")
+    if not isinstance(plantilla, dict):
+        plantilla = {}
+
+    plantilla_base = _plantilla_residentes_vacia()
+    plantilla_base.update(plantilla)
+    base["plantilla_residentes"] = plantilla_base
+
     act = base.get("actualizado")
     base["actualizado_str"] = (
         act.strftime("%d/%m/%Y %I:%M %p") if isinstance(act, datetime) else ""
@@ -2847,16 +3290,466 @@ def _config_fraccionamiento(frac):
     return base
 
 
+def _normalizar_encabezado_excel(valor):
+    import re
+    import unicodedata
+
+    texto = (
+        unicodedata.normalize("NFKD", str(valor or ""))
+        .encode("ascii", "ignore")
+        .decode()
+    )
+    texto = texto.strip().lower()
+    texto = re.sub(r"[^a-z0-9]+", " ", texto)
+    return " ".join(texto.split())
+
+
+ALIAS_COLUMNAS_RESIDENTE = {
+    "nombre": {
+        "nombre",
+        "nombre completo",
+        "residente",
+        "nombre residente",
+        "nombre del residente",
+        "propietario",
+        "nombre propietario",
+        "titular",
+    },
+    "correo": {
+        "correo",
+        "correo electronico",
+        "email",
+        "e mail",
+        "mail",
+        "correo residente",
+        "correo del residente",
+    },
+    "telefono": {
+        "telefono",
+        "telefono celular",
+        "celular",
+        "movil",
+        "numero telefono",
+        "numero de telefono",
+        "telefono movil",
+    },
+    "fraccionamiento": {
+        "fraccionamiento",
+        "residencial",
+        "condominio",
+    },
+    "privada": {
+        "privada",
+        "calle",
+        "privada calle",
+        "calle privada",
+        "nombre privada",
+        "nombre de privada",
+        "vialidad",
+    },
+    "numero_casa": {
+        "casa",
+        "numero casa",
+        "numero de casa",
+        "num casa",
+        "no casa",
+        "numero vivienda",
+        "vivienda",
+        "domicilio",
+    },
+}
+
+
+CAMPOS_PLANTILLA_RESIDENTE = {
+    "nombre",
+    "correo",
+    "telefono",
+    "fraccionamiento",
+    "privada",
+    "numero_casa",
+}
+
+
+def _campo_sugerido_para_encabezado(encabezado):
+    normalizado = _normalizar_encabezado_excel(encabezado)
+    if not normalizado:
+        return ""
+
+    for campo, aliases in ALIAS_COLUMNAS_RESIDENTE.items():
+        if normalizado in aliases:
+            return campo
+
+    return ""
+
+
+def _analizar_plantilla_excel(archivo):
+    try:
+        archivo.seek(0)
+    except Exception:
+        pass
+
+    wb = load_workbook(archivo, read_only=True, data_only=True)
+    ws = wb.active
+    filas = list(ws.iter_rows(min_row=1, max_row=30, values_only=True))
+    wb.close()
+
+    mejor = None
+
+    for indice, fila in enumerate(filas):
+        columnas = []
+        reconocidos = 0
+
+        for col_idx, celda in enumerate(fila):
+            if celda is None:
+                continue
+
+            texto = str(celda).strip()
+            if not texto:
+                continue
+
+            normalizado = _normalizar_encabezado_excel(texto)
+            sugerido = _campo_sugerido_para_encabezado(texto)
+
+            if sugerido:
+                reconocidos += 1
+
+            columnas.append(
+                {
+                    "indice": col_idx,
+                    "encabezado": texto,
+                    "normalizado": normalizado,
+                    "sugerido": sugerido,
+                }
+            )
+
+        if not columnas:
+            continue
+
+        puntuacion = (reconocidos * 10) + len(columnas)
+
+        if len(columnas) == 1:
+            puntuacion -= 6
+
+        if mejor is None or puntuacion > mejor["puntuacion"]:
+            mejor = {
+                "puntuacion": puntuacion,
+                "fila_encabezados": indice + 1,
+                "columnas_originales": columnas,
+            }
+
+    if not mejor or len(mejor["columnas_originales"]) < 2:
+        return {
+            "ok": False,
+            "error": (
+                "No se pudo localizar una fila de encabezados válida. "
+                "La plantilla debe tener al menos dos columnas con título."
+            ),
+        }
+
+    mapeo_sugerido = {}
+
+    for col in mejor["columnas_originales"]:
+        if col["sugerido"]:
+            mapeo_sugerido[str(col["indice"])] = col["sugerido"]
+
+    return {
+        "ok": True,
+        "fila_encabezados": mejor["fila_encabezados"],
+        "columnas_originales": mejor["columnas_originales"],
+        "mapeo_sugerido": mapeo_sugerido,
+    }
+
+
+@admin_bp.route("/configuracion/plantilla-residentes/subir", methods=["POST"])
+@login_required
+@role_required("admin")
+def subir_plantilla_residentes():
+    from bson.binary import Binary
+
+    fraccionamiento = request.form.get("fraccionamiento", "").strip()
+    archivo = request.files.get("plantilla")
+
+    if not fraccionamiento:
+        flash("Selecciona un fraccionamiento válido.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    if not es_fraccionamiento_valido(mongo.db, fraccionamiento):
+        flash("El fraccionamiento seleccionado no existe.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    if not archivo or not archivo.filename:
+        flash("Selecciona una plantilla Excel.", "danger")
+        return redirect(url_for("admin.configuracion", fraccionamiento=fraccionamiento))
+
+    if not archivo.filename.lower().endswith(".xlsx"):
+        flash("La plantilla debe ser un archivo .xlsx.", "danger")
+        return redirect(url_for("admin.configuracion", fraccionamiento=fraccionamiento))
+
+    try:
+        contenido = archivo.read()
+
+        if not contenido:
+            raise ValueError("El archivo está vacío.")
+
+        archivo.stream.seek(0)
+        resultado = _analizar_plantilla_excel(archivo.stream)
+
+        if not resultado.get("ok"):
+            flash(
+                resultado.get("error", "No se pudo analizar la plantilla."),
+                "danger",
+            )
+            return redirect(
+                url_for("admin.configuracion", fraccionamiento=fraccionamiento)
+            )
+
+        slug = _slug_fraccionamiento(fraccionamiento)
+        ahora = datetime.now()
+
+        configuracion = {
+            "configurada": False,
+            "pendiente": True,
+            "nombre_archivo": archivo.filename,
+            "fila_encabezados": resultado["fila_encabezados"],
+            "columnas": {},
+            "columnas_originales": resultado["columnas_originales"],
+            "mapeo_sugerido": resultado["mapeo_sugerido"],
+            "campos_detectados": [],
+            "generar_nombre_desde_correo": False,
+            "actualizado": ahora,
+        }
+
+        mongo.db.config_fraccionamientos.update_one(
+            {"fraccionamiento": slug},
+            {
+                "$set": {
+                    "plantilla_residentes": configuracion,
+                    "actualizado": ahora,
+                },
+                "$setOnInsert": {
+                    "nombre": fraccionamiento,
+                },
+            },
+            upsert=True,
+        )
+
+        mongo.db.plantillas_residentes.update_one(
+            {"fraccionamiento": slug},
+            {
+                "$set": {
+                    "fraccionamiento": slug,
+                    "nombre": fraccionamiento,
+                    "nombre_archivo": archivo.filename,
+                    "contenido": Binary(contenido),
+                    "content_type": (
+                        "application/vnd.openxmlformats-officedocument."
+                        "spreadsheetml.sheet"
+                    ),
+                    "actualizado": ahora,
+                }
+            },
+            upsert=True,
+        )
+
+        flash(
+            (
+                f"Plantilla de {_formato_frac(fraccionamiento)} analizada. "
+                "Confirma ahora qué significa cada columna."
+            ),
+            "info",
+        )
+
+    except Exception as e:
+        flash(f"No se pudo analizar la plantilla: {str(e)}", "danger")
+
+    return redirect(url_for("admin.configuracion", fraccionamiento=fraccionamiento))
+
+
+@admin_bp.route("/configuracion/plantilla-residentes/mapeo", methods=["POST"])
+@login_required
+@role_required("admin")
+def guardar_mapeo_plantilla_residentes():
+    fraccionamiento = request.form.get("fraccionamiento", "").strip()
+
+    if not fraccionamiento:
+        flash("Fraccionamiento inválido.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    if not es_fraccionamiento_valido(mongo.db, fraccionamiento):
+        flash("El fraccionamiento seleccionado no existe.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    slug = _slug_fraccionamiento(fraccionamiento)
+    config_doc = (
+        mongo.db.config_fraccionamientos.find_one({"fraccionamiento": slug}) or {}
+    )
+    plantilla = config_doc.get("plantilla_residentes") or {}
+    columnas_originales = plantilla.get("columnas_originales") or []
+
+    if not plantilla.get("pendiente") or not columnas_originales:
+        flash("No hay una plantilla pendiente de configurar.", "danger")
+        return redirect(url_for("admin.configuracion", fraccionamiento=fraccionamiento))
+
+    columnas = {}
+    usados = set()
+
+    for columna in columnas_originales:
+        indice = columna.get("indice")
+        campo = request.form.get(f"map_{indice}", "").strip()
+
+        if not campo:
+            continue
+
+        if campo not in CAMPOS_PLANTILLA_RESIDENTE:
+            flash("Se recibió un campo de plantilla no válido.", "danger")
+            return redirect(
+                url_for("admin.configuracion", fraccionamiento=fraccionamiento)
+            )
+
+        if campo in usados:
+            flash(
+                (
+                    f"El campo «{campo}» está asignado más de una vez. "
+                    "Cada campo de AccessQR debe corresponder a una sola columna."
+                ),
+                "danger",
+            )
+            return redirect(
+                url_for("admin.configuracion", fraccionamiento=fraccionamiento)
+            )
+
+        usados.add(campo)
+        columnas[campo] = {
+            "indice": indice,
+            "encabezado": columna.get("encabezado", ""),
+            "normalizado": columna.get("normalizado", ""),
+        }
+
+    obligatorios = {"correo", "privada", "numero_casa"}
+    faltantes = sorted(obligatorios - usados)
+
+    if faltantes:
+        etiquetas = {
+            "correo": "Correo",
+            "privada": "Privada/Calle",
+            "numero_casa": "Número de casa",
+        }
+        faltantes_txt = ", ".join(etiquetas.get(c, c) for c in faltantes)
+        flash(f"Falta asignar: {faltantes_txt}.", "danger")
+        return redirect(url_for("admin.configuracion", fraccionamiento=fraccionamiento))
+
+    ahora = datetime.now()
+    generar_nombre = "nombre" not in usados
+
+    configuracion = {
+        "configurada": True,
+        "pendiente": False,
+        "nombre_archivo": plantilla.get("nombre_archivo", ""),
+        "fila_encabezados": plantilla.get("fila_encabezados"),
+        "columnas": columnas,
+        "columnas_originales": columnas_originales,
+        "mapeo_sugerido": {},
+        "campos_detectados": list(columnas.keys()),
+        "generar_nombre_desde_correo": generar_nombre,
+        "actualizado": ahora,
+    }
+
+    mongo.db.config_fraccionamientos.update_one(
+        {"fraccionamiento": slug},
+        {
+            "$set": {
+                "plantilla_residentes": configuracion,
+                "actualizado": ahora,
+            }
+        },
+        upsert=True,
+    )
+
+    flash(
+        f"Plantilla de {_formato_frac(fraccionamiento)} configurada correctamente.",
+        "success",
+    )
+    return redirect(url_for("admin.configuracion", fraccionamiento=fraccionamiento))
+
+
+@admin_bp.route("/configuracion/plantilla-residentes/descargar/<fraccionamiento>")
+@login_required
+@role_required("admin")
+def descargar_plantilla_configurada(fraccionamiento):
+    slug = _slug_fraccionamiento(fraccionamiento)
+    plantilla = mongo.db.plantillas_residentes.find_one({"fraccionamiento": slug})
+
+    if not plantilla or not plantilla.get("contenido"):
+        flash(
+            "Este fraccionamiento todavía no tiene una plantilla guardada.",
+            "warning",
+        )
+        return redirect(url_for("admin.configuracion", fraccionamiento=fraccionamiento))
+
+    buffer = BytesIO(bytes(plantilla["contenido"]))
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=plantilla.get("nombre_archivo", f"plantilla_{slug}.xlsx"),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+@admin_bp.route("/configuracion/plantilla-residentes/eliminar", methods=["POST"])
+@login_required
+@role_required("admin")
+def eliminar_plantilla_residentes():
+    fraccionamiento = request.form.get("fraccionamiento", "").strip()
+
+    if not fraccionamiento:
+        flash("Fraccionamiento inválido.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    if not es_fraccionamiento_valido(mongo.db, fraccionamiento):
+        flash("El fraccionamiento seleccionado no existe.", "danger")
+        return redirect(url_for("admin.configuracion"))
+
+    slug = _slug_fraccionamiento(fraccionamiento)
+    ahora = datetime.now()
+
+    mongo.db.plantillas_residentes.delete_one({"fraccionamiento": slug})
+
+    plantilla_vacia = _plantilla_residentes_vacia()
+    plantilla_vacia["actualizado"] = ahora
+
+    mongo.db.config_fraccionamientos.update_one(
+        {"fraccionamiento": slug},
+        {
+            "$set": {
+                "plantilla_residentes": plantilla_vacia,
+                "actualizado": ahora,
+            }
+        },
+        upsert=True,
+    )
+
+    flash(
+        f"Plantilla de {_formato_frac(fraccionamiento)} eliminada.",
+        "success",
+    )
+
+    return redirect(url_for("admin.configuracion", fraccionamiento=fraccionamiento))
+
+
 @admin_bp.route("/fraccionamientos/crear", methods=["POST"])
 @login_required
 @role_required("admin")
 def crear_fraccionamiento():
     nombre = request.form.get("nombre", "").strip()
+
     if len(nombre) < 3:
         flash("Escribe un nombre válido (mínimo 3 caracteres).", "danger")
         return redirect(url_for("admin.configuracion"))
 
     slug = _slug_fraccionamiento(nombre)
+
     if not slug:
         flash("El nombre no genera un identificador válido.", "danger")
         return redirect(url_for("admin.configuracion"))
@@ -2864,19 +3757,31 @@ def crear_fraccionamiento():
     slugs_existentes = {
         _slug_fraccionamiento(f) for f in _fraccionamientos_disponibles()
     }
+
     if slug in slugs_existentes:
-        flash(f"El fraccionamiento «{_formato_frac(nombre)}» ya existe.", "danger")
+        flash(
+            f"El fraccionamiento «{_formato_frac(nombre)}» ya existe.",
+            "danger",
+        )
         return redirect(url_for("admin.configuracion", fraccionamiento=nombre))
 
     existentes = set(mongo.db.list_collection_names())
+
     for prefijo in ("residentes", "visitas"):
         col = f"{prefijo}_{slug}"
         if col not in existentes:
             mongo.db.create_collection(col)
 
+    ahora = datetime.now()
+
     mongo.db.fraccionamientos.insert_one(
-        {"nombre": nombre, "slug": slug, "created_at": datetime.now()}
+        {
+            "nombre": nombre,
+            "slug": slug,
+            "created_at": ahora,
+        }
     )
+
     mongo.db.config_fraccionamientos.update_one(
         {"fraccionamiento": slug},
         {
@@ -2884,22 +3789,24 @@ def crear_fraccionamiento():
                 "fraccionamiento": slug,
                 "nombre": nombre,
                 "privadas": 1,
+                "plantilla_residentes": _plantilla_residentes_vacia(),
                 "actualizado": None,
             }
         },
         upsert=True,
     )
 
-    # CORREGIDO: invalidar también el caché de colecciones de visitas,
-    # para que el nuevo fraccionamiento aparezca de inmediato en los
-    # KPIs/gráficas del dashboard (_facet_visitas) y no solo en la tabla.
     _invalidar_cache_fracs()
     _invalidar_cache_conteos()
     _invalidar_cache_kpis()
     _invalidar_cache_visitas_cols()
 
     socketio.emit("actualizar_dashboard", to="rol:admin")
-    flash(f"Fraccionamiento «{_formato_frac(nombre)}» creado correctamente.", "success")
+
+    flash(
+        f"Fraccionamiento «{_formato_frac(nombre)}» creado correctamente.",
+        "success",
+    )
     return redirect(url_for("admin.configuracion", fraccionamiento=nombre))
 
 
@@ -2908,33 +3815,38 @@ def crear_fraccionamiento():
 @role_required("admin")
 def eliminar_fraccionamiento():
     nombre = request.form.get("fraccionamiento", "").strip()
+
     if not nombre:
         flash("Fraccionamiento inválido.", "danger")
         return redirect(url_for("admin.configuracion"))
 
     disponibles = _fraccionamientos_disponibles()
+
     if len(disponibles) <= 1:
         flash("No puedes eliminar el único fraccionamiento del sistema.", "danger")
         return redirect(url_for("admin.configuracion"))
 
     slug = _slug_fraccionamiento(nombre)
+
     try:
         mongo.db.drop_collection(f"residentes_{slug}")
         mongo.db.drop_collection(f"visitas_{slug}")
         mongo.db.config_fraccionamientos.delete_one({"fraccionamiento": slug})
+        mongo.db.plantillas_residentes.delete_one({"fraccionamiento": slug})
         mongo.db.fraccionamientos.delete_one({"slug": slug})
 
-        # CORREGIDO: invalidar también el caché de colecciones de visitas.
         _invalidar_cache_fracs()
         _invalidar_cache_conteos()
         _invalidar_cache_kpis()
         _invalidar_cache_visitas_cols()
 
         socketio.emit("actualizar_dashboard", to="rol:admin")
+
         flash(
             f"Fraccionamiento '{_formato_frac(nombre)}' eliminado correctamente.",
             "success",
         )
+
     except Exception as e:
         flash(f"Error al eliminar fraccionamiento: {str(e)}", "danger")
 
@@ -2947,8 +3859,10 @@ def eliminar_fraccionamiento():
 def configuracion():
     disponibles = _fraccionamientos_disponibles()
     frac_sel = request.args.get("fraccionamiento", "").strip()
+
     if request.method == "POST":
         frac_sel = request.form.get("fraccionamiento", frac_sel).strip()
+
     if frac_sel not in disponibles:
         frac_sel = disponibles[0] if disponibles else ""
 
@@ -2957,11 +3871,13 @@ def configuracion():
     if request.method == "POST":
         seccion = request.form.get("seccion", "")
         datos = {}
+
         if seccion == "general":
             try:
                 privadas = int(request.form.get("privadas", 1) or 1)
             except ValueError:
                 privadas = 1
+
             datos = {
                 "nombre": request.form.get("nombre", "").strip() or frac_sel,
                 "direccion": request.form.get("direccion", "").strip(),
@@ -2969,6 +3885,7 @@ def configuracion():
                 "correo": request.form.get("correo", "").strip().lower(),
                 "privadas": max(1, min(99, privadas)),
             }
+
         elif seccion == "accesos":
             for c in (
                 "duracion_qr",
@@ -2978,9 +3895,11 @@ def configuracion():
                 "registro_incidencias",
             ):
                 datos[c] = request.form.get(c, "")
+
         elif seccion == "seguridad":
             for c in ("control_sesiones", "bitacora", "respaldos"):
                 datos[c] = request.form.get(c) == "on"
+
         elif seccion == "avanzadas":
             for c in ("camaras", "lectura_placas", "notificaciones"):
                 datos[c] = request.form.get(c) == "on"
@@ -2988,9 +3907,13 @@ def configuracion():
         if datos:
             datos["fraccionamiento"] = slug
             datos["actualizado"] = datetime.now()
+
             mongo.db.config_fraccionamientos.update_one(
-                {"fraccionamiento": slug}, {"$set": datos}, upsert=True
+                {"fraccionamiento": slug},
+                {"$set": datos},
+                upsert=True,
             )
+
             flash(
                 f"Configuración de {_formato_frac(frac_sel)} guardada correctamente.",
                 "success",
@@ -2999,7 +3922,6 @@ def configuracion():
         return redirect(url_for("admin.configuracion", fraccionamiento=frac_sel))
 
     config = _config_fraccionamiento(frac_sel)
-
     conteos, _ = _conteos_residentes_cacheados(disponibles)
 
     return render_template(

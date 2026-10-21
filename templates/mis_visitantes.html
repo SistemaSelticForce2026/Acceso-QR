@@ -444,6 +444,21 @@ let currentToken  = "";
 let currentQrUrl  = "";
 let currentQrFile = null;
 
+/* Mientras el QR está abierto (copiando o compartiendo), el tiempo real
+   NO recarga la página: socket.js ve la clase "aqr-pausa" y en su lugar
+   muestra el aviso con el botón "Actualizar". */
+function abrirQrModal() {
+    qrModal.style.display        = "flex";
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("aqr-pausa");
+}
+
+function cerrarQrModal() {
+    qrModal.style.display        = "none";
+    document.body.style.overflow = "auto";
+    document.body.classList.remove("aqr-pausa");
+}
+
 async function cargarImagenQr(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error("No se pudo cargar el QR");
@@ -474,8 +489,7 @@ document.querySelectorAll(".qr-clickable").forEach(img => {
         btnShare.disabled            = true;
         currentQrFile                = null;
 
-        qrModal.style.display        = "flex";
-        document.body.style.overflow = "hidden";
+        abrirQrModal();
 
         try {
             const { file } = await cargarImagenQr(currentQrUrl);
@@ -491,15 +505,11 @@ document.querySelectorAll(".qr-clickable").forEach(img => {
     });
 });
 
-document.getElementById("closeQrModal").onclick = () => {
-    qrModal.style.display        = "none";
-    document.body.style.overflow = "auto";
-};
+document.getElementById("closeQrModal").onclick = cerrarQrModal;
 
 qrModal.addEventListener("click", e => {
     if (e.target === qrModal) {
-        qrModal.style.display        = "none";
-        document.body.style.overflow = "auto";
+        cerrarQrModal();
     }
 });
 
@@ -625,34 +635,28 @@ photoModal.addEventListener("click", function(){
 
 </script>
 
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script>
-(function () {
-    const socket = io();
-    socket.emit("join", { room: "user:{{ session['user_id'] }}" });
-    socket.on("actualizar_dashboard", function () {
-        const u = new URL(window.location.href);
-        u.searchParams.delete("auto_qr");
-        window.location.replace(u.pathname + u.search + u.hash);
-    });
-})();
-</script>
+{# El tiempo real (actualizar_dashboard) ya lo maneja static/js/socket.js,
+   que se carga en layout_residente.html y también quita ?auto_qr al
+   recargar. No se abre otra conexión aquí. #}
 
 {% if auto_qr %}
 <script>
 /* ─── Auto abrir QR recién generado ───────────────────────────────── */
 window.addEventListener("load", () => {
 
-    const el = document.querySelector('[data-qr-token="{{ auto_qr }}"]');
+    // tojson + CSS.escape: el valor viene de la URL, así nunca puede
+    // romper el script ni el selector.
+    const tokenAuto = {{ auto_qr | tojson }};
+    const el = document.querySelector('[data-qr-token="' + CSS.escape(tokenAuto) + '"]');
 
     if (el) {
         el.click();
-
-        // Elimina ?auto_qr=... de la URL para que nunca vuelva a abrirse
-        const url = new URL(window.location);
-        url.searchParams.delete("auto_qr");
-        window.history.replaceState({}, "", url);
     }
+
+    // Elimina ?auto_qr=... de la URL para que nunca vuelva a abrirse
+    const url = new URL(window.location);
+    url.searchParams.delete("auto_qr");
+    window.history.replaceState({}, "", url);
 
 });
 </script>

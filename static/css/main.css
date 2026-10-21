@@ -14,22 +14,6 @@
 @import url("estructura/footer.css");
 @import url("estructura/notificaciones.css");
 
-/* PAGINAS */
-@import url("paginas/admin_dashboard.css");
-@import url("paginas/admin_guardias.css");
-@import url("paginas/admin_residentes.css");
-@import url("paginas/admin_reportes.css");
-@import url("paginas/admin_historial_reportes.css");
-@import url("paginas/admin_incidencias.css");
-@import url("paginas/admin_configuracion.css");
-@import url("paginas/ver_guardia.css");
-@import url("paginas/ver_residente.css");
-@import url("paginas/registrar_guardia.css");
-@import url("paginas/registrar_residente.css");
-@import url("paginas/editar_guardia.css");
-@import url("paginas/editar_residente.css");
-@import url("paginas/guardia_dashboard.css");
-
 /* =========================================================
    RESET GENERAL
 ========================================================= */
@@ -81,11 +65,10 @@ a{
    RESPONSIVE GLOBAL
 ========================================================= */
 
-@media (max-width:768px){
+@media(max-width:768px){
 
     .container{
         padding:20px;
     }
 
 }
-

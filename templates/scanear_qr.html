@@ -9,19 +9,35 @@
 
 {% block content %}
 
-<div class="access-container">
+<div class="access-container access-container--pro">
 
-    <!-- =========== -->
-    <!-- HEADER      -->
-    <!-- =========== -->
+    <!-- ===================== -->
+    <!-- CABECERA              -->
+    <!-- ===================== -->
+    <section class="grd-page-header grd-page-header--pro">
+        <div>
+            <span class="grd-eyebrow">
+                <i class="fa-solid fa-shield-halved"></i>
+                Control de acceso
+            </span>
 
-    <div class="grd-page-header">
-        <h1 class="grd-page-title">{% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}</h1>
-        <p class="grd-page-sub">
-            {% if modo == 'salida' %}Escanea el QR para confirmar la salida del visitante.
-            {% else %}Escanea el QR para autorizar el ingreso del visitante.{% endif %}
-        </p>
-    </div>
+            <h1 class="grd-page-title">
+                {% if modo == 'salida' %}
+                    Registro de salida
+                {% else %}
+                    Registro de entrada
+                {% endif %}
+            </h1>
+
+            <p class="grd-page-sub">
+                {% if modo == 'salida' %}
+                    Escanee el código QR del visitante para validar y registrar su salida del residencial.
+                {% else %}
+                    Escanee el código QR del visitante para validar su autorización de acceso al residencial.
+                {% endif %}
+            </p>
+        </div>
+    </section>
 
     <div class="grd-glass-card grd-scan-toggle">
         <div class="grd-access-toggle">
@@ -38,40 +54,41 @@
         </div>
     </div>
 
-
-    <!-- =========== -->
-    <!-- ESCANER     -->
-    <!-- =========== -->
-
+    <!-- ===================== -->
+    <!-- ESCÁNER               -->
+    <!-- ===================== -->
     {% if not bloquear_camara and (
         not resultado
         or resultado.estado in ["denegado", "rechazado"]
     ) %}
 
-    <div class="card scanner-wrapper">
+    <div class="card scanner-wrapper scanner-wrapper--pro">
 
         <div class="grd-scanwrap">
 
-            <!-- Kiosk (izquierda) -->
-            <div class="grd-scan-kiosk">
+            <!-- Panel principal -->
+            <section class="grd-scan-kiosk">
 
                 <div class="scanner-top">
                     <div>
                         <h2>
                             <i class="fa-solid fa-qrcode"></i>
-                            Escanear QR
+                            Escáner QR
                         </h2>
-                        <p class="small" id="scannerMessage"></p>
+                        <p class="small scanner-helper" id="scannerMessage">
+                            Posicione el código dentro del área de lectura para iniciar la validación.
+                        </p>
                     </div>
+
                     <div class="camera-status scanner-cam ok" id="camStatus">
                         <span class="sc-cam-dot"></span>
                         <span class="sc-cam-txt">Cámara operativa</span>
                     </div>
                 </div>
 
-                <!-- CAMARA -->
                 <div class="scanner-camera-box">
                     <div id="reader"></div>
+
                     <div class="scanner-overlay">
                         <div class="scanner-target">
                             <span class="sc-corner tl"></span>
@@ -85,41 +102,41 @@
                 <div class="scanner-footer">
                     <div class="scanner-indicator">
                         <i class="fa-solid fa-expand"></i>
-                        Alinee el QR dentro del recuadro
+                        Centre el código QR dentro del recuadro
                     </div>
                     <div class="scanner-indicator">
                         <i class="fa-solid fa-bolt"></i>
-                        Validación automática
+                        Validación automática en tiempo real
                     </div>
                 </div>
 
-            </div>
+            </section>
 
-            <!-- Panel lateral (derecha) -->
-            <div class="grd-scan-side">
+            <!-- Panel lateral -->
+            <aside class="grd-scan-side">
 
                 <form method="POST"
                       id="qrForm"
                       action="{{ form_action }}"
                       class="manual-token-form">
 
-                    <!-- TOKEN OCULTO -->
                     <input type="hidden" name="qr_token" id="qr_token">
 
-                    <!-- TOKEN MANUAL -->
                     <div class="manual-token-box">
-
                         <label for="manual_token">
                             <i class="fa-solid fa-keyboard"></i>
-                            Ingresar token manualmente
+                            Validación manual
                         </label>
 
-                        <div class="manual-token-actions">
+                        <p class="manual-token-help">
+                            Utilice esta opción únicamente si el código QR no puede leerse desde la cámara.
+                        </p>
 
+                        <div class="manual-token-actions">
                             <input
                                 type="text"
                                 id="manual_token"
-                                placeholder="Pegue aquí el token QR..."
+                                placeholder="Introduzca o pegue el token del visitante"
                                 autocomplete="off"
                             >
 
@@ -128,27 +145,28 @@
                                 class="btn"
                                 id="manualSubmit">
                                 <i class="fa-solid fa-paper-plane"></i>
-                                {% if modo == 'salida' %}Registrar salida{% else %}Registrar entrada{% endif %}
+                                {% if modo == 'salida' %}
+                                    Registrar salida
+                                {% else %}
+                                    Validar acceso
+                                {% endif %}
                             </button>
-
                         </div>
-
                     </div>
 
                 </form>
 
-                <!-- ACTIVIDAD RECIENTE -->
                 <div class="grd-recent">
                     <div class="grd-recent-h">
                         <i class="fa-solid fa-clock-rotate-left"></i>
-                        Actividad reciente
+                        Últimas validaciones
                     </div>
                     <div id="recentActivity" class="grd-recent-list">
-                        <p class="grd-recent-empty">Sin actividad reciente</p>
+                        <p class="grd-recent-empty">Todavía no se han registrado movimientos recientes.</p>
                     </div>
                 </div>
 
-            </div>
+            </aside>
 
         </div>
 
@@ -156,18 +174,13 @@
 
     {% endif %}
 
-
-    <!-- =========== -->
-    <!-- RESULTADO   -->
-    <!-- =========== -->
-
+    <!-- ===================== -->
+    <!-- RESULTADO             -->
+    <!-- ===================== -->
     {% if resultado %}
 
     <div class="result-container">
 
-        {# ============================================================ #}
-        {# CÓDIGOS DE RAZÓN — el backend manda resultado.razon          #}
-        {# ============================================================ #}
         {% set razon   = resultado.get("razon") %}
         {% set es_neg  = resultado.estado in ['denegado', 'rechazado'] %}
 
@@ -179,10 +192,6 @@
         {% set R_SINENT  = ["no_dentro", "sin_entrada", "no_en_fraccionamiento"] %}
         {% set R_USADO   = ["qr_usado", "ya_usado", "acceso_registrado", "pase_usado"] %}
         {% set R_NOFOUND = ["qr_no_encontrado"] %}
-
-        <!-- =========== -->
-        <!-- ALERTA      -->
-        <!-- =========== -->
 
         <div class="access-alert
             {% if resultado.estado in ['permitido', 'salida_registrada'] %}success
@@ -220,61 +229,54 @@
             </div>
 
             <div class="alert-content">
-
-                <!-- DEBUG → estado: {{ resultado.estado }} · razon: {{ razon }} -->
-
                 <h2>
-                    {% if resultado.estado == "permitido" %}QR validado correctamente
-                    {% elif resultado.estado == "salida_registrada" %}Salida registrada correctamente
-                    {% elif resultado.estado == "salida_pendiente" %}Salida pendiente detectada
-                    {% elif es_neg and razon in R_DENTRO %}El visitante ya está dentro
-                    {% elif es_neg and razon in R_SINENT %}El visitante no ha ingresado
-                    {% elif es_neg and razon in R_DIA %}Día no autorizado
-                    {% elif es_neg and razon in R_FUT %}Pase aún no vigente
+                    {% if resultado.estado == "permitido" %}Validación completada
+                    {% elif resultado.estado == "salida_registrada" %}Salida registrada
+                    {% elif resultado.estado == "salida_pendiente" %}Salida pendiente
+                    {% elif es_neg and razon in R_DENTRO %}Visitante ya ingresado
+                    {% elif es_neg and razon in R_SINENT %}Entrada no registrada
+                    {% elif es_neg and razon in R_DIA %}Acceso no válido para hoy
+                    {% elif es_neg and razon in R_FUT %}Pase todavía no vigente
                     {% elif es_neg and razon in R_VEN %}Pase vencido
-                    {% elif es_neg and razon in R_HORARIO %}Fuera del horario permitido
-                    {% elif es_neg and razon in R_USADO %}Pase ya utilizado
-                    {% elif es_neg and razon in R_NOFOUND %}QR no reconocido
+                    {% elif es_neg and razon in R_HORARIO %}Fuera del horario autorizado
+                    {% elif es_neg and razon in R_USADO %}Pase previamente utilizado
+                    {% elif es_neg and razon in R_NOFOUND %}Código QR no reconocido
                     {% else %}Acceso rechazado{% endif %}
                 </h2>
 
                 <p>
                     {% if resultado.estado == "permitido" %}
-                        Código QR validado correctamente. Espere la autorización manual del guardia para permitir el acceso.
+                        El código ha sido validado correctamente. Revise la información del visitante y confirme manualmente el acceso si todo es correcto.
                     {% elif resultado.estado == "salida_registrada" %}
-                        El flujo de salida fue completado correctamente y el acceso quedó cerrado.
+                        La salida del visitante ha quedado registrada correctamente y el acceso se ha cerrado en el sistema.
                     {% elif resultado.estado == "salida_pendiente" %}
-                        El visitante mantiene un acceso activo dentro del residencial. Registre la salida antes de generar un nuevo ingreso.
+                        El visitante mantiene un acceso activo dentro del residencial. Debe registrarse la salida antes de permitir un nuevo ingreso.
                     {% elif es_neg and razon in R_DENTRO %}
-                        Este QR ya fue escaneado en la entrada y el visitante se encuentra dentro. Para dejarlo salir, use el escáner de <b>Salida</b>.
+                        Este visitante ya dispone de una entrada activa. Si desea finalizar su estancia, realice el proceso desde el módulo de <b>Salida</b>.
                     {% elif es_neg and razon in R_SINENT %}
-                        Este visitante todavía no ha ingresado al fraccionamiento. Primero debe registrarse su entrada en el escáner de <b>Entrada</b>.
+                        No existe una entrada activa asociada a este visitante. Primero debe registrarse su ingreso en el módulo de <b>Entrada</b>.
                     {% elif es_neg and razon in R_DIA %}
-                        El día de hoy no corresponde con los días autorizados de este pase.
+                        La fecha actual no coincide con los días autorizados para este pase.
                     {% elif es_neg and razon in R_FUT %}
-                        Este pase aún no está activo para la fecha actual.
+                        Este pase aún no está habilitado para la fecha actual.
                     {% elif es_neg and razon in R_VEN %}
-                        Este pase ya venció y no puede utilizarse.
+                        La vigencia del pase ha finalizado y ya no puede utilizarse.
                     {% elif es_neg and razon in R_HORARIO %}
-                        El pase es válido hoy, pero no dentro del horario actual.
+                        El pase corresponde al día actual, pero se encuentra fuera del horario permitido.
                     {% elif es_neg and razon in R_USADO %}
-                        Este pase ya fue utilizado y cuenta con un acceso registrado en el sistema.
+                        Este pase ya fue utilizado anteriormente y cuenta con un movimiento registrado en el sistema.
                     {% elif resultado.get("mensaje") %}
                         {{ resultado.mensaje }}
                     {% else %}
-                        Este pase no es válido en este momento. Verifique la fecha, el día autorizado o el estado del acceso.
+                        El acceso no puede autorizarse en este momento. Revise la vigencia, el horario permitido y el estado del pase.
                     {% endif %}
                 </p>
-
-                <!-- ============================================================ -->
-                <!-- DETALLE ESPECÍFICO DE RECHAZO                                -->
-                <!-- ============================================================ -->
 
                 {% if es_neg and razon in R_DIA %}
                 <div class="grd-deny-detail amber">
                     <i class="fa-solid fa-calendar-xmark"></i>
                     <div>
-                        <strong>Este pase no es válido el día de hoy{% if resultado.get("dia_hoy") %} ({{ resultado.dia_hoy }}){% endif %}.</strong>
+                        <strong>El pase no es válido para el día actual{% if resultado.get("dia_hoy") %} ({{ resultado.dia_hoy }}){% endif %}.</strong>
                         <span>
                             {% if resultado.get("dias_autorizados_label") %}Días autorizados: <b>{{ resultado.dias_autorizados_label }}</b>. {% endif %}
                             {% if resultado.get("proximo_acceso") %}Próximo acceso disponible: <b>{{ resultado.proximo_acceso }}</b>.{% endif %}
@@ -286,8 +288,8 @@
                 <div class="grd-deny-detail blue">
                     <i class="fa-solid fa-calendar-clock"></i>
                     <div>
-                        <strong>Este pase todavía no está activo.</strong>
-                        <span>{% if resultado.get("fecha_visita") %}Será válido a partir del <b>{{ resultado.fecha_visita }}</b>. {% endif %}La fecha programada aún no ha llegado.</span>
+                        <strong>El pase todavía no se encuentra activo.</strong>
+                        <span>{% if resultado.get("fecha_visita") %}La validez comienza el <b>{{ resultado.fecha_visita }}</b>. {% endif %}Hasta esa fecha no puede emplearse.</span>
                     </div>
                 </div>
 
@@ -295,8 +297,8 @@
                 <div class="grd-deny-detail red">
                     <i class="fa-solid fa-calendar-xmark"></i>
                     <div>
-                        <strong>Este pase ha vencido.</strong>
-                        <span>{% if resultado.get("fecha_visita") %}Fue válido el <b>{{ resultado.fecha_visita }}</b> y ya no puede utilizarse.{% else %}La fecha de validez ya pasó y no puede utilizarse.{% endif %}</span>
+                        <strong>La vigencia del pase ha expirado.</strong>
+                        <span>{% if resultado.get("fecha_visita") %}Su última fecha válida fue el <b>{{ resultado.fecha_visita }}</b>.{% else %}La fecha autorizada ya ha transcurrido.{% endif %}</span>
                     </div>
                 </div>
 
@@ -304,21 +306,18 @@
                 <div class="grd-deny-detail amber">
                     <i class="fa-solid fa-rotate-left"></i>
                     <div>
-                        <strong>Este QR ya fue utilizado.</strong>
-                        <span>El visitante ya cuenta con un acceso registrado. Para un nuevo ingreso, primero debe registrarse su salida.</span>
+                        <strong>El código QR ya fue utilizado.</strong>
+                        <span>Existe un acceso previamente registrado. Para habilitar un nuevo ingreso, primero debe cerrarse la visita anterior.</span>
                     </div>
                 </div>
                 {% endif %}
-
             </div>
 
             <span class="access-alert-time">
                 <i class="fa-solid fa-clock"></i>
                 <span id="alertTimeNow"></span>
             </span>
-
         </div>
-
 
         {% if resultado.visita and resultado.estado in ["permitido", "salida_pendiente", "salida_registrada"] %}
 
@@ -328,48 +327,38 @@
                 <i class="fa-solid fa-circle-check"></i>
             </div>
             <div>
-                <h3>Salida finalizada correctamente</h3>
-                <p>El visitante abandonó el residencial y el acceso fue cerrado correctamente en el sistema.</p>
+                <h3>Proceso de salida finalizado</h3>
+                <p>El visitante ha abandonado el residencial y el movimiento ha quedado cerrado correctamente.</p>
             </div>
         </div>
         {% endif %}
 
-        {# --- normalización de campos --- #}
         {% set h_ini = resultado.visita.get('hora_desde') or resultado.visita.get('valido_inicio') or resultado.visita.get('hora_inicio') %}
         {% set h_fin = resultado.visita.get('hora_hasta') or resultado.visita.get('valido_final') or resultado.visita.get('hora_fin') %}
         {% set est   = (resultado.visita.get('estado') or '') | lower %}
 
-
-        <!-- =========== -->
-        <!-- GRID        -->
-        <!-- =========== -->
-
         <div class="dashboard-grid access-grid">
 
-            <!-- =========== -->
-            <!-- VISITANTE   -->
-            <!-- =========== -->
-
+            <!-- PERFIL -->
             <div class="card access-card grd-profile">
 
                 <div class="grd-profile-head">
                     <span class="grd-profile-tag">
                         <i class="fa-solid fa-id-card"></i>
-                        Perfil validado
+                        Identidad validada
                     </span>
                     <span class="grd-profile-badge">
                         <span class="grd-badge-dot"></span>
-                        {% if resultado.visita.modalidad_visita == "recurrente" %}Recurrente{% else %}Temporal{% endif %}
+                        {% if resultado.visita.modalidad_visita == "recurrente" %}Pase recurrente{% else %}Pase temporal{% endif %}
                     </span>
                 </div>
 
-                <!-- IDENTIDAD -->
                 <div class="grd-identity">
 
                     {% if resultado.visita and resultado.visita.get('foto_visitante') %}
                     <img
                         src="{{ resultado.visita.foto_visitante['url'] }}"
-                        alt="Foto visitante"
+                        alt="Fotografía del visitante"
                         class="grd-identity-photo"
                         id="visitorPhoto"
                     >
@@ -383,13 +372,19 @@
                         <h2>{{ resultado.visita.nombre_visitante }}</h2>
                         <p>
                             Visitante autorizado ·
-                            {% if resultado.visita.modalidad_visita == "recurrente" %}recurrente{% else %}temporal{% if resultado.visita.fecha_visita %} hasta {{ resultado.visita.fecha_visita }}{% endif %}{% endif %}
+                            {% if resultado.visita.modalidad_visita == "recurrente" %}
+                                acceso recurrente
+                            {% else %}
+                                acceso temporal{% if resultado.visita.fecha_visita %} hasta {{ resultado.visita.fecha_visita }}{% endif %}
+                            {% endif %}
                         </p>
+
                         <div class="grd-chips">
                             <span class="grd-chip">
                                 <i class="fa-solid fa-building"></i>
                                 {{ resultado.visita.condominio }} · Casa {{ resultado.visita.residencia_destino }}
                             </span>
+
                             {% if resultado.visita.vehiculo %}
                             <span class="grd-chip">
                                 <i class="fa-solid fa-car"></i>
@@ -403,7 +398,7 @@
                     <div class="grd-plate-wrap">
                         <img
                             src="{{ resultado.visita.foto_placa['url'] }}"
-                            alt="Foto placa"
+                            alt="Fotografía de la placa"
                             class="grd-plate-photo zoomable-placa"
                         >
                     </div>
@@ -411,7 +406,6 @@
 
                 </div>
 
-                <!-- CONTACTO -->
                 <div class="grd-prows">
 
                     <div class="grd-prow">
@@ -423,44 +417,43 @@
                     {% if resultado.visita.get("telefono_residente") %}
                     <div class="grd-prow">
                         <span class="grd-prow-ico tone-green"><i class="fa-solid fa-mobile-screen"></i></span>
-                        <span class="grd-prow-label">Número del residente</span>
+                        <span class="grd-prow-label">Teléfono del residente</span>
                         <a class="grd-prow-val" href="tel:{{ resultado.visita.telefono_residente }}">{{ resultado.visita.telefono_residente }}</a>
                     </div>
                     {% endif %}
 
                     <div class="grd-prow">
                         <span class="grd-prow-ico tone-amber"><i class="fa-solid fa-phone"></i></span>
-                        <span class="grd-prow-label">Número del visitante</span>
+                        <span class="grd-prow-label">Teléfono del visitante</span>
                         <a class="grd-prow-val" href="tel:{{ resultado.visita.telefono }}">{{ resultado.visita.telefono }}</a>
                     </div>
 
                 </div>
 
-                <!-- META -->
                 <div class="grd-meta">
                     <div class="grd-meta-cell">
-                        <span>Modalidad</span>
+                        <span>Tipo de acceso</span>
                         <strong>
                             {% if resultado.visita.modalidad_visita == "recurrente" %}
                                 Recurrente{% if resultado.visita.get("dias_autorizados") %} · {{ resultado.visita.dias_autorizados | join(', ') | capitalize }}{% endif %}{% if h_ini and h_fin %} · {{ h_ini | hora_ampm }} a {{ h_fin | hora_ampm }}{% endif %}
                             {% else %}
-                                Temporal — {{ resultado.visita.fecha_visita }}
+                                Temporal · {{ resultado.visita.fecha_visita }}
                             {% endif %}
                         </strong>
                     </div>
+
                     <div class="grd-meta-cell">
-                        <span>Motivo</span>
+                        <span>Motivo de visita</span>
                         <strong>{{ resultado.visita.motivo }}</strong>
                     </div>
                 </div>
 
-                <!-- ACCIONES (inline en el perfil) -->
                 {% if modo != 'salida' and resultado.estado == 'permitido' %}
                 <div class="grd-scan-actions">
 
                     <button type="button" class="grd-btn-reject" id="openRejectModal">
                         <i class="fa-solid fa-ban"></i>
-                        Rechazar
+                        Rechazar acceso
                     </button>
 
                     <form method="POST"
@@ -478,16 +471,12 @@
 
             </div>
 
-
-            <!-- =========== -->
-            <!-- ESTADO      -->
-            <!-- =========== -->
-
+            <!-- MONITOREO -->
             <div class="card access-card">
 
                 <div class="card-title">
                     <i class="fa-solid fa-clock-rotate-left"></i>
-                    <h3>Monitoreo de acceso</h3>
+                    <h3>Seguimiento del acceso</h3>
                 </div>
 
                 <div class="status-panel">
@@ -500,7 +489,7 @@
                         {% if resultado.estado == 'salida_registrada' %}
                             Salida completada
                         {% elif est in ['dentro','adentro','ingresado'] %}
-                            Visitante dentro
+                            Visitante dentro del residencial
                         {% elif est in ['salida_registrada','salida','fuera'] %}
                             Salida completada
                         {% else %}
@@ -515,7 +504,7 @@
                         <i class="fa-solid fa-calendar-days"></i>
                         <div>
                             {% if resultado.visita.modalidad_visita == "recurrente" %}
-                                <span>Horario autorizado</span>
+                                <span>Franja autorizada</span>
                                 <strong>
                                     {% if h_ini and h_fin %}
                                         {{ h_ini | hora_ampm }} a {{ h_fin | hora_ampm }}
@@ -544,23 +533,22 @@
                     <div class="timeline-item exit-line">
                         <i class="fa-solid fa-arrow-right-from-bracket"></i>
                         <div class="timeline-content">
-                            <span>Estado final:</span>
-                            <strong class="status-finished">Visitante salió del fraccionamiento</strong>
+                            <span>Estado final</span>
+                            <strong class="status-finished">El visitante ya salió del residencial</strong>
                             <small>Salida registrada a las <strong class="timeline-hour">{{ resultado.visita.hora_salida | hora_ampm }}</strong></small>
                         </div>
                     </div>
-
                     {% else %}
                     <div class="timeline-item pending-line">
                         <i class="fa-solid fa-hourglass-half"></i>
                         <div class="timeline-content">
-                            <span>Estado actual:</span>
+                            <span>Estado actual</span>
                             {% if est in ['dentro', 'adentro', 'ingresado'] %}
-                                <strong class="status-inside">Visitante dentro del residencial</strong>
-                                <small>Acceso autorizado y activo dentro del fraccionamiento.</small>
+                                <strong class="status-inside">Acceso activo dentro del residencial</strong>
+                                <small>La entrada fue autorizada y el visitante continúa dentro del recinto.</small>
                             {% else %}
-                                <strong class="status-pending">Pendiente de autorización del guardia</strong>
-                                <small>El visitante aún no ha ingresado al fraccionamiento.</small>
+                                <strong class="status-pending">Pendiente de validación final</strong>
+                                <small>El visitante todavía no ha ingresado. Requiere autorización del personal de seguridad.</small>
                             {% endif %}
                         </div>
                     </div>
@@ -572,22 +560,17 @@
 
         </div>
 
-
-        <!-- =========== -->
-        <!-- VEHICULO    -->
-        <!-- =========== -->
-
         {% if resultado.visita.vehiculo %}
         <div class="card vehicle-card">
 
             <div class="card-title">
                 <i class="fa-solid fa-car-side"></i>
-                <h3>Unidad vehicular registrada</h3>
+                <h3>Vehículo registrado</h3>
             </div>
 
             <div class="vehicle-grid">
                 <div>
-                    <span>Placa</span>
+                    <span>Matrícula / placa</span>
                     <strong>{{ resultado.visita.vehiculo.placa }}</strong>
                 </div>
                 <div>
@@ -606,11 +589,11 @@
 
             {% if resultado.visita.foto_placa %}
             <div class="plate-photo-section">
-                <span class="plate-photo-title">Fotografía de la placa registrada</span>
+                <span class="plate-photo-title">Imagen de placa registrada</span>
                 <div class="plate-photo-wrapper">
                     <img
                         src="{{ resultado.visita.foto_placa['url'] }}"
-                        alt="Foto placa"
+                        alt="Imagen ampliada de la placa"
                         class="plate-photo-large zoomable-placa"
                     >
                 </div>
@@ -620,13 +603,7 @@
         </div>
         {% endif %}
 
-
-        <!-- ===================================================== -->
-        <!-- MODAL: MOTIVO DE RECHAZO                               -->
-        <!-- ===================================================== -->
-
         {% if modo != 'salida' and resultado.estado == 'permitido' %}
-
         <div class="grd-reject-modal" id="rejectModal">
             <div class="grd-reject-sheet">
 
@@ -635,10 +612,10 @@
                         <i class="fa-solid fa-ban"></i>
                     </span>
                     <div class="grd-reject-head-txt">
-                        <h3>Motivo de la no autorización</h3>
+                        <h3>Registrar incidencia de acceso</h3>
                         <p>
-                            Selecciona la razón por la que se rechaza el acceso
-                            {% if resultado.visita %}de <strong>{{ resultado.visita.nombre_visitante }}</strong>{% endif %}.
+                            Seleccione el motivo por el que se deniega el acceso
+                            {% if resultado.visita %}a <strong>{{ resultado.visita.nombre_visitante }}</strong>{% endif %}.
                         </p>
                     </div>
                     <button type="button" class="grd-reject-x" id="closeRejectModal" aria-label="Cerrar">
@@ -660,8 +637,8 @@
                         <button type="button" class="grd-reason" data-tipo="placa_no_coincide">
                             <span class="grd-reason-ico amber"><i class="fa-solid fa-car"></i></span>
                             <span class="grd-reason-txt">
-                                <strong>Placa incorrecta</strong>
-                                <small>La placa del vehículo no coincide con la registrada.</small>
+                                <strong>Placa no coincidente</strong>
+                                <small>La matrícula observada no coincide con la registrada en el pase.</small>
                             </span>
                             <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
                         </button>
@@ -669,8 +646,8 @@
                         <button type="button" class="grd-reason" data-tipo="persona_sospechosa">
                             <span class="grd-reason-ico red"><i class="fa-solid fa-user-secret"></i></span>
                             <span class="grd-reason-txt">
-                                <strong>Identidad sospechosa</strong>
-                                <small>Se detectó una persona con comportamiento sospechoso.</small>
+                                <strong>Identidad o comportamiento sospechoso</strong>
+                                <small>Se detectan inconsistencias o señales de riesgo durante la verificación.</small>
                             </span>
                             <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
                         </button>
@@ -678,8 +655,8 @@
                         <button type="button" class="grd-reason" data-tipo="visitante_agresivo">
                             <span class="grd-reason-ico red"><i class="fa-solid fa-triangle-exclamation"></i></span>
                             <span class="grd-reason-txt">
-                                <strong>Conducta agresiva</strong>
-                                <small>El visitante presentó una actitud agresiva.</small>
+                                <strong>Conducta inapropiada o agresiva</strong>
+                                <small>El visitante presenta una actitud que compromete la seguridad del acceso.</small>
                             </span>
                             <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
                         </button>
@@ -687,8 +664,8 @@
                         <button type="button" class="grd-reason" data-tipo="datos_no_coinciden">
                             <span class="grd-reason-ico violet"><i class="fa-solid fa-file-circle-xmark"></i></span>
                             <span class="grd-reason-txt">
-                                <strong>Información inválida</strong>
-                                <small>Los datos del visitante no coinciden con lo registrado.</small>
+                                <strong>Datos inconsistentes</strong>
+                                <small>La información del visitante no coincide con la registrada en el sistema.</small>
                             </span>
                             <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
                         </button>
@@ -696,8 +673,8 @@
                         <button type="button" class="grd-reason" data-tipo="sin_autorizacion">
                             <span class="grd-reason-ico red"><i class="fa-solid fa-lock"></i></span>
                             <span class="grd-reason-txt">
-                                <strong>Acceso no autorizado</strong>
-                                <small>La persona intenta ingresar sin autorización.</small>
+                                <strong>Acceso sin autorización válida</strong>
+                                <small>No existe autorización suficiente para permitir el ingreso.</small>
                             </span>
                             <span class="grd-reason-check"><i class="fa-solid fa-check"></i></span>
                         </button>
@@ -707,7 +684,7 @@
                     <textarea class="grd-reject-note"
                         name="detalle"
                         rows="2"
-                        placeholder="Detalle adicional del rechazo (opcional)…"></textarea>
+                        placeholder="Observaciones adicionales de la incidencia (opcional)"></textarea>
 
                     <div class="grd-reject-actions">
                         <button type="button" class="grd-btn-reject" id="cancelReject">Cancelar</button>
@@ -721,27 +698,17 @@
 
             </div>
         </div>
-
         {% endif %}
-
         {% endif %}
-
     </div>
-
     {% endif %}
-
 </div>
-
-<!-- ======================================== -->
-<!-- MODAL FOTO                               -->
-<!-- ======================================== -->
 
 <div class="photo-modal" id="photoModal">
     <span class="close-photo" id="closePhoto">&times;</span>
-    <img src="" class="photo-modal-content" id="photoZoom" alt="Zoom foto">
+    <img src="" class="photo-modal-content" id="photoZoom" alt="Ampliación de imagen">
 </div>
 
-<!-- Hora de validación en el banner -->
 <script>
 (function () {
     var t = document.getElementById("alertTimeNow");
@@ -751,8 +718,6 @@
 })();
 </script>
 
-
-<!-- Evita el reenvío del POST al refrescar (PRG en el cliente) -->
 {% if resultado %}
 <script>
 (function () {
@@ -762,17 +727,12 @@
     }
 })();
 
-// Si la página se restaura desde la caché del navegador (botón atrás), recargar limpio
 window.addEventListener("pageshow", function (e) {
     if (e.persisted) window.location.reload();
 });
 </script>
 {% endif %}
 
-
-<!-- ===================================================== -->
-<!-- TOLERANCIA 5 MIN: recuperar pase tras refresco         -->
-<!-- ===================================================== -->
 {% if modo != 'salida' %}
 <script>
 (function () {
@@ -780,35 +740,28 @@ window.addEventListener("pageshow", function (e) {
     const TOL_MS = 5 * 60 * 1000;
 
     const resultadoData = {{ resultado|tojson|default('null') }};
-    
+
     if (resultadoData && resultadoData.estado === 'permitido' && resultadoData.visita) {
-        // QR escaneado y a la espera de autorización: lo guardamos por si la
-        // pantalla se refresca por error.
         sessionStorage.setItem(KEY, JSON.stringify({
             token: resultadoData.visita.qr_token,
             ts: Date.now()
         }));
         return;
     } else if (resultadoData) {
-        // El pase ya se resolvió (autorizado, rechazado o inválido).
         sessionStorage.removeItem(KEY);
         return;
     }
 
-    // ---- Escáner vacío (sin resultado) ----
     let raw = sessionStorage.getItem(KEY);
     if (!raw) return;
 
     let p;
     try { p = JSON.parse(raw); } catch (e) { sessionStorage.removeItem(KEY); return; }
     if (!p || !p.token || !p.ts || (Date.now() - p.ts) > TOL_MS) {
-        // Se acabó la tolerancia: el servidor ya lo marcó como "No se presentó".
         sessionStorage.removeItem(KEY);
         return;
     }
 
-    // Solo recuperamos cuando la página se RECARGÓ (refresco), no cuando el
-    // guardia entró al escáner deliberadamente para otra persona.
     let recargada = false;
     try {
         const nav = performance.getEntriesByType('navigation')[0];
@@ -826,61 +779,54 @@ window.addEventListener("pageshow", function (e) {
 </script>
 {% endif %}
 
-
-<!-- ===================================================== -->
-<!-- SCRIPT                                                -->
-<!-- ===================================================== -->
-
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
-
 {% if not bloquear_camara %}
 
-const qrInput       = document.getElementById("qr_token");
-const qrForm        = document.getElementById("qrForm");
-const manualToken   = document.getElementById("manual_token");
-const manualSubmit  = document.getElementById("manualSubmit");
+const qrInput        = document.getElementById("qr_token");
+const qrForm         = document.getElementById("qrForm");
+const manualToken    = document.getElementById("manual_token");
+const manualSubmit   = document.getElementById("manualSubmit");
 const scannerMessage = document.getElementById("scannerMessage");
 
 const beep = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
-
 const html5QrCode = new Html5Qrcode("reader");
 
 let scanned = false;
 let cameraStopped = false;
 
-/* ── Bloquear Enter en el input manual: solo el botón envía ── */
-manualToken.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-        e.preventDefault();
-    }
-});
+if (manualToken) {
+    manualToken.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") e.preventDefault();
+    });
+}
 
-/* ── Envío manual solo desde el botón ── */
-manualSubmit.addEventListener("click", () => {
-    const token = manualToken.value.trim();
-    if (!token) {
-        alert("Ingrese un token válido");
-        return;
-    }
-    qrInput.value = token;
-    qrForm.submit();
-});
+if (manualSubmit) {
+    manualSubmit.addEventListener("click", () => {
+        const token = manualToken.value.trim();
+        if (!token) {
+            alert("Introduzca un token válido para continuar.");
+            return;
+        }
+        qrInput.value = token;
+        qrForm.submit();
+    });
+}
 
 function onScanSuccess(decodedText) {
     if (scanned) return;
     scanned = true;
 
     beep.play();
-    navigator.vibrate?.(200);
+    navigator.vibrate?.(180);
 
     qrInput.value = decodedText;
 
     scannerMessage.innerHTML = `
-        <span style="color:#22c55e; font-weight:600;">
+        <span style="color:#16a34a; font-weight:600;">
             <i class="fa-solid fa-circle-check"></i>
-            Código QR detectado correctamente...
+            Código detectado. Procesando validación...
         </span>
     `;
 
@@ -893,8 +839,8 @@ function onScanSuccess(decodedText) {
                 document.getElementById("reader").innerHTML = `
                     <div class="scanner-finished">
                         <i class="fa-solid fa-circle-check"></i>
-                        <h3>QR procesado correctamente</h3>
-                        <p>Esperando siguiente validación...</p>
+                        <h3>Lectura completada</h3>
+                        <p>Enviando información al sistema de control de acceso...</p>
                     </div>
                 `;
                 qrForm.submit();
@@ -902,7 +848,7 @@ function onScanSuccess(decodedText) {
             .catch(() => {
                 qrForm.submit();
             });
-    }, 1000);
+    }, 700);
 }
 
 function onScanFailure(error) {}
@@ -939,9 +885,9 @@ async function iniciarCamara() {
         );
 
         scannerMessage.innerHTML = `
-            <span style="color:#22c55e; font-weight:600;">
+            <span style="color:#16a34a; font-weight:600;">
                 <i class="fa-solid fa-circle-check"></i>
-                Cámara iniciada correctamente
+                Cámara iniciada correctamente. Sistema listo para escanear.
             </span>
         `;
 
@@ -957,17 +903,17 @@ async function iniciarCamara() {
                 <div class="scanner-error-icon">
                     <i class="fa-solid fa-camera-slash"></i>
                 </div>
-                <h3>Cámara no disponible</h3>
+                <h3>No ha sido posible iniciar la cámara</h3>
                 <p>
-                    No fue posible acceder a la cámara del dispositivo.
-                    Verifique los permisos del navegador o continúe con el ingreso manual.
+                    El navegador no ha podido acceder al dispositivo de captura.
+                    Revise los permisos de cámara o utilice la validación manual.
                 </p>
                 <p class="scanner-error-detail">
-                    Detalle: ${err.name || 'Error'}${err.message ? ' — ' + err.message : ''}
+                    Detalle técnico: ${err.name || 'Error'}${err.message ? ' — ' + err.message : ''}
                 </p>
                 <button type="button" class="scanner-retry-btn" onclick="location.reload()">
                     <i class="fa-solid fa-rotate"></i>
-                    Reintentar cámara
+                    Reintentar
                 </button>
             </div>
         `;
@@ -978,12 +924,7 @@ iniciarCamara();
 
 {% endif %}
 
-/* ========================================= */
-/* ZOOM FOTOS                                */
-/* ========================================= */
-
 document.addEventListener("DOMContentLoaded", () => {
-
     const photoModal = document.getElementById("photoModal");
     const photoZoom  = document.getElementById("photoZoom");
     const closePhoto = document.getElementById("closePhoto");
@@ -1009,15 +950,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (closePhoto) closePhoto.onclick = cerrarZoom;
 
-    photoModal.onclick = e => { if (e.target === photoModal) cerrarZoom(); };
+    if (photoModal) {
+        photoModal.onclick = e => { if (e.target === photoModal) cerrarZoom(); };
+    }
 
     document.onkeydown = e => { if (e.key === "Escape") cerrarZoom(); };
-
 });
-
-/* ========================================= */
-/* ACTIVIDAD RECIENTE                        */
-/* ========================================= */
 
 {% if resultado and resultado.visita and resultado.estado in ["permitido", "salida_registrada"] %}
 (function () {
@@ -1025,12 +963,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const name  = '{{ resultado.visita.nombre_visitante | e }}';
     const place = '{{ resultado.visita.condominio | e }} · Casa {{ resultado.visita.residencia_destino | e }}';
     const acts  = JSON.parse(sessionStorage.getItem('grdRecentActivity') || '[]');
+
     acts.unshift({
         dir:  dir,
         name: name,
         place: place,
         time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
     });
+
     if (acts.length > 5) acts.length = 5;
     sessionStorage.setItem('grdRecentActivity', JSON.stringify(acts));
 })();
@@ -1039,8 +979,10 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('recentActivity');
     if (!el) return;
+
     const acts = JSON.parse(sessionStorage.getItem('grdRecentActivity') || '[]');
     if (!acts.length) return;
+
     el.innerHTML = acts.map(function (a) {
         const icon = a.dir === 'in' ? 'fa-arrow-right-to-bracket' : 'fa-right-from-bracket';
         return '<div class="grd-recent-row">'
@@ -1051,23 +993,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 });
 
-/* ========================================= */
-/* MODAL DE RECHAZO                          */
-/* ========================================= */
-
 (function () {
     const modal = document.getElementById('rejectModal');
     if (!modal) return;
 
-    const openBtn   = document.getElementById('openRejectModal');
-    const closeBtn  = document.getElementById('closeRejectModal');
-    const cancelBtn = document.getElementById('cancelReject');
+    const openBtn    = document.getElementById('openRejectModal');
+    const closeBtn   = document.getElementById('closeRejectModal');
+    const cancelBtn  = document.getElementById('cancelReject');
     const confirmBtn = document.getElementById('confirmReject');
-    const tipoInput = document.getElementById('rejectTipo');
-    const reasons   = modal.querySelectorAll('.grd-reason');
+    const tipoInput  = document.getElementById('rejectTipo');
+    const reasons    = modal.querySelectorAll('.grd-reason');
 
     function openModal()  { modal.classList.add('open');    document.body.style.overflow = 'hidden'; }
-    function closeModal() { modal.classList.remove('open'); document.body.style.overflow = '';       }
+    function closeModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
 
     if (openBtn)   openBtn.addEventListener('click', openModal);
     if (closeBtn)  closeBtn.addEventListener('click', closeModal);
@@ -1089,7 +1027,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 })();
-
 </script>
 
 {% endblock %}

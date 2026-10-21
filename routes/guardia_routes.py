@@ -73,6 +73,49 @@ def _buscar_visita(token):
     return col.find_one({"qr_token": token})
 
 
+# ---------------------------------------------------------------------------
+# Tiempo real (Socket.IO)
+# ---------------------------------------------------------------------------
+
+
+def _sala_guardias(fraccionamiento):
+    """Sala con SOLO los guardias de un fraccionamiento.
+    Debe coincidir con la que crea app.py (on_connect)."""
+    return f"guardia:{(fraccionamiento or '').strip().lower()}"
+
+
+def _invalidar_kpis_admin():
+    """Limpia la caché de KPIs del dashboard admin para que, al recargarse,
+    muestre los números nuevos y no los guardados hace unos segundos."""
+    try:
+        from routes.admin_routes import (  # pylint: disable=import-outside-toplevel
+            _invalidar_cache_kpis,
+        )
+
+        _invalidar_cache_kpis()
+    except Exception:  # pylint: disable=broad-except
+        pass
+
+
+def _avisar_cambio_visita(visita, residente_ids=None):
+    """Avisa en vivo que una visita cambió de estado a:
+    - el admin (ve todos los fraccionamientos),
+    - los guardias del MISMO fraccionamiento (por si hay otra caseta),
+    - el residente dueño del pase."""
+    _invalidar_kpis_admin()
+    socketio.emit("actualizar_dashboard", to="rol:admin")
+
+    frac = (visita or {}).get("fraccionamiento") or session.get("fraccionamiento")
+    if frac:
+        socketio.emit("actualizar_dashboard", to=_sala_guardias(frac))
+
+    ids = set(residente_ids or [])
+    if visita and visita.get("residente_id"):
+        ids.add(visita["residente_id"])
+    for rid in ids:
+        socketio.emit("actualizar_dashboard", to=f"user:{rid}")
+
+
 def _render_scan(modo, resultado=None, bloquear_camara=False):
     """Renderiza la pantalla de escaneo con el resultado."""
     visita = None
@@ -149,12 +192,15 @@ def _registrar_incidencia_qr(sesion, tipo, descripcion, visita=None):
         "descripcion": descripcion,
         "estado": "abierta",
         "fecha_hora": datetime.now(),
+        # Para que cada caseta vea solo las incidencias de su fraccionamiento
+        "fraccionamiento": (session.get("fraccionamiento") or "").strip().lower(),
     }
     if visita:
         incidencia["visita_id"] = str(visita["_id"])
         incidencia["visitante"] = visita.get("nombre_visitante")
         incidencia["residencia_destino"] = visita.get("residencia_destino")
     mongo.db.incidencias.insert_one(incidencia)
+    _invalidar_kpis_admin()
     socketio.emit("actualizar_dashboard", to="rol:admin")
 
 
@@ -192,8 +238,7 @@ def _registrar_salida(visita, sesion):
 
     _col_visita(visita).update_one({"_id": visita["_id"]}, {"$set": update_salida})
     visita.update(update_salida)
-    socketio.emit("actualizar_dashboard", to="rol:admin")
-    socketio.emit("actualizar_dashboard", to=f"user:{visita['residente_id']}")
+    _avisar_cambio_visita(visita)
     return visita
 
 
@@ -425,6 +470,11 @@ def _marcar_no_presentados(col):
     limite = datetime.now() - TOLERANCIA_AUTORIZACION
     base = {"estado": "pendiente_autorizacion", "fecha_escaneo": {"$lt": limite}}
     try:
+        # Residentes afectados (para avisarles en vivo del cambio).
+        afectadas = list(col.find(base, {"residente_id": 1, "fraccionamiento": 1}))
+        if not afectadas:
+            return
+
         col.update_many(
             {**base, "modalidad_visita": {"$ne": "recurrente"}},
             {"$set": {"estado": "no_presento", "qr_estado": "no_presentado"}},
@@ -432,6 +482,13 @@ def _marcar_no_presentados(col):
         col.update_many(
             {**base, "modalidad_visita": "recurrente"},
             {"$set": {"estado": "activo"}},
+        )
+
+        _avisar_cambio_visita(
+            afectadas[0],
+            residente_ids=[
+                v.get("residente_id") for v in afectadas if v.get("residente_id")
+            ],
         )
     except PyMongoError:
         pass
@@ -563,7 +620,18 @@ def dashboard():
     inicio_hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
     kpis = _conteos_estado_actual(col, inicio_hoy)
 
-    incidencias = mongo.db.incidencias.count_documents({"estado": "abierta"})
+    # Solo las de este fraccionamiento (las antiguas sin el campo también
+    # se cuentan, para no ocultar nada registrado antes de este cambio).
+    frac_norm = (frac or "").strip().lower()
+    incidencias = mongo.db.incidencias.count_documents(
+        {
+            "estado": "abierta",
+            "$or": [
+                {"fraccionamiento": frac_norm},
+                {"fraccionamiento": {"$exists": False}},
+            ],
+        }
+    )
 
     return render_template(
         "guardia_dashboard.html",
@@ -729,6 +797,9 @@ def scan_entrada():
                 visita["hora_escaneo"] = ahora.strftime("%H:%M:%S")
                 visita["fecha_escaneo"] = ahora
 
+                # El residente ve "Pendiente" en vivo y el admin actualiza.
+                _avisar_cambio_visita(visita)
+
                 resultado = {
                     "estado": "permitido",
                     "mensaje": (
@@ -867,10 +938,8 @@ def incidencia_manual():
             }
         )
 
-        # Avisar a admin y al residente dueño del pase.
-        socketio.emit("actualizar_dashboard", to="rol:admin")
-        if visita.get("residente_id"):
-            socketio.emit("actualizar_dashboard", to=f"user:{visita['residente_id']}")
+        # Avisar a admin, guardias del fraccionamiento y residente dueño del pase.
+        _avisar_cambio_visita(visita)
 
     resultado = {
         "estado": "incidencia",
@@ -893,44 +962,61 @@ def incidencia_manual():
 def confirm_access():
     """Autoriza físicamente el acceso: marca la visita como 'dentro' y la registra."""
 
-    token = request.form["qr_token"]
-    visita = _buscar_visita(token)
+    token = request.form.get("qr_token", "").strip()
+    visita = _buscar_visita(token) if token else None
 
-    if visita:
+    if not visita:
+        flash("No se encontró el pase. Escanea el código de nuevo.", "danger")
+        return redirect(url_for("guard.scan_entrada"))
 
-        ahora = datetime.now()
+    ahora = datetime.now()
 
-        update_entrada = {
-            "estado": "dentro",
-            "hora_entrada_real": ahora.strftime("%H:%M:%S"),
-            "fecha_entrada_real": ahora,
-            "hora_escaneo": ahora.strftime("%H:%M:%S"),
-            "fecha_escaneo": ahora,
-        }
+    update_entrada = {
+        "estado": "dentro",
+        "hora_entrada_real": ahora.strftime("%H:%M:%S"),
+        "fecha_entrada_real": ahora,
+        "hora_escaneo": ahora.strftime("%H:%M:%S"),
+        "fecha_escaneo": ahora,
+    }
 
-        if visita.get("modalidad_visita", "temporal") == "temporal":
-            update_entrada["entrada_consumida"] = True  # se consume al autorizar
-        else:
-            # Recurrente: limpiar el ciclo del día anterior
-            update_entrada["hora_salida"] = None
-            update_entrada["fecha_salida"] = None
+    if visita.get("modalidad_visita", "temporal") == "temporal":
+        update_entrada["entrada_consumida"] = True  # se consume al autorizar
+    else:
+        # Recurrente: limpiar el ciclo del día anterior
+        update_entrada["hora_salida"] = None
+        update_entrada["fecha_salida"] = None
 
-        _col_visita(visita).update_one({"_id": visita["_id"]}, {"$set": update_entrada})
+    # Solo se autoriza si el pase sigue "pendiente de autorización".
+    # El filtro hace la operación atómica: si el guardia da doble clic, o el
+    # pase ya venció por tolerancia / fue rechazado / ya entró, no se vuelve
+    # a registrar la entrada ni se duplica la bitácora.
+    res = _col_visita(visita).update_one(
+        {"_id": visita["_id"], "estado": "pendiente_autorizacion"},
+        {"$set": update_entrada},
+    )
 
-        mongo.db.access_logs.insert_one(
-            {
-                "visita_id": str(visita["_id"]),
-                "guardia_id": session["user_id"],
-                "guardia_nombre": session["nombre"],
-                "accion": "confirmacion_manual",
-                "fecha_hora": ahora,
-                "resultado": "acceso_confirmado",
-                "observaciones": "Guardia confirmó físicamente al visitante",
-            }
+    if res.modified_count == 0:
+        flash(
+            "Este pase ya no está pendiente de autorización "
+            "(ya entró, fue rechazado o venció el tiempo de espera). "
+            "Escanéalo de nuevo si es necesario.",
+            "warning",
         )
+        return redirect(url_for("guard.scan_entrada"))
 
-        socketio.emit("actualizar_dashboard", to="rol:admin")
-        socketio.emit("actualizar_dashboard", to=f"user:{visita['residente_id']}")
+    mongo.db.access_logs.insert_one(
+        {
+            "visita_id": str(visita["_id"]),
+            "guardia_id": session["user_id"],
+            "guardia_nombre": session["nombre"],
+            "accion": "confirmacion_manual",
+            "fecha_hora": ahora,
+            "resultado": "acceso_confirmado",
+            "observaciones": "Guardia confirmó físicamente al visitante",
+        }
+    )
+
+    _avisar_cambio_visita(visita)
 
     flash("Acceso autorizado correctamente.", "success")
 
